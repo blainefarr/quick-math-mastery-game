@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect } from 'react';
-import { useGame } from '@/context/GameContext';
+import useGame from '@/context/useGame';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -39,12 +38,10 @@ const OperationSelection = () => {
   const [range1Max, setRange1Max] = useState(settings.range.max1);
   const [range2Min, setRange2Min] = useState(settings.range.min2);
   const [range2Max, setRange2Max] = useState(settings.range.max2);
-  // timerSeconds removed, always 60 seconds.
   const defaultTime = 60;
   const [useFocusNumber, setUseFocusNumber] = useState(focusNumber !== null);
   const [focusNumberValue, setFocusNumberValue] = useState(focusNumber || 1);
   
-  // Update local state when settings change
   useEffect(() => {
     setSelectedOperation(settings.operation);
     setRange1Min(settings.range.min1);
@@ -53,12 +50,10 @@ const OperationSelection = () => {
     setRange2Max(settings.range.max2);
   }, [settings]);
   
-  // Handle operation selection
   const handleOperationSelect = (operation: Operation) => {
     setSelectedOperation(operation);
   };
   
-  // Handle range input changes
   const handleRangeChange = (
     setter: React.Dispatch<React.SetStateAction<number>>,
     value: string,
@@ -71,7 +66,6 @@ const OperationSelection = () => {
     }
   };
   
-  // Handle focus number toggle
   const handleFocusNumberToggle = (checked: boolean) => {
     setUseFocusNumber(checked);
     if (!checked) {
@@ -81,7 +75,6 @@ const OperationSelection = () => {
     }
   };
   
-  // Handle focus number value change
   const handleFocusNumberChange = (value: string) => {
     const numValue = parseInt(value);
     if (!isNaN(numValue) && numValue > 0) {
@@ -92,15 +85,12 @@ const OperationSelection = () => {
     }
   };
   
-  // Start game with selected settings
   const handleStartGame = () => {
-    // Validate ranges
     if (range1Max < range1Min || range2Max < range2Min) {
       alert('Maximum value must be greater than or equal to minimum value');
       return;
     }
     
-    // Update settings (timer: always 60s)
     updateSettings({
       operation: selectedOperation,
       range: {
@@ -112,14 +102,12 @@ const OperationSelection = () => {
       timerSeconds: 60
     });
     
-    // Update focus number
     if (useFocusNumber) {
       setFocusNumber(focusNumberValue);
     } else {
       setFocusNumber(null);
     }
     
-    // Set timer and start game
     setTimeLeft(defaultTime);
     setGameState('playing');
   };
@@ -132,7 +120,6 @@ const OperationSelection = () => {
         </CardHeader>
         
         <CardContent className="space-y-6">
-          {/* Operation Selection */}
           <div className="space-y-2">
             <h3 className="text-lg font-medium">Operation</h3>
             <Tabs 
@@ -174,7 +161,6 @@ const OperationSelection = () => {
             </Tabs>
           </div>
           
-          {/* Focus Number Option */}
           <div className="space-y-2 border p-4 rounded-lg bg-muted/50">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
@@ -219,12 +205,10 @@ const OperationSelection = () => {
             )}
           </div>
           
-          {/* Number Ranges */}
           <div className="space-y-4">
             <h3 className="text-lg font-medium">Number Ranges</h3>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* First Number Range */}
               <div className={`space-y-2 ${useFocusNumber ? 'opacity-50' : ''}`}>
                 <Label htmlFor="range1">First Number Range:</Label>
                 <div className="flex space-x-2">
@@ -262,7 +246,6 @@ const OperationSelection = () => {
                 )}
               </div>
               
-              {/* Second Number Range */}
               <div className="space-y-2">
                 <Label htmlFor="range2">Second Number Range:</Label>
                 <div className="flex space-x-2">
@@ -295,7 +278,6 @@ const OperationSelection = () => {
             </div>
           </div>
           
-          {/* Default Timer Notice */}
           <div className="space-y-2">
             <h3 className="text-lg font-medium">Timer</h3>
             <span className="block font-bold text-primary">60 seconds</span>

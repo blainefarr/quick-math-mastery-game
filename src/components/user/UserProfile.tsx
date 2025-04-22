@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect } from 'react';
-import { useGame } from '@/context/GameContext';
+import useGame from '@/context/useGame';
 import { 
   DropdownMenu,
   DropdownMenuContent,

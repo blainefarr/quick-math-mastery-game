@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { useGame } from '@/context/GameContext';
+import useGame from '@/context/useGame';
 import { Button } from '@/components/ui/button';
 import AuthModal from './auth/AuthModal';
 import UserProfile from './user/UserProfile';
