@@ -1,13 +1,39 @@
-// Update this page (the content is just a fallback if you fail to update the page)
 
+import React from 'react';
+import { GameProvider } from '@/context/GameContext';
+import Header from '@/components/Header';
+import OperationSelection from '@/components/OperationSelection';
+import GameScreen from '@/components/GameScreen';
+import EndScreen from '@/components/EndScreen';
+import { useGame } from '@/context/GameContext';
+import MathBackground from '@/components/common/MathBackground';
+
+// Main content that uses the game context
+const GameContent = () => {
+  const { gameState } = useGame();
+  
+  return (
+    <div className="min-h-screen flex flex-col bg-background relative overflow-hidden">
+      {/* Background math symbols */}
+      <MathBackground />
+      
+      {/* Main content */}
+      <Header />
+      <main className="flex-1 relative z-10">
+        {gameState === 'selection' && <OperationSelection />}
+        {gameState === 'playing' && <GameScreen />}
+        {gameState === 'ended' && <EndScreen />}
+      </main>
+    </div>
+  );
+};
+
+// Index page with context provider
 const Index = () => {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Your Blank App</h1>
-        <p className="text-xl text-gray-600">Start building your amazing project here!</p>
-      </div>
-    </div>
+    <GameProvider>
+      <GameContent />
+    </GameProvider>
   );
 };
 

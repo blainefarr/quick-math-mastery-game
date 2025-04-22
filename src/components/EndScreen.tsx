@@ -1,0 +1,123 @@
+
+import React, { useEffect } from 'react';
+import { useGame } from '@/context/GameContext';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { ArrowLeft, RefreshCw } from 'lucide-react';
+import MathIcon from './common/MathIcon';
+import ConfettiEffect from './common/ConfettiEffect';
+
+const EndScreen = () => {
+  const { 
+    score, 
+    resetScore, 
+    settings, 
+    setGameState, 
+    setTimeLeft 
+  } = useGame();
+  
+  // Show confetti effect when component mounts
+  useEffect(() => {
+    const audio = new Audio();
+    audio.src = 'data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA/+M4wAAAAAAAAAAAAEluZm8AAAAPAAAAAwAAACsAWlpaWlpaWlpaWlp6enp6enp6enp6epqampqampqampqaurq6urq6urq6urra2tra2tra2tra2vr6+vr6+vr6+vr6GhoaGhoaGhoaGho6Ojo6Ojo6Ojo6OlpaWlpaWlpaWlp6enp6enp6enp6epqampqampqampqa//NCxAAAAANIAAAAAurq6urq6urq6ura2tra2tra2tra2vr6+vr6+vr6+vr6GhoaGhoaGhoaGho6Ojo6Ojo6Ojo6OlpaWlpaWlpaWlpaqqqqqqqqqqqqqqqqqqqqqqqqv/zgMSAAACQABzxQAhAgBgeM4yqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//+ZVZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZ';
+    audio.volume = 0.2;
+    audio.play();
+  }, []);
+  
+  // Restart game with the same settings
+  const handleRestart = () => {
+    resetScore();
+    setTimeLeft(settings.timerSeconds);
+    setGameState('playing');
+  };
+  
+  // Return to selection screen
+  const handleBackToSelection = () => {
+    resetScore();
+    setGameState('selection');
+  };
+  
+  // Get operation name in readable format
+  const getOperationName = () => {
+    switch (settings.operation) {
+      case 'addition': return 'Addition';
+      case 'subtraction': return 'Subtraction';
+      case 'multiplication': return 'Multiplication';
+      case 'division': return 'Division';
+      default: return '';
+    }
+  };
+
+  return (
+    <div className="flex justify-center items-center min-h-screen p-4 animate-fade-in">
+      {/* Show confetti effect based on score */}
+      <ConfettiEffect score={score} />
+      
+      <Card className="w-full max-w-md shadow-xl">
+        <CardHeader className="text-center">
+          <CardTitle className="text-3xl font-bold text-primary">Game Over!</CardTitle>
+          <CardDescription>Your performance summary</CardDescription>
+        </CardHeader>
+        
+        <CardContent className="space-y-6">
+          <div className="flex justify-center">
+            <div className="text-center bg-gradient-to-r from-primary/20 to-secondary/20 rounded-full w-36 h-36 flex flex-col justify-center items-center shadow-inner animate-pop">
+              <span className="text-sm text-muted-foreground">Final Score</span>
+              <span className="text-5xl font-bold text-primary">{score}</span>
+              {score > 10 && <span className="text-xs text-accent mt-1">Amazing work!</span>}
+            </div>
+          </div>
+          
+          <div className="space-y-2">
+            <h3 className="text-lg font-semibold flex items-center">
+              <span>Game Settings</span>
+              <MathIcon operation={settings.operation} className="ml-2 text-accent" />
+            </h3>
+            <div className="bg-muted p-4 rounded-lg">
+              <p className="mb-2 flex items-center">
+                <span className="font-medium mr-2">Operation:</span> 
+                <span className="flex items-center bg-primary/10 px-2 py-1 rounded-md">
+                  <MathIcon operation={settings.operation} size={16} className="mr-1" />
+                  {getOperationName()}
+                </span>
+              </p>
+              <p className="mb-2">
+                <span className="font-medium">Number Range 1:</span> 
+                <span className="ml-2 bg-secondary/10 px-2 py-1 rounded-md">{settings.range.min1} to {settings.range.max1}</span>
+              </p>
+              <p className="mb-2">
+                <span className="font-medium">Number Range 2:</span> 
+                <span className="ml-2 bg-secondary/10 px-2 py-1 rounded-md">{settings.range.min2} to {settings.range.max2}</span>
+              </p>
+              <p>
+                <span className="font-medium">Time Limit:</span> 
+                <span className="ml-2 bg-secondary/10 px-2 py-1 rounded-md">{settings.timerSeconds} seconds</span>
+              </p>
+            </div>
+          </div>
+        </CardContent>
+        
+        <CardFooter className="flex flex-col gap-2">
+          <Button 
+            onClick={handleRestart}
+            className="w-full bg-primary hover:bg-primary/90 flex items-center"
+          >
+            <RefreshCw className="mr-2" size={16} />
+            Restart with Same Settings
+          </Button>
+          
+          <Button 
+            onClick={handleBackToSelection}
+            variant="outline"
+            className="w-full border-primary text-primary hover:bg-primary/10 flex items-center"
+          >
+            <ArrowLeft className="mr-2" size={16} />
+            Back to Selection
+          </Button>
+        </CardFooter>
+      </Card>
+    </div>
+  );
+};
+
+export default EndScreen;
