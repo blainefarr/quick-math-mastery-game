@@ -1,11 +1,10 @@
+
 import React, { useState, useEffect } from 'react';
 import { useGame } from '@/context/GameContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Slider } from '@/components/ui/slider';
-import { Switch } from '@/components/ui/switch';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ArrowRight, Plus, Minus, X, Divide, Info } from 'lucide-react';
 import { Operation } from '@/types';
@@ -16,6 +15,13 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+
+const operationColors = {
+  addition: "bg-blue-200 text-primary font-bold shadow",
+  subtraction: "bg-green-200 text-primary font-bold shadow",
+  multiplication: "bg-purple-200 text-primary font-bold shadow",
+  division: "bg-orange-200 text-primary font-bold shadow",
+};
 
 const OperationSelection = () => {
   const { 
@@ -32,7 +38,8 @@ const OperationSelection = () => {
   const [range1Max, setRange1Max] = useState(settings.range.max1);
   const [range2Min, setRange2Min] = useState(settings.range.min2);
   const [range2Max, setRange2Max] = useState(settings.range.max2);
-  const [timerSeconds, setTimerSeconds] = useState(settings.timerSeconds);
+  // timerSeconds removed, always 60 seconds.
+  const defaultTime = 60;
   const [useFocusNumber, setUseFocusNumber] = useState(focusNumber !== null);
   const [focusNumberValue, setFocusNumberValue] = useState(focusNumber || 1);
   
@@ -43,7 +50,6 @@ const OperationSelection = () => {
     setRange1Max(settings.range.max1);
     setRange2Min(settings.range.min2);
     setRange2Max(settings.range.max2);
-    setTimerSeconds(settings.timerSeconds);
   }, [settings]);
   
   // Handle operation selection
@@ -62,11 +68,6 @@ const OperationSelection = () => {
     if (!isNaN(numValue) && numValue >= min && numValue <= max) {
       setter(numValue);
     }
-  };
-  
-  // Handle timer slider change
-  const handleTimerChange = (value: number[]) => {
-    setTimerSeconds(value[0]);
   };
   
   // Handle focus number toggle
@@ -98,7 +99,7 @@ const OperationSelection = () => {
       return;
     }
     
-    // Update settings
+    // Update settings (timer: always 60s)
     updateSettings({
       operation: selectedOperation,
       range: {
@@ -107,7 +108,7 @@ const OperationSelection = () => {
         min2: range2Min,
         max2: range2Max
       },
-      timerSeconds
+      timerSeconds: 60
     });
     
     // Update focus number
@@ -118,50 +119,15 @@ const OperationSelection = () => {
     }
     
     // Set timer and start game
-    setTimeLeft(timerSeconds);
+    setTimeLeft(defaultTime);
     setGameState('playing');
   };
   
-  // Get operation details
-  const getOperationDetails = (operation: Operation) => {
-    switch (operation) {
-      case 'addition':
-        return {
-          title: 'Addition',
-          description: 'Practice adding numbers together',
-          icon: <Plus className="h-6 w-6" />,
-          color: 'bg-blue-100 text-blue-700'
-        };
-      case 'subtraction':
-        return {
-          title: 'Subtraction',
-          description: 'Practice subtracting numbers',
-          icon: <Minus className="h-6 w-6" />,
-          color: 'bg-green-100 text-green-700'
-        };
-      case 'multiplication':
-        return {
-          title: 'Multiplication',
-          description: 'Practice multiplying numbers',
-          icon: <X className="h-6 w-6" />,
-          color: 'bg-purple-100 text-purple-700'
-        };
-      case 'division':
-        return {
-          title: 'Division',
-          description: 'Practice dividing numbers',
-          icon: <Divide className="h-6 w-6" />,
-          color: 'bg-orange-100 text-orange-700'
-        };
-    }
-  };
-
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
       <Card className="shadow-lg animate-fade-in">
         <CardHeader>
           <CardTitle className="text-2xl font-bold text-center">Choose Your Math Challenge</CardTitle>
-          <CardDescription className="text-center">Select an operation and customize your practice session</CardDescription>
         </CardHeader>
         
         <CardContent className="space-y-6">
@@ -175,37 +141,35 @@ const OperationSelection = () => {
               className="w-full"
             >
               <TabsList className="grid grid-cols-2 md:grid-cols-4 w-full">
-                <TabsTrigger value="addition" className="flex items-center justify-center">
+                <TabsTrigger
+                  value="addition"
+                  className={`flex items-center justify-center ${selectedOperation === "addition" ? operationColors.addition : ""}`}
+                >
                   <MathIcon operation="addition" className="mr-2" />
                   Addition
                 </TabsTrigger>
-                <TabsTrigger value="subtraction" className="flex items-center justify-center">
+                <TabsTrigger
+                  value="subtraction"
+                  className={`flex items-center justify-center ${selectedOperation === "subtraction" ? operationColors.subtraction : ""}`}
+                >
                   <MathIcon operation="subtraction" className="mr-2" />
                   Subtraction
                 </TabsTrigger>
-                <TabsTrigger value="multiplication" className="flex items-center justify-center">
+                <TabsTrigger
+                  value="multiplication"
+                  className={`flex items-center justify-center ${selectedOperation === "multiplication" ? operationColors.multiplication : ""}`}
+                >
                   <MathIcon operation="multiplication" className="mr-2" />
                   Multiplication
                 </TabsTrigger>
-                <TabsTrigger value="division" className="flex items-center justify-center">
+                <TabsTrigger
+                  value="division"
+                  className={`flex items-center justify-center ${selectedOperation === "division" ? operationColors.division : ""}`}
+                >
                   <MathIcon operation="division" className="mr-2" />
                   Division
                 </TabsTrigger>
               </TabsList>
-              
-              <TabsContent value={selectedOperation} className="mt-4">
-                <Card className={`border-none shadow-sm ${getOperationDetails(selectedOperation).color}`}>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-lg flex items-center">
-                      {getOperationDetails(selectedOperation).icon}
-                      <span className="ml-2">{getOperationDetails(selectedOperation).title}</span>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p>{getOperationDetails(selectedOperation).description}</p>
-                  </CardContent>
-                </Card>
-              </TabsContent>
             </Tabs>
           </div>
           
@@ -229,10 +193,12 @@ const OperationSelection = () => {
                   </Tooltip>
                 </TooltipProvider>
               </div>
-              <Switch 
-                id="focus-number-toggle" 
+              <input
+                type="checkbox"
+                id="focus-number-toggle"
                 checked={useFocusNumber}
-                onCheckedChange={handleFocusNumberToggle}
+                onChange={(e) => handleFocusNumberToggle(e.target.checked)}
+                className="toggle toggle-primary"
               />
             </div>
             
@@ -330,28 +296,10 @@ const OperationSelection = () => {
             </div>
           </div>
           
-          {/* Timer Settings */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-medium">Timer (seconds)</h3>
-              <span className="font-bold text-primary">{timerSeconds}s</span>
-            </div>
-            
-            <Slider
-              defaultValue={[timerSeconds]}
-              value={[timerSeconds]}
-              onValueChange={handleTimerChange}
-              max={120}
-              min={10}
-              step={5}
-              className="w-full"
-            />
-            
-            <div className="flex justify-between text-sm text-muted-foreground">
-              <span>10s</span>
-              <span>60s</span>
-              <span>120s</span>
-            </div>
+          {/* Default Timer Notice */}
+          <div className="space-y-2">
+            <h3 className="text-lg font-medium">Timer</h3>
+            <span className="block font-bold text-primary">60 seconds</span>
           </div>
         </CardContent>
         
@@ -370,3 +318,4 @@ const OperationSelection = () => {
 };
 
 export default OperationSelection;
+

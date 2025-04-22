@@ -42,6 +42,15 @@ const UserProfile = () => {
   // If not logged in, don't render anything
   if (!isLoggedIn) return null;
 
+  // Close trap: fix UI by resetting scroll/focus lock
+  const handleDialogClose = (open: boolean) => {
+    setIsProfileOpen(open);
+    if (!open) {
+      // After dialog closes, restore document scroll/focus
+      document.body.classList.remove('ReactModal__Body--open');
+    }
+  };
+
   return (
     <>
       <DropdownMenu>
@@ -69,8 +78,7 @@ const UserProfile = () => {
         </DropdownMenuContent>
       </DropdownMenu>
       
-      {/* Profile Dialog - Added DialogClose for proper closing behavior */}
-      <Dialog open={isProfileOpen} onOpenChange={setIsProfileOpen}>
+      <Dialog open={isProfileOpen} onOpenChange={handleDialogClose}>
         <DialogContent className="max-w-4xl">
           <DialogHeader>
             <DialogTitle className="text-xl">My Profile - {username}</DialogTitle>

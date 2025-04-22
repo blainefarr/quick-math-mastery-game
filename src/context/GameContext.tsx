@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { GameSettings, Operation, Problem, ProblemRange, UserScore } from '@/types';
 
@@ -56,7 +55,7 @@ interface GameContextType {
 const defaultSettings: GameSettings = {
   operation: 'addition',
   range: { min1: 1, max1: 10, min2: 1, max2: 10 },
-  timerSeconds: 60
+  timerSeconds: 60 // always 60s, not user-configurable
 };
 
 // Create context
@@ -244,7 +243,6 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
   
   // Save score to history
   const saveScore = () => {
-    // Only save if a user is logged in
     if (isLoggedIn && score > 0) {
       const newScore: UserScore = {
         score,
@@ -252,11 +250,15 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
         range: settings.range,
         date: new Date().toISOString(),
       };
-      
       setScoreHistory(prev => [...prev, newScore]);
-      // Note: The useEffect will automatically save to localStorage
     }
   };
+
+  // Fix for focus trap bug
+  useEffect(() => {
+    // Watch for profile open/close and forcibly trigger a rerender to reset focus trap issues
+    document.body.classList.remove('ReactModal__Body--open');
+  }, [isLoggedIn]);
 
   // Provide context values
   const value = {
