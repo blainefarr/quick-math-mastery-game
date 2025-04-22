@@ -1,5 +1,6 @@
+
 import React, { useState, useEffect } from 'react';
-import useGame from '@/context/useGame';
+import { useGame } from '@/context/useGame';
 import { 
   DropdownMenu,
   DropdownMenuContent,
@@ -14,6 +15,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogClose,
+  DialogDescription,
 } from '@/components/ui/dialog';
 import { 
   Tabs, 
@@ -34,7 +36,6 @@ import { User, LogOut } from 'lucide-react';
 import ScoreHistory from './ScoreHistory';
 import ScoreChart from './ScoreChart';
 import { Label } from '@/components/ui/label';
-import { ProblemRange } from '@/types';
 
 const UserProfile = () => {
   const { username, isLoggedIn, setIsLoggedIn, scoreHistory } = useGame();
@@ -48,35 +49,6 @@ const UserProfile = () => {
     localStorage.removeItem('mathUserData');
   };
   
-  // Critical fix: Clean up modal effects when component unmounts or when profile closes
-  useEffect(() => {
-    // Cleanup function that runs when component unmounts or dependencies change
-    return () => {
-      document.body.classList.remove('ReactModal__Body--open');
-      document.body.style.overflow = '';
-      document.body.style.paddingRight = '';
-    };
-  }, []);
-  
-  // Manual cleanup when dialog closes
-  const handleDialogChange = (open: boolean) => {
-    setIsProfileOpen(open);
-    if (!open) {
-      // Reset these immediately when dialog closes
-      document.body.classList.remove('ReactModal__Body--open');
-      document.body.style.overflow = '';
-      document.body.style.paddingRight = '';
-      
-      // Force a DOM reflow to ensure styles are updated
-      setTimeout(() => {
-        window.dispatchEvent(new Event('resize'));
-      }, 10);
-    }
-  };
-  
-  // If not logged in, don't render anything
-  if (!isLoggedIn) return null;
-
   // Get unique ranges from score history
   const getUniqueRanges = () => {
     const uniqueRanges = new Set<string>();
@@ -110,6 +82,9 @@ const UserProfile = () => {
   const filteredScores = getFilteredScores();
   const uniqueRanges = getUniqueRanges();
 
+  // If not logged in, don't render anything
+  if (!isLoggedIn) return null;
+
   return (
     <>
       <DropdownMenu>
@@ -137,10 +112,11 @@ const UserProfile = () => {
         </DropdownMenuContent>
       </DropdownMenu>
       
-      <Dialog open={isProfileOpen} onOpenChange={handleDialogChange}>
+      <Dialog open={isProfileOpen} onOpenChange={setIsProfileOpen}>
         <DialogContent className="max-w-4xl">
           <DialogHeader>
             <DialogTitle className="text-xl">My Profile - {username}</DialogTitle>
+            <DialogDescription className="sr-only">View and manage your profile</DialogDescription>
           </DialogHeader>
           
           <div className="mt-4">

@@ -90,6 +90,12 @@ const AuthModal = ({ children }: AuthModalProps) => {
         {children}
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Authentication</DialogTitle>
+          <DialogDescription>
+            Sign in or create an account to save your progress
+          </DialogDescription>
+        </DialogHeader>
         <Tabs defaultValue="login" value={activeTab} onValueChange={(value) => setActiveTab(value as 'login' | 'register')}>
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="login">Login</TabsTrigger>
@@ -98,13 +104,6 @@ const AuthModal = ({ children }: AuthModalProps) => {
           
           {/* Login Tab */}
           <TabsContent value="login">
-            <DialogHeader>
-              <DialogTitle>Login to Your Account</DialogTitle>
-              <DialogDescription>
-                Sign in to save and track your math progress
-              </DialogDescription>
-            </DialogHeader>
-            
             <form onSubmit={handleLogin} className="space-y-4 py-4">
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
@@ -138,13 +137,6 @@ const AuthModal = ({ children }: AuthModalProps) => {
           
           {/* Register Tab */}
           <TabsContent value="register">
-            <DialogHeader>
-              <DialogTitle>Create an Account</DialogTitle>
-              <DialogDescription>
-                Register to save your scores and track progress
-              </DialogDescription>
-            </DialogHeader>
-            
             <form onSubmit={handleRegister} className="space-y-4 py-4">
               <div className="space-y-2">
                 <Label htmlFor="name">Name</Label>
