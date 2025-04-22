@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import useGame from '@/context/useGame';
 import { Button } from '@/components/ui/button';
@@ -24,20 +23,16 @@ const GameScreen = () => {
 
   const [feedback, setFeedback] = useState<'correct' | 'incorrect' | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  
-  // Initialize game on first load
+
   useEffect(() => {
     console.log('GameScreen mounted with settings:', settings);
     
-    // Generate first problem if we don't have one
     if (!currentProblem) {
       generateNewProblem();
     }
     
-    // Set focus on input
     inputRef.current?.focus();
     
-    // Start timer
     const timer = setInterval(() => {
       setTimeLeft(prevTime => {
         if (prevTime <= 1) {
@@ -51,49 +46,49 @@ const GameScreen = () => {
       });
     }, 1000);
     
-    // Clean up timer
     return () => clearInterval(timer);
   }, []);
-  
-  // Handle user answer submission
+
+  const focusInput = () => {
+    setTimeout(() => {
+      if (inputRef.current) {
+        inputRef.current.focus();
+      }
+    }, 0);
+  };
+
   const checkAnswer = () => {
     if (!currentProblem) return;
     
     const numAnswer = Number(userAnswer);
     
     if (numAnswer === currentProblem.answer) {
-      // Correct answer
       setFeedback('correct');
       incrementScore();
       setUserAnswer('');
       
-      // Generate new problem after small delay
       setTimeout(() => {
         generateNewProblem();
         setFeedback(null);
-        inputRef.current?.focus();
+        focusInput();
       }, 300);
     } else {
-      // Incorrect answer
       setFeedback('incorrect');
       
-      // Clear incorrect feedback after short delay
       setTimeout(() => {
         setFeedback(null);
         setUserAnswer('');
-        inputRef.current?.focus();
+        focusInput();
       }, 500);
     }
   };
-  
-  // Handle key press (Enter) for submitting answer
+
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
       checkAnswer();
     }
   };
-  
-  // Format operation symbol
+
   const getOperationSymbol = () => {
     if (!currentProblem) return '';
     
@@ -106,7 +101,6 @@ const GameScreen = () => {
     }
   };
 
-  // Handle restart game - don't save scores
   const handleRestartGame = () => {
     saveScore();
     setGameState('ended');
@@ -115,7 +109,6 @@ const GameScreen = () => {
   return (
     <div className="flex justify-center items-center min-h-screen p-4 bg-background">
       <div className="w-full max-w-xl">
-        {/* Timer and Score */}
         <div className="flex justify-between mb-8">
           <Card className={`p-3 flex items-center ${timeLeft < 10 ? 'animate-timer-tick text-destructive' : ''}`}>
             <Clock className="mr-2" />
@@ -128,7 +121,6 @@ const GameScreen = () => {
           </Card>
         </div>
         
-        {/* Problem Display */}
         <Card className={`mb-6 py-10 px-6 shadow-lg animate-bounce-in ${feedback === 'correct' ? 'bg-success/10 border-success' : feedback === 'incorrect' ? 'bg-destructive/10 border-destructive' : ''}`}>
           <CardContent className="flex justify-center items-center text-4xl md:text-6xl font-bold">
             {currentProblem && (
@@ -165,7 +157,6 @@ const GameScreen = () => {
           </CardContent>
         </Card>
         
-        {/* Controls */}
         <div className="flex justify-center space-x-4">
           <Button 
             onClick={checkAnswer}
@@ -184,7 +175,6 @@ const GameScreen = () => {
           </Button>
         </div>
         
-        {/* Current operation info */}
         <div className="mt-8 text-center text-sm text-muted-foreground flex justify-center items-center">
           <span>Current mode: </span>
           <span className="ml-1 inline-flex items-center bg-primary/10 px-2 py-1 rounded-full text-primary font-medium">

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useGame } from '@/context/useGame';
 import { 
@@ -41,28 +40,31 @@ const UserProfile = () => {
   const { username, isLoggedIn, setIsLoggedIn, scoreHistory } = useGame();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [selectedRange, setSelectedRange] = useState<string>("all");
-  
-  // For debugging
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
   useEffect(() => {
-    // Log when dialog opens/closes
-    console.log('Profile dialog state changed:', isProfileOpen);
-    console.log('Current scoreHistory:', scoreHistory);
-    
-    // Important: Handle body class cleanup for modal
+    setLoading(true);
+    try {
+      console.log('Profile dialog state changed:', isProfileOpen);
+      console.log('Current scoreHistory from context:', scoreHistory);
+
+      setLoading(false);
+    } catch (err) {
+      setError("Could not load scores");
+      setLoading(false);
+    }
     return () => {
       document.body.classList.remove('ReactModal__Body--open');
       document.body.style.pointerEvents = '';
     };
   }, [isProfileOpen, scoreHistory]);
-  
-  // Logout handler
+
   const handleLogout = () => {
     setIsLoggedIn(false);
-    // Clear localStorage on logout
     localStorage.removeItem('mathUserData');
   };
-  
-  // Get unique ranges from score history
+
   const getUniqueRanges = () => {
     if (!scoreHistory || scoreHistory.length === 0) {
       return [];
@@ -80,8 +82,7 @@ const UserProfile = () => {
     
     return Array.from(uniqueRanges);
   };
-  
-  // Filter scores by selected range
+
   const getFilteredScores = () => {
     if (!scoreHistory || scoreHistory.length === 0) {
       return [];
@@ -91,7 +92,6 @@ const UserProfile = () => {
       return scoreHistory;
     }
     
-    // Parse range values
     const [range1, range2] = selectedRange.split(', ');
     const [min1, max1] = range1.split('-').map(Number);
     const [min2, max2] = range2.split('-').map(Number);
@@ -103,21 +103,18 @@ const UserProfile = () => {
       return r.min1 === min1 && r.max1 === max1 && r.min2 === min2 && r.max2 === max2;
     });
   };
-  
+
   const filteredScores = getFilteredScores();
   const uniqueRanges = getUniqueRanges();
 
-  // Handler to ensure proper cleanup when dialog closes
   const handleOpenChange = (open: boolean) => {
     setIsProfileOpen(open);
     if (!open) {
-      // Ensure body is interactive when dialog closes
       document.body.style.pointerEvents = '';
       document.body.classList.remove('ReactModal__Body--open');
     }
   };
 
-  // If not logged in, don't render anything
   if (!isLoggedIn) return null;
 
   return (
@@ -155,9 +152,7 @@ const UserProfile = () => {
               View and manage your profile and score history
             </DialogDescription>
           </DialogHeader>
-          
           <div className="mt-4">
-            {/* Range Filter */}
             <div className="mb-4">
               <Label htmlFor="range-filter" className="mr-2">Filter by Range:</Label>
               <Select 
@@ -178,28 +173,34 @@ const UserProfile = () => {
               </Select>
             </div>
             
-            <Tabs defaultValue="history">
-              <TabsList>
-                <TabsTrigger value="history">Score History</TabsTrigger>
-                <TabsTrigger value="progress">Progress</TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="history" className="mt-4">
-                <Card>
-                  <CardContent className="p-4">
-                    <ScoreHistory scores={filteredScores} />
-                  </CardContent>
-                </Card>
-              </TabsContent>
-              
-              <TabsContent value="progress" className="mt-4">
-                <Card>
-                  <CardContent className="p-4">
-                    <ScoreChart scores={filteredScores} />
-                  </CardContent>
-                </Card>
-              </TabsContent>
-            </Tabs>
+            {loading ? (
+              <p className="text-center py-8">Loading score history...</p>
+            ) : error ? (
+              <p className="text-center py-8 text-red-500">{error}</p>
+            ) : (
+              <Tabs defaultValue="history">
+                <TabsList>
+                  <TabsTrigger value="history">Score History</TabsTrigger>
+                  <TabsTrigger value="progress">Progress</TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="history" className="mt-4">
+                  <Card>
+                    <CardContent className="p-4">
+                      <ScoreHistory scores={filteredScores} />
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+                
+                <TabsContent value="progress" className="mt-4">
+                  <Card>
+                    <CardContent className="p-4">
+                      <ScoreChart scores={filteredScores} />
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+              </Tabs>
+            )}
           </div>
           
           <DialogClose asChild>
@@ -208,7 +209,6 @@ const UserProfile = () => {
               variant="outline" 
               className="mt-4"
               onClick={() => {
-                // Additional cleanup when close button is clicked
                 document.body.style.pointerEvents = '';
                 document.body.classList.remove('ReactModal__Body--open');
               }}
