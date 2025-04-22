@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useGame } from '@/context/GameContext';
 import { 
   DropdownMenu,
@@ -47,6 +47,32 @@ const UserProfile = () => {
     setIsLoggedIn(false);
     // Clear localStorage on logout
     localStorage.removeItem('mathUserData');
+  };
+  
+  // Critical fix: Clean up modal effects when component unmounts or when profile closes
+  useEffect(() => {
+    // Cleanup function that runs when component unmounts or dependencies change
+    return () => {
+      document.body.classList.remove('ReactModal__Body--open');
+      document.body.style.overflow = '';
+      document.body.style.paddingRight = '';
+    };
+  }, []);
+  
+  // Manual cleanup when dialog closes
+  const handleDialogChange = (open: boolean) => {
+    setIsProfileOpen(open);
+    if (!open) {
+      // Reset these immediately when dialog closes
+      document.body.classList.remove('ReactModal__Body--open');
+      document.body.style.overflow = '';
+      document.body.style.paddingRight = '';
+      
+      // Force a DOM reflow to ensure styles are updated
+      setTimeout(() => {
+        window.dispatchEvent(new Event('resize'));
+      }, 10);
+    }
   };
   
   // If not logged in, don't render anything
@@ -112,16 +138,7 @@ const UserProfile = () => {
         </DropdownMenuContent>
       </DropdownMenu>
       
-      <Dialog open={isProfileOpen} onOpenChange={(open) => {
-        setIsProfileOpen(open);
-        // Important: Force cleanup of any stray modal classes when dialog closes
-        if (!open) {
-          document.body.classList.remove('ReactModal__Body--open');
-          // Force document to be scrollable again
-          document.body.style.overflow = '';
-          document.body.style.paddingRight = '';
-        }
-      }}>
+      <Dialog open={isProfileOpen} onOpenChange={handleDialogChange}>
         <DialogContent className="max-w-4xl">
           <DialogHeader>
             <DialogTitle className="text-xl">My Profile - {username}</DialogTitle>

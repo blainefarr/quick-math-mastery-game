@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ArrowRight, Plus, Minus, X, Divide, Info } from 'lucide-react';
 import { Operation } from '@/types';
 import MathIcon from './common/MathIcon';
+import { Switch } from '@/components/ui/switch';
 import {
   Tooltip,
   TooltipContent,
@@ -193,12 +194,10 @@ const OperationSelection = () => {
                   </Tooltip>
                 </TooltipProvider>
               </div>
-              <input
-                type="checkbox"
+              <Switch
                 id="focus-number-toggle"
                 checked={useFocusNumber}
-                onChange={(e) => handleFocusNumberToggle(e.target.checked)}
-                className="toggle toggle-primary"
+                onCheckedChange={handleFocusNumberToggle}
               />
             </div>
             
@@ -318,4 +317,3 @@ const OperationSelection = () => {
 };
 
 export default OperationSelection;
-

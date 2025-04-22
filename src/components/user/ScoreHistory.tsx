@@ -24,23 +24,6 @@ interface ScoreHistoryProps {
 
 const ScoreHistory = ({ scores }: ScoreHistoryProps) => {
   const [operationFilter, setOperationFilter] = useState<string>('all');
-  const [rangeFilter, setRangeFilter] = useState<string>('all');
-  
-  // Extract unique range combinations for filtering
-  const uniqueRanges = React.useMemo(() => {
-    const ranges = new Set<string>();
-    scores.forEach(score => {
-      const rangeKey = `${score.range.min1}-${score.range.max1}_${score.range.min2}-${score.range.max2}`;
-      ranges.add(rangeKey);
-    });
-    return Array.from(ranges).map(key => {
-      const [range1, range2] = key.split('_');
-      return { 
-        key, 
-        label: `${range1} and ${range2}`
-      };
-    });
-  }, [scores]);
   
   // Get operation name in readable format
   const getOperationName = (operation: string) => {
@@ -65,16 +48,9 @@ const ScoreHistory = ({ scores }: ScoreHistoryProps) => {
     }).format(date);
   };
   
-  // Filter scores by selected operation and range
+  // Filter scores by selected operation
   const filteredScores = scores.filter(score => {
-    const matchesOperation = operationFilter === 'all' || score.operation === operationFilter;
-    
-    if (rangeFilter === 'all') {
-      return matchesOperation;
-    }
-    
-    const rangeKey = `${score.range.min1}-${score.range.max1}_${score.range.min2}-${score.range.max2}`;
-    return matchesOperation && rangeKey === rangeFilter;
+    return operationFilter === 'all' || score.operation === operationFilter;
   });
   
   // Sort scores by date (newest first)
@@ -108,20 +84,6 @@ const ScoreHistory = ({ scores }: ScoreHistoryProps) => {
               <SelectItem value="subtraction">Subtraction</SelectItem>
               <SelectItem value="multiplication">Multiplication</SelectItem>
               <SelectItem value="division">Division</SelectItem>
-            </SelectContent>
-          </Select>
-          
-          <Select value={rangeFilter} onValueChange={setRangeFilter}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Filter by range" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Ranges</SelectItem>
-              {uniqueRanges.map(range => (
-                <SelectItem key={range.key} value={range.key}>
-                  {range.label}
-                </SelectItem>
-              ))}
             </SelectContent>
           </Select>
         </div>
