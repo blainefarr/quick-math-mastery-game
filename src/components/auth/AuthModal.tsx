@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useGame } from '@/context/useGame'; // Now using the named export
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -29,6 +29,25 @@ const AuthModal = ({ children }: AuthModalProps) => {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
+  // Effect to handle cleanup when dialog state changes
+  useEffect(() => {
+    // Cleanup function to ensure body interaction is restored
+    return () => {
+      document.body.classList.remove('ReactModal__Body--open');
+      document.body.style.pointerEvents = '';
+    };
+  }, [isOpen]);
+
+  // Handle dialog state change
+  const handleOpenChange = (open: boolean) => {
+    setIsOpen(open);
+    if (!open) {
+      // Ensure body is interactive when dialog closes
+      document.body.style.pointerEvents = '';
+      document.body.classList.remove('ReactModal__Body--open');
+    }
+  };
+
   // Mock login functionality (would connect to backend in the future)
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,7 +67,7 @@ const AuthModal = ({ children }: AuthModalProps) => {
       // Mock successful login
       setIsLoggedIn(true);
       setUsername(email.split('@')[0]); // Use part of email as username
-      setIsOpen(false);
+      handleOpenChange(false);
       
       // Reset form
       setEmail('');
@@ -75,7 +94,7 @@ const AuthModal = ({ children }: AuthModalProps) => {
       // Mock successful registration and login
       setIsLoggedIn(true);
       setUsername(name);
-      setIsOpen(false);
+      handleOpenChange(false);
       
       // Reset form
       setName('');
@@ -85,7 +104,7 @@ const AuthModal = ({ children }: AuthModalProps) => {
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         {children}
       </DialogTrigger>

@@ -47,6 +47,12 @@ const UserProfile = () => {
     // Log when dialog opens/closes
     console.log('Profile dialog state changed:', isProfileOpen);
     console.log('Current scoreHistory:', scoreHistory);
+    
+    // Important: Handle body class cleanup for modal
+    return () => {
+      document.body.classList.remove('ReactModal__Body--open');
+      document.body.style.pointerEvents = '';
+    };
   }, [isProfileOpen, scoreHistory]);
   
   // Logout handler
@@ -101,6 +107,16 @@ const UserProfile = () => {
   const filteredScores = getFilteredScores();
   const uniqueRanges = getUniqueRanges();
 
+  // Handler to ensure proper cleanup when dialog closes
+  const handleOpenChange = (open: boolean) => {
+    setIsProfileOpen(open);
+    if (!open) {
+      // Ensure body is interactive when dialog closes
+      document.body.style.pointerEvents = '';
+      document.body.classList.remove('ReactModal__Body--open');
+    }
+  };
+
   // If not logged in, don't render anything
   if (!isLoggedIn) return null;
 
@@ -120,7 +136,7 @@ const UserProfile = () => {
             </div>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => setIsProfileOpen(true)}>
+          <DropdownMenuItem onClick={() => handleOpenChange(true)}>
             My Profile
           </DropdownMenuItem>
           <DropdownMenuSeparator />
@@ -131,7 +147,7 @@ const UserProfile = () => {
         </DropdownMenuContent>
       </DropdownMenu>
       
-      <Dialog open={isProfileOpen} onOpenChange={setIsProfileOpen}>
+      <Dialog open={isProfileOpen} onOpenChange={handleOpenChange}>
         <DialogContent className="max-w-4xl">
           <DialogHeader>
             <DialogTitle className="text-xl">My Profile - {username}</DialogTitle>
@@ -187,7 +203,18 @@ const UserProfile = () => {
           </div>
           
           <DialogClose asChild>
-            <Button type="button" variant="outline" className="mt-4">Close Profile</Button>
+            <Button 
+              type="button" 
+              variant="outline" 
+              className="mt-4"
+              onClick={() => {
+                // Additional cleanup when close button is clicked
+                document.body.style.pointerEvents = '';
+                document.body.classList.remove('ReactModal__Body--open');
+              }}
+            >
+              Close Profile
+            </Button>
           </DialogClose>
         </DialogContent>
       </Dialog>
