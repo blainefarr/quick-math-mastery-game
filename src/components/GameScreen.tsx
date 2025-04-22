@@ -18,35 +18,40 @@ const GameScreen = () => {
     userAnswer,
     setUserAnswer,
     setGameState,
-    saveScore
+    saveScore,
+    settings
   } = useGame();
 
   const [feedback, setFeedback] = useState<'correct' | 'incorrect' | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   
-  // Timer effect
+  // Initialize game on first load
   useEffect(() => {
-    // Generate first problem
-    generateNewProblem();
+    // Generate first problem if we don't have one
+    if (!currentProblem) {
+      generateNewProblem();
+    }
     
     // Set focus on input
     inputRef.current?.focus();
     
     // Start timer
     const timer = setInterval(() => {
-      if (timeLeft <= 1) {
-        clearInterval(timer);
-        setGameState('ended');
-        saveScore();
-        setTimeLeft(0);
-      } else {
-        setTimeLeft(timeLeft - 1);
-      }
+      setTimeLeft(prevTime => {
+        if (prevTime <= 1) {
+          clearInterval(timer);
+          setGameState('ended');
+          saveScore();
+          return 0;
+        } else {
+          return prevTime - 1;
+        }
+      });
     }, 1000);
     
     // Clean up timer
     return () => clearInterval(timer);
-  }, [timeLeft]);
+  }, []);
   
   // Handle user answer submission
   const checkAnswer = () => {
@@ -99,6 +104,12 @@ const GameScreen = () => {
     }
   };
 
+  // Handle restart game
+  const handleRestartGame = () => {
+    setGameState('ended');
+    saveScore();
+  };
+
   return (
     <div className="flex justify-center items-center min-h-screen p-4 bg-background">
       <div className="w-full max-w-xl">
@@ -134,7 +145,7 @@ const GameScreen = () => {
                 value={userAnswer}
                 onChange={(e) => setUserAnswer(e.target.value)}
                 onKeyDown={handleKeyPress}
-                className="text-4xl md:text-6xl w-24 md:w-32 h-16 text-center font-bold p-0 border-b-4 focus-visible:ring-0 focus-visible:ring-offset-0"
+                className="text-4xl md:text-6xl w-24 md:w-32 h-16 text-center font-bold p-0 border-b-4 focus-visible:ring-0 focus-visible:ring-offset-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 autoFocus
               />
               
@@ -161,15 +172,11 @@ const GameScreen = () => {
           
           <Button 
             variant="outline"
-            onClick={() => {
-              setUserAnswer('');
-              generateNewProblem();
-              inputRef.current?.focus();
-            }}
+            onClick={handleRestartGame}
             className="text-lg py-6 px-6 border-primary text-primary hover:bg-primary/10 transition-all"
           >
             <RefreshCw className="mr-2" />
-            New Problem
+            Restart Game
           </Button>
         </div>
         

@@ -101,6 +101,7 @@ const EndScreen = () => {
           <Button 
             onClick={handleRestart}
             className="w-full bg-primary hover:bg-primary/90 flex items-center"
+            type="button"
           >
             <RefreshCw className="mr-2" size={16} />
             Restart with Same Settings
@@ -110,6 +111,7 @@ const EndScreen = () => {
             onClick={handleBackToSelection}
             variant="outline"
             className="w-full border-primary text-primary hover:bg-primary/10 flex items-center"
+            type="button"
           >
             <ArrowLeft className="mr-2" size={16} />
             Back to Selection
