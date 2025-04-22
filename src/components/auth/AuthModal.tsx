@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { useGame } from '@/context/useGame'; // Corrected import path
+import { useGame } from '@/context/GameContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
