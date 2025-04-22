@@ -14,6 +14,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogClose,
 } from '@/components/ui/dialog';
 import { 
   Tabs, 
@@ -34,6 +35,8 @@ const UserProfile = () => {
   // Logout handler
   const handleLogout = () => {
     setIsLoggedIn(false);
+    // Clear localStorage on logout
+    localStorage.removeItem('mathUserData');
   };
   
   // If not logged in, don't render anything
@@ -66,7 +69,7 @@ const UserProfile = () => {
         </DropdownMenuContent>
       </DropdownMenu>
       
-      {/* Profile Dialog */}
+      {/* Profile Dialog - Added DialogClose for proper closing behavior */}
       <Dialog open={isProfileOpen} onOpenChange={setIsProfileOpen}>
         <DialogContent className="max-w-4xl">
           <DialogHeader>
@@ -97,6 +100,10 @@ const UserProfile = () => {
               </TabsContent>
             </Tabs>
           </div>
+          
+          <DialogClose asChild>
+            <Button type="button" variant="outline" className="mt-4">Close Profile</Button>
+          </DialogClose>
         </DialogContent>
       </Dialog>
     </>

@@ -13,8 +13,12 @@ const EndScreen = () => {
     resetScore, 
     settings, 
     setGameState, 
-    setTimeLeft 
+    setTimeLeft,
+    getIsHighScore 
   } = useGame();
+  
+  // Determine if this is a high score
+  const isHighScore = getIsHighScore(score, settings.operation, settings.range);
   
   // Show confetti effect when component mounts
   useEffect(() => {
@@ -47,6 +51,12 @@ const EndScreen = () => {
       default: return '';
     }
   };
+  
+  // Get range description for high score message
+  const getRangeDescription = () => {
+    const { min1, max1, min2, max2 } = settings.range;
+    return `${min1}-${max1} and ${min2}-${max2}`;
+  };
 
   return (
     <div className="flex justify-center items-center min-h-screen p-4 animate-fade-in">
@@ -64,9 +74,23 @@ const EndScreen = () => {
             <div className="text-center bg-gradient-to-r from-primary/20 to-secondary/20 rounded-full w-36 h-36 flex flex-col justify-center items-center shadow-inner animate-pop">
               <span className="text-sm text-muted-foreground">Final Score</span>
               <span className="text-5xl font-bold text-primary">{score}</span>
-              {score > 10 && <span className="text-xs text-accent mt-1">Amazing work!</span>}
+              {isHighScore && score > 0 ? (
+                <span className="text-xs text-accent mt-1 font-bold bg-accent/20 px-2 py-1 rounded-full">
+                  New High Score!
+                </span>
+              ) : score > 10 ? (
+                <span className="text-xs text-accent mt-1">Amazing work!</span>
+              ) : null}
             </div>
           </div>
+          
+          {isHighScore && score > 0 && (
+            <div className="bg-accent/10 p-3 rounded-lg text-center text-sm">
+              <p className="font-medium text-accent">
+                New high score for {getOperationName()} with range {getRangeDescription()}!
+              </p>
+            </div>
+          )}
           
           <div className="space-y-2">
             <h3 className="text-lg font-semibold flex items-center">

@@ -1,345 +1,367 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useGame } from '@/context/GameContext';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Slider } from '@/components/ui/slider';
+import { Switch } from '@/components/ui/switch';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Minus, X, Divide } from 'lucide-react';
+import { ArrowRight, Plus, Minus, X, Divide, Info } from 'lucide-react';
+import { Operation } from '@/types';
+import MathIcon from './common/MathIcon';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const OperationSelection = () => {
-  const { settings, updateSettings, setGameState, setTimeLeft } = useGame();
-  const [startAnimation, setStartAnimation] = useState(false);
+  const { 
+    settings, 
+    updateSettings, 
+    setGameState, 
+    setTimeLeft,
+    focusNumber,
+    setFocusNumber
+  } = useGame();
   
-  // Start the game with current settings
-  const handleStart = () => {
-    // Play animation first
-    setStartAnimation(true);
-    
-    // Play a start sound
-    const audio = new Audio();
-    audio.src = 'data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA/+M4wAAAAAAAAAAAAEluZm8AAAAPAAAAAwAAAElqAEhISEhISEhISEhIWVlZWVlZWVlZWVlpcXFxcXFxcXFxcXF5eXl5eXl5eXl5eYKCgoKCgoKCgoKCioqKioqKioqKioqSk5OTk5OTk5OTk5ubm5ubm5ubm5ubs7Ozs7Ozs7Ozs7O7u7u7u7u7u7u7u8PDw8PDw8PDw8PD29/jUMQAAANAABLBxn8iBnqqqqqqqqqqqqoICAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQu7u7u7u7u7v/jMMQjYdZG81QwZu8u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7v/jUMQKYdZG8AQcZu8u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7v/jMMQKX+JKAF/GG5EJImEsSJJ4riUTxXFo0VxRMSiSKRXI3EWRI9ISPRJIZEiYCuQIiRIiIiRIiIiIiREiRIiJESRIiJEiRIiJEiBIiREiIiIiJEiQiIiIQiJEREIQhCGP/jYMQHX9KNACSMGZEQhCEQhCEIQhEREREREREREIREREP8REQREREL8QiIiIRERDwQhD/CIiIiEIQhCEIQh/+IkREiQ/whCIiIQhD/D/iIiIRCEPwhhCEIRD//ER4iIQj/43DEBXOpRlJYGHACIQhCEQ/hCEP//8Q/w/4YQiIP8P+P+EIP//4f8P+H/D/D/D/D/D/h/h/w/w/4f8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P/jUMQGZO1HsGPSMgP8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P/jMMQDX/JSIAYYsoP8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P/jYMQBW2syMgAYQMoP8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P/jkMQAVWtKLzDiAEgP8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8P8REREREREREREQAAAAAAJBQAYOAGAAiTMSBITAg';
-    audio.volume = 0.3;
-    audio.play();
-    
-    // Wait for animation then start game
-    setTimeout(() => {
-      setTimeLeft(settings.timerSeconds);
-      setGameState('playing');
-    }, 800);
+  const [selectedOperation, setSelectedOperation] = useState<Operation>(settings.operation);
+  const [range1Min, setRange1Min] = useState(settings.range.min1);
+  const [range1Max, setRange1Max] = useState(settings.range.max1);
+  const [range2Min, setRange2Min] = useState(settings.range.min2);
+  const [range2Max, setRange2Max] = useState(settings.range.max2);
+  const [timerSeconds, setTimerSeconds] = useState(settings.timerSeconds);
+  const [useFocusNumber, setUseFocusNumber] = useState(focusNumber !== null);
+  const [focusNumberValue, setFocusNumberValue] = useState(focusNumber || 1);
+  
+  // Update local state when settings change
+  useEffect(() => {
+    setSelectedOperation(settings.operation);
+    setRange1Min(settings.range.min1);
+    setRange1Max(settings.range.max1);
+    setRange2Min(settings.range.min2);
+    setRange2Max(settings.range.max2);
+    setTimerSeconds(settings.timerSeconds);
+  }, [settings]);
+  
+  // Handle operation selection
+  const handleOperationSelect = (operation: Operation) => {
+    setSelectedOperation(operation);
   };
   
-  // Update range values for the selected operation
-  const handleRangeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    const numValue = parseInt(value, 10);
+  // Handle range input changes
+  const handleRangeChange = (
+    setter: React.Dispatch<React.SetStateAction<number>>,
+    value: string,
+    min: number,
+    max: number
+  ) => {
+    const numValue = parseInt(value);
+    if (!isNaN(numValue) && numValue >= min && numValue <= max) {
+      setter(numValue);
+    }
+  };
+  
+  // Handle timer slider change
+  const handleTimerChange = (value: number[]) => {
+    setTimerSeconds(value[0]);
+  };
+  
+  // Handle focus number toggle
+  const handleFocusNumberToggle = (checked: boolean) => {
+    setUseFocusNumber(checked);
+    if (!checked) {
+      setFocusNumber(null);
+    } else {
+      setFocusNumber(focusNumberValue);
+    }
+  };
+  
+  // Handle focus number value change
+  const handleFocusNumberChange = (value: string) => {
+    const numValue = parseInt(value);
+    if (!isNaN(numValue) && numValue > 0) {
+      setFocusNumberValue(numValue);
+      if (useFocusNumber) {
+        setFocusNumber(numValue);
+      }
+    }
+  };
+  
+  // Start game with selected settings
+  const handleStartGame = () => {
+    // Validate ranges
+    if (range1Max < range1Min || range2Max < range2Min) {
+      alert('Maximum value must be greater than or equal to minimum value');
+      return;
+    }
     
-    // Only update if it's a valid number
-    if (!isNaN(numValue)) {
-      updateSettings({
-        range: {
-          ...settings.range,
-          [name]: numValue
-        }
-      });
+    // Update settings
+    updateSettings({
+      operation: selectedOperation,
+      range: {
+        min1: range1Min,
+        max1: range1Max,
+        min2: range2Min,
+        max2: range2Max
+      },
+      timerSeconds
+    });
+    
+    // Update focus number
+    if (useFocusNumber) {
+      setFocusNumber(focusNumberValue);
+    } else {
+      setFocusNumber(null);
+    }
+    
+    // Set timer and start game
+    setTimeLeft(timerSeconds);
+    setGameState('playing');
+  };
+  
+  // Get operation details
+  const getOperationDetails = (operation: Operation) => {
+    switch (operation) {
+      case 'addition':
+        return {
+          title: 'Addition',
+          description: 'Practice adding numbers together',
+          icon: <Plus className="h-6 w-6" />,
+          color: 'bg-blue-100 text-blue-700'
+        };
+      case 'subtraction':
+        return {
+          title: 'Subtraction',
+          description: 'Practice subtracting numbers',
+          icon: <Minus className="h-6 w-6" />,
+          color: 'bg-green-100 text-green-700'
+        };
+      case 'multiplication':
+        return {
+          title: 'Multiplication',
+          description: 'Practice multiplying numbers',
+          icon: <X className="h-6 w-6" />,
+          color: 'bg-purple-100 text-purple-700'
+        };
+      case 'division':
+        return {
+          title: 'Division',
+          description: 'Practice dividing numbers',
+          icon: <Divide className="h-6 w-6" />,
+          color: 'bg-orange-100 text-orange-700'
+        };
     }
   };
 
   return (
-    <div className={`flex justify-center items-center min-h-screen p-4 animate-fade-in ${startAnimation ? 'animate-slide-in' : ''}`}>
-      <Card className={`w-full max-w-md shadow-xl ${startAnimation ? 'animate-slide-in opacity-0' : ''}`}>
-        <CardHeader className="text-center">
-          <CardTitle className="text-3xl font-bold text-primary">Minute Math</CardTitle>
-          <CardDescription>Select operation and number ranges</CardDescription>
+    <div className="container mx-auto px-4 py-8 max-w-4xl">
+      <Card className="shadow-lg animate-fade-in">
+        <CardHeader>
+          <CardTitle className="text-2xl font-bold text-center">Choose Your Math Challenge</CardTitle>
+          <CardDescription className="text-center">Select an operation and customize your practice session</CardDescription>
         </CardHeader>
         
-        <Tabs defaultValue="addition" onValueChange={(value) => updateSettings({ operation: value as any })}>
-          <TabsList className="grid grid-cols-4">
-            <TabsTrigger value="addition" className="flex items-center gap-1">
-              <Plus size={16} /> Add
-            </TabsTrigger>
-            <TabsTrigger value="subtraction" className="flex items-center gap-1">
-              <Minus size={16} /> Sub
-            </TabsTrigger>
-            <TabsTrigger value="multiplication" className="flex items-center gap-1">
-              <X size={16} /> Mult
-            </TabsTrigger>
-            <TabsTrigger value="division" className="flex items-center gap-1">
-              <Divide size={16} /> Div
-            </TabsTrigger>
-          </TabsList>
+        <CardContent className="space-y-6">
+          {/* Operation Selection */}
+          <div className="space-y-2">
+            <h3 className="text-lg font-medium">Operation</h3>
+            <Tabs 
+              defaultValue={selectedOperation} 
+              value={selectedOperation}
+              onValueChange={(value) => handleOperationSelect(value as Operation)}
+              className="w-full"
+            >
+              <TabsList className="grid grid-cols-2 md:grid-cols-4 w-full">
+                <TabsTrigger value="addition" className="flex items-center justify-center">
+                  <MathIcon operation="addition" className="mr-2" />
+                  Addition
+                </TabsTrigger>
+                <TabsTrigger value="subtraction" className="flex items-center justify-center">
+                  <MathIcon operation="subtraction" className="mr-2" />
+                  Subtraction
+                </TabsTrigger>
+                <TabsTrigger value="multiplication" className="flex items-center justify-center">
+                  <MathIcon operation="multiplication" className="mr-2" />
+                  Multiplication
+                </TabsTrigger>
+                <TabsTrigger value="division" className="flex items-center justify-center">
+                  <MathIcon operation="division" className="mr-2" />
+                  Division
+                </TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value={selectedOperation} className="mt-4">
+                <Card className={`border-none shadow-sm ${getOperationDetails(selectedOperation).color}`}>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-lg flex items-center">
+                      {getOperationDetails(selectedOperation).icon}
+                      <span className="ml-2">{getOperationDetails(selectedOperation).title}</span>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p>{getOperationDetails(selectedOperation).description}</p>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            </Tabs>
+          </div>
           
-          {/* Addition Settings */}
-          <TabsContent value="addition">
-            <CardContent className="space-y-4">
-              <div className="space-y-1">
-                <Label htmlFor="add-first-number">First Number Range:</Label>
+          {/* Focus Number Option */}
+          <div className="space-y-2 border p-4 rounded-lg bg-muted/50">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <Label htmlFor="focus-number-toggle" className="text-base font-medium">
+                  Use Focus Number
+                </Label>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Info size={16} className="text-muted-foreground" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="max-w-xs">
+                        When enabled, all questions will include this number as one of the operands.
+                      </p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
+              <Switch 
+                id="focus-number-toggle" 
+                checked={useFocusNumber}
+                onCheckedChange={handleFocusNumberToggle}
+              />
+            </div>
+            
+            {useFocusNumber && (
+              <div className="pt-2">
+                <Label htmlFor="focus-number-input">Focus Number:</Label>
+                <Input
+                  id="focus-number-input"
+                  type="number"
+                  value={focusNumberValue}
+                  onChange={(e) => handleFocusNumberChange(e.target.value)}
+                  className="w-24 mt-1"
+                  min={1}
+                />
+                <p className="text-sm text-muted-foreground mt-2">
+                  All questions will include {focusNumberValue} as one of the numbers.
+                </p>
+              </div>
+            )}
+          </div>
+          
+          {/* Number Ranges */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-medium">Number Ranges</h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* First Number Range */}
+              <div className={`space-y-2 ${useFocusNumber ? 'opacity-50' : ''}`}>
+                <Label htmlFor="range1">First Number Range:</Label>
                 <div className="flex space-x-2">
-                  <div className="w-1/2">
-                    <Label htmlFor="min1" className="text-xs">Min</Label>
-                    <Input 
-                      id="min1" 
-                      name="min1" 
-                      type="number" 
-                      value={settings.range.min1} 
-                      onChange={handleRangeChange}
-                      min={0}
+                  <div>
+                    <Label htmlFor="range1-min" className="text-sm">Min</Label>
+                    <Input
+                      id="range1-min"
+                      type="number"
+                      value={range1Min}
+                      onChange={(e) => handleRangeChange(setRange1Min, e.target.value, 1, 100)}
+                      className="w-24"
+                      min={1}
                       max={100}
+                      disabled={useFocusNumber}
                     />
                   </div>
-                  <div className="w-1/2">
-                    <Label htmlFor="max1" className="text-xs">Max</Label>
-                    <Input 
-                      id="max1" 
-                      name="max1" 
-                      type="number" 
-                      value={settings.range.max1} 
-                      onChange={handleRangeChange}
-                      min={0}
+                  <div>
+                    <Label htmlFor="range1-max" className="text-sm">Max</Label>
+                    <Input
+                      id="range1-max"
+                      type="number"
+                      value={range1Max}
+                      onChange={(e) => handleRangeChange(setRange1Max, e.target.value, 1, 100)}
+                      className="w-24"
+                      min={1}
                       max={100}
+                      disabled={useFocusNumber}
                     />
                   </div>
                 </div>
+                {useFocusNumber && (
+                  <p className="text-xs text-muted-foreground">
+                    Using focus number {focusNumberValue} as first number
+                  </p>
+                )}
               </div>
               
-              <div className="space-y-1">
-                <Label htmlFor="add-second-number">Second Number Range:</Label>
+              {/* Second Number Range */}
+              <div className="space-y-2">
+                <Label htmlFor="range2">Second Number Range:</Label>
                 <div className="flex space-x-2">
-                  <div className="w-1/2">
-                    <Label htmlFor="min2" className="text-xs">Min</Label>
-                    <Input 
-                      id="min2" 
-                      name="min2" 
-                      type="number" 
-                      value={settings.range.min2} 
-                      onChange={handleRangeChange}
-                      min={0}
+                  <div>
+                    <Label htmlFor="range2-min" className="text-sm">Min</Label>
+                    <Input
+                      id="range2-min"
+                      type="number"
+                      value={range2Min}
+                      onChange={(e) => handleRangeChange(setRange2Min, e.target.value, 1, 100)}
+                      className="w-24"
+                      min={1}
                       max={100}
                     />
                   </div>
-                  <div className="w-1/2">
-                    <Label htmlFor="max2" className="text-xs">Max</Label>
-                    <Input 
-                      id="max2" 
-                      name="max2" 
-                      type="number" 
-                      value={settings.range.max2} 
-                      onChange={handleRangeChange}
-                      min={0}
+                  <div>
+                    <Label htmlFor="range2-max" className="text-sm">Max</Label>
+                    <Input
+                      id="range2-max"
+                      type="number"
+                      value={range2Max}
+                      onChange={(e) => handleRangeChange(setRange2Max, e.target.value, 1, 100)}
+                      className="w-24"
+                      min={1}
                       max={100}
                     />
                   </div>
                 </div>
               </div>
-            </CardContent>
-          </TabsContent>
+            </div>
+          </div>
           
-          {/* Subtraction Settings */}
-          <TabsContent value="subtraction">
-            <CardContent className="space-y-4">
-              <div className="space-y-1">
-                <Label htmlFor="sub-first-number">First Number Range:</Label>
-                <div className="flex space-x-2">
-                  <div className="w-1/2">
-                    <Label htmlFor="min1" className="text-xs">Min</Label>
-                    <Input 
-                      id="min1" 
-                      name="min1" 
-                      type="number" 
-                      value={settings.range.min1} 
-                      onChange={handleRangeChange}
-                      min={0}
-                      max={100}
-                    />
-                  </div>
-                  <div className="w-1/2">
-                    <Label htmlFor="max1" className="text-xs">Max</Label>
-                    <Input 
-                      id="max1" 
-                      name="max1" 
-                      type="number" 
-                      value={settings.range.max1} 
-                      onChange={handleRangeChange}
-                      min={0}
-                      max={100}
-                    />
-                  </div>
-                </div>
-              </div>
-              
-              <div className="space-y-1">
-                <Label htmlFor="sub-second-number">Second Number Range:</Label>
-                <div className="flex space-x-2">
-                  <div className="w-1/2">
-                    <Label htmlFor="min2" className="text-xs">Min</Label>
-                    <Input 
-                      id="min2" 
-                      name="min2" 
-                      type="number" 
-                      value={settings.range.min2} 
-                      onChange={handleRangeChange}
-                      min={0}
-                      max={100}
-                    />
-                  </div>
-                  <div className="w-1/2">
-                    <Label htmlFor="max2" className="text-xs">Max</Label>
-                    <Input 
-                      id="max2" 
-                      name="max2" 
-                      type="number" 
-                      value={settings.range.max2} 
-                      onChange={handleRangeChange}
-                      min={0}
-                      max={100}
-                    />
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </TabsContent>
-          
-          {/* Multiplication Settings */}
-          <TabsContent value="multiplication">
-            <CardContent className="space-y-4">
-              <div className="space-y-1">
-                <Label htmlFor="mult-first-number">First Number Range:</Label>
-                <div className="flex space-x-2">
-                  <div className="w-1/2">
-                    <Label htmlFor="min1" className="text-xs">Min</Label>
-                    <Input 
-                      id="min1" 
-                      name="min1" 
-                      type="number" 
-                      value={settings.range.min1} 
-                      onChange={handleRangeChange}
-                      min={0}
-                      max={12}
-                    />
-                  </div>
-                  <div className="w-1/2">
-                    <Label htmlFor="max1" className="text-xs">Max</Label>
-                    <Input 
-                      id="max1" 
-                      name="max1" 
-                      type="number" 
-                      value={settings.range.max1} 
-                      onChange={handleRangeChange}
-                      min={0}
-                      max={12}
-                    />
-                  </div>
-                </div>
-              </div>
-              
-              <div className="space-y-1">
-                <Label htmlFor="mult-second-number">Second Number Range:</Label>
-                <div className="flex space-x-2">
-                  <div className="w-1/2">
-                    <Label htmlFor="min2" className="text-xs">Min</Label>
-                    <Input 
-                      id="min2" 
-                      name="min2" 
-                      type="number" 
-                      value={settings.range.min2} 
-                      onChange={handleRangeChange}
-                      min={0}
-                      max={12}
-                    />
-                  </div>
-                  <div className="w-1/2">
-                    <Label htmlFor="max2" className="text-xs">Max</Label>
-                    <Input 
-                      id="max2" 
-                      name="max2" 
-                      type="number" 
-                      value={settings.range.max2} 
-                      onChange={handleRangeChange}
-                      min={0}
-                      max={12}
-                    />
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </TabsContent>
-          
-          {/* Division Settings */}
-          <TabsContent value="division">
-            <CardContent className="space-y-4">
-              <div className="space-y-1">
-                <Label htmlFor="div-first-number">Dividend Range (result of division):</Label>
-                <div className="flex space-x-2">
-                  <div className="w-1/2">
-                    <Label htmlFor="min1" className="text-xs">Min</Label>
-                    <Input 
-                      id="min1" 
-                      name="min1" 
-                      type="number" 
-                      value={settings.range.min1} 
-                      onChange={handleRangeChange}
-                      min={1}
-                      max={12}
-                    />
-                  </div>
-                  <div className="w-1/2">
-                    <Label htmlFor="max1" className="text-xs">Max</Label>
-                    <Input 
-                      id="max1" 
-                      name="max1" 
-                      type="number" 
-                      value={settings.range.max1} 
-                      onChange={handleRangeChange}
-                      min={1}
-                      max={12}
-                    />
-                  </div>
-                </div>
-              </div>
-              
-              <div className="space-y-1">
-                <Label htmlFor="div-second-number">Divisor Range (number divided by):</Label>
-                <div className="flex space-x-2">
-                  <div className="w-1/2">
-                    <Label htmlFor="min2" className="text-xs">Min</Label>
-                    <Input 
-                      id="min2" 
-                      name="min2" 
-                      type="number" 
-                      value={settings.range.min2} 
-                      onChange={handleRangeChange}
-                      min={1}
-                      max={12}
-                    />
-                  </div>
-                  <div className="w-1/2">
-                    <Label htmlFor="max2" className="text-xs">Max</Label>
-                    <Input 
-                      id="max2" 
-                      name="max2" 
-                      type="number" 
-                      value={settings.range.max2} 
-                      onChange={handleRangeChange}
-                      min={1}
-                      max={12}
-                    />
-                  </div>
-                </div>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Note: Only whole number results will be generated
-              </p>
-            </CardContent>
-          </TabsContent>
-        </Tabs>
+          {/* Timer Settings */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-medium">Timer (seconds)</h3>
+              <span className="font-bold text-primary">{timerSeconds}s</span>
+            </div>
+            
+            <Slider
+              defaultValue={[timerSeconds]}
+              value={[timerSeconds]}
+              onValueChange={handleTimerChange}
+              max={120}
+              min={10}
+              step={5}
+              className="w-full"
+            />
+            
+            <div className="flex justify-between text-sm text-muted-foreground">
+              <span>10s</span>
+              <span>60s</span>
+              <span>120s</span>
+            </div>
+          </div>
+        </CardContent>
         
         <CardFooter>
           <Button 
-            onClick={handleStart} 
-            className="w-full mt-4 bg-gradient-to-r from-primary to-secondary animate-bounce-in"
+            onClick={handleStartGame}
+            className="w-full py-6 text-lg font-bold bg-primary hover:bg-primary/90 transition-all"
           >
             Start Game
+            <ArrowRight className="ml-2" />
           </Button>
         </CardFooter>
       </Card>

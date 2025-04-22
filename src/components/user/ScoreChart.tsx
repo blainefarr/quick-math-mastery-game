@@ -11,6 +11,23 @@ interface ScoreChartProps {
 
 const ScoreChart = ({ scores }: ScoreChartProps) => {
   const [operationFilter, setOperationFilter] = useState<string>('all');
+  const [rangeFilter, setRangeFilter] = useState<string>('all');
+  
+  // Extract unique range combinations for filtering
+  const uniqueRanges = React.useMemo(() => {
+    const ranges = new Set<string>();
+    scores.forEach(score => {
+      const rangeKey = `${score.range.min1}-${score.range.max1}_${score.range.min2}-${score.range.max2}`;
+      ranges.add(rangeKey);
+    });
+    return Array.from(ranges).map(key => {
+      const [range1, range2] = key.split('_');
+      return { 
+        key, 
+        label: `${range1} and ${range2}`
+      };
+    });
+  }, [scores]);
   
   // Format date for display
   const formatDate = (dateString: string) => {
@@ -21,10 +38,17 @@ const ScoreChart = ({ scores }: ScoreChartProps) => {
     }).format(date);
   };
   
-  // Filter scores by selected operation
-  const filteredScores = operationFilter === 'all'
-    ? scores
-    : scores.filter(score => score.operation === operationFilter);
+  // Filter scores by selected operation and range
+  const filteredScores = scores.filter(score => {
+    const matchesOperation = operationFilter === 'all' || score.operation === operationFilter;
+    
+    if (rangeFilter === 'all') {
+      return matchesOperation;
+    }
+    
+    const rangeKey = `${score.range.min1}-${score.range.max1}_${score.range.min2}-${score.range.max2}`;
+    return matchesOperation && rangeKey === rangeFilter;
+  });
   
   // Sort scores by date (chronological order)
   const sortedScores = [...filteredScores].sort((a, b) => 
@@ -60,21 +84,37 @@ const ScoreChart = ({ scores }: ScoreChartProps) => {
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-4">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-4">
         <h3 className="text-lg font-medium">Your Progress</h3>
         
-        <Select value={operationFilter} onValueChange={setOperationFilter}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Filter by operation" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Operations</SelectItem>
-            <SelectItem value="addition">Addition</SelectItem>
-            <SelectItem value="subtraction">Subtraction</SelectItem>
-            <SelectItem value="multiplication">Multiplication</SelectItem>
-            <SelectItem value="division">Division</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="flex flex-col sm:flex-row gap-2">
+          <Select value={operationFilter} onValueChange={setOperationFilter}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Filter by operation" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Operations</SelectItem>
+              <SelectItem value="addition">Addition</SelectItem>
+              <SelectItem value="subtraction">Subtraction</SelectItem>
+              <SelectItem value="multiplication">Multiplication</SelectItem>
+              <SelectItem value="division">Division</SelectItem>
+            </SelectContent>
+          </Select>
+          
+          <Select value={rangeFilter} onValueChange={setRangeFilter}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Filter by range" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Ranges</SelectItem>
+              {uniqueRanges.map(range => (
+                <SelectItem key={range.key} value={range.key}>
+                  {range.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
@@ -89,18 +129,24 @@ const ScoreChart = ({ scores }: ScoreChartProps) => {
         </Card>
       </div>
       
-      <div className="h-72 w-full mt-4">
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="date" />
-            <YAxis />
-            <Tooltip />
-            <Legend />
-            <Bar dataKey="score" fill="#9b87f5" name="Score" />
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
+      {chartData.length === 0 ? (
+        <Card className="p-8 text-center">
+          <p>No scores match your selected filters.</p>
+        </Card>
+      ) : (
+        <div className="h-72 w-full mt-4">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="date" />
+              <YAxis />
+              <Tooltip />
+              <Legend />
+              <Bar dataKey="score" fill="#9b87f5" name="Score" />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      )}
     </div>
   );
 };

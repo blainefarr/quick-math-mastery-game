@@ -1,4 +1,3 @@
-
 export type Operation = 'addition' | 'subtraction' | 'multiplication' | 'division';
 
 export interface ProblemRange {
@@ -15,11 +14,11 @@ export interface Problem {
   answer: number;
 }
 
-export interface GameSettings {
+export type GameSettings = {
   operation: Operation;
   range: ProblemRange;
   timerSeconds: number;
-}
+};
 
 export interface UserScore {
   score: number;

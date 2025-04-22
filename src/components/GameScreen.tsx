@@ -104,10 +104,10 @@ const GameScreen = () => {
     }
   };
 
-  // Handle restart game
+  // Handle restart game - don't save scores
   const handleRestartGame = () => {
     setGameState('ended');
-    saveScore();
+    // Note: We're not calling saveScore() here
   };
 
   return (
