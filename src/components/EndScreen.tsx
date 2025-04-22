@@ -1,6 +1,6 @@
 
 import React, { useEffect } from 'react';
-import { useGame } from '@/context/GameContext';
+import useGame from '@/context/useGame';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft, RefreshCw } from 'lucide-react';

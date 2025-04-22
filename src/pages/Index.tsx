@@ -1,11 +1,11 @@
 
 import React from 'react';
-import { GameProvider } from '@/context/GameContext';
+import GameProvider from '@/context/GameProvider';
 import Header from '@/components/Header';
 import OperationSelection from '@/components/OperationSelection';
 import GameScreen from '@/components/GameScreen';
 import EndScreen from '@/components/EndScreen';
-import { useGame } from '@/context/GameContext';
+import useGame from '@/context/useGame';
 import MathBackground from '@/components/common/MathBackground';
 
 // Main content that uses the game context
