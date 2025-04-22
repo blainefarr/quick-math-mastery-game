@@ -31,10 +31,32 @@ const GameProvider = ({ children }: GameProviderProps) => {
       try {
         const userData = JSON.parse(savedUserData);
         setIsLoggedIn(true);
-        setUsername(userData.username);
-        setScoreHistory(userData.scoreHistory || []);
+        setUsername(userData.username || '');
+        // Ensure we have valid score history
+        if (Array.isArray(userData.scoreHistory)) {
+          // Filter out any invalid score entries
+          const validScores = userData.scoreHistory.filter((score: any) => 
+            score && 
+            typeof score === 'object' && 
+            score.operation && 
+            score.date && 
+            score.range && 
+            typeof score.range === 'object' &&
+            'min1' in score.range &&
+            'max1' in score.range &&
+            'min2' in score.range &&
+            'max2' in score.range
+          );
+          setScoreHistory(validScores);
+        } else {
+          setScoreHistory([]);
+        }
       } catch (error) {
         console.error('Error parsing saved user data:', error);
+        // Reset to defaults if there's an error
+        setIsLoggedIn(false);
+        setUsername('');
+        setScoreHistory([]);
       }
     }
   }, []);
@@ -196,7 +218,12 @@ const GameProvider = ({ children }: GameProviderProps) => {
       const newScore: UserScore = {
         score,
         operation: settings.operation,
-        range: settings.range,
+        range: {
+          min1: settings.range.min1,
+          max1: settings.range.max1,
+          min2: settings.range.min2,
+          max2: settings.range.max2
+        },
         date: new Date().toISOString(),
       };
       setScoreHistory(prev => [...prev, newScore]);

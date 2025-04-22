@@ -9,29 +9,52 @@ interface ScoreChartProps {
   scores: UserScore[];
 }
 
-const ScoreChart = ({ scores }: ScoreChartProps) => {
+const ScoreChart = ({ scores = [] }: ScoreChartProps) => {
   const [operationFilter, setOperationFilter] = useState<string>('all');
   
-  // Format date for display
+  // Handle invalid or empty scores
+  const validScores = Array.isArray(scores) ? scores.filter(score => 
+    score && 
+    typeof score === 'object' && 
+    score.operation && 
+    score.date && 
+    score.range
+  ) : [];
+  
+  // Format date for display with error handling
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return new Intl.DateTimeFormat('en-US', {
-      month: 'short',
-      day: 'numeric',
-    }).format(date);
+    try {
+      const date = new Date(dateString);
+      // Check if date is valid
+      if (isNaN(date.getTime())) {
+        return 'Invalid date';
+      }
+      return new Intl.DateTimeFormat('en-US', {
+        month: 'short',
+        day: 'numeric',
+      }).format(date);
+    } catch (error) {
+      console.error('Error formatting date:', error);
+      return 'Invalid date';
+    }
   };
   
   // Filter scores by selected operation
-  const filteredScores = scores.filter(score => {
+  const filteredScores = validScores.filter(score => {
     return operationFilter === 'all' || score.operation === operationFilter;
   });
   
-  // Sort scores by date (chronological order)
-  const sortedScores = [...filteredScores].sort((a, b) => 
-    new Date(a.date).getTime() - new Date(b.date).getTime()
-  );
+  // Sort scores by date (chronological order) with error handling
+  const sortedScores = [...filteredScores].sort((a, b) => {
+    try {
+      return new Date(a.date).getTime() - new Date(b.date).getTime();
+    } catch (error) {
+      console.error('Error sorting dates:', error);
+      return 0;
+    }
+  });
   
-  // Prepare data for chart
+  // Prepare data for chart with error handling
   const chartData = sortedScores.map(score => ({
     date: formatDate(score.date),
     score: score.score,
@@ -48,8 +71,8 @@ const ScoreChart = ({ scores }: ScoreChartProps) => {
     ? Math.max(...sortedScores.map(score => score.score))
     : 0;
   
-  // If no scores, show empty state
-  if (scores.length === 0) {
+  // If no valid scores, show empty state
+  if (validScores.length === 0) {
     return (
       <div className="text-center py-8">
         <p className="text-muted-foreground">You haven't completed any games yet.</p>

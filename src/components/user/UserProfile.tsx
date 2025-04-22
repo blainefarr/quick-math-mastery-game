@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useGame } from '@/context/useGame';
 import { 
   DropdownMenu,
@@ -51,12 +51,18 @@ const UserProfile = () => {
   
   // Get unique ranges from score history
   const getUniqueRanges = () => {
+    if (!scoreHistory || scoreHistory.length === 0) {
+      return [];
+    }
+    
     const uniqueRanges = new Set<string>();
     
     scoreHistory.forEach(score => {
-      const { min1, max1, min2, max2 } = score.range;
-      const rangeString = `${min1}-${max1}, ${min2}-${max2}`;
-      uniqueRanges.add(rangeString);
+      if (score && score.range) {
+        const { min1, max1, min2, max2 } = score.range;
+        const rangeString = `${min1}-${max1}, ${min2}-${max2}`;
+        uniqueRanges.add(rangeString);
+      }
     });
     
     return Array.from(uniqueRanges);
@@ -64,6 +70,10 @@ const UserProfile = () => {
   
   // Filter scores by selected range
   const getFilteredScores = () => {
+    if (!scoreHistory || scoreHistory.length === 0) {
+      return [];
+    }
+    
     if (selectedRange === "all") {
       return scoreHistory;
     }
@@ -74,6 +84,8 @@ const UserProfile = () => {
     const [min2, max2] = range2.split('-').map(Number);
     
     return scoreHistory.filter(score => {
+      if (!score || !score.range) return false;
+      
       const r = score.range;
       return r.min1 === min1 && r.max1 === max1 && r.min2 === min2 && r.max2 === max2;
     });
@@ -116,7 +128,7 @@ const UserProfile = () => {
         <DialogContent className="max-w-4xl">
           <DialogHeader>
             <DialogTitle className="text-xl">My Profile - {username}</DialogTitle>
-            <DialogDescription className="sr-only">View and manage your profile</DialogDescription>
+            <DialogDescription>View and manage your profile</DialogDescription>
           </DialogHeader>
           
           <div className="mt-4">
