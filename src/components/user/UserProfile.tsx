@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useGame } from '@/context/useGame';
 import { 
   DropdownMenu,
@@ -41,6 +41,13 @@ const UserProfile = () => {
   const { username, isLoggedIn, setIsLoggedIn, scoreHistory } = useGame();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [selectedRange, setSelectedRange] = useState<string>("all");
+  
+  // For debugging
+  useEffect(() => {
+    // Log when dialog opens/closes
+    console.log('Profile dialog state changed:', isProfileOpen);
+    console.log('Current scoreHistory:', scoreHistory);
+  }, [isProfileOpen, scoreHistory]);
   
   // Logout handler
   const handleLogout = () => {
@@ -128,7 +135,9 @@ const UserProfile = () => {
         <DialogContent className="max-w-4xl">
           <DialogHeader>
             <DialogTitle className="text-xl">My Profile - {username}</DialogTitle>
-            <DialogDescription>View and manage your profile</DialogDescription>
+            <DialogDescription>
+              View and manage your profile and score history
+            </DialogDescription>
           </DialogHeader>
           
           <div className="mt-4">

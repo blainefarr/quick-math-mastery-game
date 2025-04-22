@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { UserScore } from '@/types';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card } from '@/components/ui/card';
@@ -11,15 +11,22 @@ interface ScoreChartProps {
 
 const ScoreChart = ({ scores = [] }: ScoreChartProps) => {
   const [operationFilter, setOperationFilter] = useState<string>('all');
+  const [validScores, setValidScores] = useState<UserScore[]>([]);
   
-  // Handle invalid or empty scores
-  const validScores = Array.isArray(scores) ? scores.filter(score => 
-    score && 
-    typeof score === 'object' && 
-    score.operation && 
-    score.date && 
-    score.range
-  ) : [];
+  // Process scores on component mount and when scores prop changes
+  useEffect(() => {
+    console.log('ScoreChart received scores:', scores);
+    // Filter out invalid scores
+    const filtered = Array.isArray(scores) ? scores.filter(score => 
+      score && 
+      typeof score === 'object' && 
+      score.operation && 
+      score.date && 
+      score.range
+    ) : [];
+    setValidScores(filtered);
+    console.log('Filtered valid scores for chart:', filtered);
+  }, [scores]);
   
   // Format date for display with error handling
   const formatDate = (dateString: string) => {

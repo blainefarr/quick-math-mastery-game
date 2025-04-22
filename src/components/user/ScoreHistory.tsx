@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { UserScore } from '@/types';
 import {
   Table,
@@ -24,15 +24,22 @@ interface ScoreHistoryProps {
 
 const ScoreHistory = ({ scores = [] }: ScoreHistoryProps) => {
   const [operationFilter, setOperationFilter] = useState<string>('all');
+  const [validScores, setValidScores] = useState<UserScore[]>([]);
   
-  // Handle invalid or empty scores
-  const validScores = Array.isArray(scores) ? scores.filter(score => 
-    score && 
-    typeof score === 'object' && 
-    score.operation && 
-    score.date && 
-    score.range
-  ) : [];
+  // Process scores on component mount and when scores prop changes
+  useEffect(() => {
+    console.log('ScoreHistory received scores:', scores);
+    // Filter out invalid scores
+    const filtered = Array.isArray(scores) ? scores.filter(score => 
+      score && 
+      typeof score === 'object' && 
+      score.operation && 
+      score.date && 
+      score.range
+    ) : [];
+    setValidScores(filtered);
+    console.log('Filtered valid scores:', filtered);
+  }, [scores]);
   
   // Get operation name in readable format
   const getOperationName = (operation: string) => {

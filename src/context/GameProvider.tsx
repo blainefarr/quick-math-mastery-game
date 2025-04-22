@@ -29,11 +29,13 @@ const GameProvider = ({ children }: GameProviderProps) => {
     const savedUserData = localStorage.getItem('mathUserData');
     if (savedUserData) {
       try {
+        console.log('Loading user data from localStorage:', savedUserData);
         const userData = JSON.parse(savedUserData);
         setIsLoggedIn(true);
         setUsername(userData.username || '');
         // Ensure we have valid score history
         if (Array.isArray(userData.scoreHistory)) {
+          console.log('Loaded score history:', userData.scoreHistory);
           // Filter out any invalid score entries
           const validScores = userData.scoreHistory.filter((score: any) => 
             score && 
@@ -68,7 +70,9 @@ const GameProvider = ({ children }: GameProviderProps) => {
         username,
         scoreHistory
       };
-      localStorage.setItem('mathUserData', JSON.stringify(userData));
+      const dataString = JSON.stringify(userData);
+      console.log('Saving user data to localStorage:', dataString);
+      localStorage.setItem('mathUserData', dataString);
     }
   }, [isLoggedIn, username, scoreHistory]);
 
@@ -215,6 +219,7 @@ const GameProvider = ({ children }: GameProviderProps) => {
   // Save score to history
   const saveScore = () => {
     if (isLoggedIn && score > 0) {
+      console.log('Saving score:', score, 'for operation:', settings.operation);
       const newScore: UserScore = {
         score,
         operation: settings.operation,
@@ -226,7 +231,20 @@ const GameProvider = ({ children }: GameProviderProps) => {
         },
         date: new Date().toISOString(),
       };
-      setScoreHistory(prev => [...prev, newScore]);
+      
+      // Add the new score to history
+      const updatedScores = [...scoreHistory, newScore];
+      console.log('Updated score history:', updatedScores);
+      setScoreHistory(updatedScores);
+      
+      // Force an immediate save to localStorage
+      const userData = {
+        username,
+        scoreHistory: updatedScores
+      };
+      localStorage.setItem('mathUserData', JSON.stringify(userData));
+    } else {
+      console.log('Not saving score: user not logged in or score is 0', { isLoggedIn, score });
     }
   };
 
