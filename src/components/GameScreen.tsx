@@ -27,6 +27,8 @@ const GameScreen = () => {
   
   // Initialize game on first load
   useEffect(() => {
+    console.log('GameScreen mounted with settings:', settings);
+    
     // Generate first problem if we don't have one
     if (!currentProblem) {
       generateNewProblem();
@@ -106,8 +108,8 @@ const GameScreen = () => {
 
   // Handle restart game - don't save scores
   const handleRestartGame = () => {
+    saveScore();
     setGameState('ended');
-    // Note: We're not calling saveScore() here
   };
 
   return (
@@ -142,6 +144,8 @@ const GameScreen = () => {
               <Input
                 ref={inputRef}
                 type="number"
+                inputMode="numeric"
+                pattern="[0-9]*"
                 value={userAnswer}
                 onChange={(e) => setUserAnswer(e.target.value)}
                 onKeyDown={handleKeyPress}

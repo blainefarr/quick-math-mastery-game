@@ -5,6 +5,15 @@ import { cn } from "@/lib/utils"
 
 const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
   ({ className, type, ...props }, ref) => {
+    // If it's a number input, add inputMode="numeric" and pattern="[0-9]*" for mobile number pads
+    const inputProps = type === "number" 
+      ? { 
+          inputMode: "numeric" as React.HTMLAttributes<HTMLInputElement>["inputMode"],
+          pattern: "[0-9]*",
+          ...props 
+        } 
+      : props;
+    
     return (
       <input
         type={type}
@@ -13,7 +22,7 @@ const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
           className
         )}
         ref={ref}
-        {...props}
+        {...inputProps}
       />
     )
   }

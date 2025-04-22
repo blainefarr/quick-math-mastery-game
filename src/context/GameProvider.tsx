@@ -78,7 +78,15 @@ const GameProvider = ({ children }: GameProviderProps) => {
 
   // Update game settings
   const updateSettings = (newSettings: Partial<GameSettings>) => {
-    setSettings(prev => ({ ...prev, ...newSettings }));
+    console.log('Updating settings:', newSettings);
+    setSettings(prev => {
+      const updated = { ...prev, ...newSettings };
+      console.log('New settings:', updated);
+      return updated;
+    });
+    
+    // Reset game state when settings change
+    setCurrentProblem(null);
   };
 
   // Increment score
@@ -110,7 +118,10 @@ const GameProvider = ({ children }: GameProviderProps) => {
 
   // Generate a new math problem based on current settings
   const generateNewProblem = () => {
+    // Use current settings
     const { operation, range } = settings;
+    console.log('Generating problem with settings:', operation, range);
+    
     const { min1, max1, min2, max2 } = range;
     
     // Use focus number if set
@@ -251,7 +262,8 @@ const GameProvider = ({ children }: GameProviderProps) => {
   // Fix for focus trap bug
   useEffect(() => {
     document.body.classList.remove('ReactModal__Body--open');
-  }, [isLoggedIn]);
+    document.body.style.pointerEvents = '';
+  }, [gameState]);
 
   const value: GameContextType = {
     gameState,

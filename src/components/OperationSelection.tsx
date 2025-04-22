@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import useGame from '@/context/useGame';
 import { Button } from '@/components/ui/button';
@@ -15,6 +16,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const operationColors = {
   addition: "bg-blue-200 text-primary font-bold shadow",
@@ -30,9 +32,11 @@ const OperationSelection = () => {
     setGameState, 
     setTimeLeft,
     focusNumber,
-    setFocusNumber
+    setFocusNumber,
+    resetScore
   } = useGame();
   
+  const isMobile = useIsMobile();
   const [selectedOperation, setSelectedOperation] = useState<Operation>(settings.operation);
   const [range1Min, setRange1Min] = useState(settings.range.min1);
   const [range1Max, setRange1Max] = useState(settings.range.max1);
@@ -91,6 +95,9 @@ const OperationSelection = () => {
       return;
     }
     
+    // Reset score when starting a new game
+    resetScore();
+    
     updateSettings({
       operation: selectedOperation,
       range: {
@@ -132,6 +139,7 @@ const OperationSelection = () => {
                 <TabsTrigger
                   value="addition"
                   className={`flex items-center justify-center ${selectedOperation === "addition" ? operationColors.addition : ""}`}
+                  aria-selected={selectedOperation === "addition"}
                 >
                   <MathIcon operation="addition" className="mr-2" />
                   Addition
@@ -139,6 +147,7 @@ const OperationSelection = () => {
                 <TabsTrigger
                   value="subtraction"
                   className={`flex items-center justify-center ${selectedOperation === "subtraction" ? operationColors.subtraction : ""}`}
+                  aria-selected={selectedOperation === "subtraction"}
                 >
                   <MathIcon operation="subtraction" className="mr-2" />
                   Subtraction
@@ -146,6 +155,7 @@ const OperationSelection = () => {
                 <TabsTrigger
                   value="multiplication"
                   className={`flex items-center justify-center ${selectedOperation === "multiplication" ? operationColors.multiplication : ""}`}
+                  aria-selected={selectedOperation === "multiplication"}
                 >
                   <MathIcon operation="multiplication" className="mr-2" />
                   Multiplication
@@ -153,6 +163,7 @@ const OperationSelection = () => {
                 <TabsTrigger
                   value="division"
                   className={`flex items-center justify-center ${selectedOperation === "division" ? operationColors.division : ""}`}
+                  aria-selected={selectedOperation === "division"}
                 >
                   <MathIcon operation="division" className="mr-2" />
                   Division
@@ -161,7 +172,7 @@ const OperationSelection = () => {
             </Tabs>
           </div>
           
-          <div className="space-y-2 border p-4 rounded-lg bg-muted/50">
+          <div className="space-y-2 border p-4 rounded-lg bg-muted/50 mt-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
                 <Label htmlFor="focus-number-toggle" className="text-base font-medium">
@@ -193,6 +204,8 @@ const OperationSelection = () => {
                 <Input
                   id="focus-number-input"
                   type="number"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
                   value={focusNumberValue}
                   onChange={(e) => handleFocusNumberChange(e.target.value)}
                   className="w-24 mt-1"
@@ -205,7 +218,7 @@ const OperationSelection = () => {
             )}
           </div>
           
-          <div className="space-y-4">
+          <div className="space-y-4 mt-6">
             <h3 className="text-lg font-medium">Number Ranges</h3>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -217,6 +230,8 @@ const OperationSelection = () => {
                     <Input
                       id="range1-min"
                       type="number"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
                       value={range1Min}
                       onChange={(e) => handleRangeChange(setRange1Min, e.target.value, 1, 100)}
                       className="w-24"
@@ -230,6 +245,8 @@ const OperationSelection = () => {
                     <Input
                       id="range1-max"
                       type="number"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
                       value={range1Max}
                       onChange={(e) => handleRangeChange(setRange1Max, e.target.value, 1, 100)}
                       className="w-24"
@@ -254,6 +271,8 @@ const OperationSelection = () => {
                     <Input
                       id="range2-min"
                       type="number"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
                       value={range2Min}
                       onChange={(e) => handleRangeChange(setRange2Min, e.target.value, 1, 100)}
                       className="w-24"
@@ -266,6 +285,8 @@ const OperationSelection = () => {
                     <Input
                       id="range2-max"
                       type="number"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
                       value={range2Max}
                       onChange={(e) => handleRangeChange(setRange2Max, e.target.value, 1, 100)}
                       className="w-24"
@@ -278,7 +299,7 @@ const OperationSelection = () => {
             </div>
           </div>
           
-          <div className="space-y-2">
+          <div className="space-y-2 mt-6">
             <h3 className="text-lg font-medium">Timer</h3>
             <span className="block font-bold text-primary">60 seconds</span>
           </div>
