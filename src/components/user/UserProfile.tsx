@@ -24,13 +24,23 @@ import {
 } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { User, LogOut } from 'lucide-react';
 import ScoreHistory from './ScoreHistory';
 import ScoreChart from './ScoreChart';
+import { Label } from '@/components/ui/label';
+import { ProblemRange } from '@/types';
 
 const UserProfile = () => {
   const { username, isLoggedIn, setIsLoggedIn, scoreHistory } = useGame();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [selectedRange, setSelectedRange] = useState<string>("all");
   
   // Logout handler
   const handleLogout = () => {
@@ -42,14 +52,38 @@ const UserProfile = () => {
   // If not logged in, don't render anything
   if (!isLoggedIn) return null;
 
-  // Close trap: fix UI by resetting scroll/focus lock
-  const handleDialogClose = (open: boolean) => {
-    setIsProfileOpen(open);
-    if (!open) {
-      // After dialog closes, restore document scroll/focus
-      document.body.classList.remove('ReactModal__Body--open');
-    }
+  // Get unique ranges from score history
+  const getUniqueRanges = () => {
+    const uniqueRanges = new Set<string>();
+    
+    scoreHistory.forEach(score => {
+      const { min1, max1, min2, max2 } = score.range;
+      const rangeString = `${min1}-${max1}, ${min2}-${max2}`;
+      uniqueRanges.add(rangeString);
+    });
+    
+    return Array.from(uniqueRanges);
   };
+  
+  // Filter scores by selected range
+  const getFilteredScores = () => {
+    if (selectedRange === "all") {
+      return scoreHistory;
+    }
+    
+    // Parse range values
+    const [range1, range2] = selectedRange.split(', ');
+    const [min1, max1] = range1.split('-').map(Number);
+    const [min2, max2] = range2.split('-').map(Number);
+    
+    return scoreHistory.filter(score => {
+      const r = score.range;
+      return r.min1 === min1 && r.max1 === max1 && r.min2 === min2 && r.max2 === max2;
+    });
+  };
+  
+  const filteredScores = getFilteredScores();
+  const uniqueRanges = getUniqueRanges();
 
   return (
     <>
@@ -78,13 +112,43 @@ const UserProfile = () => {
         </DropdownMenuContent>
       </DropdownMenu>
       
-      <Dialog open={isProfileOpen} onOpenChange={handleDialogClose}>
+      <Dialog open={isProfileOpen} onOpenChange={(open) => {
+        setIsProfileOpen(open);
+        // Important: Force cleanup of any stray modal classes when dialog closes
+        if (!open) {
+          document.body.classList.remove('ReactModal__Body--open');
+          // Force document to be scrollable again
+          document.body.style.overflow = '';
+          document.body.style.paddingRight = '';
+        }
+      }}>
         <DialogContent className="max-w-4xl">
           <DialogHeader>
             <DialogTitle className="text-xl">My Profile - {username}</DialogTitle>
           </DialogHeader>
           
           <div className="mt-4">
+            {/* Range Filter */}
+            <div className="mb-4">
+              <Label htmlFor="range-filter" className="mr-2">Filter by Range:</Label>
+              <Select 
+                value={selectedRange} 
+                onValueChange={setSelectedRange}
+              >
+                <SelectTrigger className="w-[250px]" id="range-filter">
+                  <SelectValue placeholder="Select range" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Ranges</SelectItem>
+                  {uniqueRanges.map((range, index) => (
+                    <SelectItem key={index} value={range}>
+                      {range}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
             <Tabs defaultValue="history">
               <TabsList>
                 <TabsTrigger value="history">Score History</TabsTrigger>
@@ -94,7 +158,7 @@ const UserProfile = () => {
               <TabsContent value="history" className="mt-4">
                 <Card>
                   <CardContent className="p-4">
-                    <ScoreHistory scores={scoreHistory} />
+                    <ScoreHistory scores={filteredScores} />
                   </CardContent>
                 </Card>
               </TabsContent>
@@ -102,7 +166,7 @@ const UserProfile = () => {
               <TabsContent value="progress" className="mt-4">
                 <Card>
                   <CardContent className="p-4">
-                    <ScoreChart scores={scoreHistory} />
+                    <ScoreChart scores={filteredScores} />
                   </CardContent>
                 </Card>
               </TabsContent>
