@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { GameSettings, Operation, Problem, ProblemRange, UserScore } from '@/types';
 import { GameContextType, GameState, GameProviderProps } from './game-context-types';
 import GameContext from './GameContext';
+import { toast } from 'sonner';
 
 // Default values
 const defaultSettings: GameSettings = {
@@ -59,6 +60,7 @@ const GameProvider = ({ children }: GameProviderProps) => {
         setIsLoggedIn(false);
         setUsername('');
         setScoreHistory([]);
+        toast.error('Error loading your saved data');
       }
     }
   }, []);
@@ -243,19 +245,27 @@ const GameProvider = ({ children }: GameProviderProps) => {
         date: new Date().toISOString(),
       };
       
+      // Create a fresh copy of the score history
+      const newHistory = Array.isArray(scoreHistory) ? [...scoreHistory] : [];
+      
       // Add the new score to history
-      const updatedScores = [...scoreHistory, newScore];
-      console.log('Updated score history:', updatedScores);
-      setScoreHistory(updatedScores);
+      newHistory.push(newScore);
+      console.log('Updated score history:', newHistory);
+      
+      // Update state with the new score history
+      setScoreHistory(newHistory);
       
       // Force an immediate save to localStorage
       const userData = {
         username,
-        scoreHistory: updatedScores
+        scoreHistory: newHistory
       };
       localStorage.setItem('mathUserData', JSON.stringify(userData));
+      
+      return true;
     } else {
       console.log('Not saving score: user not logged in or score is 0', { isLoggedIn, score });
+      return false;
     }
   };
 

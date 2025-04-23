@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import useGame from '@/context/useGame';
 import { Button } from '@/components/ui/button';
@@ -5,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Clock, RefreshCw } from 'lucide-react';
 import MathIcon from './common/MathIcon';
+import { toast } from 'sonner';
 
 const GameScreen = () => {
   const {
@@ -38,7 +40,13 @@ const GameScreen = () => {
         if (prevTime <= 1) {
           clearInterval(timer);
           setGameState('ended');
-          saveScore();
+          try {
+            saveScore();
+            console.log('Game ended, score saved:', score);
+          } catch (err) {
+            console.error('Error saving score:', err);
+            toast.error('Failed to save your score');
+          }
           return 0;
         } else {
           return prevTime - 1;
@@ -70,7 +78,13 @@ const GameScreen = () => {
   };
 
   const handleRestartGame = () => {
-    saveScore();
+    try {
+      saveScore();
+      console.log('Game restarted, score saved:', score);
+    } catch (err) {
+      console.error('Error saving score on restart:', err);
+      toast.error('Failed to save your score');
+    }
     setGameState('ended');
   };
 

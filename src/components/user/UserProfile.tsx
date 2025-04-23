@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useGame } from '@/context/useGame';
 import { 
@@ -35,6 +36,7 @@ import { User, LogOut } from 'lucide-react';
 import ScoreHistory from './ScoreHistory';
 import ScoreChart from './ScoreChart';
 import { Label } from '@/components/ui/label';
+import { toast } from 'sonner';
 
 const UserProfile = () => {
   const { username, isLoggedIn, setIsLoggedIn, scoreHistory } = useGame();
@@ -42,18 +44,24 @@ const UserProfile = () => {
   const [selectedRange, setSelectedRange] = useState<string>("all");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [profileScores, setProfileScores] = useState([]);
 
   useEffect(() => {
-    setLoading(true);
-    try {
-      console.log('Profile dialog state changed:', isProfileOpen);
-      console.log('Current scoreHistory from context:', scoreHistory);
-
-      setLoading(false);
-    } catch (err) {
-      setError("Could not load scores");
-      setLoading(false);
+    if (isProfileOpen) {
+      setLoading(true);
+      try {
+        console.log('Profile dialog opened, current scoreHistory:', scoreHistory);
+        // Make a copy of the score history to ensure we're using fresh data
+        setProfileScores(scoreHistory ? [...scoreHistory] : []);
+        setLoading(false);
+      } catch (err) {
+        console.error("Error loading scores:", err);
+        setError("Could not load scores");
+        toast.error("Failed to load your score history");
+        setLoading(false);
+      }
     }
+    
     return () => {
       document.body.classList.remove('ReactModal__Body--open');
       document.body.style.pointerEvents = '';
@@ -63,16 +71,17 @@ const UserProfile = () => {
   const handleLogout = () => {
     setIsLoggedIn(false);
     localStorage.removeItem('mathUserData');
+    toast.success("You've been logged out");
   };
 
   const getUniqueRanges = () => {
-    if (!scoreHistory || scoreHistory.length === 0) {
+    if (!profileScores || profileScores.length === 0) {
       return [];
     }
     
     const uniqueRanges = new Set<string>();
     
-    scoreHistory.forEach(score => {
+    profileScores.forEach(score => {
       if (score && score.range) {
         const { min1, max1, min2, max2 } = score.range;
         const rangeString = `${min1}-${max1}, ${min2}-${max2}`;
@@ -84,19 +93,19 @@ const UserProfile = () => {
   };
 
   const getFilteredScores = () => {
-    if (!scoreHistory || scoreHistory.length === 0) {
+    if (!profileScores || profileScores.length === 0) {
       return [];
     }
     
     if (selectedRange === "all") {
-      return scoreHistory;
+      return profileScores;
     }
     
     const [range1, range2] = selectedRange.split(', ');
     const [min1, max1] = range1.split('-').map(Number);
     const [min2, max2] = range2.split('-').map(Number);
     
-    return scoreHistory.filter(score => {
+    return profileScores.filter(score => {
       if (!score || !score.range) return false;
       
       const r = score.range;
