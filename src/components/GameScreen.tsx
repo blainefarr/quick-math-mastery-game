@@ -57,38 +57,6 @@ const GameScreen = () => {
     }, 0);
   };
 
-  const checkAnswer = () => {
-    if (!currentProblem) return;
-    
-    const numAnswer = Number(userAnswer);
-    
-    if (numAnswer === currentProblem.answer) {
-      setFeedback('correct');
-      incrementScore();
-      setUserAnswer('');
-      
-      setTimeout(() => {
-        generateNewProblem();
-        setFeedback(null);
-        focusInput();
-      }, 300);
-    } else {
-      setFeedback('incorrect');
-      
-      setTimeout(() => {
-        setFeedback(null);
-        setUserAnswer('');
-        focusInput();
-      }, 500);
-    }
-  };
-
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      checkAnswer();
-    }
-  };
-
   const getOperationSymbol = () => {
     if (!currentProblem) return '';
     
@@ -104,6 +72,25 @@ const GameScreen = () => {
   const handleRestartGame = () => {
     saveScore();
     setGameState('ended');
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newValue = e.target.value;
+    setUserAnswer(newValue);
+
+    if (currentProblem) {
+      if (newValue.trim() === "") return;
+      if (Number(newValue) === currentProblem.answer) {
+        setFeedback('correct');
+        incrementScore();
+        setTimeout(() => {
+          setUserAnswer('');
+          setFeedback(null);
+          generateNewProblem();
+          focusInput();
+        }, 100);
+      }
+    }
   };
 
   return (
@@ -139,8 +126,7 @@ const GameScreen = () => {
                 inputMode="numeric"
                 pattern="[0-9]*"
                 value={userAnswer}
-                onChange={(e) => setUserAnswer(e.target.value)}
-                onKeyDown={handleKeyPress}
+                onChange={handleInputChange}
                 className="text-4xl md:text-6xl w-24 md:w-32 h-16 text-center font-bold p-0 border-b-4 focus-visible:ring-0 focus-visible:ring-offset-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 autoFocus
               />
@@ -157,14 +143,7 @@ const GameScreen = () => {
           </CardContent>
         </Card>
         
-        <div className="flex justify-center space-x-4">
-          <Button 
-            onClick={checkAnswer}
-            className="text-lg py-6 px-8 bg-primary hover:bg-primary/90 shadow-md transition-transform transform hover:scale-105"
-          >
-            Check
-          </Button>
-          
+        <div className="flex justify-center">
           <Button 
             variant="outline"
             onClick={handleRestartGame}
