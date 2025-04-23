@@ -15,9 +15,34 @@ import {
 } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
+// Import Select UI
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from '@/components/ui/select';
+
 interface AuthModalProps {
   children: React.ReactNode;
 }
+
+const GRADE_OPTIONS = [
+  'Pre-K',
+  'Kindergarten',
+  '1st Grade',
+  '2nd Grade',
+  '3rd Grade',
+  '4th Grade',
+  '5th Grade',
+  '6th Grade',
+  '7th Grade',
+  '8th Grade',
+  'High School',
+  'High School Grad',
+  'College Grad',
+];
 
 const AuthModal = ({ children }: AuthModalProps) => {
   const { setIsLoggedIn, setUsername } = useGame();
@@ -26,6 +51,7 @@ const AuthModal = ({ children }: AuthModalProps) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
+  const [grade, setGrade] = useState<string>('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
@@ -75,7 +101,7 @@ const AuthModal = ({ children }: AuthModalProps) => {
     }, 1000);
   };
   
-  // Mock registration functionality
+  // Mock registration functionality (now with grade)
   const handleRegister = (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -86,7 +112,7 @@ const AuthModal = ({ children }: AuthModalProps) => {
       setIsLoading(false);
       
       // Basic validation
-      if (!name || !email || !password) {
+      if (!name || !email || !password || !grade) {
         setError('Please fill in all fields');
         return;
       }
@@ -98,6 +124,7 @@ const AuthModal = ({ children }: AuthModalProps) => {
       
       // Reset form
       setName('');
+      setGrade('');
       setEmail('');
       setPassword('');
     }, 1000);
@@ -168,6 +195,19 @@ const AuthModal = ({ children }: AuthModalProps) => {
                 />
               </div>
               <div className="space-y-2">
+                <Label htmlFor="grade">Grade</Label>
+                <Select value={grade} onValueChange={setGrade}>
+                  <SelectTrigger id="grade">
+                    <SelectValue placeholder="Select grade" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {GRADE_OPTIONS.map(opt => (
+                      <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
                 <Label htmlFor="reg-email">Email</Label>
                 <Input 
                   id="reg-email" 
@@ -203,3 +243,4 @@ const AuthModal = ({ children }: AuthModalProps) => {
 };
 
 export default AuthModal;
+
