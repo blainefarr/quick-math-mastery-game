@@ -2,47 +2,36 @@
 import React, { useState, useEffect } from 'react';
 import useGame from '@/context/useGame';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowRight, Info } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { Operation } from '@/types';
-import MathIcon from './common/MathIcon';
-import { Switch } from '@/components/ui/switch';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { useIsMobile } from '@/hooks/use-mobile';
 
-// Operation colors for clarity
-const operationStyles = {
-  addition: "bg-blue-200 border-2 border-blue-400 shadow font-bold text-primary",
-  subtraction: "bg-green-200 border-2 border-green-400 shadow font-bold text-primary",
-  multiplication: "bg-purple-200 border-2 border-purple-400 shadow font-bold text-primary",
-  division: "bg-orange-200 border-2 border-orange-400 shadow font-bold text-primary",
-};
+// Refactored, imported
+import OperationButton from './operation/OperationButton';
+import FocusNumberSection from './operation/FocusNumberSection';
+import NegativeNumbersToggle from './operation/NegativeNumbersToggle';
+import NumberRangeSection from './operation/NumberRangeSection';
 
 const OperationSelection = () => {
   const {
-    settings,
-    updateSettings,
-    setGameState,
-    setTimeLeft,
-    focusNumber,
-    setFocusNumber,
-    resetScore,
+    settings, updateSettings, setGameState, setTimeLeft,
+    focusNumber, setFocusNumber, resetScore,
   } = useGame();
 
   const isMobile = useIsMobile();
   const [selectedOperation, setSelectedOperation] = useState<Operation>(settings.operation);
+
+  // For negative numbers feature
+  const [negativeNumbersEnabled, setNegativeNumbersEnabled] = useState(false);
+
+  // Range state
   const [range1Min, setRange1Min] = useState(settings.range.min1);
   const [range1Max, setRange1Max] = useState(settings.range.max1);
   const [range2Min, setRange2Min] = useState(settings.range.min2);
   const [range2Max, setRange2Max] = useState(settings.range.max2);
-  const defaultTime = 60;
+
+  // Focus number state
   const [useFocusNumber, setUseFocusNumber] = useState(focusNumber !== null);
   const [focusNumberValue, setFocusNumberValue] = useState(focusNumber || 1);
 
@@ -54,21 +43,13 @@ const OperationSelection = () => {
     setRange2Max(settings.range.max2);
   }, [settings]);
 
-  const handleOperationSelect = (operation: Operation) => {
-    setSelectedOperation(operation);
+  // Handle number input changes with parsing
+  const parseOrDefault = (str: string, def: number) => {
+    const val = parseInt(str);
+    return !isNaN(val) ? val : def;
   };
 
-  const handleRangeChange = (
-    setter: React.Dispatch<React.SetStateAction<number>>,
-    value: string,
-    min: number,
-    max: number
-  ) => {
-    const numValue = parseInt(value);
-    if (!isNaN(numValue) && numValue >= min && numValue <= max) {
-      setter(numValue);
-    }
-  };
+  const handleOperationSelect = (operation: Operation) => setSelectedOperation(operation);
 
   const handleFocusNumberToggle = (checked: boolean) => {
     setUseFocusNumber(checked);
@@ -80,23 +61,19 @@ const OperationSelection = () => {
   };
 
   const handleFocusNumberChange = (value: string) => {
-    const numValue = parseInt(value);
-    if (!isNaN(numValue) && numValue > 0) {
-      setFocusNumberValue(numValue);
-      if (useFocusNumber) {
-        setFocusNumber(numValue);
-      }
-    }
+    const numValue = parseOrDefault(value, focusNumberValue);
+    setFocusNumberValue(numValue);
+    if (useFocusNumber) setFocusNumber(numValue);
   };
+
+  const handleNegativeToggle = (checked: boolean) => setNegativeNumbersEnabled(checked);
 
   const handleStartGame = () => {
     if (range1Max < range1Min || range2Max < range2Min) {
       alert('Maximum value must be greater than or equal to minimum value');
       return;
     }
-
     resetScore();
-
     updateSettings({
       operation: selectedOperation,
       range: {
@@ -105,19 +82,16 @@ const OperationSelection = () => {
         min2: range2Min,
         max2: range2Max
       },
-      timerSeconds: 60
+      timerSeconds: 60,
+      allowNegatives: negativeNumbersEnabled
     });
-
-    if (useFocusNumber) {
-      setFocusNumber(focusNumberValue);
-    } else {
-      setFocusNumber(null);
-    }
-
-    setTimeLeft(defaultTime);
+    if (useFocusNumber) setFocusNumber(focusNumberValue);
+    else setFocusNumber(null);
+    setTimeLeft(60);
     setGameState('playing');
   };
 
+  // Responsive, flex-based layout using new subcomponents
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
       <Card className="shadow-lg animate-fade-in">
@@ -126,192 +100,51 @@ const OperationSelection = () => {
             Choose Your Math Challenge
           </CardTitle>
         </CardHeader>
-
-        <CardContent className="space-y-4 md:space-y-6">
-          {/* OPERATION SELECTION - FLEX, RESPONSIVE */}
+        <CardContent className="flex flex-col gap-4 md:gap-6">
+          {/* OPERATION SELECTION */}
           <div>
             <h3 className="text-lg font-medium mb-3">Operation</h3>
-            {/* Responsive flex row, wraps on xs/sm screens, consistent gap */}
-            <div
-              className="
-                flex flex-wrap justify-center items-center gap-3
-                rounded-lg p-2
-                bg-muted/50
-              "
-              style={{
-                minHeight: isMobile ? 64 : 56, marginBottom: isMobile ? 16 : 28
-              }}
-            >
+            <div className="flex flex-wrap gap-3 justify-center items-center rounded-lg p-2 bg-muted/50 w-full">
               {(['addition', 'subtraction', 'multiplication', 'division'] as Operation[]).map((operation) => (
-                <button
+                <OperationButton
                   key={operation}
-                  type="button"
-                  aria-pressed={selectedOperation === operation}
-                  onClick={() => handleOperationSelect(operation)}
-                  className={`
-                    flex items-center justify-center gap-2
-                    px-4 py-2
-                    rounded-lg
-                    transition-all
-                    font-semibold select-none
-                    cursor-pointer
-                    border-2
-                    ${
-                      selectedOperation === operation
-                      ? operationStyles[operation]
-                      : 'bg-white border-transparent text-muted-foreground shadow hover:bg-muted'
-                    }
-                    focus:outline-none focus:ring-2 focus:ring-primary
-                  `}
-                  style={{
-                    minWidth: isMobile ? 68 : 96,
-                    fontSize: isMobile ? '1.2rem' : '1.14rem'
-                  }}
-                >
-                  <MathIcon operation={operation} size={22} className="mr-2" />
-                  <span className="capitalize hidden xs:inline">
-                    {operation.charAt(0).toUpperCase() + operation.slice(1)}
-                  </span>
-                </button>
+                  active={selectedOperation === operation}
+                  operation={operation}
+                  onClick={handleOperationSelect}
+                />
               ))}
             </div>
           </div>
-
-          {/* FOCUS NUMBER SECTION */}
-          <div className="space-y-2 border p-4 rounded-lg bg-muted/50 mt-2 md:mt-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <Label htmlFor="focus-number-toggle" className="text-base font-medium">
-                  Use Focus Number
-                </Label>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Info size={16} className="text-muted-foreground" />
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p className="max-w-xs">
-                        When enabled, all questions will include this number as one of the operands.
-                      </p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </div>
-              <Switch
-                id="focus-number-toggle"
-                checked={useFocusNumber}
-                onCheckedChange={handleFocusNumberToggle}
-              />
-            </div>
-            {useFocusNumber && (
-              <div className="pt-2">
-                <Label htmlFor="focus-number-input">Focus Number:</Label>
-                <Input
-                  id="focus-number-input"
-                  type="number"
-                  inputMode="numeric"
-                  pattern="[0-9]*"
-                  value={focusNumberValue}
-                  onChange={(e) => handleFocusNumberChange(e.target.value)}
-                  className="w-24 mt-1"
-                  min={1}
-                />
-                <p className="text-sm text-muted-foreground mt-2">
-                  All questions will include <span className="font-bold">{focusNumberValue}</span> as one of the numbers.
-                </p>
-              </div>
-            )}
-          </div>
-
+          {/* FOCUS NUMBER */}
+          <FocusNumberSection
+            enabled={useFocusNumber}
+            value={focusNumberValue}
+            onToggle={handleFocusNumberToggle}
+            onChange={handleFocusNumberChange}
+          />
+          {/* NEGATIVE NUMBERS */}
+          <NegativeNumbersToggle
+            enabled={negativeNumbersEnabled}
+            onToggle={handleNegativeToggle}
+          />
           {/* NUMBER RANGES */}
-          <div className="space-y-4 mt-3 md:mt-6">
-            <h3 className="text-lg font-medium">Number Ranges</h3>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className={`space-y-2 ${useFocusNumber ? 'opacity-50' : ''}`}>
-                <Label htmlFor="range1">First Number Range:</Label>
-                <div className="flex space-x-2">
-                  <div>
-                    <Label htmlFor="range1-min" className="text-sm">Min</Label>
-                    <Input
-                      id="range1-min"
-                      type="number"
-                      inputMode="numeric"
-                      pattern="[0-9]*"
-                      value={range1Min}
-                      onChange={(e) => handleRangeChange(setRange1Min, e.target.value, 1, 100)}
-                      className="w-24"
-                      min={1}
-                      max={100}
-                      disabled={useFocusNumber}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="range1-max" className="text-sm">Max</Label>
-                    <Input
-                      id="range1-max"
-                      type="number"
-                      inputMode="numeric"
-                      pattern="[0-9]*"
-                      value={range1Max}
-                      onChange={(e) => handleRangeChange(setRange1Max, e.target.value, 1, 100)}
-                      className="w-24"
-                      min={1}
-                      max={100}
-                      disabled={useFocusNumber}
-                    />
-                  </div>
-                </div>
-                {useFocusNumber && (
-                  <p className="text-xs text-muted-foreground">
-                    Using focus number {focusNumberValue} as first number
-                  </p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="range2">Second Number Range:</Label>
-                <div className="flex space-x-2">
-                  <div>
-                    <Label htmlFor="range2-min" className="text-sm">Min</Label>
-                    <Input
-                      id="range2-min"
-                      type="number"
-                      inputMode="numeric"
-                      pattern="[0-9]*"
-                      value={range2Min}
-                      onChange={(e) => handleRangeChange(setRange2Min, e.target.value, 1, 100)}
-                      className="w-24"
-                      min={1}
-                      max={100}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="range2-max" className="text-sm">Max</Label>
-                    <Input
-                      id="range2-max"
-                      type="number"
-                      inputMode="numeric"
-                      pattern="[0-9]*"
-                      value={range2Max}
-                      onChange={(e) => handleRangeChange(setRange2Max, e.target.value, 1, 100)}
-                      className="w-24"
-                      min={1}
-                      max={100}
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
+          <NumberRangeSection
+            focusNumberEnabled={useFocusNumber}
+            focusNumber={focusNumberValue}
+            negativeNumbersEnabled={negativeNumbersEnabled}
+            range1={{ min: range1Min, max: range1Max }}
+            range2={{ min: range2Min, max: range2Max }}
+            setRange1Min={v => setRange1Min(parseOrDefault(v, range1Min))}
+            setRange1Max={v => setRange1Max(parseOrDefault(v, range1Max))}
+            setRange2Min={v => setRange2Min(parseOrDefault(v, range2Min))}
+            setRange2Max={v => setRange2Max(parseOrDefault(v, range2Max))}
+          />
           {/* TIMER */}
-          <div className="space-y-2 mt-4 md:mt-6">
+          <div>
             <h3 className="text-lg font-medium">Timer</h3>
             <span className="block font-bold text-primary">60 seconds</span>
           </div>
         </CardContent>
-
         <CardFooter>
           <Button
             onClick={handleStartGame}
@@ -327,4 +160,3 @@ const OperationSelection = () => {
 };
 
 export default OperationSelection;
-

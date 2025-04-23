@@ -10,18 +10,18 @@ interface MathIconProps {
 }
 
 const MathIcon = ({ operation, size = 24, className = '' }: MathIconProps) => {
-  switch (operation) {
-    case 'addition':
-      return <Plus size={size} className={className} />;
-    case 'subtraction':
-      return <Minus size={size} className={className} />;
-    case 'multiplication':
-      return <X size={size} className={className} />;
-    case 'division':
-      return <Divide size={size} className={className} />;
-    default:
-      return null;
-  }
+  // Center the icon using a flex container
+  return (
+    <span
+      className={`inline-flex items-center justify-center w-full h-full ${className}`}
+      style={{ minWidth: size, minHeight: size }}
+    >
+      {operation === "addition" && <Plus size={size} />}
+      {operation === "subtraction" && <Minus size={size} />}
+      {operation === "multiplication" && <X size={size} />}
+      {operation === "division" && <Divide size={size} />}
+    </span>
+  );
 };
 
 export default MathIcon;

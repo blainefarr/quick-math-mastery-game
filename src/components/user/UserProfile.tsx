@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useGame } from '@/context/useGame';
 import { 
@@ -42,6 +41,7 @@ const UserProfile = () => {
   const { username, isLoggedIn, setIsLoggedIn, scoreHistory } = useGame();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [selectedRange, setSelectedRange] = useState<string>("all");
+  const [selectedOperation, setSelectedOperation] = useState<string>("all");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [profileScores, setProfileScores] = useState([]);
@@ -51,7 +51,6 @@ const UserProfile = () => {
       setLoading(true);
       try {
         console.log('Profile dialog opened, current scoreHistory:', scoreHistory);
-        // Make a copy of the score history to ensure we're using fresh data
         setProfileScores(scoreHistory ? [...scoreHistory] : []);
         setLoading(false);
       } catch (err) {
@@ -92,29 +91,38 @@ const UserProfile = () => {
     return Array.from(uniqueRanges);
   };
 
-  const getFilteredScores = () => {
+  const getUniqueOperations = () => {
     if (!profileScores || profileScores.length === 0) {
       return [];
     }
-    
-    if (selectedRange === "all") {
-      return profileScores;
-    }
-    
-    const [range1, range2] = selectedRange.split(', ');
-    const [min1, max1] = range1.split('-').map(Number);
-    const [min2, max2] = range2.split('-').map(Number);
-    
-    return profileScores.filter(score => {
-      if (!score || !score.range) return false;
-      
-      const r = score.range;
-      return r.min1 === min1 && r.max1 === max1 && r.min2 === min2 && r.max2 === max2;
+    const uniqueOps = new Set<string>();
+    profileScores.forEach(score => {
+      if (score && score.operation) uniqueOps.add(score.operation);
     });
+    return Array.from(uniqueOps);
+  };
+
+  const getFilteredScores = () => {
+    let filtered = profileScores ?? [];
+    if (selectedRange !== "all") {
+      const [range1, range2] = selectedRange.split(', ');
+      const [min1, max1] = range1.split('-').map(Number);
+      const [min2, max2] = range2.split('-').map(Number);
+      filtered = filtered.filter(score => {
+        if (!score || !score.range) return false;
+        const r = score.range;
+        return r.min1 === min1 && r.max1 === max1 && r.min2 === min2 && r.max2 === max2;
+      });
+    }
+    if (selectedOperation !== "all") {
+      filtered = filtered.filter(score => score && score.operation === selectedOperation);
+    }
+    return filtered;
   };
 
   const filteredScores = getFilteredScores();
   const uniqueRanges = getUniqueRanges();
+  const uniqueOperations = getUniqueOperations();
 
   const handleOpenChange = (open: boolean) => {
     setIsProfileOpen(open);
@@ -162,24 +170,42 @@ const UserProfile = () => {
             </DialogDescription>
           </DialogHeader>
           <div className="mt-4">
-            <div className="mb-4">
-              <Label htmlFor="range-filter" className="mr-2">Filter by Range:</Label>
-              <Select 
-                value={selectedRange} 
-                onValueChange={setSelectedRange}
-              >
-                <SelectTrigger className="w-[250px]" id="range-filter">
-                  <SelectValue placeholder="Select range" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Ranges</SelectItem>
-                  {uniqueRanges.map((range, index) => (
-                    <SelectItem key={index} value={range}>
-                      {range}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <div className="mb-4 flex items-end gap-4 flex-wrap">
+              <Label className="mr-2 text-base font-semibold">Filter:</Label>
+              <div>
+                <Label htmlFor="range-filter" className="text-[13px] block mb-1">Range</Label>
+                <Select
+                  value={selectedRange}
+                  onValueChange={setSelectedRange}
+                >
+                  <SelectTrigger className="w-[180px]" id="range-filter">
+                    <SelectValue placeholder="Select range" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Ranges</SelectItem>
+                    {uniqueRanges.map((range, index) => (
+                      <SelectItem key={index} value={range}>{range}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="operation-filter" className="text-[13px] block mb-1">Operation</Label>
+                <Select
+                  value={selectedOperation}
+                  onValueChange={setSelectedOperation}
+                >
+                  <SelectTrigger className="w-[150px]" id="operation-filter">
+                    <SelectValue placeholder="Select operation" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Operations</SelectItem>
+                    {uniqueOperations.map((op, idx) => (
+                      <SelectItem key={idx} value={op}>{op.charAt(0).toUpperCase() + op.slice(1)}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
             
             {loading ? (

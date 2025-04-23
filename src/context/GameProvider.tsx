@@ -7,7 +7,8 @@ import { toast } from 'sonner';
 const defaultSettings: GameSettings = {
   operation: 'addition',
   range: { min1: 1, max1: 10, min2: 1, max2: 10 },
-  timerSeconds: 60 // always 60s, not user-configurable
+  timerSeconds: 60,
+  allowNegatives: false // default
 };
 
 const GameProvider = ({ children }: GameProviderProps) => {
@@ -71,13 +72,10 @@ const GameProvider = ({ children }: GameProviderProps) => {
   }, [isLoggedIn, username, scoreHistory]);
 
   const updateSettings = (newSettings: Partial<GameSettings>) => {
-    console.log('Updating settings:', newSettings);
     setSettings(prev => {
       const updated = { ...prev, ...newSettings };
-      console.log('New settings:', updated);
       return updated;
     });
-    
     setCurrentProblem(null);
   };
 
@@ -104,49 +102,49 @@ const GameProvider = ({ children }: GameProviderProps) => {
   };
 
   const generateNewProblem = () => {
-    const { operation, range } = settings;
-    const { min1, max1, min2, max2 } = range;
+    const { operation, range, allowNegatives = false } = settings;
+    let { min1, max1, min2, max2 } = range;
+
+    // Enable negatives if allowed
+    const random = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1)) + min;
+    if (!allowNegatives) {
+      min1 = Math.max(min1, 1); max1 = Math.max(max1, 1);
+      min2 = Math.max(min2, 1); max2 = Math.max(max2, 1);
+    }
 
     if (focusNumber !== null) {
       let num1: number, num2: number, answer: number;
-
       switch (operation) {
         case 'addition':
           num1 = focusNumber;
-          num2 = Math.floor(Math.random() * (max2 - min2 + 1)) + min2;
+          num2 = random(min2, max2);
           answer = num1 + num2;
           break;
         case 'subtraction':
           num1 = focusNumber;
-          num2 = Math.floor(Math.random() * (max2 - min2 + 1)) + min2;
-          if (num1 < num2) [num1, num2] = [num2, num1];
+          num2 = random(min2, max2);
+          // Allow negatives, but if not allowed, swap to non-neg
+          if (!allowNegatives && num1 < num2) [num1, num2] = [num2, num1];
           answer = num1 - num2;
           break;
         case 'multiplication':
           num1 = focusNumber;
-          num2 = Math.floor(Math.random() * (max2 - min2 + 1)) + min2;
+          num2 = random(min2, max2);
           answer = num1 * num2;
           break;
         case 'division':
+          // Division logic: focusNumber as divisor (no repeated answer)
           num2 = focusNumber;
-          answer = Math.floor(Math.random() * (max1 - min1 + 1)) + min1;
+          answer = random(min1, max1);
           num1 = answer * num2;
           break;
         default:
-          num1 = 0;
-          num2 = 0;
-          answer = 0;
+          num1 = 0; num2 = 0; answer = 0;
       }
-
-      setCurrentProblem({
-        num1,
-        num2,
-        operation,
-        answer,
-      });
+      setCurrentProblem({ num1, num2, operation, answer });
     } else {
-      let num1 = Math.floor(Math.random() * (max1 - min1 + 1)) + min1;
-      let num2 = Math.floor(Math.random() * (max2 - min2 + 1)) + min2;
+      let num1 = random(min1, max1);
+      let num2 = random(min2, max2);
       let answer: number;
 
       switch (operation) {
@@ -154,28 +152,23 @@ const GameProvider = ({ children }: GameProviderProps) => {
           answer = num1 + num2;
           break;
         case 'subtraction':
-          if (num1 < num2) [num1, num2] = [num2, num1];
+          if (!allowNegatives && num1 < num2) [num1, num2] = [num2, num1];
           answer = num1 - num2;
           break;
         case 'multiplication':
           answer = num1 * num2;
           break;
         case 'division':
-          answer = Math.floor(Math.random() * (max1 - min1 + 1)) + min1;
-          num2 = Math.floor(Math.random() * (max2 - min2 + 1)) + min2;
+          // Division: treat the selected range as denominator/answer (see above)
+          answer = random(min1, max1);
+          num2 = random(min2, max2) || 1; // Avoid zero division
           if (num2 === 0) num2 = 1;
           num1 = answer * num2;
           break;
         default:
           answer = 0;
       }
-
-      setCurrentProblem({
-        num1,
-        num2,
-        operation,
-        answer,
-      });
+      setCurrentProblem({ num1, num2, operation, answer });
     }
   };
 
