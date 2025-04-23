@@ -79,18 +79,31 @@ const GameProvider = ({ children }: GameProviderProps) => {
       setScoreHistory([]);
       return;
     }
-    const scores: UserScore[] = (data || []).map((row) => ({
-      score: row.score,
-      operation: row.operation,
-      range: {
-        min1: row.min1,
-        max1: row.max1,
-        min2: row.min2,
-        max2: row.max2,
-      },
-      date: row.date,
-    }));
+    
+    const scores: UserScore[] = (data || []).map((row) => {
+      const operation = validateOperation(row.operation);
+      return {
+        score: row.score,
+        operation,
+        range: {
+          min1: row.min1,
+          max1: row.max1,
+          min2: row.min2,
+          max2: row.max2,
+        },
+        date: row.date,
+      };
+    });
+    
     setScoreHistory(scores);
+  };
+
+  const validateOperation = (op: string): Operation => {
+    const validOperations: Operation[] = ['addition', 'subtraction', 'multiplication', 'division'];
+    if (validOperations.includes(op as Operation)) {
+      return op as Operation;
+    }
+    return 'addition';
   };
 
   const updateSettings = (newSettings: Partial<GameSettings>) => {
