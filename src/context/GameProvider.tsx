@@ -3,6 +3,7 @@ import { GameSettings, Operation, Problem, ProblemRange, UserScore } from '@/typ
 import { GameContextType, GameState, GameProviderProps } from './game-context-types';
 import GameContext from './GameContext';
 import { toast } from 'sonner';
+import { supabase } from "@/integrations/supabase/client";
 
 const defaultSettings: GameSettings = {
   operation: 'addition',
@@ -22,54 +23,75 @@ const GameProvider = ({ children }: GameProviderProps) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [username, setUsername] = useState('');
   const [focusNumber, setFocusNumber] = useState<number | null>(null);
-  
+  const [userId, setUserId] = useState<string | null>(null);
+
   useEffect(() => {
-    const savedUserData = localStorage.getItem('mathUserData');
-    if (savedUserData) {
-      try {
-        console.log('Loading user data from localStorage:', savedUserData);
-        const userData = JSON.parse(savedUserData);
-        setIsLoggedIn(true);
-        setUsername(userData.username || '');
-        if (Array.isArray(userData.scoreHistory)) {
-          console.log('Loaded score history:', userData.scoreHistory);
-          const validScores = userData.scoreHistory.filter((score: any) => 
-            score && 
-            typeof score === 'object' && 
-            score.operation && 
-            score.date && 
-            score.range && 
-            typeof score.range === 'object' &&
-            'min1' in score.range &&
-            'max1' in score.range &&
-            'min2' in score.range &&
-            'max2' in score.range
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        if (session?.user) {
+          setIsLoggedIn(true);
+          setUserId(session.user.id);
+          setUsername(
+            session.user.user_metadata?.name ??
+            session.user.email?.split('@')[0] ??
+            session.user.email ??
+            ""
           );
-          setScoreHistory(validScores);
         } else {
-          setScoreHistory([]);
+          setIsLoggedIn(false);
+          setUserId(null);
+          setUsername('');
         }
-      } catch (error) {
-        console.error('Error parsing saved user data:', error);
-        setIsLoggedIn(false);
-        setUsername('');
-        setScoreHistory([]);
-        toast.error('Error loading your saved data');
       }
-    }
+    );
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        setIsLoggedIn(true);
+        setUserId(session.user.id);
+        setUsername(
+          session.user.user_metadata?.name ??
+          session.user.email?.split('@')[0] ??
+          session.user.email ??
+          ""
+        );
+      }
+    });
+
+    return () => { subscription.unsubscribe(); };
   }, []);
-  
+
   useEffect(() => {
-    if (isLoggedIn && username) {
-      const userData = {
-        username,
-        scoreHistory
-      };
-      const dataString = JSON.stringify(userData);
-      console.log('Saving user data to localStorage:', dataString);
-      localStorage.setItem('mathUserData', dataString);
+    if (isLoggedIn && userId) {
+      fetchUserScores(userId);
+    } else {
+      setScoreHistory([]);
     }
-  }, [isLoggedIn, username, scoreHistory]);
+  }, [isLoggedIn, userId]);
+
+  const fetchUserScores = async (uid: string) => {
+    const { data, error } = await supabase
+      .from('scores')
+      .select('score, operation, min1, max1, min2, max2, date')
+      .eq('user_id', uid)
+      .order('date', { ascending: false });
+    if (error) {
+      toast.error('Failed to load your scores');
+      setScoreHistory([]);
+      return;
+    }
+    const scores: UserScore[] = (data || []).map((row) => ({
+      score: row.score,
+      operation: row.operation,
+      range: {
+        min1: row.min1,
+        max1: row.max1,
+        min2: row.min2,
+        max2: row.max2,
+      },
+      date: row.date,
+    }));
+    setScoreHistory(scores);
+  };
 
   const updateSettings = (newSettings: Partial<GameSettings>) => {
     setSettings(prev => {
@@ -80,24 +102,20 @@ const GameProvider = ({ children }: GameProviderProps) => {
   };
 
   const incrementScore = () => setScore(prev => prev + 1);
-  
+
   const resetScore = () => setScore(0);
-  
+
   const getIsHighScore = (newScore: number, operation: Operation, range: ProblemRange) => {
     if (scoreHistory.length === 0) return true;
-    
-    const matchingScores = scoreHistory.filter(s => 
-      s.operation === operation && 
-      s.range.min1 === range.min1 && 
-      s.range.max1 === range.max1 && 
-      s.range.min2 === range.min2 && 
+    const matchingScores = scoreHistory.filter(s =>
+      s.operation === operation &&
+      s.range.min1 === range.min1 &&
+      s.range.max1 === range.max1 &&
+      s.range.min2 === range.min2 &&
       s.range.max2 === range.max2
     );
-    
     if (matchingScores.length === 0) return true;
-    
     const highestScore = Math.max(...matchingScores.map(s => s.score));
-    
     return newScore > highestScore;
   };
 
@@ -105,7 +123,6 @@ const GameProvider = ({ children }: GameProviderProps) => {
     const { operation, range, allowNegatives = false } = settings;
     let { min1, max1, min2, max2 } = range;
 
-    // Enable negatives if allowed
     const random = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1)) + min;
     if (!allowNegatives) {
       min1 = Math.max(min1, 1); max1 = Math.max(max1, 1);
@@ -123,7 +140,6 @@ const GameProvider = ({ children }: GameProviderProps) => {
         case 'subtraction':
           num1 = focusNumber;
           num2 = random(min2, max2);
-          // Allow negatives, but if not allowed, swap to non-neg
           if (!allowNegatives && num1 < num2) [num1, num2] = [num2, num1];
           answer = num1 - num2;
           break;
@@ -133,7 +149,6 @@ const GameProvider = ({ children }: GameProviderProps) => {
           answer = num1 * num2;
           break;
         case 'division':
-          // Division logic: focusNumber as divisor (no repeated answer)
           num2 = focusNumber;
           answer = random(min1, max1);
           num1 = answer * num2;
@@ -159,9 +174,8 @@ const GameProvider = ({ children }: GameProviderProps) => {
           answer = num1 * num2;
           break;
         case 'division':
-          // Division: treat the selected range as denominator/answer (see above)
           answer = random(min1, max1);
-          num2 = random(min2, max2) || 1; // Avoid zero division
+          num2 = random(min2, max2) || 1;
           if (num2 === 0) num2 = 1;
           num1 = answer * num2;
           break;
@@ -172,37 +186,30 @@ const GameProvider = ({ children }: GameProviderProps) => {
     }
   };
 
-  const saveScore = () => {
-    if (isLoggedIn && score > 0) {
-      console.log('Saving score:', score, 'for operation:', settings.operation);
-      const newScore: UserScore = {
+  const saveScore = async () => {
+    if (isLoggedIn && score > 0 && userId) {
+      const newScore = {
         score,
         operation: settings.operation,
-        range: {
-          min1: settings.range.min1,
-          max1: settings.range.max1,
-          min2: settings.range.min2,
-          max2: settings.range.max2
-        },
+        min1: settings.range.min1,
+        max1: settings.range.max1,
+        min2: settings.range.min2,
+        max2: settings.range.max2,
         date: new Date().toISOString(),
+        user_id: userId,
       };
-      
-      const newHistory = Array.isArray(scoreHistory) ? [...scoreHistory] : [];
-      
-      newHistory.push(newScore);
-      console.log('Updated score history:', newHistory);
-      
-      setScoreHistory(newHistory);
-      
-      const userData = {
-        username,
-        scoreHistory: newHistory
-      };
-      localStorage.setItem('mathUserData', JSON.stringify(userData));
-      
+      const { error } = await supabase
+        .from('scores')
+        .insert([newScore]);
+      if (error) {
+        toast.error('Failed to save your score');
+        return false;
+      }
+      fetchUserScores(userId);
+      toast.success('Score saved!');
       return true;
     } else {
-      console.log('Not saving score: user not logged in or score is 0', { isLoggedIn, score });
+      toast.info('Log in to save your score.');
       return false;
     }
   };
@@ -234,7 +241,7 @@ const GameProvider = ({ children }: GameProviderProps) => {
     setUsername,
     focusNumber,
     setFocusNumber,
-    getIsHighScore
+    getIsHighScore,
   };
 
   return (

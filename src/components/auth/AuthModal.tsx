@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
-import { useGame } from '@/context/useGame'; // Now using the named export
+import { useGame } from '@/context/useGame';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -14,8 +15,6 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-
-// Import Select UI
 import {
   Select,
   SelectTrigger,
@@ -47,87 +46,122 @@ const GRADE_OPTIONS = [
 const AuthModal = ({ children }: AuthModalProps) => {
   const { setIsLoggedIn, setUsername } = useGame();
   const [isOpen, setIsOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<'login' | 'register'>('login');
+  const [activeTab, setActiveTab] = useState<'login' | 'register' | 'forgot'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [grade, setGrade] = useState<string>('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [successMsg, setSuccessMsg] = useState('');
 
-  // Effect to handle cleanup when dialog state changes
   useEffect(() => {
-    // Cleanup function to ensure body interaction is restored
     return () => {
       document.body.classList.remove('ReactModal__Body--open');
       document.body.style.pointerEvents = '';
     };
   }, [isOpen]);
 
-  // Handle dialog state change
   const handleOpenChange = (open: boolean) => {
     setIsOpen(open);
     if (!open) {
-      // Ensure body is interactive when dialog closes
       document.body.style.pointerEvents = '';
       document.body.classList.remove('ReactModal__Body--open');
+      setError('');
+      setSuccessMsg('');
+      setPassword('');
     }
   };
 
-  // Mock login functionality (would connect to backend in the future)
-  const handleLogin = (e: React.FormEvent) => {
+  // LOGIN: check real password/email using supabase
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
     setError('');
-    
-    // Simulate API call
-    setTimeout(() => {
-      setIsLoading(false);
-      
-      // Basic validation
-      if (!email || !password) {
-        setError('Please fill in all fields');
-        return;
-      }
-      
-      // Mock successful login
+    setIsLoading(true);
+    setSuccessMsg('');
+    const { data, error: supaError } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+    setIsLoading(false);
+    if (supaError) {
+      setError(supaError.message === "Invalid login credentials" ?
+        "Email or password incorrect" : supaError.message);
+      return;
+    }
+    if (data && data.user) {
       setIsLoggedIn(true);
-      setUsername(email.split('@')[0]); // Use part of email as username
+      setUsername(data.user.email?.split('@')[0] || data.user.email || "");
       handleOpenChange(false);
-      
-      // Reset form
-      setEmail('');
-      setPassword('');
-    }, 1000);
+    }
+    setEmail('');
+    setPassword('');
   };
-  
-  // Mock registration functionality (now with grade)
-  const handleRegister = (e: React.FormEvent) => {
+
+  // REGISTER: create user via supabase, then set username/grade in public metadata
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
     setError('');
-    
-    // Simulate API call
-    setTimeout(() => {
+    setSuccessMsg('');
+    setIsLoading(true);
+    if (!name || !email || !password || !grade) {
+      setError('Please fill in all fields');
       setIsLoading(false);
-      
-      // Basic validation
-      if (!name || !email || !password || !grade) {
-        setError('Please fill in all fields');
-        return;
+      return;
+    }
+    // Register via supabase
+    const { data, error: supaError } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: { name, grade }
       }
-      
-      // Mock successful registration and login
-      setIsLoggedIn(true);
-      setUsername(name);
-      handleOpenChange(false);
-      
-      // Reset form
-      setName('');
-      setGrade('');
-      setEmail('');
-      setPassword('');
-    }, 1000);
+    });
+    setIsLoading(false);
+
+    if (supaError) {
+      setError(supaError.message.includes("already registered") ? "Email already registered." : supaError.message);
+      return;
+    }
+
+    // If confirmation required, tell user
+    if (!data.user) {
+      setSuccessMsg("Please check your email to confirm your registration!");
+      return;
+    }
+
+    setIsLoggedIn(true);
+    setUsername(name);
+    setGrade('');
+    setName('');
+    setEmail('');
+    setPassword('');
+    handleOpenChange(false);
+  };
+
+  // FORGOT PASSWORD flow
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setSuccessMsg('');
+    setIsLoading(true);
+
+    if (!email) {
+      setError("Please enter your email");
+      setIsLoading(false);
+      return;
+    }
+
+    const { error: supaError } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: window.location.origin + '/'
+    });
+    setIsLoading(false);
+
+    if (supaError) {
+      setError(supaError.message);
+      return;
+    }
+    setSuccessMsg("Password reset email sent! Check your inbox.");
   };
 
   return (
@@ -142,54 +176,65 @@ const AuthModal = ({ children }: AuthModalProps) => {
             Sign in or create an account to save your progress
           </DialogDescription>
         </DialogHeader>
-        <Tabs defaultValue="login" value={activeTab} onValueChange={(value) => setActiveTab(value as 'login' | 'register')}>
+        <Tabs defaultValue="login" value={activeTab} onValueChange={(value) => setActiveTab(value as any)}>
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="login">Login</TabsTrigger>
             <TabsTrigger value="register">Register</TabsTrigger>
           </TabsList>
-          
+
           {/* Login Tab */}
           <TabsContent value="login">
             <form onSubmit={handleLogin} className="space-y-4 py-4">
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
-                <Input 
-                  id="email" 
-                  type="email" 
-                  placeholder="your@email.com" 
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="your@email.com"
+                  autoComplete="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                 />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="password">Password</Label>
-                <Input 
-                  id="password" 
-                  type="password" 
+                <Input
+                  id="password"
+                  type="password"
                   value={password}
+                  autoComplete="current-password"
                   onChange={(e) => setPassword(e.target.value)}
                 />
               </div>
-              
+
               {error && <p className="text-sm text-destructive">{error}</p>}
-              
+              {successMsg && <p className="text-sm text-success">{successMsg}</p>}
+
               <DialogFooter>
                 <Button type="submit" disabled={isLoading} className="w-full">
                   {isLoading ? 'Signing in...' : 'Sign In'}
                 </Button>
               </DialogFooter>
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  className="mt-2 text-primary underline text-xs hover:text-accent"
+                  onClick={() => { setActiveTab('forgot'); setError(""); setSuccessMsg(""); }}>
+                  Forgot password?
+                </button>
+              </div>
             </form>
           </TabsContent>
-          
+
           {/* Register Tab */}
           <TabsContent value="register">
             <form onSubmit={handleRegister} className="space-y-4 py-4">
               <div className="space-y-2">
                 <Label htmlFor="name">Name</Label>
-                <Input 
-                  id="name" 
-                  type="text" 
-                  placeholder="Your name" 
+                <Input
+                  id="name"
+                  type="text"
+                  placeholder="Your name"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                 />
@@ -209,31 +254,66 @@ const AuthModal = ({ children }: AuthModalProps) => {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="reg-email">Email</Label>
-                <Input 
-                  id="reg-email" 
-                  type="email" 
-                  placeholder="your@email.com" 
+                <Input
+                  id="reg-email"
+                  type="email"
+                  placeholder="your@email.com"
+                  autoComplete="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                 />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="reg-password">Password</Label>
-                <Input 
-                  id="reg-password" 
-                  type="password" 
+                <Input
+                  id="reg-password"
+                  type="password"
                   value={password}
+                  autoComplete="new-password"
                   onChange={(e) => setPassword(e.target.value)}
                 />
               </div>
-              
+
               {error && <p className="text-sm text-destructive">{error}</p>}
-              
+              {successMsg && <p className="text-sm text-success">{successMsg}</p>}
+
               <DialogFooter>
                 <Button type="submit" disabled={isLoading} className="w-full">
                   {isLoading ? 'Creating Account...' : 'Create Account'}
                 </Button>
               </DialogFooter>
+            </form>
+          </TabsContent>
+
+          {/* Forgot Password Tab */}
+          <TabsContent value="forgot">
+            <form onSubmit={handleForgotPassword} className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="forgot-email">Email</Label>
+                <Input
+                  id="forgot-email"
+                  type="email"
+                  placeholder="your@email.com"
+                  autoComplete="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+              </div>
+              {error && <p className="text-sm text-destructive">{error}</p>}
+              {successMsg && <p className="text-sm text-success">{successMsg}</p>}
+              <DialogFooter>
+                <Button type="submit" disabled={isLoading} className="w-full">
+                  {isLoading ? 'Sending...' : 'Send Reset Email'}
+                </Button>
+              </DialogFooter>
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  className="mt-2 text-primary underline text-xs hover:text-accent"
+                  onClick={() => { setActiveTab('login'); setError(""); setSuccessMsg(""); }}>
+                  Back to Login
+                </button>
+              </div>
             </form>
           </TabsContent>
         </Tabs>
@@ -243,4 +323,3 @@ const AuthModal = ({ children }: AuthModalProps) => {
 };
 
 export default AuthModal;
-
