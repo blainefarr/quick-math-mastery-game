@@ -2,14 +2,18 @@
 import * as React from "react"
 import { cn } from "@/lib/utils"
 import { Plus, Minus } from "lucide-react"
+
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   toggleNegative?: boolean;
   isNegative?: boolean;
   onToggleNegative?: () => void;
 }
+
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
   ({ className, type = "text", toggleNegative, isNegative, onToggleNegative, ...props }, ref) => {
-    // Remove browser number spinners and use numeric keyboard on mobile
+    // Ensure we have proper spacing for the toggle button
+    const toggleButtonSpacing = toggleNegative ? "pl-10" : undefined;
+    
     return (
       <div className={toggleNegative ? "relative flex items-center" : undefined}>
         {toggleNegative && (
@@ -25,21 +29,28 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
         )}
         <input
           type={type}
-          inputMode={type === "number" || type === "text" ? "numeric" : undefined}
-          pattern={type === "number" || type === "text" ? "[0-9]*" : undefined}
+          inputMode={type === "number" ? "numeric" : undefined}
+          pattern={type === "number" ? "[0-9]*" : undefined}
           // Prevent up/down arrows
           className={cn(
             "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
-            toggleNegative && "pl-9",
+            toggleButtonSpacing,
             "appearance-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none",
             className
           )}
           ref={ref}
           {...props}
+          // Add automatic selection on focus
+          onFocus={(e) => {
+            e.target.select();
+            if (props.onFocus) props.onFocus(e);
+          }}
         />
       </div>
     );
   }
 );
+
 Input.displayName = "Input";
+
 export { Input }
