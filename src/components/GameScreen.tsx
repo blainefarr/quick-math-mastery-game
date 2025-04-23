@@ -24,6 +24,7 @@ const GameScreen = () => {
   } = useGame();
 
   const [feedback, setFeedback] = useState<'correct' | 'incorrect' | null>(null);
+  const [isNegative, setIsNegative] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -57,6 +58,11 @@ const GameScreen = () => {
     return () => clearInterval(timer);
   }, []);
 
+  // Reset isNegative when a new problem is generated
+  useEffect(() => {
+    setIsNegative(false);
+  }, [currentProblem]);
+
   const focusInput = () => {
     setTimeout(() => {
       if (inputRef.current) {
@@ -89,23 +95,36 @@ const GameScreen = () => {
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newValue = e.target.value;
-    setUserAnswer(newValue);
+    const rawValue = e.target.value;
+    // Remove any minus sign as we handle it separately
+    const cleanValue = rawValue.replace(/^-/, '');
+    setUserAnswer(cleanValue);
 
-    if (currentProblem) {
-      if (newValue.trim() === "") return;
-      if (Number(newValue) === currentProblem.answer) {
+    // Check if the answer is correct
+    if (currentProblem && cleanValue.trim() !== "") {
+      const numericValue = isNegative ? -Number(cleanValue) : Number(cleanValue);
+      
+      if (numericValue === currentProblem.answer) {
         setFeedback('correct');
         incrementScore();
         setTimeout(() => {
           setUserAnswer('');
           setFeedback(null);
+          setIsNegative(false);
           generateNewProblem();
           focusInput();
         }, 100);
       }
     }
   };
+
+  const toggleNegative = () => {
+    setIsNegative(prev => !prev);
+    focusInput();
+  };
+
+  // Determine if we should show the negative toggle
+  const showNegativeToggle = settings.allowNegatives;
 
   return (
     <div className="flex justify-center items-center min-h-screen p-4 bg-background">
@@ -137,13 +156,19 @@ const GameScreen = () => {
               <Input
                 ref={inputRef}
                 type="number"
-                inputMode="tel"
-                pattern="^-?\\d*$"
                 value={userAnswer}
                 onChange={handleInputChange}
-                className="text-4xl md:text-6xl w-24 md:w-32 h-16 text-center font-bold p-0 border-b-4 focus-visible:ring-0 focus-visible:ring-offset-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                className="text-4xl md:text-6xl w-24 md:w-32 h-16 text-center font-bold p-0 border-b-4 focus-visible:ring-0 focus-visible:ring-offset-0"
                 autoFocus
+                toggleNegative={showNegativeToggle}
+                isNegative={isNegative}
+                onToggleNegative={toggleNegative}
               />
+              
+              {/* Display the negative sign when isNegative is true */}
+              {isNegative && (
+                <span className="absolute top-1/2 transform -translate-y-1/2 -left-4 text-4xl md:text-6xl">-</span>
+              )}
               
               {feedback && (
                 <div 
