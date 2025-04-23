@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import useGame from '@/context/useGame';
 import { Button } from '@/components/ui/button';
@@ -95,7 +94,6 @@ const OperationSelection = () => {
       return;
     }
     
-    // Reset score when starting a new game
     resetScore();
     
     updateSettings({
@@ -127,7 +125,7 @@ const OperationSelection = () => {
         </CardHeader>
         
         <CardContent className="space-y-6">
-          <div className="space-y-2">
+          <div className="space-y-2 mb-6">
             <h3 className="text-lg font-medium">Operation</h3>
             <Tabs 
               defaultValue={selectedOperation} 
