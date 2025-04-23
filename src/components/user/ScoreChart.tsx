@@ -1,7 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
 import { UserScore } from '@/types';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card } from '@/components/ui/card';
 import { BarChart, CartesianGrid, XAxis, YAxis, Tooltip, Legend, Bar, ResponsiveContainer } from 'recharts';
 
@@ -10,7 +9,6 @@ interface ScoreChartProps {
 }
 
 const ScoreChart = ({ scores = [] }: ScoreChartProps) => {
-  const [operationFilter, setOperationFilter] = useState<string>('all');
   const [validScores, setValidScores] = useState<UserScore[]>([]);
   
   // Process scores on component mount and when scores prop changes
@@ -46,13 +44,8 @@ const ScoreChart = ({ scores = [] }: ScoreChartProps) => {
     }
   };
   
-  // Filter scores by selected operation
-  const filteredScores = validScores.filter(score => {
-    return operationFilter === 'all' || score.operation === operationFilter;
-  });
-  
   // Sort scores by date (chronological order) with error handling
-  const sortedScores = [...filteredScores].sort((a, b) => {
+  const sortedScores = [...validScores].sort((a, b) => {
     try {
       return new Date(a.date).getTime() - new Date(b.date).getTime();
     } catch (error) {
@@ -90,24 +83,7 @@ const ScoreChart = ({ scores = [] }: ScoreChartProps) => {
 
   return (
     <div>
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-4">
-        <h3 className="text-lg font-medium">Your Progress</h3>
-        
-        <div className="flex flex-col sm:flex-row gap-2">
-          <Select value={operationFilter} onValueChange={setOperationFilter}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Filter by operation" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Operations</SelectItem>
-              <SelectItem value="addition">Addition</SelectItem>
-              <SelectItem value="subtraction">Subtraction</SelectItem>
-              <SelectItem value="multiplication">Multiplication</SelectItem>
-              <SelectItem value="division">Division</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
+      <h3 className="text-lg font-medium mb-4">Your Progress</h3>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
         <Card className="p-4">

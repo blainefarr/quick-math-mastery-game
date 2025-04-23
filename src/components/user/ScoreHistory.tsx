@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { UserScore } from '@/types';
 import {
   Table,
@@ -9,13 +9,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Card } from '@/components/ui/card';
 
 interface ScoreHistoryProps {
@@ -23,7 +16,6 @@ interface ScoreHistoryProps {
 }
 
 const ScoreHistory = ({ scores = [] }: ScoreHistoryProps) => {
-  const [operationFilter, setOperationFilter] = useState<string>('all');
   const [validScores, setValidScores] = useState<UserScore[]>([]);
   
   // Process scores on component mount and when scores prop changes
@@ -73,13 +65,8 @@ const ScoreHistory = ({ scores = [] }: ScoreHistoryProps) => {
     }
   };
   
-  // Filter scores by selected operation
-  const filteredScores = validScores.filter(score => {
-    return operationFilter === 'all' || score.operation === operationFilter;
-  });
-  
   // Sort scores by date (newest first) with error handling
-  const sortedScores = [...filteredScores].sort((a, b) => {
+  const sortedScores = [...validScores].sort((a, b) => {
     try {
       return new Date(b.date).getTime() - new Date(a.date).getTime();
     } catch (error) {
@@ -100,24 +87,7 @@ const ScoreHistory = ({ scores = [] }: ScoreHistoryProps) => {
 
   return (
     <div>
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-4">
-        <h3 className="text-lg font-medium">Your Score History</h3>
-        
-        <div className="flex flex-col sm:flex-row gap-2">
-          <Select value={operationFilter} onValueChange={setOperationFilter}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Filter by operation" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Operations</SelectItem>
-              <SelectItem value="addition">Addition</SelectItem>
-              <SelectItem value="subtraction">Subtraction</SelectItem>
-              <SelectItem value="multiplication">Multiplication</SelectItem>
-              <SelectItem value="division">Division</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
+      <h3 className="text-lg font-medium mb-4">Your Score History</h3>
       
       {sortedScores.length === 0 ? (
         <Card className="p-8 text-center">

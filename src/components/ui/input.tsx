@@ -11,15 +11,7 @@ interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
 
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
   ({ className, type, toggleNegative, isNegative, onToggleNegative, ...props }, ref) => {
-    // Special handling for number inputs to work better on mobile
-    const inputProps = type === "number"
-      ? {
-          inputMode: "tel" as React.HTMLAttributes<HTMLInputElement>["inputMode"],
-          pattern: "^-?\\d*$",
-          ...props
-        }
-      : props;
-
+    // Input should go back to being a standard number input
     return (
       <div className={toggleNegative ? "relative flex items-center" : undefined}>
         {toggleNegative && (
@@ -35,12 +27,12 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
         <input
           type={type}
           className={cn(
-            "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [&[type='number']]:appearance-textfield",
+            "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
             toggleNegative && "pl-9",
             className
           )}
           ref={ref}
-          {...inputProps}
+          {...props}
         />
       </div>
     );

@@ -198,9 +198,10 @@ const UserProfile = () => {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Operations</SelectItem>
-                    {uniqueOperations.map((op, idx) => (
-                      <SelectItem key={idx} value={op}>{op.charAt(0).toUpperCase() + op.slice(1)}</SelectItem>
-                    ))}
+                    <SelectItem value="addition">Addition</SelectItem>
+                    <SelectItem value="subtraction">Subtraction</SelectItem>
+                    <SelectItem value="multiplication">Multiplication</SelectItem>
+                    <SelectItem value="division">Division</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
