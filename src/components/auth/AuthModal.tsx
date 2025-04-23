@@ -91,7 +91,7 @@ const AuthModal = ({ children }: AuthModalProps) => {
     }
     if (data && data.user) {
       setIsLoggedIn(true);
-      setUsername(data.user.email?.split('@')[0] || data.user.email || "");
+      setUsername(data.user.user_metadata?.name || data.user.email?.split('@')[0] || data.user.email || "");
       handleOpenChange(false);
     }
     setEmail('');
@@ -109,18 +109,24 @@ const AuthModal = ({ children }: AuthModalProps) => {
       setIsLoading(false);
       return;
     }
-    // Register via supabase
+    
+    // Register via supabase with metadata
     const { data, error: supaError } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        data: { name, grade }
+        data: {
+          name,
+          grade
+        }
       }
     });
+    
     setIsLoading(false);
 
     if (supaError) {
-      setError(supaError.message.includes("already registered") ? "Email already registered." : supaError.message);
+      setError(supaError.message.includes("already registered") ? 
+        "Email already registered." : supaError.message);
       return;
     }
 
@@ -132,10 +138,10 @@ const AuthModal = ({ children }: AuthModalProps) => {
 
     setIsLoggedIn(true);
     setUsername(name);
-    setGrade('');
     setName('');
     setEmail('');
     setPassword('');
+    setGrade('');
     handleOpenChange(false);
   };
 

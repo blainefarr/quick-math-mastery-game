@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { GameSettings, Operation, Problem, ProblemRange, UserScore } from '@/types';
 import { GameContextType, GameState, GameProviderProps } from './game-context-types';
@@ -216,6 +217,7 @@ const GameProvider = ({ children }: GameProviderProps) => {
         .insert([newScore]);
       if (error) {
         toast.error('Failed to save your score');
+        console.error('Score save error:', error);
         return false;
       }
       fetchUserScores(userId);
