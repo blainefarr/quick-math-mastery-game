@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import useGame from '@/context/useGame';
 import { Button } from '@/components/ui/button';
@@ -17,10 +16,8 @@ const EndScreen = () => {
     getIsHighScore 
   } = useGame();
   
-  // Determine if this is a high score
   const isHighScore = getIsHighScore(score, settings.operation, settings.range);
   
-  // Show confetti effect when component mounts
   useEffect(() => {
     const audio = new Audio();
     audio.src = 'data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA/+M4wAAAAAAAAAAAAEluZm8AAAAPAAAAAwAAACsAWlpaWlpaWlpaWlp6enp6enp6enp6epqampqampqampqaurq6urq6urq6urra2tra2tra2tra2vr6+vr6+vr6+vr6GhoaGhoaGhoaGho6Ojo6Ojo6Ojo6OlpaWlpaWlpaWlp6enp6enp6enp6epqampqampqampqa//NCxAAAAANIAAAAAurq6urq6urq6ura2tra2tra2tra2vr6+vr6+vr6+vr6GhoaGhoaGhoaGho6Ojo6Ojo6Ojo6OlpaWlpaWlpaWlpaqqqqqqqqqqqqqqqqqqqqqqqqv/zgMSAAACQABzxQAhAgBgeM4yqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//+ZVZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZ';
@@ -28,20 +25,17 @@ const EndScreen = () => {
     audio.play();
   }, []);
   
-  // Restart game with the same settings
   const handleRestart = () => {
     resetScore();
     setTimeLeft(settings.timerSeconds);
     setGameState('playing');
   };
   
-  // Return to selection screen
   const handleBackToSelection = () => {
     resetScore();
     setGameState('selection');
   };
   
-  // Get operation name in readable format
   const getOperationName = () => {
     switch (settings.operation) {
       case 'addition': return 'Addition';
@@ -52,7 +46,6 @@ const EndScreen = () => {
     }
   };
   
-  // Get range description for high score message
   const getRangeDescription = () => {
     const { min1, max1, min2, max2 } = settings.range;
     return `${min1}-${max1} and ${min2}-${max2}`;
@@ -60,10 +53,8 @@ const EndScreen = () => {
 
   return (
     <div className="flex justify-center items-center min-h-screen p-4 animate-fade-in">
-      {/* Show confetti effect based on score */}
       <ConfettiEffect score={score} />
-      
-      <Card className="w-full max-w-md shadow-xl">
+      <Card className="w-full max-w-md shadow-xl mt-0">
         <CardHeader className="text-center">
           <CardTitle className="text-3xl font-bold text-primary">Game Over!</CardTitle>
           <CardDescription>Your performance summary</CardDescription>
