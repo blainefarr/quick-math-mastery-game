@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { GameSettings, Operation, Problem, ProblemRange, UserScore } from '@/types';
 import { GameContextType, GameState, GameProviderProps } from './game-context-types';
@@ -137,49 +136,46 @@ const GameProvider = ({ children }: GameProviderProps) => {
         num2 = 1;
       }
       
-      // For division, ensure we get whole number answers
-      let adjustedNum1 = num1;
-      if (operation === 'division') {
-        adjustedNum1 = num1 * num2; // This guarantees a whole number result
-      }
-      
-      // For subtraction, ensure no negative results if needed
-      if (operation === 'subtraction' && num1 < num2) {
-        // Swap numbers to ensure positive result
-        const temp = adjustedNum1;
-        adjustedNum1 = num2;
-        num2 = temp;
-      }
-      
-      // Calculate answer
       let answer: number;
+      let adjustedNum1 = num1;
+      
+      // Handle operations differently to ensure whole number results
       switch (operation) {
         case 'addition':
           answer = num1 + num2;
           break;
         case 'subtraction':
+          // Ensure positive result
+          if (num1 < num2) {
+            const temp = num1;
+            adjustedNum1 = num2;
+            num2 = temp;
+          }
           answer = adjustedNum1 - num2;
           break;
         case 'multiplication':
           answer = num1 * num2;
           break;
         case 'division':
-          answer = adjustedNum1 / num2;
+          // For division, START with the answer and work backwards
+          // This means num2 is the divisor, and we calculate the dividend (num1)
+          // to ensure we get whole number results
+          answer = num1; // The focus number becomes the answer
+          adjustedNum1 = answer * num2; // This guarantees a whole number result
           break;
         default:
           answer = 0;
       }
       
       setCurrentProblem({
-        num1: operation === 'subtraction' ? adjustedNum1 : num1,
+        num1: operation === 'division' ? adjustedNum1 : adjustedNum1,
         num2,
         operation,
         answer
       });
     } else {
-      // Regular random number generation (existing logic)
-      // Generate random numbers within range
-      const num1 = Math.floor(Math.random() * (max1 - min1 + 1)) + min1;
+      // Regular random number generation (without focus number)
+      let num1 = Math.floor(Math.random() * (max1 - min1 + 1)) + min1;
       let num2 = Math.floor(Math.random() * (max2 - min2 + 1)) + min2;
       
       // Ensure no division by zero
@@ -187,41 +183,37 @@ const GameProvider = ({ children }: GameProviderProps) => {
         num2 = 1;
       }
       
-      // For division, ensure we get whole number answers
-      let adjustedNum1 = num1;
-      if (operation === 'division') {
-        adjustedNum1 = num1 * num2; // This guarantees a whole number result
-      }
-      
-      // For subtraction, ensure no negative results if needed
-      if (operation === 'subtraction' && num1 < num2) {
-        // Swap numbers to ensure positive result
-        const temp = adjustedNum1;
-        adjustedNum1 = num2;
-        num2 = temp;
-      }
-      
-      // Calculate answer
       let answer: number;
+      
+      // Handle operations differently to ensure whole number results
       switch (operation) {
         case 'addition':
           answer = num1 + num2;
           break;
         case 'subtraction':
-          answer = adjustedNum1 - num2;
+          // Ensure positive result by swapping if needed
+          if (num1 < num2) {
+            const temp = num1;
+            num1 = num2;
+            num2 = temp;
+          }
+          answer = num1 - num2;
           break;
         case 'multiplication':
           answer = num1 * num2;
           break;
         case 'division':
-          answer = adjustedNum1 / num2;
+          // For division, START with 2 random numbers
+          // But use one as answer, one as divisor, then calculate dividend
+          answer = num1;
+          num1 = answer * num2; // This guarantees a whole number result
           break;
         default:
           answer = 0;
       }
       
       setCurrentProblem({
-        num1: operation === 'subtraction' ? adjustedNum1 : num1,
+        num1,
         num2,
         operation,
         answer

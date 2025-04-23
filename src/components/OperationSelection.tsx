@@ -125,8 +125,8 @@ const OperationSelection = () => {
         </CardHeader>
         
         <CardContent className="space-y-6">
-          <div className="space-y-2 mb-6">
-            <h3 className="text-lg font-medium">Operation</h3>
+          <div className="mb-10">
+            <h3 className="text-lg font-medium mb-3">Operation</h3>
             <Tabs 
               defaultValue={selectedOperation} 
               value={selectedOperation}
