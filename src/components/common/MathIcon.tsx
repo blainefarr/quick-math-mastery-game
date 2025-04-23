@@ -10,17 +10,16 @@ interface MathIconProps {
 }
 
 const MathIcon = ({ operation, size = 24, className = '' }: MathIconProps) => {
-  // Center the icon using a flex container
   return (
-    <span
-      className={`inline-flex items-center justify-center w-full h-full ${className}`}
-      style={{ minWidth: size, minHeight: size }}
+    <div
+      className={`inline-flex items-center justify-center ${className}`}
+      style={{ width: size, height: size }}
     >
       {operation === "addition" && <Plus size={size} />}
       {operation === "subtraction" && <Minus size={size} />}
       {operation === "multiplication" && <X size={size} />}
       {operation === "division" && <Divide size={size} />}
-    </span>
+    </div>
   );
 };
 

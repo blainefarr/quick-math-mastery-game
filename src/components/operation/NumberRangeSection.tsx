@@ -30,7 +30,8 @@ const NumberRangeSection = ({
             <Input
               id="range1-min"
               type="number"
-              inputMode="numeric"
+              inputMode="tel"
+              pattern="^-?\\d*$"
               value={range1.min}
               onChange={e => setRange1Min(e.target.value)}
               className="w-24"
@@ -44,7 +45,8 @@ const NumberRangeSection = ({
             <Input
               id="range1-max"
               type="number"
-              inputMode="numeric"
+              inputMode="tel"
+              pattern="^-?\\d*$"
               value={range1.max}
               onChange={e => setRange1Max(e.target.value)}
               className="w-24"
@@ -68,7 +70,8 @@ const NumberRangeSection = ({
             <Input
               id="range2-min"
               type="number"
-              inputMode="numeric"
+              inputMode="tel"
+              pattern="^-?\\d*$"
               value={range2.min}
               onChange={e => setRange2Min(e.target.value)}
               className="w-24"
@@ -81,7 +84,8 @@ const NumberRangeSection = ({
             <Input
               id="range2-max"
               type="number"
-              inputMode="numeric"
+              inputMode="tel"
+              pattern="^-?\\d*$"
               value={range2.max}
               onChange={e => setRange2Max(e.target.value)}
               className="w-24"

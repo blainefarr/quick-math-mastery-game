@@ -137,8 +137,8 @@ const GameScreen = () => {
               <Input
                 ref={inputRef}
                 type="number"
-                inputMode="numeric"
-                pattern="[0-9]*"
+                inputMode="tel"
+                pattern="^-?\\d*$"
                 value={userAnswer}
                 onChange={handleInputChange}
                 className="text-4xl md:text-6xl w-24 md:w-32 h-16 text-center font-bold p-0 border-b-4 focus-visible:ring-0 focus-visible:ring-offset-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"

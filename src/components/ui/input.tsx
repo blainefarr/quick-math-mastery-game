@@ -5,11 +5,11 @@ import { cn } from "@/lib/utils"
 
 const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
   ({ className, type, ...props }, ref) => {
-    // Always add inputMode and pattern if type === "number"
+    // Special handling for number inputs to work better on mobile
     const inputProps = type === "number"
       ? {
-          inputMode: "numeric" as React.HTMLAttributes<HTMLInputElement>["inputMode"],
-          pattern: "[0-9]*",
+          inputMode: "tel" as React.HTMLAttributes<HTMLInputElement>["inputMode"],
+          pattern: "^-?\\d*$",
           ...props
         }
       : props;
@@ -30,4 +30,3 @@ const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
 Input.displayName = "Input";
 
 export { Input }
-

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useGame } from '@/context/useGame';
 import { 
@@ -170,16 +171,15 @@ const UserProfile = () => {
             </DialogDescription>
           </DialogHeader>
           <div className="mt-4">
-            <div className="mb-4 flex items-end gap-4 flex-wrap">
-              <Label className="mr-2 text-base font-semibold">Filter:</Label>
-              <div>
-                <Label htmlFor="range-filter" className="text-[13px] block mb-1">Range</Label>
+            <div className="mb-4">
+              <Label className="mr-2 text-base font-semibold mb-2 block">Filter:</Label>
+              <div className="flex flex-wrap gap-4">
                 <Select
                   value={selectedRange}
                   onValueChange={setSelectedRange}
                 >
-                  <SelectTrigger className="w-[180px]" id="range-filter">
-                    <SelectValue placeholder="Select range" />
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="All Ranges" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Ranges</SelectItem>
@@ -188,15 +188,13 @@ const UserProfile = () => {
                     ))}
                   </SelectContent>
                 </Select>
-              </div>
-              <div>
-                <Label htmlFor="operation-filter" className="text-[13px] block mb-1">Operation</Label>
+                
                 <Select
                   value={selectedOperation}
                   onValueChange={setSelectedOperation}
                 >
-                  <SelectTrigger className="w-[150px]" id="operation-filter">
-                    <SelectValue placeholder="Select operation" />
+                  <SelectTrigger className="w-[150px]">
+                    <SelectValue placeholder="All Operations" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Operations</SelectItem>
