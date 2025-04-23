@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import useGame from '@/context/useGame';
 import { Button } from '@/components/ui/button';
@@ -52,7 +53,7 @@ const EndScreen = () => {
   };
 
   return (
-    <div className="flex justify-center items-center min-h-screen p-4 animate-fade-in">
+    <div className="flex justify-center items-center min-h-[calc(100vh-80px)] p-4 animate-fade-in">
       <ConfettiEffect score={score} />
       <Card className="w-full max-w-md shadow-xl mt-0">
         <CardHeader className="text-center">
