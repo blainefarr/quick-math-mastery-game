@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { UserScore, Operation, ProblemRange } from '@/types';
@@ -6,7 +5,7 @@ import { toast } from 'sonner';
 
 export const useScoreManagement = (userId: string | null) => {
   const [scoreHistory, setScoreHistory] = useState<UserScore[]>([]);
-  const [savingScore, setSavingScore] = useState(false); // Added to prevent concurrent saves
+  const [savingScore, setSavingScore] = useState(false);
 
   const fetchUserScores = useCallback(async () => {
     if (!userId) return [];
@@ -55,7 +54,6 @@ export const useScoreManagement = (userId: string | null) => {
     focusNumber: number | null = null,
     allowNegatives: boolean = false
   ) => {
-    // Log all input values to verify state at call time
     console.log('Calling saveScore with:', {
       score,
       operation,
@@ -66,7 +64,6 @@ export const useScoreManagement = (userId: string | null) => {
       userId
     });
 
-    // Prevent concurrent saves
     if (savingScore) {
       console.log('Already saving a score, skipping this request');
       return false;
@@ -83,7 +80,6 @@ export const useScoreManagement = (userId: string | null) => {
       return false;
     }
 
-    // Use nullish coalescing to ensure no undefined values
     const scoreData = {
       score,
       operation,
@@ -102,7 +98,6 @@ export const useScoreManagement = (userId: string | null) => {
       setSavingScore(true);
       console.log('About to save score data:', scoreData);
       
-      // Add throwOnError() to expose silent Supabase errors
       const { error } = await supabase
         .from('scores')
         .insert(scoreData)
@@ -110,22 +105,17 @@ export const useScoreManagement = (userId: string | null) => {
 
       if (error) {
         console.error('Error saving score:', error);
-        toast.error('Failed to save score');
-        setSavingScore(false);
         return false;
       }
 
       console.log('Score saved successfully:', score);
-      toast.success('Score saved!');
       
-      // Update scores after saving
       const updatedScores = await fetchUserScores();
       setScoreHistory(updatedScores);
       setSavingScore(false);
       return true;
     } catch (error) {
       console.error('Error saving score:', error);
-      toast.error('Failed to save score');
       setSavingScore(false);
       return false;
     }
@@ -155,6 +145,6 @@ export const useScoreManagement = (userId: string | null) => {
     fetchUserScores, 
     saveScore, 
     getIsHighScore,
-    savingScore  // Export this state so other components can check if we're currently saving
+    savingScore
   };
 };

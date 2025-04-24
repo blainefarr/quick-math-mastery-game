@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import useGame from '@/context/useGame';
 import { Button } from '@/components/ui/button';
@@ -164,10 +163,6 @@ const GameScreen = () => {
       settings.focusNumber || null,
       settings.allowNegatives || false
     );
-
-    if (success) {
-      toast.success('Game Saved');
-    }
 
     return success;
   };
