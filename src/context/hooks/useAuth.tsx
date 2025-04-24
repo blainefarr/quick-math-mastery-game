@@ -1,6 +1,7 @@
+
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 
 export const useAuth = () => {
   const [loading, setLoading] = useState(false);
@@ -12,15 +13,14 @@ export const useAuth = () => {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === 'SIGNED_OUT') {
-        toast({
-          title: "Successfully logged out",
-          variant: "default",
-        });
+        toast.dismiss('logout');
+        toast("Successfully logged out", { id: 'logout' });
       }
     });
 
     return () => {
       subscription.unsubscribe();
+      authListenerRef.current = false;
     };
   }, []);
 
@@ -49,11 +49,7 @@ export const useAuth = () => {
       sessionStorage.removeItem('supabase.auth.token');
       
     } catch (error: any) {
-      toast({
-        title: "Error logging out",
-        description: error.message,
-        variant: "destructive",
-      });
+      toast.error(error.message);
       return false;
     } finally {
       setLoading(false);
@@ -76,28 +72,10 @@ export const useAuth = () => {
     return true;
   }, []);
 
-  const resetPassword = useCallback(async (email: string) => {
-    try {
-      setLoading(true);
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/update-password`,
-      });
-      if (error) throw error;
-      toast.success("Password reset email sent!");
-    } catch (error: any) {
-      toast.error(error.message);
-      return false;
-    } finally {
-      setLoading(false);
-    }
-    return true;
-  }, []);
-
   return {
     login,
     logout,
     register,
-    resetPassword,
     loading
   };
 };

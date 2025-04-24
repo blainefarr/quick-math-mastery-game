@@ -40,7 +40,7 @@ const NumberRangeSection = ({
   setRange1Max,
   setRange2Min,
   setRange2Max,
-  timeLimit,
+  timeLimit = 60,
   onTimeChange
 }: NumberRangeSectionProps) => {
   const selectAllOnFocus = (e: React.FocusEvent<HTMLInputElement>) => {
@@ -138,7 +138,7 @@ const NumberRangeSection = ({
             </Tooltip>
           </TooltipProvider>
         </div>
-        <Select value={timeLimit?.toString()} onValueChange={onTimeChange}>
+        <Select defaultValue={timeLimit.toString()} onValueChange={onTimeChange}>
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="Select time limit" />
           </SelectTrigger>
