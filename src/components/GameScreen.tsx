@@ -43,18 +43,22 @@ const GameScreen = () => {
           clearInterval(timer);
           setGameState('ended');
           try {
-            saveScore().then(success => {
-              if (success) {
-                console.log('Game ended, score saved successfully:', score);
-              } else {
-                console.log('Game ended, could not save score:', score);
-                if (!isLoggedIn) {
-                  console.log('User not logged in - this is expected');
-                } else if (!userId) {
-                  console.error('No user ID available - this is unexpected');
+            saveScore()
+              .then(success => {
+                if (success) {
+                  console.log('Game ended, score saved successfully:', score);
+                } else {
+                  console.log('Game ended, could not save score:', score);
+                  if (!isLoggedIn) {
+                    console.log('User not logged in - this is expected');
+                  } else if (!userId) {
+                    console.error('No user ID available - this is unexpected');
+                  }
                 }
-              }
-            });
+              })
+              .catch(err => {
+                console.error('Error in promise handling:', err);
+              });
           } catch (err) {
             console.error('Error saving score:', err);
             toast.error('Failed to save your score');
@@ -93,16 +97,20 @@ const GameScreen = () => {
 
   const handleRestartGame = () => {
     try {
-      saveScore().then(success => {
-        if (success) {
-          console.log('Game restarted, score saved successfully:', score);
-        } else {
-          console.log('Game restarted, could not save score:', score);
-          if (!isLoggedIn) {
-            console.log('User not logged in - this is expected');
+      saveScore()
+        .then(success => {
+          if (success) {
+            console.log('Game restarted, score saved successfully:', score);
+          } else {
+            console.log('Game restarted, could not save score:', score);
+            if (!isLoggedIn) {
+              console.log('User not logged in - this is expected');
+            }
           }
-        }
-      });
+        })
+        .catch(err => {
+          console.error('Error in promise handling:', err);
+        });
     } catch (err) {
       console.error('Error saving score on restart:', err);
       toast.error('Failed to save your score');

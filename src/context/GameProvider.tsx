@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { GameSettings, Operation, Problem, ProblemRange, UserScore } from '@/types';
 import { GameContextType, GameState, GameProviderProps } from './game-context-types';
@@ -85,26 +84,32 @@ const GameProvider = ({ children }: GameProviderProps) => {
     }
     
     console.log('Received score data:', data);
-    const scores: UserScore[] = (data || []).map((row) => {
-      const operation = validateOperation(row.operation);
-      return {
-        score: row.score,
-        operation,
-        range: {
-          min1: row.min1,
-          max1: row.max1,
-          min2: row.min2,
-          max2: row.max2,
-        },
-        date: row.date,
-        duration: row.duration || settings.timerSeconds,
-        focusNumber: row.focus_number || null,
-        allowNegatives: row.allow_negatives || false
-      };
-    });
     
-    console.log('Processed score history:', scores);
-    setScoreHistory(scores);
+    if (Array.isArray(data)) {
+      const scores: UserScore[] = data.map((row) => {
+        const operation = validateOperation(row.operation);
+        return {
+          score: row.score,
+          operation,
+          range: {
+            min1: row.min1,
+            max1: row.max1,
+            min2: row.min2,
+            max2: row.max2,
+          },
+          date: row.date,
+          duration: row.duration || settings.timerSeconds,
+          focusNumber: row.focus_number || null,
+          allowNegatives: row.allow_negatives || false
+        };
+      });
+      
+      console.log('Processed score history:', scores);
+      setScoreHistory(scores);
+    } else {
+      console.error('Received non-array data from scores table:', data);
+      setScoreHistory([]);
+    }
   };
 
   const validateOperation = (op: string): Operation => {
@@ -283,6 +288,7 @@ const GameProvider = ({ children }: GameProviderProps) => {
     focusNumber,
     setFocusNumber,
     getIsHighScore,
+    userId
   };
 
   return (

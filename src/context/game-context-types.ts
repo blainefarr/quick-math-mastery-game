@@ -32,13 +32,13 @@ export interface GameContextType {
   
   // Score history
   scoreHistory: UserScore[];
-  saveScore: () => void;
+  saveScore: () => Promise<boolean>;
   
-  // Auth state (placeholder for future backend)
+  // Auth state
   isLoggedIn: boolean;
   setIsLoggedIn: (value: boolean) => void;
   
-  // Username (placeholder for future backend)
+  // Username
   username: string;
   setUsername: (name: string) => void;
   
@@ -48,6 +48,9 @@ export interface GameContextType {
   
   // Check for high score
   getIsHighScore: (newScore: number, operation: Operation, range: ProblemRange) => boolean;
+  
+  // User ID
+  userId: string | null;
 }
 
 export interface GameProviderProps {
