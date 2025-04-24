@@ -1,30 +1,32 @@
 
 import React, { useState, useEffect } from 'react';
-import { GameSettings, Operation, Problem, ProblemRange, UserScore } from '@/types';
-import { GameContextType, GameState, GameProviderProps } from './game-context-types';
+import { supabase } from '@/integrations/supabase/client';
 import GameContext from './GameContext';
-import { toast } from 'sonner';
-import { supabase } from "@/integrations/supabase/client";
-
-const defaultSettings: GameSettings = {
-  operation: 'addition',
-  range: { min1: 1, max1: 10, min2: 1, max2: 10 },
-  timerSeconds: 60,
-  allowNegatives: false // default
-};
+import { GameContextType, GameState, GameProviderProps } from './game-context-types';
+import { useGameSettings } from './hooks/useGameSettings';
+import { useProblemGenerator } from './hooks/useProblemGenerator';
+import { useScoreManagement } from './hooks/useScoreManagement';
 
 const GameProvider = ({ children }: GameProviderProps) => {
+  const { settings, updateSettings, resetSettings } = useGameSettings();
+  const { currentProblem, generateNewProblem } = useProblemGenerator();
+  
   const [gameState, setGameState] = useState<GameState>('selection');
-  const [settings, setSettings] = useState<GameSettings>(defaultSettings);
   const [score, setScore] = useState(0);
-  const [currentProblem, setCurrentProblem] = useState<Problem | null>(null);
-  const [timeLeft, setTimeLeft] = useState(defaultSettings.timerSeconds);
+  const [timeLeft, setTimeLeft] = useState(settings.timerSeconds);
   const [userAnswer, setUserAnswer] = useState('');
-  const [scoreHistory, setScoreHistory] = useState<UserScore[]>([]);
+  const [focusNumber, setFocusNumber] = useState<number | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [username, setUsername] = useState('');
-  const [focusNumber, setFocusNumber] = useState<number | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
+
+  const { 
+    scoreHistory, 
+    fetchUserScores, 
+    saveScore, 
+    getIsHighScore,
+    setScoreHistory 
+  } = useScoreManagement(userId);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -45,6 +47,7 @@ const GameProvider = ({ children }: GameProviderProps) => {
         }
       }
     );
+
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
         setIsLoggedIn(true);
@@ -63,208 +66,14 @@ const GameProvider = ({ children }: GameProviderProps) => {
 
   useEffect(() => {
     if (isLoggedIn && userId) {
-      fetchUserScores(userId);
-    } else {
-      setScoreHistory([]);
+      fetchUserScores().then(scores => {
+        setScoreHistory(scores);
+      });
     }
   }, [isLoggedIn, userId]);
 
-  const fetchUserScores = async (uid: string) => {
-    console.log('Fetching scores for user:', uid);
-    const { data, error } = await supabase
-      .from('scores')
-      .select('score, operation, min1, max1, min2, max2, date, duration, focus_number, allow_negatives')
-      .eq('user_id', uid)
-      .order('date', { ascending: false });
-    
-    if (error) {
-      console.error('Error fetching scores:', error);
-      toast.error('Failed to load your scores');
-      setScoreHistory([]);
-      return;
-    }
-    
-    console.log('Received score data:', data);
-    
-    if (Array.isArray(data)) {
-      const scores: UserScore[] = data.map((row) => {
-        const operation = validateOperation(row.operation);
-        return {
-          score: row.score ?? 0,
-          operation,
-          range: {
-            min1: row.min1 ?? 1,
-            max1: row.max1 ?? 10,
-            min2: row.min2 ?? 1,
-            max2: row.max2 ?? 10,
-          },
-          date: row.date || new Date().toISOString(),
-          duration: row.duration || settings.timerSeconds,
-          focusNumber: row.focus_number || null,
-          allowNegatives: row.allow_negatives || false
-        };
-      });
-      
-      console.log('Processed score history:', scores);
-      setScoreHistory(scores);
-    } else {
-      console.error('Received non-array data from scores table:', data);
-      setScoreHistory([]);
-    }
-  };
-
-  const validateOperation = (op: string): Operation => {
-    const validOperations: Operation[] = ['addition', 'subtraction', 'multiplication', 'division'];
-    if (validOperations.includes(op as Operation)) {
-      return op as Operation;
-    }
-    return 'addition';
-  };
-
-  const updateSettings = (newSettings: Partial<GameSettings>) => {
-    setSettings(prev => {
-      const updated = { ...prev, ...newSettings };
-      return updated;
-    });
-    setCurrentProblem(null);
-  };
-
   const incrementScore = () => setScore(prev => prev + 1);
-
   const resetScore = () => setScore(0);
-
-  const getIsHighScore = (newScore: number, operation: Operation, range: ProblemRange) => {
-    if (scoreHistory.length === 0) return true;
-    const matchingScores = scoreHistory.filter(s =>
-      s.operation === operation &&
-      s.range.min1 === range.min1 &&
-      s.range.max1 === range.max1 &&
-      s.range.min2 === range.min2 &&
-      s.range.max2 === range.max2
-    );
-    if (matchingScores.length === 0) return true;
-    const highestScore = Math.max(...matchingScores.map(s => s.score));
-    return newScore > highestScore;
-  };
-
-  const generateNewProblem = () => {
-    const { operation, range, allowNegatives = false } = settings;
-    let { min1, max1, min2, max2 } = range;
-
-    const random = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1)) + min;
-    if (!allowNegatives) {
-      min1 = Math.max(min1, 1); max1 = Math.max(max1, 1);
-      min2 = Math.max(min2, 1); max2 = Math.max(max2, 1);
-    }
-
-    if (focusNumber !== null) {
-      let num1: number, num2: number, answer: number;
-      switch (operation) {
-        case 'addition':
-          num1 = focusNumber;
-          num2 = random(min2, max2);
-          answer = num1 + num2;
-          break;
-        case 'subtraction':
-          num1 = focusNumber;
-          num2 = random(min2, max2);
-          if (!allowNegatives && num1 < num2) [num1, num2] = [num2, num1];
-          answer = num1 - num2;
-          break;
-        case 'multiplication':
-          num1 = focusNumber;
-          num2 = random(min2, max2);
-          answer = num1 * num2;
-          break;
-        case 'division':
-          num2 = focusNumber;
-          answer = random(min1, max1);
-          num1 = answer * num2;
-          break;
-        default:
-          num1 = 0; num2 = 0; answer = 0;
-      }
-      setCurrentProblem({ num1, num2, operation, answer });
-    } else {
-      let num1 = random(min1, max1);
-      let num2 = random(min2, max2);
-      let answer: number;
-
-      switch (operation) {
-        case 'addition':
-          answer = num1 + num2;
-          break;
-        case 'subtraction':
-          if (!allowNegatives && num1 < num2) [num1, num2] = [num2, num1];
-          answer = num1 - num2;
-          break;
-        case 'multiplication':
-          answer = num1 * num2;
-          break;
-        case 'division':
-          answer = random(min1, max1);
-          num2 = random(min2, max2) || 1;
-          if (num2 === 0) num2 = 1;
-          num1 = answer * num2;
-          break;
-        default:
-          answer = 0;
-      }
-      setCurrentProblem({ num1, num2, operation, answer });
-    }
-  };
-
-  const saveScore = async () => {
-    if (!isLoggedIn || score <= 0 || !userId) {
-      if (!isLoggedIn) {
-        toast.info('Log in to save your score.');
-      }
-      return false;
-    }
-    
-    console.log('Saving score with the following details:');
-    console.log('User ID:', userId);
-    console.log('Score:', score);
-    console.log('Operation:', settings.operation);
-    console.log('Range:', settings.range);
-    console.log('Duration:', settings.timerSeconds);
-    console.log('Focus Number:', focusNumber);
-    console.log('Allow Negatives:', settings.allowNegatives);
-    
-    const newScore = {
-      score,
-      operation: settings.operation,
-      min1: settings.range.min1,
-      max1: settings.range.max1,
-      min2: settings.range.min2,
-      max2: settings.range.max2,
-      date: new Date().toISOString(),
-      user_id: userId,
-      duration: settings.timerSeconds,
-      focus_number: focusNumber,
-      allow_negatives: settings.allowNegatives || false
-    };
-    
-    const { error } = await supabase
-      .from('scores')
-      .insert([newScore]);
-      
-    if (error) {
-      console.error('Score save error:', error);
-      toast.error('Failed to save your score');
-      return false;
-    }
-    
-    console.log('Score saved successfully');
-    fetchUserScores(userId);
-    toast.success('Score saved!');
-    return true;
-  };
-
-  useEffect(() => {
-    document.body.classList.remove('ReactModal__Body--open');
-    document.body.style.pointerEvents = '';
-  }, [gameState]);
 
   const value: GameContextType = {
     gameState,
