@@ -1,4 +1,3 @@
-
 import React from 'react';
 
 interface NumberRangeSectionProps {
@@ -50,15 +49,13 @@ const NumberRangeSection = ({
     e.target.select();
   };
 
-  // Handle either direct min/max props or range1/range2 props
   const renderRangeInputs = () => {
     if (range1 && range2 && setRange1Min && setRange1Max && setRange2Min && setRange2Max) {
-      // Using the new props structure
       return (
         <div className="flex flex-col sm:flex-row sm:justify-between sm:gap-6 w-full">
-          <div className="mb-4 sm:mb-0 w-full pl-4">
-            <h4 className="text-sm font-medium mb-2 ml-2">First Number Range</h4>
-            <div className="flex flex-row gap-4 ml-2">
+          <div className="mb-4 sm:mb-0 w-full">
+            <h4 className="text-base font-medium mb-2">First Number Range</h4>
+            <div className="flex flex-row gap-4">
               <div className="flex flex-col items-start">
                 <label className="font-medium text-xs mb-1">Min</label>
                 <input
@@ -86,7 +83,7 @@ const NumberRangeSection = ({
             </div>
           </div>
           <div className="w-full">
-            <h4 className="text-sm font-medium mb-2">Second Number Range</h4>
+            <h4 className="text-base font-medium mb-2">Second Number Range</h4>
             <div className="flex flex-row gap-4">
               <div className="flex flex-col items-start">
                 <label className="font-medium text-xs mb-1">Min</label>
@@ -113,40 +110,6 @@ const NumberRangeSection = ({
                 />
               </div>
             </div>
-          </div>
-        </div>
-      );
-    } else if (min !== undefined && max !== undefined && onMinChange && onMaxChange) {
-      // Using the original props structure
-      return (
-        <div className="flex flex-row gap-4">
-          <div className="flex flex-col items-start">
-            <label className="font-medium text-xs mb-1">
-              {inputLabelMin || "Min"}
-            </label>
-            <input
-              value={min}
-              onChange={e => onMinChange(Number(e.target.value))}
-              onFocus={selectAllOnFocus}
-              className="w-16 px-2 py-1 rounded-md border shadow-sm focus:ring-2 focus:ring-accent focus:border-accent text-center font-mono text-lg appearance-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-              type="number"
-              inputMode="numeric"
-              pattern="[0-9]*"
-            />
-          </div>
-          <div className="flex flex-col items-start">
-            <label className="font-medium text-xs mb-1">
-              {inputLabelMax || "Max"}
-            </label>
-            <input
-              value={max}
-              onChange={e => onMaxChange(Number(e.target.value))}
-              onFocus={selectAllOnFocus}
-              className="w-16 px-2 py-1 rounded-md border shadow-sm focus:ring-2 focus:ring-accent focus:border-accent text-center font-mono text-lg appearance-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-              type="number"
-              inputMode="numeric"
-              pattern="[0-9]*"
-            />
           </div>
         </div>
       );
