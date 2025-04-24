@@ -1,3 +1,4 @@
+
 import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { UserScore, Operation, ProblemRange } from '@/types';
@@ -70,7 +71,6 @@ export const useScoreManagement = (userId: string | null) => {
     }
 
     if (!userId) {
-      toast.info('Log in to save your score.');
       return false;
     }
 

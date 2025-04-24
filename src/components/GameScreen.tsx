@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import useGame from '@/context/useGame';
 import { Button } from '@/components/ui/button';
@@ -26,15 +27,14 @@ const GameScreen = () => {
 
   const [feedback, setFeedback] = useState<'correct' | 'incorrect' | null>(null);
   const [isNegative, setIsNegative] = useState(false);
-  const [currentScore, setCurrentScore] = useState(0);
+  const scoreRef = useRef(0);
   const inputRef = useRef<HTMLInputElement>(null);
-  const finalScoreRef = useRef(0);
   const initialProblemGeneratedRef = useRef(false);
 
+  // Update the ref whenever score changes
   useEffect(() => {
-    setCurrentScore(score);
-    finalScoreRef.current = score;
-    console.log(`Score updated: ${score} -> currentScore set to: ${score}, finalScoreRef set to: ${finalScoreRef.current}`);
+    scoreRef.current = score;
+    console.log(`Score updated to: ${score}, scoreRef set to: ${scoreRef.current}`);
   }, [score]);
 
   useEffect(() => {
@@ -58,12 +58,11 @@ const GameScreen = () => {
         if (prevTime <= 1) {
           clearInterval(timer);
           
-          const finalScore = finalScoreRef.current;
-          console.log(`Game ending with final score: ${finalScore} (from ref), score state: ${score}, currentScore state: ${currentScore}`);
+          console.log(`Game ending with final score: ${scoreRef.current} (from ref), score state: ${score}`);
           
           setGameState('ended');
           
-          console.log('Game ended, attempting to save score:', finalScore);
+          console.log('Game ended, attempting to save score:', scoreRef.current);
           
           saveGameScore();
           
@@ -100,8 +99,7 @@ const GameScreen = () => {
   };
 
   const handleRestartGame = () => {
-    const finalScore = finalScoreRef.current;
-    console.log('Restarting game, attempting to save score:', finalScore);
+    console.log('Restarting game, attempting to save score:', scoreRef.current);
     
     saveGameScore();
     
@@ -118,13 +116,6 @@ const GameScreen = () => {
       if (numericValue === currentProblem.answer) {
         setFeedback('correct');
         incrementScore();
-        setCurrentScore(prev => {
-          const newScore = prev + 1;
-          console.log(`Local score updated from ${prev} to ${newScore}`);
-          return newScore;
-        });
-        finalScoreRef.current = finalScoreRef.current + 1;
-        console.log(`finalScoreRef updated to: ${finalScoreRef.current}`);
         
         setTimeout(() => {
           setUserAnswer('');
@@ -156,7 +147,7 @@ const GameScreen = () => {
     }
 
     const success = await saveScore(
-      finalScoreRef.current,
+      scoreRef.current,
       settings.operation,
       settings.range,
       settings.timerSeconds,
@@ -177,7 +168,7 @@ const GameScreen = () => {
           </Card>
           <Card className="p-3">
             <span className="font-medium">Score: </span>
-            <span className="text-xl font-bold">{currentScore}</span>
+            <span className="text-xl font-bold">{score}</span>
           </Card>
         </div>
 
