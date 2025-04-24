@@ -105,7 +105,7 @@ const OperationSelection = () => {
   // Responsive, flex-based layout using new subcomponents
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
-      <Card className="shadow-lg animate-fade-in">
+      <Card className="shadow-lg animate-fade-in max-w-[800px] mx-auto">
         <CardHeader>
           <CardTitle className="text-2xl font-bold text-center">
             Choose Your Math Challenge

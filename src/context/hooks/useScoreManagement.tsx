@@ -62,6 +62,9 @@ export const useScoreManagement = (userId: string | null) => {
       return false;
     }
 
+    // Debug log to ensure we have the correct score value
+    console.log(`Saving score value: ${score} for user ${userId}`);
+
     const scoreData = {
       score,
       operation,
@@ -93,6 +96,7 @@ export const useScoreManagement = (userId: string | null) => {
       toast.success('Score saved!');
       
       // Refresh score history after saving
+      console.log('Game ended, refreshing scores');
       const updatedScores = await fetchUserScores();
       setScoreHistory(updatedScores);
 

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import useGame from '@/context/useGame';
 import { Button } from '@/components/ui/button';
@@ -28,9 +29,11 @@ const GameScreen = () => {
   const [isNegative, setIsNegative] = useState(false);
   const [currentScore, setCurrentScore] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
-
+  
+  // Track score changes to ensure we always have the latest value
   useEffect(() => {
     setCurrentScore(score);
+    console.log(`Score updated: ${score} -> currentScore set to: ${score}`);
   }, [score]);
 
   useEffect(() => {
@@ -47,15 +50,18 @@ const GameScreen = () => {
       );
     }
     inputRef.current?.focus();
+    
     const timer = setInterval(() => {
       setTimeLeft(prevTime => {
         if (prevTime <= 1) {
           clearInterval(timer);
           setGameState('ended');
+          
+          // Use the latest score value via the state tracker
           console.log('Game ended, attempting to save score:', currentScore);
           
           saveScore(
-            currentScore,
+            currentScore, // Use the tracked score state
             settings.operation,
             settings.range,
             settings.timerSeconds,
@@ -114,7 +120,7 @@ const GameScreen = () => {
     console.log('Restarting game, attempting to save score:', currentScore);
     
     saveScore(
-      currentScore,
+      currentScore, // Use the tracked score state
       settings.operation,
       settings.range,
       settings.timerSeconds,
@@ -148,6 +154,13 @@ const GameScreen = () => {
       if (numericValue === currentProblem.answer) {
         setFeedback('correct');
         incrementScore();
+        // Update our local score tracker immediately
+        setCurrentScore(prev => {
+          const newScore = prev + 1;
+          console.log(`Local score updated from ${prev} to ${newScore}`);
+          return newScore;
+        });
+        
         setTimeout(() => {
           setUserAnswer('');
           setFeedback(null);
@@ -181,7 +194,7 @@ const GameScreen = () => {
           </Card>
           <Card className="p-3">
             <span className="font-medium">Score: </span>
-            <span className="text-xl font-bold">{score}</span>
+            <span className="text-xl font-bold">{currentScore}</span> {/* Show the tracked score */}
           </Card>
         </div>
 
