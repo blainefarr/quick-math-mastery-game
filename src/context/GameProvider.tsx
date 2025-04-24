@@ -70,17 +70,21 @@ const GameProvider = ({ children }: GameProviderProps) => {
   }, [isLoggedIn, userId]);
 
   const fetchUserScores = async (uid: string) => {
+    console.log('Fetching scores for user:', uid);
     const { data, error } = await supabase
       .from('scores')
-      .select('score, operation, min1, max1, min2, max2, date')
+      .select('score, operation, min1, max1, min2, max2, date, duration, focus_number, allow_negatives')
       .eq('user_id', uid)
       .order('date', { ascending: false });
+    
     if (error) {
+      console.error('Error fetching scores:', error);
       toast.error('Failed to load your scores');
       setScoreHistory([]);
       return;
     }
     
+    console.log('Received score data:', data);
     const scores: UserScore[] = (data || []).map((row) => {
       const operation = validateOperation(row.operation);
       return {
@@ -93,9 +97,13 @@ const GameProvider = ({ children }: GameProviderProps) => {
           max2: row.max2,
         },
         date: row.date,
+        duration: row.duration || settings.timerSeconds,
+        focusNumber: row.focus_number || null,
+        allowNegatives: row.allow_negatives || false
       };
     });
     
+    console.log('Processed score history:', scores);
     setScoreHistory(scores);
   };
 
@@ -201,32 +209,50 @@ const GameProvider = ({ children }: GameProviderProps) => {
   };
 
   const saveScore = async () => {
-    if (isLoggedIn && score > 0 && userId) {
-      const newScore = {
-        score,
-        operation: settings.operation,
-        min1: settings.range.min1,
-        max1: settings.range.max1,
-        min2: settings.range.min2,
-        max2: settings.range.max2,
-        date: new Date().toISOString(),
-        user_id: userId,
-      };
-      const { error } = await supabase
-        .from('scores')
-        .insert([newScore]);
-      if (error) {
-        toast.error('Failed to save your score');
-        console.error('Score save error:', error);
-        return false;
+    if (!isLoggedIn || score <= 0 || !userId) {
+      if (!isLoggedIn) {
+        toast.info('Log in to save your score.');
       }
-      fetchUserScores(userId);
-      toast.success('Score saved!');
-      return true;
-    } else {
-      toast.info('Log in to save your score.');
       return false;
     }
+    
+    console.log('Saving score with the following details:');
+    console.log('User ID:', userId);
+    console.log('Score:', score);
+    console.log('Operation:', settings.operation);
+    console.log('Range:', settings.range);
+    console.log('Duration:', settings.timerSeconds);
+    console.log('Focus Number:', focusNumber);
+    console.log('Allow Negatives:', settings.allowNegatives);
+    
+    const newScore = {
+      score,
+      operation: settings.operation,
+      min1: settings.range.min1,
+      max1: settings.range.max1,
+      min2: settings.range.min2,
+      max2: settings.range.max2,
+      date: new Date().toISOString(),
+      user_id: userId,
+      duration: settings.timerSeconds,
+      focus_number: focusNumber,
+      allow_negatives: settings.allowNegatives || false
+    };
+    
+    const { error } = await supabase
+      .from('scores')
+      .insert([newScore]);
+      
+    if (error) {
+      console.error('Score save error:', error);
+      toast.error('Failed to save your score');
+      return false;
+    }
+    
+    console.log('Score saved successfully');
+    fetchUserScores(userId);
+    toast.success('Score saved!');
+    return true;
   };
 
   useEffect(() => {

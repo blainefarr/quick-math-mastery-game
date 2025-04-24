@@ -58,7 +58,9 @@ const ScoreChart = ({ scores = [] }: ScoreChartProps) => {
   const chartData = sortedScores.map(score => ({
     date: formatDate(score.date),
     score: score.score,
-    operation: score.operation
+    operation: score.operation,
+    duration: score.duration || 60,
+    settings: `${score.focusNumber ? 'Focus: ' + score.focusNumber : ''}${score.allowNegatives ? ' Negatives' : ''}`
   }));
   
   // Calculate average score if there are scores
@@ -108,7 +110,13 @@ const ScoreChart = ({ scores = [] }: ScoreChartProps) => {
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="date" />
               <YAxis />
-              <Tooltip />
+              <Tooltip
+                formatter={(value, name, props) => {
+                  if (name === 'score') return [value, 'Score'];
+                  return [value, name];
+                }}
+                labelFormatter={(label) => `Date: ${label}`}
+              />
               <Legend />
               <Bar dataKey="score" fill="#9b87f5" name="Score" />
             </BarChart>

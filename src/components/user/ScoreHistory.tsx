@@ -10,6 +10,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Card } from '@/components/ui/card';
+import MathIcon from '../common/MathIcon';
 
 interface ScoreHistoryProps {
   scores: UserScore[];
@@ -101,6 +102,7 @@ const ScoreHistory = ({ scores = [] }: ScoreHistoryProps) => {
                 <TableHead>Date</TableHead>
                 <TableHead>Operation</TableHead>
                 <TableHead>Range</TableHead>
+                <TableHead>Settings</TableHead>
                 <TableHead className="text-right">Score</TableHead>
               </TableRow>
             </TableHeader>
@@ -108,9 +110,21 @@ const ScoreHistory = ({ scores = [] }: ScoreHistoryProps) => {
               {sortedScores.map((score, index) => (
                 <TableRow key={index}>
                   <TableCell>{formatDate(score.date)}</TableCell>
-                  <TableCell>{getOperationName(score.operation)}</TableCell>
+                  <TableCell className="whitespace-nowrap">
+                    <div className="flex items-center">
+                      <MathIcon operation={score.operation} size={16} className="mr-1" />
+                      {getOperationName(score.operation)}
+                    </div>
+                  </TableCell>
                   <TableCell>
                     {score.range.min1}-{score.range.max1} {getOperationName(score.operation)[0]} {score.range.min2}-{score.range.max2}
+                  </TableCell>
+                  <TableCell>
+                    <div className="text-xs text-muted-foreground">
+                      <div>{score.duration || 60}s</div>
+                      {score.focusNumber && <div>Focus: {score.focusNumber}</div>}
+                      {score.allowNegatives && <div>Allow negatives</div>}
+                    </div>
                   </TableCell>
                   <TableCell className="text-right font-medium">{score.score}</TableCell>
                 </TableRow>

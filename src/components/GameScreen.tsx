@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import useGame from '@/context/useGame';
 import { Button } from '@/components/ui/button';
@@ -19,7 +20,9 @@ const GameScreen = () => {
     setUserAnswer,
     setGameState,
     saveScore,
-    settings
+    settings,
+    userId,
+    isLoggedIn
   } = useGame();
 
   const [feedback, setFeedback] = useState<'correct' | 'incorrect' | null>(null);
@@ -28,6 +31,8 @@ const GameScreen = () => {
 
   useEffect(() => {
     console.log('GameScreen mounted with settings:', settings);
+    console.log('User logged in:', isLoggedIn, 'User ID:', userId);
+    
     if (!currentProblem) {
       generateNewProblem();
     }
@@ -38,8 +43,18 @@ const GameScreen = () => {
           clearInterval(timer);
           setGameState('ended');
           try {
-            saveScore();
-            console.log('Game ended, score saved:', score);
+            saveScore().then(success => {
+              if (success) {
+                console.log('Game ended, score saved successfully:', score);
+              } else {
+                console.log('Game ended, could not save score:', score);
+                if (!isLoggedIn) {
+                  console.log('User not logged in - this is expected');
+                } else if (!userId) {
+                  console.error('No user ID available - this is unexpected');
+                }
+              }
+            });
           } catch (err) {
             console.error('Error saving score:', err);
             toast.error('Failed to save your score');
@@ -78,8 +93,16 @@ const GameScreen = () => {
 
   const handleRestartGame = () => {
     try {
-      saveScore();
-      console.log('Game restarted, score saved:', score);
+      saveScore().then(success => {
+        if (success) {
+          console.log('Game restarted, score saved successfully:', score);
+        } else {
+          console.log('Game restarted, could not save score:', score);
+          if (!isLoggedIn) {
+            console.log('User not logged in - this is expected');
+          }
+        }
+      });
     } catch (err) {
       console.error('Error saving score on restart:', err);
       toast.error('Failed to save your score');

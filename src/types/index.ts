@@ -19,7 +19,7 @@ export type GameSettings = {
   operation: Operation;
   range: ProblemRange;
   timerSeconds: number;
-  allowNegatives?: boolean; // <<--- Added flag
+  allowNegatives?: boolean;
 };
 
 export interface UserScore {
@@ -27,4 +27,7 @@ export interface UserScore {
   operation: Operation;
   range: ProblemRange;
   date: string;
+  duration?: number;
+  focusNumber?: number | null;
+  allowNegatives?: boolean;
 }
