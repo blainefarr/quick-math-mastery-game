@@ -1,3 +1,4 @@
+
 import React from 'react';
 interface NumberRangeSectionProps {
   title?: string;
@@ -50,19 +51,52 @@ const NumberRangeSection = ({
   };
   const renderRangeInputs = () => {
     if (range1 && range2 && setRange1Min && setRange1Max && setRange2Min && setRange2Max) {
+      // Set the range1 min and max to the focus number if enabled
+      const range1MinValue = focusNumberEnabled && focusNumber ? focusNumber : range1.min;
+      const range1MaxValue = focusNumberEnabled && focusNumber ? focusNumber : range1.max;
+      
       return <div className="flex flex-wrap md:flex-nowrap gap-8 px-4 max-w-[700px] mx-auto">
           <div className="flex-1 min-w-[240px]">
             <h4 className="text-base font-medium mb-2">Number Range 1</h4>
             <div className="flex flex-row gap-4">
               <div className="flex flex-col">
                 <label className="text-xs font-medium block mb-1">Min</label>
-                <input value={range1.min} onChange={e => setRange1Min(e.target.value)} onFocus={selectAllOnFocus} className="w-24 px-3 py-1 rounded-md border shadow-sm focus:ring-2 focus:ring-accent focus:border-accent font-mono text-lg text-left appearance-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" type="number" inputMode="numeric" pattern="[0-9]*" />
+                <input 
+                  value={range1MinValue} 
+                  onChange={e => setRange1Min(e.target.value)} 
+                  onFocus={selectAllOnFocus} 
+                  className={`w-24 px-3 py-1 rounded-md border shadow-sm focus:ring-2 focus:ring-accent focus:border-accent font-mono text-lg text-left appearance-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${
+                    focusNumberEnabled ? 'bg-gray-100 text-gray-500' : ''
+                  }`} 
+                  type="number" 
+                  inputMode="numeric" 
+                  pattern="[0-9]*" 
+                  disabled={focusNumberEnabled}
+                  readOnly={focusNumberEnabled}
+                />
               </div>
               <div className="flex flex-col">
                 <label className="text-xs font-medium block mb-1">Max</label>
-                <input value={range1.max} onChange={e => setRange1Max(e.target.value)} onFocus={selectAllOnFocus} className="w-24 px-3 py-1 rounded-md border shadow-sm focus:ring-2 focus:ring-accent focus:border-accent font-mono text-lg text-left appearance-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" type="number" inputMode="numeric" pattern="[0-9]*" />
+                <input 
+                  value={range1MaxValue} 
+                  onChange={e => setRange1Max(e.target.value)} 
+                  onFocus={selectAllOnFocus} 
+                  className={`w-24 px-3 py-1 rounded-md border shadow-sm focus:ring-2 focus:ring-accent focus:border-accent font-mono text-lg text-left appearance-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${
+                    focusNumberEnabled ? 'bg-gray-100 text-gray-500' : ''
+                  }`} 
+                  type="number" 
+                  inputMode="numeric" 
+                  pattern="[0-9]*" 
+                  disabled={focusNumberEnabled}
+                  readOnly={focusNumberEnabled}
+                />
               </div>
             </div>
+            {focusNumberEnabled && focusNumber && (
+              <p className="text-xs text-muted-foreground mt-2">
+                Fixed to your focus number ({focusNumber})
+              </p>
+            )}
           </div>
           <div className="flex-1 min-w-[240px]">
             <h4 className="text-base font-medium mb-2">Number Range 2</h4>

@@ -6,6 +6,7 @@ import { GameContextType, GameState, GameProviderProps } from './game-context-ty
 import { useGameSettings } from './hooks/useGameSettings';
 import { useProblemGenerator } from './hooks/useProblemGenerator';
 import { useScoreManagement } from './hooks/useScoreManagement';
+import { toast } from 'sonner';
 
 const GameProvider = ({ children }: GameProviderProps) => {
   const { settings, updateSettings, resetSettings } = useGameSettings();
@@ -28,11 +29,36 @@ const GameProvider = ({ children }: GameProviderProps) => {
     setScoreHistory 
   } = useScoreManagement(userId);
 
+  // Handle user logout
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+      // Clear local storage items related to auth
+      localStorage.removeItem('supabase.auth.token');
+      sessionStorage.removeItem('supabase.auth.token');
+      
+      // Don't toast here - we'll let the auth state change event handle this
+      setIsLoggedIn(false);
+      setUserId(null);
+      setUsername('');
+      setScoreHistory([]);
+    } catch (error) {
+      console.error('Error signing out:', error);
+      toast('Failed to log out');
+    }
+  };
+
   // Handle authentication state changes
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (session?.user) {
+      (event, session) => {
+        if (event === 'SIGNED_OUT') {
+          setIsLoggedIn(false);
+          setUserId(null);
+          setUsername('');
+          setScoreHistory([]);
+          toast('Logged out successfully');
+        } else if (session?.user) {
           setIsLoggedIn(true);
           setUserId(session.user.id);
           setUsername(
@@ -43,13 +69,13 @@ const GameProvider = ({ children }: GameProviderProps) => {
           );
           
           // Fetch scores after login
-          const scores = await fetchUserScores();
-          setScoreHistory(scores);
-        } else {
-          setIsLoggedIn(false);
-          setUserId(null);
-          setUsername('');
-          setScoreHistory([]);
+          setTimeout(() => {
+            fetchUserScores().then(scores => {
+              if (scores) {
+                setScoreHistory(scores);
+              }
+            });
+          }, 0);
         }
       }
     );
@@ -117,7 +143,8 @@ const GameProvider = ({ children }: GameProviderProps) => {
     focusNumber,
     setFocusNumber,
     getIsHighScore,
-    userId
+    userId,
+    handleLogout
   };
 
   return (

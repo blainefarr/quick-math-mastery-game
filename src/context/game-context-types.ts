@@ -1,70 +1,47 @@
 
-import { ReactNode } from "react";
-import { GameSettings, Operation, Problem, ProblemRange, UserScore } from "@/types";
+import { Operation, ProblemRange, Problem, UserScore } from '@/types';
 
 export type GameState = 'selection' | 'playing' | 'ended';
 
 export interface GameContextType {
-  // Game state
   gameState: GameState;
   setGameState: (state: GameState) => void;
-  
-  // Game settings
-  settings: GameSettings;
-  updateSettings: (settings: Partial<GameSettings>) => void;
-  
-  // Game data
+  settings: {
+    operation: Operation;
+    range: ProblemRange;
+    timerSeconds: number;
+    allowNegatives?: boolean;
+    focusNumber?: number | null;
+  };
+  updateSettings: (settings: Partial<{
+    operation: Operation;
+    range: ProblemRange;
+    timerSeconds: number;
+    allowNegatives?: boolean;
+    focusNumber?: number | null;
+  }>) => void;
   score: number;
   incrementScore: () => void;
   resetScore: () => void;
-  
-  // Problem management
   currentProblem: Problem | null;
-  generateNewProblem: (
-    operation: Operation, 
-    range: ProblemRange, 
-    allowNegatives?: boolean, 
-    focusNumber?: number | null
-  ) => Problem;
-  
-  // Timer
+  generateNewProblem: () => void;
   timeLeft: number;
-  setTimeLeft: (time: number | ((prev: number) => number)) => void;
-  
-  // User answer
+  setTimeLeft: (time: number) => void;
   userAnswer: string;
   setUserAnswer: (answer: string) => void;
-  
-  // Score history
   scoreHistory: UserScore[];
-  saveScore: (
-    score: number, 
-    operation: Operation, 
-    range: ProblemRange, 
-    timerSeconds: number,
-    focusNumber?: number | null,
-    allowNegatives?: boolean
-  ) => Promise<boolean>;
-  
-  // Auth state
+  saveScore: () => Promise<void>;
   isLoggedIn: boolean;
-  setIsLoggedIn: (value: boolean) => void;
-  
-  // Username
+  setIsLoggedIn: (isLoggedIn: boolean) => void;
   username: string;
-  setUsername: (name: string) => void;
-  
-  // Focus number
+  setUsername: (username: string) => void;
   focusNumber: number | null;
   setFocusNumber: (num: number | null) => void;
-  
-  // Check for high score
-  getIsHighScore: (newScore: number, operation: Operation, range: ProblemRange) => boolean;
-  
-  // User ID
+  getIsHighScore: (score: number, operation: Operation, range: ProblemRange) => boolean;
   userId: string | null;
+  handleLogout: () => Promise<void>;
 }
 
 export interface GameProviderProps {
-  children: ReactNode;
+  children: React.ReactNode;
 }

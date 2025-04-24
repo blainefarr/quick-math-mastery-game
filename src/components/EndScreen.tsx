@@ -53,7 +53,7 @@ const EndScreen = () => {
   };
 
   return (
-    <div className="flex justify-center items-center min-h-screen p-4 animate-fade-in">
+    <div className="flex justify-center items-center min-h-screen p-4 animate-fade-in mt-8 sm:mt-12 md:mt-16">
       <ConfettiEffect score={score} />
       <Card className="w-full max-w-md shadow-xl mt-4 sm:mt-0">
         <CardHeader className="text-center">
