@@ -14,7 +14,7 @@ import ScoreHistory from './ScoreHistory';
 import useGame from '@/context/useGame';
 
 const UserProfile = () => {
-  const { username, handleLogout } = useGame();
+  const { username, handleLogout, scoreHistory } = useGame();
   const [sheetOpen, setSheetOpen] = useState(false);
   
   const userInitial = username ? username.charAt(0).toUpperCase() : 'U';
@@ -49,7 +49,7 @@ const UserProfile = () => {
             </div>
           </div>
           
-          <ScoreHistory />
+          <ScoreHistory scores={scoreHistory} />
           
           <div className="mt-8 flex justify-end">
             <Button 

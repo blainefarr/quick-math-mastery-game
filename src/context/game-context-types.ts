@@ -24,13 +24,25 @@ export interface GameContextType {
   incrementScore: () => void;
   resetScore: () => void;
   currentProblem: Problem | null;
-  generateNewProblem: () => void;
+  generateNewProblem: (
+    operation?: Operation, 
+    range?: ProblemRange, 
+    allowNegatives?: boolean, 
+    focusNumber?: number | null
+  ) => void;
   timeLeft: number;
   setTimeLeft: (time: number) => void;
   userAnswer: string;
   setUserAnswer: (answer: string) => void;
   scoreHistory: UserScore[];
-  saveScore: () => Promise<void>;
+  saveScore: (
+    score?: number, 
+    operation?: Operation, 
+    range?: ProblemRange, 
+    timerSeconds?: number,
+    focusNumber?: number | null,
+    allowNegatives?: boolean
+  ) => Promise<void>;
   isLoggedIn: boolean;
   setIsLoggedIn: (isLoggedIn: boolean) => void;
   username: string;

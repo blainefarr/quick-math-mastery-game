@@ -6,11 +6,12 @@ import { GameContextType, GameState, GameProviderProps } from './game-context-ty
 import { useGameSettings } from './hooks/useGameSettings';
 import { useProblemGenerator } from './hooks/useProblemGenerator';
 import { useScoreManagement } from './hooks/useScoreManagement';
+import { Operation, ProblemRange } from '@/types';
 import { toast } from 'sonner';
 
 const GameProvider = ({ children }: GameProviderProps) => {
   const { settings, updateSettings, resetSettings } = useGameSettings();
-  const { currentProblem, generateNewProblem } = useProblemGenerator();
+  const { currentProblem, generateNewProblem: generateProblem } = useProblemGenerator();
   
   const [gameState, setGameState] = useState<GameState>('selection');
   const [score, setScore] = useState(0);
@@ -24,7 +25,7 @@ const GameProvider = ({ children }: GameProviderProps) => {
   const { 
     scoreHistory, 
     fetchUserScores, 
-    saveScore, 
+    saveScore: saveFinalScore, 
     getIsHighScore,
     setScoreHistory 
   } = useScoreManagement(userId);
@@ -120,6 +121,42 @@ const GameProvider = ({ children }: GameProviderProps) => {
     setScore(0);
   };
 
+  // Wrapper for generateNewProblem to match the interface
+  const generateNewProblemWrapper = (
+    operation?: Operation, 
+    range?: ProblemRange,
+    allowNegatives?: boolean,
+    focusNumber?: number | null
+  ) => {
+    return generateProblem(
+      operation || settings.operation, 
+      range || settings.range,
+      allowNegatives !== undefined ? allowNegatives : settings.allowNegatives || false,
+      focusNumber !== undefined ? focusNumber : settings.focusNumber || null
+    );
+  };
+  
+  // Wrapper for saveScore to match the interface
+  const saveScoreWrapper = async (
+    finalScore?: number, 
+    operation?: Operation, 
+    range?: ProblemRange, 
+    timerSeconds?: number,
+    focusNumberVal?: number | null,
+    allowNegatives?: boolean
+  ) => {
+    const result = await saveFinalScore(
+      finalScore !== undefined ? finalScore : score,
+      operation || settings.operation,
+      range || settings.range,
+      timerSeconds || settings.timerSeconds,
+      focusNumberVal !== undefined ? focusNumberVal : settings.focusNumber || null,
+      allowNegatives !== undefined ? allowNegatives : settings.allowNegatives || false
+    );
+    
+    return result;
+  };
+
   const value: GameContextType = {
     gameState,
     setGameState,
@@ -129,13 +166,13 @@ const GameProvider = ({ children }: GameProviderProps) => {
     incrementScore,
     resetScore,
     currentProblem,
-    generateNewProblem,
+    generateNewProblem: generateNewProblemWrapper,
     timeLeft,
     setTimeLeft,
     userAnswer,
     setUserAnswer,
     scoreHistory,
-    saveScore,
+    saveScore: saveScoreWrapper,
     isLoggedIn,
     setIsLoggedIn,
     username,
