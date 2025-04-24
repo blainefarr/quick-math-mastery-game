@@ -70,7 +70,7 @@ const GameProvider = ({ children }: GameProviderProps) => {
         setScoreHistory(scores);
       });
     }
-  }, [isLoggedIn, userId]);
+  }, [isLoggedIn, userId, fetchUserScores]);
 
   const incrementScore = () => setScore(prev => prev + 1);
   const resetScore = () => setScore(0);

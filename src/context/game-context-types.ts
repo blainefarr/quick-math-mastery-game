@@ -20,7 +20,12 @@ export interface GameContextType {
   
   // Problem management
   currentProblem: Problem | null;
-  generateNewProblem: () => void;
+  generateNewProblem: (
+    operation: Operation, 
+    range: ProblemRange, 
+    allowNegatives?: boolean, 
+    focusNumber?: number | null
+  ) => Problem;
   
   // Timer
   timeLeft: number;
@@ -32,7 +37,14 @@ export interface GameContextType {
   
   // Score history
   scoreHistory: UserScore[];
-  saveScore: () => Promise<boolean>;
+  saveScore: (
+    score: number, 
+    operation: Operation, 
+    range: ProblemRange, 
+    timerSeconds: number,
+    focusNumber?: number | null,
+    allowNegatives?: boolean
+  ) => Promise<boolean>;
   
   // Auth state
   isLoggedIn: boolean;

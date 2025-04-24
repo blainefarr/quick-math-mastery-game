@@ -19,7 +19,23 @@ export const useScoreManagement = (userId: string | null) => {
 
       if (error) throw error;
 
-      return data as UserScore[];
+      // Transform data from Supabase format to our UserScore type
+      const transformedData: UserScore[] = (data || []).map(item => ({
+        score: item.score,
+        operation: item.operation as Operation,
+        range: {
+          min1: item.min1,
+          max1: item.max1,
+          min2: item.min2,
+          max2: item.max2,
+        },
+        date: item.date,
+        duration: item.duration,
+        focusNumber: item.focus_number,
+        allowNegatives: item.allow_negatives
+      }));
+
+      return transformedData;
     } catch (error) {
       console.error('Error fetching scores:', error);
       toast.error('Failed to load your scores');
