@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { UserScore, Operation, ProblemRange } from '@/types';
@@ -25,7 +24,6 @@ export const useScoreManagement = (userId: string | null) => {
 
       console.log("Raw score data from Supabase:", data);
 
-      // Transform data from Supabase format to our UserScore type
       const transformedData: UserScore[] = (data || []).map(item => ({
         score: item.score,
         operation: item.operation as Operation,
@@ -63,8 +61,6 @@ export const useScoreManagement = (userId: string | null) => {
       return false;
     }
 
-    // Removed the "score <= 0" check to allow saving scores of 0
-
     const scoreData = {
       score,
       operation,
@@ -75,10 +71,11 @@ export const useScoreManagement = (userId: string | null) => {
       user_id: userId,
       duration: timerSeconds,
       focus_number: focusNumber,
-      allow_negatives: allowNegatives
+      allow_negatives: allowNegatives,
+      date: new Date().toISOString()
     };
 
-    console.log('Saving score with payload:', scoreData);
+    console.log('Attempting to save score with payload:', scoreData);
 
     try {
       const { data, error } = await supabase
@@ -86,20 +83,24 @@ export const useScoreManagement = (userId: string | null) => {
         .insert(scoreData);
 
       if (error) {
-        console.error('Score save error details:', error);
+        console.error('Detailed score save error:', error);
         toast.error(`Failed to save score: ${error.message}`);
         return false;
       }
 
       console.log('Score saved successfully:', data);
       toast.success('Score saved!');
+      
+      const updatedScores = await fetchUserScores();
+      setScoreHistory(updatedScores);
+
       return true;
     } catch (error) {
-      console.error('Score save error:', error);
-      toast.error('Failed to save your score');
+      console.error('Unexpected error saving score:', error);
+      toast.error('An unexpected error occurred while saving your score');
       return false;
     }
-  }, [userId]);
+  }, [userId, fetchUserScores]);
 
   const getIsHighScore = useCallback((
     newScore: number, 
