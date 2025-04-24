@@ -41,7 +41,10 @@ export type Database = {
       }
       scores: {
         Row: {
+          allow_negatives: boolean | null
           date: string
+          duration: number | null
+          focus_number: number | null
           id: string
           max1: number
           max2: number
@@ -52,7 +55,10 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          allow_negatives?: boolean | null
           date?: string
+          duration?: number | null
+          focus_number?: number | null
           id?: string
           max1: number
           max2: number
@@ -63,7 +69,10 @@ export type Database = {
           user_id: string
         }
         Update: {
+          allow_negatives?: boolean | null
           date?: string
+          duration?: number | null
+          focus_number?: number | null
           id?: string
           max1?: number
           max2?: number

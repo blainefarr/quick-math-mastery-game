@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { GameSettings, Operation, Problem, ProblemRange, UserScore } from '@/types';
 import { GameContextType, GameState, GameProviderProps } from './game-context-types';
@@ -89,15 +90,15 @@ const GameProvider = ({ children }: GameProviderProps) => {
       const scores: UserScore[] = data.map((row) => {
         const operation = validateOperation(row.operation);
         return {
-          score: row.score,
+          score: row.score ?? 0,
           operation,
           range: {
-            min1: row.min1,
-            max1: row.max1,
-            min2: row.min2,
-            max2: row.max2,
+            min1: row.min1 ?? 1,
+            max1: row.max1 ?? 10,
+            min2: row.min2 ?? 1,
+            max2: row.max2 ?? 10,
           },
-          date: row.date,
+          date: row.date || new Date().toISOString(),
           duration: row.duration || settings.timerSeconds,
           focusNumber: row.focus_number || null,
           allowNegatives: row.allow_negatives || false
