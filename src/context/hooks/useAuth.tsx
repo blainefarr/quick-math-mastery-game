@@ -1,10 +1,29 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
+import { toast } from '@/hooks/use-toast';
 
 export const useAuth = () => {
   const [loading, setLoading] = useState(false);
+  const authListenerRef = useRef(false);
   
+  useEffect(() => {
+    if (authListenerRef.current) return;
+    authListenerRef.current = true;
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'SIGNED_OUT') {
+        toast({
+          title: "Successfully logged out",
+          variant: "default",
+        });
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
+
   const login = useCallback(async ({ email, password }: { email: string; password: string }) => {
     try {
       setLoading(true);
@@ -29,9 +48,12 @@ export const useAuth = () => {
       localStorage.removeItem('supabase.auth.token');
       sessionStorage.removeItem('supabase.auth.token');
       
-      toast.success("Successfully logged out!");
     } catch (error: any) {
-      toast.error(error.message);
+      toast({
+        title: "Error logging out",
+        description: error.message,
+        variant: "destructive",
+      });
       return false;
     } finally {
       setLoading(false);

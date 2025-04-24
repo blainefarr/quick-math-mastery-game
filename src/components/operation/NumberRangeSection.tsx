@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { 
   Select,
@@ -87,7 +86,7 @@ const NumberRangeSection = ({
               </div>
             </div>
             {focusNumberEnabled && (
-              <p className="text-sm text-muted-foreground">
+              <p className="text-xs text-muted-foreground">
                 (locked to focus number)
               </p>
             )}
