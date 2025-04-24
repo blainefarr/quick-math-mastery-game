@@ -28,9 +28,12 @@ const GameProvider = ({ children }: GameProviderProps) => {
     setScoreHistory 
   } = useScoreManagement(userId);
 
+  // Handle authentication state changes
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      async (event, session) => {
+        console.log("Auth state changed:", event, session?.user?.id);
+        
         if (session?.user) {
           setIsLoggedIn(true);
           setUserId(session.user.id);
@@ -40,16 +43,24 @@ const GameProvider = ({ children }: GameProviderProps) => {
             session.user.email ??
             ""
           );
+          
+          // Fetch scores after login
+          const scores = await fetchUserScores();
+          console.log("Fetched scores after auth change:", scores?.length || 0);
+          setScoreHistory(scores);
         } else {
           setIsLoggedIn(false);
           setUserId(null);
           setUsername('');
+          setScoreHistory([]);
         }
       }
     );
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    // Check initial session
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (session?.user) {
+        console.log("Initial auth session found:", session.user.id);
         setIsLoggedIn(true);
         setUserId(session.user.id);
         setUsername(
@@ -58,19 +69,29 @@ const GameProvider = ({ children }: GameProviderProps) => {
           session.user.email ??
           ""
         );
+        
+        // Fetch scores on initial load if logged in
+        const scores = await fetchUserScores();
+        console.log("Fetched scores on initial load:", scores?.length || 0);
+        setScoreHistory(scores);
+      } else {
+        console.log("No initial auth session");
       }
     });
 
     return () => { subscription.unsubscribe(); };
-  }, []);
+  }, [fetchUserScores]);
 
+  // Refresh scores when gameState changes to 'ended'
   useEffect(() => {
-    if (isLoggedIn && userId) {
+    if (gameState === 'ended' && isLoggedIn && userId) {
+      console.log("Game ended, refreshing scores");
       fetchUserScores().then(scores => {
+        console.log("Updated scores after game end:", scores?.length || 0);
         setScoreHistory(scores);
       });
     }
-  }, [isLoggedIn, userId, fetchUserScores]);
+  }, [gameState, isLoggedIn, userId, fetchUserScores]);
 
   const incrementScore = () => setScore(prev => prev + 1);
   const resetScore = () => setScore(0);

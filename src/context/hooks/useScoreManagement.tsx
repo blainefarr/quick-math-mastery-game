@@ -17,7 +17,13 @@ export const useScoreManagement = (userId: string | null) => {
         .eq('user_id', userId)
         .order('date', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching scores:', error);
+        toast.error('Failed to load your scores');
+        return [];
+      }
+
+      console.log("Raw score data from Supabase:", data);
 
       // Transform data from Supabase format to our UserScore type
       const transformedData: UserScore[] = (data || []).map(item => ({
@@ -35,6 +41,7 @@ export const useScoreManagement = (userId: string | null) => {
         allowNegatives: item.allow_negatives
       }));
 
+      console.log("Transformed score data:", transformedData);
       return transformedData;
     } catch (error) {
       console.error('Error fetching scores:', error);
@@ -51,29 +58,40 @@ export const useScoreManagement = (userId: string | null) => {
     focusNumber: number | null = null,
     allowNegatives: boolean = false
   ) => {
-    if (!userId || score <= 0) {
-      if (!userId) toast.info('Log in to save your score.');
+    if (!userId) {
+      toast.info('Log in to save your score.');
       return false;
     }
 
+    // Removed the "score <= 0" check to allow saving scores of 0
+
+    const scoreData = {
+      score,
+      operation,
+      min1: range.min1,
+      max1: range.max1,
+      min2: range.min2,
+      max2: range.max2,
+      user_id: userId,
+      duration: timerSeconds,
+      focus_number: focusNumber,
+      allow_negatives: allowNegatives
+    };
+
+    console.log('Saving score with payload:', scoreData);
+
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('scores')
-        .insert({
-          score,
-          operation,
-          min1: range.min1,
-          max1: range.max1,
-          min2: range.min2,
-          max2: range.max2,
-          user_id: userId,
-          duration: timerSeconds,
-          focus_number: focusNumber,
-          allow_negatives: allowNegatives
-        });
+        .insert(scoreData);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Score save error details:', error);
+        toast.error(`Failed to save score: ${error.message}`);
+        return false;
+      }
 
+      console.log('Score saved successfully:', data);
       toast.success('Score saved!');
       return true;
     } catch (error) {

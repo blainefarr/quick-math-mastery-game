@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import useGame from '@/context/useGame';
 import { Button } from '@/components/ui/button';
@@ -47,34 +46,33 @@ const GameScreen = () => {
         if (prevTime <= 1) {
           clearInterval(timer);
           setGameState('ended');
-          try {
-            saveScore(
-              score,
-              settings.operation,
-              settings.range,
-              settings.timerSeconds,
-              settings.focusNumber || null,
-              settings.allowNegatives || false
-            )
-              .then(success => {
-                if (success) {
-                  console.log('Game ended, score saved successfully:', score);
-                } else {
-                  console.log('Game ended, could not save score:', score);
-                  if (!isLoggedIn) {
-                    console.log('User not logged in - this is expected');
-                  } else if (!userId) {
-                    console.error('No user ID available - this is unexpected');
-                  }
+          console.log('Game ended, attempting to save score:', score);
+          
+          // Always try to save the score, even if it's 0
+          saveScore(
+            score,
+            settings.operation,
+            settings.range,
+            settings.timerSeconds,
+            settings.focusNumber || null,
+            settings.allowNegatives || false
+          )
+            .then(success => {
+              if (success) {
+                console.log('Game ended, score saved successfully:', score);
+              } else {
+                console.log('Game ended, could not save score:', score);
+                if (!isLoggedIn) {
+                  console.log('User not logged in - this is expected');
+                } else if (!userId) {
+                  console.error('No user ID available - this is unexpected');
                 }
-              })
-              .catch(err => {
-                console.error('Error in promise handling:', err);
-              });
-          } catch (err) {
-            console.error('Error saving score:', err);
-            toast.error('Failed to save your score');
-          }
+              }
+            })
+            .catch(err => {
+              console.error('Error in promise handling when saving score:', err);
+            });
+          
           return 0;
         } else {
           return prevTime - 1;
@@ -108,32 +106,31 @@ const GameScreen = () => {
   };
 
   const handleRestartGame = () => {
-    try {
-      saveScore(
-        score,
-        settings.operation,
-        settings.range,
-        settings.timerSeconds,
-        settings.focusNumber || null,
-        settings.allowNegatives || false
-      )
-        .then(success => {
-          if (success) {
-            console.log('Game restarted, score saved successfully:', score);
-          } else {
-            console.log('Game restarted, could not save score:', score);
-            if (!isLoggedIn) {
-              console.log('User not logged in - this is expected');
-            }
+    console.log('Restarting game, attempting to save score:', score);
+    
+    // Always try to save the score, even if it's 0
+    saveScore(
+      score,
+      settings.operation,
+      settings.range,
+      settings.timerSeconds,
+      settings.focusNumber || null,
+      settings.allowNegatives || false
+    )
+      .then(success => {
+        if (success) {
+          console.log('Game restarted, score saved successfully:', score);
+        } else {
+          console.log('Game restarted, could not save score:', score);
+          if (!isLoggedIn) {
+            console.log('User not logged in - this is expected');
           }
-        })
-        .catch(err => {
-          console.error('Error in promise handling:', err);
-        });
-    } catch (err) {
-      console.error('Error saving score on restart:', err);
-      toast.error('Failed to save your score');
-    }
+        }
+      })
+      .catch(err => {
+        console.error('Error in promise handling when restarting game:', err);
+      });
+    
     setGameState('ended');
   };
 
