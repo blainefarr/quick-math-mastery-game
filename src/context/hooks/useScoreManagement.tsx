@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { UserScore, Operation, ProblemRange } from '@/types';
@@ -23,8 +22,6 @@ export const useScoreManagement = (userId: string | null) => {
         return [];
       }
 
-      console.log("Raw score data from Supabase:", data);
-
       const transformedData: UserScore[] = (data || []).map(item => ({
         score: item.score,
         operation: item.operation as Operation,
@@ -40,7 +37,6 @@ export const useScoreManagement = (userId: string | null) => {
         allowNegatives: item.allow_negatives
       }));
 
-      console.log("Transformed score data:", transformedData);
       return transformedData;
     } catch (error) {
       console.error('Error fetching scores:', error);
@@ -62,10 +58,6 @@ export const useScoreManagement = (userId: string | null) => {
       return false;
     }
 
-    // Debug log to ensure we have the correct score value
-    console.log(`Saving score value: ${score} for user ${userId}`);
-
-    // Do not proceed if score is invalid
     if (score < 0 || typeof score !== 'number' || isNaN(score)) {
       console.error(`Invalid score value: ${score}`);
       toast.error('Invalid score value');
@@ -86,31 +78,26 @@ export const useScoreManagement = (userId: string | null) => {
       date: new Date().toISOString()
     };
 
-    console.log('Attempting to save score with payload:', scoreData);
-
     try {
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('scores')
         .insert(scoreData);
 
       if (error) {
-        console.error('Detailed score save error:', error);
-        toast.error(`Failed to save score: ${error.message}`);
+        console.error('Error saving score:', error);
+        toast.error('Failed to save score');
         return false;
       }
 
-      console.log('Score saved successfully:', data);
       toast.success('Score saved!');
       
-      // Refresh score history after saving
-      console.log('Game ended, refreshing scores');
       const updatedScores = await fetchUserScores();
       setScoreHistory(updatedScores);
 
       return true;
     } catch (error) {
-      console.error('Unexpected error saving score:', error);
-      toast.error('An unexpected error occurred while saving your score');
+      console.error('Error saving score:', error);
+      toast.error('Failed to save score');
       return false;
     }
   }, [userId, fetchUserScores]);
