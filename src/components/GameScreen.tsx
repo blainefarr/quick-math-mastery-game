@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import useGame from '@/context/useGame';
 import { Button } from '@/components/ui/button';
@@ -29,6 +30,7 @@ const GameScreen = () => {
   const [currentScore, setCurrentScore] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const finalScoreRef = useRef(0);
+  const initialProblemGeneratedRef = useRef(false);
 
   useEffect(() => {
     setCurrentScore(score);
@@ -41,14 +43,15 @@ const GameScreen = () => {
     console.log('User logged in:', isLoggedIn, 'User ID:', userId);
     console.log('Initial score:', score);
     
-    if (!currentProblem) {
-      generateNewProblem(
-        settings.operation, 
-        settings.range,
-        settings.allowNegatives || false,
-        settings.focusNumber || null
-      );
-    }
+    // Always generate a new problem when component mounts to avoid operation carryover
+    generateNewProblem(
+      settings.operation, 
+      settings.range,
+      settings.allowNegatives || false,
+      settings.focusNumber || null
+    );
+    initialProblemGeneratedRef.current = true;
+    
     inputRef.current?.focus();
     
     const timer = setInterval(() => {
@@ -74,17 +77,20 @@ const GameScreen = () => {
             .then(success => {
               if (success) {
                 console.log('Game ended, score saved successfully:', finalScore);
+                toast.success(`Score of ${finalScore} saved successfully!`);
               } else {
                 console.log('Game ended, could not save score:', finalScore);
                 if (!isLoggedIn) {
                   console.log('User not logged in - this is expected');
                 } else if (!userId) {
                   console.error('No user ID available - this is unexpected');
+                  toast.error("Couldn't save score: no user ID found");
                 }
               }
             })
             .catch(err => {
               console.error('Error in promise handling when saving score:', err);
+              toast.error("Error saving score");
             });
           
           return 0;
@@ -134,15 +140,19 @@ const GameScreen = () => {
       .then(success => {
         if (success) {
           console.log('Game restarted, score saved successfully:', finalScore);
+          toast.success(`Score of ${finalScore} saved!`);
         } else {
           console.log('Game restarted, could not save score:', finalScore);
           if (!isLoggedIn) {
             console.log('User not logged in - this is expected');
+          } else {
+            toast.error("Couldn't save score. Please try again.");
           }
         }
       })
       .catch(err => {
         console.error('Error in promise handling when restarting game:', err);
+        toast.error("Error saving score");
       });
     
     setGameState('ended');
