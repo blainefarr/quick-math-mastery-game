@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import useGame from '@/context/useGame';
 import { Button } from '@/components/ui/button';
@@ -42,13 +43,18 @@ const GameScreen = () => {
     console.log('Initial score:', score);
     
     // Always generate a new problem when component mounts to avoid operation carryover
-    generateNewProblem();
+    generateNewProblem(
+      settings.operation, 
+      settings.range,
+      settings.allowNegatives || false,
+      settings.focusNumber || null
+    );
     initialProblemGeneratedRef.current = true;
     
     inputRef.current?.focus();
     
     const timer = setInterval(() => {
-      setTimeLeft((prevTime: number) => {
+      setTimeLeft(prevTime => {
         if (prevTime <= 1) {
           clearInterval(timer);
           
@@ -115,7 +121,12 @@ const GameScreen = () => {
           setUserAnswer('');
           setFeedback(null);
           setIsNegative(false);
-          generateNewProblem();
+          generateNewProblem(
+            settings.operation, 
+            settings.range,
+            settings.allowNegatives || false,
+            settings.focusNumber || null
+          );
           focusInput();
         }, 100);
       }
@@ -135,14 +146,16 @@ const GameScreen = () => {
       return false;
     }
 
-    return await saveScore(
-      scoreRef.current, 
+    const success = await saveScore(
+      scoreRef.current,
       settings.operation,
       settings.range,
       settings.timerSeconds,
       settings.focusNumber || null,
       settings.allowNegatives || false
     );
+
+    return success;
   };
 
   return (

@@ -6,12 +6,10 @@ import { GameContextType, GameState, GameProviderProps } from './game-context-ty
 import { useGameSettings } from './hooks/useGameSettings';
 import { useProblemGenerator } from './hooks/useProblemGenerator';
 import { useScoreManagement } from './hooks/useScoreManagement';
-import { Operation, ProblemRange } from '@/types';
-import { toast } from 'sonner';
 
 const GameProvider = ({ children }: GameProviderProps) => {
   const { settings, updateSettings, resetSettings } = useGameSettings();
-  const { currentProblem, generateNewProblem: generateProblem } = useProblemGenerator();
+  const { currentProblem, generateNewProblem } = useProblemGenerator();
   
   const [gameState, setGameState] = useState<GameState>('selection');
   const [score, setScore] = useState(0);
@@ -25,41 +23,16 @@ const GameProvider = ({ children }: GameProviderProps) => {
   const { 
     scoreHistory, 
     fetchUserScores, 
-    saveScore: saveFinalScore, 
+    saveScore, 
     getIsHighScore,
     setScoreHistory 
   } = useScoreManagement(userId);
 
-  // Handle user logout
-  const handleLogout = async () => {
-    try {
-      await supabase.auth.signOut();
-      // Clear local storage items related to auth
-      localStorage.removeItem('supabase.auth.token');
-      sessionStorage.removeItem('supabase.auth.token');
-      
-      // Don't toast here - we'll let the auth state change event handle this
-      setIsLoggedIn(false);
-      setUserId(null);
-      setUsername('');
-      setScoreHistory([]);
-    } catch (error) {
-      console.error('Error signing out:', error);
-      toast('Failed to log out');
-    }
-  };
-
   // Handle authentication state changes
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        if (event === 'SIGNED_OUT') {
-          setIsLoggedIn(false);
-          setUserId(null);
-          setUsername('');
-          setScoreHistory([]);
-          toast('Logged out successfully');
-        } else if (session?.user) {
+      async (event, session) => {
+        if (session?.user) {
           setIsLoggedIn(true);
           setUserId(session.user.id);
           setUsername(
@@ -70,13 +43,13 @@ const GameProvider = ({ children }: GameProviderProps) => {
           );
           
           // Fetch scores after login
-          setTimeout(() => {
-            fetchUserScores().then(scores => {
-              if (scores) {
-                setScoreHistory(scores);
-              }
-            });
-          }, 0);
+          const scores = await fetchUserScores();
+          setScoreHistory(scores);
+        } else {
+          setIsLoggedIn(false);
+          setUserId(null);
+          setUsername('');
+          setScoreHistory([]);
         }
       }
     );
@@ -121,42 +94,6 @@ const GameProvider = ({ children }: GameProviderProps) => {
     setScore(0);
   };
 
-  // Wrapper for generateNewProblem to match the interface
-  const generateNewProblemWrapper = (
-    operation?: Operation, 
-    range?: ProblemRange,
-    allowNegatives?: boolean,
-    focusNumber?: number | null
-  ) => {
-    return generateProblem(
-      operation || settings.operation, 
-      range || settings.range,
-      allowNegatives !== undefined ? allowNegatives : settings.allowNegatives || false,
-      focusNumber !== undefined ? focusNumber : settings.focusNumber || null
-    );
-  };
-  
-  // Wrapper for saveScore to match the interface
-  const saveScoreWrapper = async (
-    finalScore?: number, 
-    operation?: Operation, 
-    range?: ProblemRange, 
-    timerSeconds?: number,
-    focusNumber?: number | null,
-    allowNegatives?: boolean
-  ): Promise<boolean> => {
-    const result = await saveFinalScore(
-      finalScore !== undefined ? finalScore : score,
-      operation || settings.operation,
-      range || settings.range,
-      timerSeconds || settings.timerSeconds,
-      focusNumber !== undefined ? focusNumber : settings.focusNumber || null,
-      allowNegatives !== undefined ? allowNegatives : settings.allowNegatives || false
-    );
-    
-    return result;
-  };
-
   const value: GameContextType = {
     gameState,
     setGameState,
@@ -166,13 +103,13 @@ const GameProvider = ({ children }: GameProviderProps) => {
     incrementScore,
     resetScore,
     currentProblem,
-    generateNewProblem: generateNewProblemWrapper,
+    generateNewProblem,
     timeLeft,
     setTimeLeft,
     userAnswer,
     setUserAnswer,
     scoreHistory,
-    saveScore: saveScoreWrapper,
+    saveScore,
     isLoggedIn,
     setIsLoggedIn,
     username,
@@ -180,8 +117,7 @@ const GameProvider = ({ children }: GameProviderProps) => {
     focusNumber,
     setFocusNumber,
     getIsHighScore,
-    userId,
-    handleLogout
+    userId
   };
 
   return (

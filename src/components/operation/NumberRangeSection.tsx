@@ -1,123 +1,89 @@
-import React, { useState, useEffect } from 'react';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import useGame from '@/context/useGame';
-
-const NumberRangeSection = () => {
-  const { settings, updateSettings } = useGame();
-  const [min1, setMin1] = useState(settings.range.min1.toString());
-  const [max1, setMax1] = useState(settings.range.max1.toString());
-  const [min2, setMin2] = useState(settings.range.min2.toString());
-  const [max2, setMax2] = useState(settings.range.max2.toString());
-
-  const validateNumber = (value: string): boolean => {
-    return /^-?\d+$/.test(value);
+import React from 'react';
+interface NumberRangeSectionProps {
+  title?: string;
+  min?: number;
+  max?: number;
+  onMinChange?: (value: number) => void;
+  onMaxChange?: (value: number) => void;
+  inputPrefix?: string;
+  inputSuffix?: string;
+  inputLabelMin?: string;
+  inputLabelMax?: string;
+  focusNumberEnabled?: boolean;
+  focusNumber?: number;
+  negativeNumbersEnabled?: boolean;
+  range1?: {
+    min: number;
+    max: number;
   };
-
-  const handleMin1Change = (value: string) => {
-    if (value === '' || validateNumber(value)) {
-      setMin1(value);
-    }
+  range2?: {
+    min: number;
+    max: number;
   };
-
-  const handleMax1Change = (value: string) => {
-    if (value === '' || validateNumber(value)) {
-      setMax1(value);
-    }
+  setRange1Min?: (value: any) => void;
+  setRange1Max?: (value: any) => void;
+  setRange2Min?: (value: any) => void;
+  setRange2Max?: (value: any) => void;
+}
+const NumberRangeSection = ({
+  title,
+  min,
+  max,
+  onMinChange,
+  onMaxChange,
+  inputPrefix,
+  inputSuffix,
+  inputLabelMin,
+  inputLabelMax,
+  focusNumberEnabled,
+  focusNumber,
+  negativeNumbersEnabled,
+  range1,
+  range2,
+  setRange1Min,
+  setRange1Max,
+  setRange2Min,
+  setRange2Max
+}: NumberRangeSectionProps) => {
+  const selectAllOnFocus = (e: React.FocusEvent<HTMLInputElement>) => {
+    e.target.select();
   };
-
-  const handleMin2Change = (value: string) => {
-    if (value === '' || validateNumber(value)) {
-      setMin2(value);
-    }
-  };
-
-  const handleMax2Change = (value: string) => {
-    if (value === '' || validateNumber(value)) {
-      setMax2(value);
-    }
-  };
-
-  useEffect(() => {
-    const newMin1 = min1 === '' ? 0 : parseInt(min1);
-    const newMax1 = max1 === '' ? 10 : parseInt(max1);
-    const newMin2 = min2 === '' ? 0 : parseInt(min2);
-    const newMax2 = max2 === '' ? 10 : parseInt(max2);
-
-    updateSettings({
-      range: {
-        min1: newMin1,
-        max1: newMax1,
-        min2: newMin2,
-        max2: newMax2,
-      },
-    });
-  }, [min1, max1, min2, max2, updateSettings]);
-
-  return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <Label>Timer</Label>
-        <Select
-          value={settings.timerSeconds.toString()}
-          onValueChange={(value) => updateSettings({ timerSeconds: parseInt(value) })}
-        >
-          <SelectTrigger className="w-[140px]">
-            <SelectValue placeholder="Select time" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="15">15 seconds</SelectItem>
-            <SelectItem value="30">30 seconds</SelectItem>
-            <SelectItem value="60">1 minute</SelectItem>
-            <SelectItem value="120">2 minutes</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div className="space-y-4">
-        <div>
-          <Label htmlFor="min1">First Number Range</Label>
-          <div className="flex space-x-2">
-            <Input
-              type="number"
-              id="min1"
-              placeholder="Min"
-              value={min1}
-              onChange={(e) => handleMin1Change(e.target.value)}
-            />
-            <Input
-              type="number"
-              id="max1"
-              placeholder="Max"
-              value={max1}
-              onChange={(e) => handleMax1Change(e.target.value)}
-            />
+  const renderRangeInputs = () => {
+    if (range1 && range2 && setRange1Min && setRange1Max && setRange2Min && setRange2Max) {
+      return <div className="flex flex-wrap md:flex-nowrap gap-8 px-4 max-w-[700px] mx-auto">
+          <div className="flex-1 min-w-[240px]">
+            <h4 className="text-base font-medium mb-2">Number Range 1</h4>
+            <div className="flex flex-row gap-4">
+              <div className="flex flex-col">
+                <label className="text-xs font-medium block mb-1">Min</label>
+                <input value={range1.min} onChange={e => setRange1Min(e.target.value)} onFocus={selectAllOnFocus} className="w-24 px-3 py-1 rounded-md border shadow-sm focus:ring-2 focus:ring-accent focus:border-accent font-mono text-lg text-left appearance-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" type="number" inputMode="numeric" pattern="[0-9]*" />
+              </div>
+              <div className="flex flex-col">
+                <label className="text-xs font-medium block mb-1">Max</label>
+                <input value={range1.max} onChange={e => setRange1Max(e.target.value)} onFocus={selectAllOnFocus} className="w-24 px-3 py-1 rounded-md border shadow-sm focus:ring-2 focus:ring-accent focus:border-accent font-mono text-lg text-left appearance-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" type="number" inputMode="numeric" pattern="[0-9]*" />
+              </div>
+            </div>
           </div>
-        </div>
-
-        <div>
-          <Label htmlFor="min2">Second Number Range</Label>
-          <div className="flex space-x-2">
-            <Input
-              type="number"
-              id="min2"
-              placeholder="Min"
-              value={min2}
-              onChange={(e) => handleMin2Change(e.target.value)}
-            />
-            <Input
-              type="number"
-              id="max2"
-              placeholder="Max"
-              value={max2}
-              onChange={(e) => handleMax2Change(e.target.value)}
-            />
+          <div className="flex-1 min-w-[240px]">
+            <h4 className="text-base font-medium mb-2">Number Range 2</h4>
+            <div className="flex flex-row gap-4">
+              <div className="flex flex-col">
+                <label className="text-xs font-medium block mb-1">Min</label>
+                <input value={range2.min} onChange={e => setRange2Min(e.target.value)} onFocus={selectAllOnFocus} className="w-24 px-3 py-1 rounded-md border shadow-sm focus:ring-2 focus:ring-accent focus:border-accent font-mono text-lg text-left appearance-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" type="number" inputMode="numeric" pattern="[0-9]*" />
+              </div>
+              <div className="flex flex-col">
+                <label className="text-xs font-medium block mb-1">Max</label>
+                <input value={range2.max} onChange={e => setRange2Max(e.target.value)} onFocus={selectAllOnFocus} className="w-24 px-3 py-1 rounded-md border shadow-sm focus:ring-2 focus:ring-accent focus:border-accent font-mono text-lg text-left appearance-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" type="number" inputMode="numeric" pattern="[0-9]*" />
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
-    </div>
-  );
+        </div>;
+    }
+    return null;
+  };
+  return <div className="w-full">
+      {title && <h3 className="font-bold text-md mb-2 px-4">{title}</h3>}
+      {renderRangeInputs()}
+    </div>;
 };
-
 export default NumberRangeSection;
