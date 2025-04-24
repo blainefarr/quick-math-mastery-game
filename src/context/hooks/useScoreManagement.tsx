@@ -1,3 +1,4 @@
+
 import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { UserScore, Operation, ProblemRange } from '@/types';
@@ -91,6 +92,7 @@ export const useScoreManagement = (userId: string | null) => {
       console.log('Score saved successfully:', data);
       toast.success('Score saved!');
       
+      // Refresh score history after saving
       const updatedScores = await fetchUserScores();
       setScoreHistory(updatedScores);
 

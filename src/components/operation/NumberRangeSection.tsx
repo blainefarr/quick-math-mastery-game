@@ -55,8 +55,8 @@ const NumberRangeSection = ({
     if (range1 && range2 && setRange1Min && setRange1Max && setRange2Min && setRange2Max) {
       // Using the new props structure
       return (
-        <>
-          <div className="mb-4">
+        <div className="flex flex-col md:flex-row md:justify-between md:gap-4 w-full">
+          <div className="mb-4 md:mb-0 w-full md:w-1/2">
             <h4 className="text-sm font-medium mb-2">First Number Range</h4>
             <div className="flex flex-row gap-4">
               <div className="flex flex-col items-start">
@@ -85,7 +85,7 @@ const NumberRangeSection = ({
               </div>
             </div>
           </div>
-          <div>
+          <div className="w-full md:w-1/2">
             <h4 className="text-sm font-medium mb-2">Second Number Range</h4>
             <div className="flex flex-row gap-4">
               <div className="flex flex-col items-start">
@@ -114,7 +114,7 @@ const NumberRangeSection = ({
               </div>
             </div>
           </div>
-        </>
+        </div>
       );
     } else if (min !== undefined && max !== undefined && onMinChange && onMaxChange) {
       // Using the original props structure

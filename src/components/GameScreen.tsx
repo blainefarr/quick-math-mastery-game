@@ -26,11 +26,17 @@ const GameScreen = () => {
 
   const [feedback, setFeedback] = useState<'correct' | 'incorrect' | null>(null);
   const [isNegative, setIsNegative] = useState(false);
+  const [currentScore, setCurrentScore] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    setCurrentScore(score);
+  }, [score]);
 
   useEffect(() => {
     console.log('GameScreen mounted with settings:', settings);
     console.log('User logged in:', isLoggedIn, 'User ID:', userId);
+    console.log('Initial score:', score);
     
     if (!currentProblem) {
       generateNewProblem(
@@ -46,11 +52,10 @@ const GameScreen = () => {
         if (prevTime <= 1) {
           clearInterval(timer);
           setGameState('ended');
-          console.log('Game ended, attempting to save score:', score);
+          console.log('Game ended, attempting to save score:', currentScore);
           
-          // Always try to save the score, even if it's 0
           saveScore(
-            score,
+            currentScore,
             settings.operation,
             settings.range,
             settings.timerSeconds,
@@ -59,9 +64,9 @@ const GameScreen = () => {
           )
             .then(success => {
               if (success) {
-                console.log('Game ended, score saved successfully:', score);
+                console.log('Game ended, score saved successfully:', currentScore);
               } else {
-                console.log('Game ended, could not save score:', score);
+                console.log('Game ended, could not save score:', currentScore);
                 if (!isLoggedIn) {
                   console.log('User not logged in - this is expected');
                 } else if (!userId) {
@@ -106,11 +111,10 @@ const GameScreen = () => {
   };
 
   const handleRestartGame = () => {
-    console.log('Restarting game, attempting to save score:', score);
+    console.log('Restarting game, attempting to save score:', currentScore);
     
-    // Always try to save the score, even if it's 0
     saveScore(
-      score,
+      currentScore,
       settings.operation,
       settings.range,
       settings.timerSeconds,
@@ -119,9 +123,9 @@ const GameScreen = () => {
     )
       .then(success => {
         if (success) {
-          console.log('Game restarted, score saved successfully:', score);
+          console.log('Game restarted, score saved successfully:', currentScore);
         } else {
-          console.log('Game restarted, could not save score:', score);
+          console.log('Game restarted, could not save score:', currentScore);
           if (!isLoggedIn) {
             console.log('User not logged in - this is expected');
           }

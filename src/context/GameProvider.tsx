@@ -93,8 +93,17 @@ const GameProvider = ({ children }: GameProviderProps) => {
     }
   }, [gameState, isLoggedIn, userId, fetchUserScores]);
 
-  const incrementScore = () => setScore(prev => prev + 1);
-  const resetScore = () => setScore(0);
+  const incrementScore = () => {
+    setScore(prev => {
+      console.log(`Incrementing score from ${prev} to ${prev + 1}`);
+      return prev + 1;
+    });
+  };
+  
+  const resetScore = () => {
+    console.log("Resetting score to 0");
+    setScore(0);
+  };
 
   const value: GameContextType = {
     gameState,
