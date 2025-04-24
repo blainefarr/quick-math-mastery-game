@@ -14,6 +14,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 interface NumberRangeSectionProps {
   focusNumberEnabled?: boolean;
   focusNumber?: number;
+  negativeNumbersEnabled?: boolean;
   range1?: {
     min: number;
     max: number;
@@ -33,6 +34,7 @@ interface NumberRangeSectionProps {
 const NumberRangeSection = ({
   focusNumberEnabled,
   focusNumber,
+  negativeNumbersEnabled,
   range1,
   range2,
   setRange1Min,
@@ -85,7 +87,7 @@ const NumberRangeSection = ({
               </div>
             </div>
             {focusNumberEnabled && (
-              <p className="text-sm text-muted-foreground mt-1">
+              <p className="text-sm text-muted-foreground">
                 (locked to focus number)
               </p>
             )}
