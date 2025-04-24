@@ -6,7 +6,8 @@ const defaultSettings: GameSettings = {
   operation: 'addition',
   range: { min1: 1, max1: 10, min2: 1, max2: 10 },
   timerSeconds: 60,
-  allowNegatives: false
+  allowNegatives: false,
+  focusNumber: null
 };
 
 export const useGameSettings = () => {

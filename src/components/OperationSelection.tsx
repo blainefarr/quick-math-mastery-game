@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import useGame from '@/context/useGame';
 import { Button } from '@/components/ui/button';
@@ -83,7 +82,8 @@ const OperationSelection = () => {
         max2: range2Max
       },
       timerSeconds: 60,
-      allowNegatives: negativeNumbersEnabled
+      allowNegatives: negativeNumbersEnabled,
+      focusNumber: useFocusNumber ? focusNumberValue : null
     });
     if (useFocusNumber) setFocusNumber(focusNumberValue);
     else setFocusNumber(null);

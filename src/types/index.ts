@@ -20,6 +20,7 @@ export type GameSettings = {
   range: ProblemRange;
   timerSeconds: number;
   allowNegatives?: boolean;
+  focusNumber?: number | null;
 };
 
 export interface UserScore {

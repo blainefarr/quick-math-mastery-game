@@ -34,7 +34,12 @@ const GameScreen = () => {
     console.log('User logged in:', isLoggedIn, 'User ID:', userId);
     
     if (!currentProblem) {
-      generateNewProblem();
+      generateNewProblem(
+        settings.operation, 
+        settings.range,
+        settings.allowNegatives || false,
+        settings.focusNumber || null
+      );
     }
     inputRef.current?.focus();
     const timer = setInterval(() => {
@@ -43,7 +48,14 @@ const GameScreen = () => {
           clearInterval(timer);
           setGameState('ended');
           try {
-            saveScore()
+            saveScore(
+              score,
+              settings.operation,
+              settings.range,
+              settings.timerSeconds,
+              settings.focusNumber || null,
+              settings.allowNegatives || false
+            )
               .then(success => {
                 if (success) {
                   console.log('Game ended, score saved successfully:', score);
@@ -97,7 +109,14 @@ const GameScreen = () => {
 
   const handleRestartGame = () => {
     try {
-      saveScore()
+      saveScore(
+        score,
+        settings.operation,
+        settings.range,
+        settings.timerSeconds,
+        settings.focusNumber || null,
+        settings.allowNegatives || false
+      )
         .then(success => {
           if (success) {
             console.log('Game restarted, score saved successfully:', score);
@@ -132,7 +151,12 @@ const GameScreen = () => {
           setUserAnswer('');
           setFeedback(null);
           setIsNegative(false);
-          generateNewProblem();
+          generateNewProblem(
+            settings.operation, 
+            settings.range,
+            settings.allowNegatives || false,
+            settings.focusNumber || null
+          );
           focusInput();
         }, 100);
       }
