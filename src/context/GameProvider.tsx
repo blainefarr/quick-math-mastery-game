@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import GameContext from './GameContext';
@@ -34,6 +35,7 @@ const GameProvider = ({ children }: GameProviderProps) => {
     if (didSetupRef.current) return;
     didSetupRef.current = true;
 
+    // Set up the auth state listener first
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (session?.user) {
@@ -47,14 +49,12 @@ const GameProvider = ({ children }: GameProviderProps) => {
           );
           
           // Fetch scores after login
-          const scores = await fetchUserScores();
-          setScoreHistory(scores);
-          
-          // Only show login toast on SIGNED_IN event
           if (event === 'SIGNED_IN') {
             toast.success("Successfully logged in!");
+            const scores = await fetchUserScores();
+            setScoreHistory(scores);
           }
-        } else {
+        } else if (event === 'SIGNED_OUT') {
           setIsLoggedIn(false);
           setUserId(null);
           setUsername('');
@@ -63,7 +63,7 @@ const GameProvider = ({ children }: GameProviderProps) => {
       }
     );
 
-    // Check initial session
+    // Then check initial session
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (session?.user) {
         setIsLoggedIn(true);

@@ -138,7 +138,7 @@ const NumberRangeSection = ({
             </Tooltip>
           </TooltipProvider>
         </div>
-        <Select defaultValue={timeLimit.toString()} onValueChange={onTimeChange}>
+        <Select defaultValue={timeLimit?.toString() || '60'} onValueChange={onTimeChange}>
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="Select time limit" />
           </SelectTrigger>
