@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useGame } from '@/context/useGame';
 import { 
@@ -171,7 +170,7 @@ const UserProfile = () => {
             </DialogDescription>
           </DialogHeader>
           <div className="flex-1 overflow-y-auto">
-            <div className="mb-4">
+            <div className="mb-4 px-4">
               <Label className="mr-2 text-base font-semibold mb-2 block">Filter:</Label>
               <div className="flex flex-wrap gap-4">
                 <Select
@@ -236,20 +235,6 @@ const UserProfile = () => {
               </Tabs>
             )}
           </div>
-          
-          <DialogClose asChild>
-            <Button 
-              type="button" 
-              variant="outline" 
-              className="mt-4"
-              onClick={() => {
-                document.body.style.pointerEvents = '';
-                document.body.classList.remove('ReactModal__Body--open');
-              }}
-            >
-              Close Profile
-            </Button>
-          </DialogClose>
         </DialogContent>
       </Dialog>
     </>
