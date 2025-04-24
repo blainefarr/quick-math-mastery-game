@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import useGame from '@/context/useGame';
 import { Button } from '@/components/ui/button';
@@ -156,7 +157,7 @@ const GameScreen = () => {
     }
 
     const success = await saveScore(
-      finalScore,
+      finalScoreRef.current,
       settings.operation,
       settings.range,
       settings.timerSeconds,
