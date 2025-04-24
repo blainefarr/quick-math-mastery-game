@@ -95,8 +95,9 @@ const GameProvider = ({ children }: GameProviderProps) => {
 
   const incrementScore = () => {
     setScore(prev => {
-      console.log(`Incrementing score from ${prev} to ${prev + 1}`);
-      return prev + 1;
+      const newScore = prev + 1;
+      console.log(`Incrementing score from ${prev} to ${newScore}`);
+      return newScore;
     });
   };
   

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import useGame from '@/context/useGame';
 import { Button } from '@/components/ui/button';
@@ -29,11 +28,12 @@ const GameScreen = () => {
   const [isNegative, setIsNegative] = useState(false);
   const [currentScore, setCurrentScore] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
-  
-  // Track score changes to ensure we always have the latest value
+  const finalScoreRef = useRef(0);
+
   useEffect(() => {
     setCurrentScore(score);
-    console.log(`Score updated: ${score} -> currentScore set to: ${score}`);
+    finalScoreRef.current = score;
+    console.log(`Score updated: ${score} -> currentScore set to: ${score}, finalScoreRef set to: ${finalScoreRef.current}`);
   }, [score]);
 
   useEffect(() => {
@@ -55,13 +55,16 @@ const GameScreen = () => {
       setTimeLeft(prevTime => {
         if (prevTime <= 1) {
           clearInterval(timer);
+          
+          const finalScore = finalScoreRef.current;
+          console.log(`Game ending with final score: ${finalScore} (from ref), score state: ${score}, currentScore state: ${currentScore}`);
+          
           setGameState('ended');
           
-          // Use the latest score value via the state tracker
-          console.log('Game ended, attempting to save score:', currentScore);
+          console.log('Game ended, attempting to save score:', finalScore);
           
           saveScore(
-            currentScore, // Use the tracked score state
+            finalScore,
             settings.operation,
             settings.range,
             settings.timerSeconds,
@@ -70,9 +73,9 @@ const GameScreen = () => {
           )
             .then(success => {
               if (success) {
-                console.log('Game ended, score saved successfully:', currentScore);
+                console.log('Game ended, score saved successfully:', finalScore);
               } else {
-                console.log('Game ended, could not save score:', currentScore);
+                console.log('Game ended, could not save score:', finalScore);
                 if (!isLoggedIn) {
                   console.log('User not logged in - this is expected');
                 } else if (!userId) {
@@ -117,10 +120,11 @@ const GameScreen = () => {
   };
 
   const handleRestartGame = () => {
-    console.log('Restarting game, attempting to save score:', currentScore);
+    const finalScore = finalScoreRef.current;
+    console.log('Restarting game, attempting to save score:', finalScore);
     
     saveScore(
-      currentScore, // Use the tracked score state
+      finalScore,
       settings.operation,
       settings.range,
       settings.timerSeconds,
@@ -129,9 +133,9 @@ const GameScreen = () => {
     )
       .then(success => {
         if (success) {
-          console.log('Game restarted, score saved successfully:', currentScore);
+          console.log('Game restarted, score saved successfully:', finalScore);
         } else {
-          console.log('Game restarted, could not save score:', currentScore);
+          console.log('Game restarted, could not save score:', finalScore);
           if (!isLoggedIn) {
             console.log('User not logged in - this is expected');
           }
@@ -154,12 +158,13 @@ const GameScreen = () => {
       if (numericValue === currentProblem.answer) {
         setFeedback('correct');
         incrementScore();
-        // Update our local score tracker immediately
         setCurrentScore(prev => {
           const newScore = prev + 1;
           console.log(`Local score updated from ${prev} to ${newScore}`);
           return newScore;
         });
+        finalScoreRef.current = finalScoreRef.current + 1;
+        console.log(`finalScoreRef updated to: ${finalScoreRef.current}`);
         
         setTimeout(() => {
           setUserAnswer('');
@@ -194,7 +199,7 @@ const GameScreen = () => {
           </Card>
           <Card className="p-3">
             <span className="font-medium">Score: </span>
-            <span className="text-xl font-bold">{currentScore}</span> {/* Show the tracked score */}
+            <span className="text-xl font-bold">{currentScore}</span>
           </Card>
         </div>
 
