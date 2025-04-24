@@ -53,7 +53,7 @@ const NumberRangeSection = ({
   const renderRangeInputs = () => {
     if (range1 && range2 && setRange1Min && setRange1Max && setRange2Min && setRange2Max) {
       return (
-        <div className="flex flex-wrap md:flex-nowrap items-start gap-10">
+        <div className="flex flex-wrap xs:flex-nowrap items-start gap-4 xs:gap-10">
           <div className="w-full">
             <h4 className="text-base font-medium mb-2">First Number Range</h4>
             <div className="flex flex-row gap-4">
