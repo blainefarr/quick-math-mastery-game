@@ -15,7 +15,7 @@ const FocusNumberSection = ({
   value,
   onToggle,
   onChange
-}: FocusNumberSectionProps) => <div className="space-y-2 border p-4 rounded-lg bg-muted/50 mt-2 py-[12px] my-[6px]">
+}: FocusNumberSectionProps) => <div className="space-y-2 border p-4 rounded-lg bg-muted/50 mt-2 py-[12px] my-0">
     <div className="flex items-center justify-between">
       <div className="flex items-center space-x-2">
         <Label htmlFor="focus-number-toggle" className="text-base font-medium">
