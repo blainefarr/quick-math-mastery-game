@@ -163,14 +163,14 @@ const UserProfile = () => {
       </DropdownMenu>
       
       <Dialog open={isProfileOpen} onOpenChange={handleOpenChange}>
-        <DialogContent className="max-w-4xl">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
           <DialogHeader>
             <DialogTitle className="text-xl">My Profile - {username}</DialogTitle>
             <DialogDescription>
               View and manage your profile and score history
             </DialogDescription>
           </DialogHeader>
-          <div className="mt-4">
+          <div className="flex-1 overflow-y-auto">
             <div className="mb-4">
               <Label className="mr-2 text-base font-semibold mb-2 block">Filter:</Label>
               <div className="flex flex-wrap gap-4">
@@ -212,7 +212,7 @@ const UserProfile = () => {
             ) : error ? (
               <p className="text-center py-8 text-red-500">{error}</p>
             ) : (
-              <Tabs defaultValue="history">
+              <Tabs defaultValue="history" className="w-full">
                 <TabsList>
                   <TabsTrigger value="history">Score History</TabsTrigger>
                   <TabsTrigger value="progress">Progress</TabsTrigger>

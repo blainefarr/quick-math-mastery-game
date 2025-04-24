@@ -4,14 +4,13 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowRight } from 'lucide-react';
 import { Operation } from '@/types';
-import { useIsMobile } from '@/hooks/use-mobile';
 
 import OperationButton from './operation/OperationButton';
 import FocusNumberSection from './operation/FocusNumberSection';
 import NegativeNumbersToggle from './operation/NegativeNumbersToggle';
 import NumberRangeSection from './operation/NumberRangeSection';
 
-const GAME_DURATION = 15;
+const GAME_DURATION = 60;
 
 const OperationSelection = () => {
   const {
@@ -23,7 +22,6 @@ const OperationSelection = () => {
     setFocusNumber,
     resetScore
   } = useGame();
-  const isMobile = useIsMobile();
   const [selectedOperation, setSelectedOperation] = useState<Operation>(settings.operation);
 
   const [negativeNumbersEnabled, setNegativeNumbersEnabled] = useState(false);
@@ -103,7 +101,7 @@ const OperationSelection = () => {
             Choose Your Math Challenge
           </CardTitle>
         </CardHeader>
-        <CardContent className="flex flex-col gap-4 md:gap-6">
+        <CardContent className="flex flex-col gap-6">
           <div>
             <h3 className="text-lg font-medium mb-3">Operation</h3>
             <div className="flex flex-wrap gap-3 justify-center items-center rounded-lg p-2 bg-muted/50 w-full">
@@ -147,11 +145,6 @@ const OperationSelection = () => {
             setRange2Min={v => setRange2Min(parseOrDefault(v, range2Min))}
             setRange2Max={v => setRange2Max(parseOrDefault(v, range2Max))}
           />
-
-          <div>
-            <h3 className="text-lg font-medium">Timer</h3>
-            <span className="block font-bold text-primary">{GAME_DURATION} seconds</span>
-          </div>
         </CardContent>
         <CardFooter>
           <Button

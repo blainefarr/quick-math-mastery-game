@@ -50,11 +50,11 @@ const NumberRangeSection = ({
   const renderRangeInputs = () => {
     if (range1 && range2 && setRange1Min && setRange1Max && setRange2Min && setRange2Max) {
       return (
-        <div className="flex flex-wrap 2xs:flex-nowrap items-start gap-4 2xs:gap-8">
-          <div className="w-full">
+        <div className="flex flex-row gap-10 items-start">
+          <div className="flex-1">
             <h4 className="text-base font-medium mb-2">First Number Range</h4>
             <div className="flex flex-row gap-4">
-              <div className="flex flex-col items-start">
+              <div className="flex flex-col">
                 <label className="text-xs font-medium block mb-1">Min</label>
                 <input
                   value={range1.min}
@@ -66,7 +66,7 @@ const NumberRangeSection = ({
                   pattern="[0-9]*"
                 />
               </div>
-              <div className="flex flex-col items-start">
+              <div className="flex flex-col">
                 <label className="text-xs font-medium block mb-1">Max</label>
                 <input
                   value={range1.max}
@@ -80,10 +80,10 @@ const NumberRangeSection = ({
               </div>
             </div>
           </div>
-          <div className="w-full">
+          <div className="flex-1">
             <h4 className="text-base font-medium mb-2">Second Number Range</h4>
             <div className="flex flex-row gap-4">
-              <div className="flex flex-col items-start">
+              <div className="flex flex-col">
                 <label className="text-xs font-medium block mb-1">Min</label>
                 <input
                   value={range2.min}
@@ -95,7 +95,7 @@ const NumberRangeSection = ({
                   pattern="[0-9]*"
                 />
               </div>
-              <div className="flex flex-col items-start">
+              <div className="flex flex-col">
                 <label className="text-xs font-medium block mb-1">Max</label>
                 <input
                   value={range2.max}
@@ -116,7 +116,7 @@ const NumberRangeSection = ({
   };
 
   return (
-    <div className="w-full flex flex-col gap-1 mb-4 px-4">
+    <div className="w-full px-4">
       {title && <h3 className="font-bold text-md mb-2">{title}</h3>}
       {renderRangeInputs()}
     </div>
