@@ -1,19 +1,16 @@
-
 import React from "react";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Info } from "lucide-react";
-import {
-  Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,
-} from "@/components/ui/tooltip";
-
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 interface NegativeNumbersToggleProps {
   enabled: boolean;
   onToggle: (checked: boolean) => void;
 }
-
-const NegativeNumbersToggle = ({ enabled, onToggle }: NegativeNumbersToggleProps) => (
-  <div className="flex items-center justify-between border p-4 rounded-lg bg-muted/50 mt-2">
+const NegativeNumbersToggle = ({
+  enabled,
+  onToggle
+}: NegativeNumbersToggleProps) => <div className="flex items-center justify-between border p-4 rounded-lg bg-muted/50 mt-2 py-[12px]">
     <div className="flex items-center space-x-2">
       <Label htmlFor="negative-number-toggle" className="text-base font-medium">
         Include Negative Numbers
@@ -31,12 +28,6 @@ const NegativeNumbersToggle = ({ enabled, onToggle }: NegativeNumbersToggleProps
         </Tooltip>
       </TooltipProvider>
     </div>
-    <Switch
-      id="negative-number-toggle"
-      checked={enabled}
-      onCheckedChange={onToggle}
-    />
-  </div>
-);
-
+    <Switch id="negative-number-toggle" checked={enabled} onCheckedChange={onToggle} />
+  </div>;
 export default NegativeNumbersToggle;
