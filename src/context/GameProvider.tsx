@@ -142,15 +142,15 @@ const GameProvider = ({ children }: GameProviderProps) => {
     operation?: Operation, 
     range?: ProblemRange, 
     timerSeconds?: number,
-    focusNumberVal?: number | null,
+    focusNumber?: number | null,
     allowNegatives?: boolean
-  ) => {
+  ): Promise<boolean> => {
     const result = await saveFinalScore(
       finalScore !== undefined ? finalScore : score,
       operation || settings.operation,
       range || settings.range,
       timerSeconds || settings.timerSeconds,
-      focusNumberVal !== undefined ? focusNumberVal : settings.focusNumber || null,
+      focusNumber !== undefined ? focusNumber : settings.focusNumber || null,
       allowNegatives !== undefined ? allowNegatives : settings.allowNegatives || false
     );
     

@@ -135,7 +135,7 @@ const GameScreen = () => {
       return false;
     }
 
-    await saveScore(
+    return await saveScore(
       scoreRef.current, 
       settings.operation,
       settings.range,
@@ -143,8 +143,6 @@ const GameScreen = () => {
       settings.focusNumber || null,
       settings.allowNegatives || false
     );
-
-    return true;
   };
 
   return (

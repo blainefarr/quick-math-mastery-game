@@ -31,7 +31,7 @@ export interface GameContextType {
     focusNumber?: number | null
   ) => void;
   timeLeft: number;
-  setTimeLeft: (time: number) => void;
+  setTimeLeft: (time: number | ((prevTime: number) => number)) => void;
   userAnswer: string;
   setUserAnswer: (answer: string) => void;
   scoreHistory: UserScore[];
@@ -42,7 +42,7 @@ export interface GameContextType {
     timerSeconds?: number,
     focusNumber?: number | null,
     allowNegatives?: boolean
-  ) => Promise<void>;
+  ) => Promise<boolean>;
   isLoggedIn: boolean;
   setIsLoggedIn: (isLoggedIn: boolean) => void;
   username: string;
