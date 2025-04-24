@@ -10,7 +10,7 @@ interface NegativeNumbersToggleProps {
 const NegativeNumbersToggle = ({
   enabled,
   onToggle
-}: NegativeNumbersToggleProps) => <div className="flex items-center justify-between border p-4 rounded-lg bg-muted/50 mt-2 py-[12px] my-[6px]">
+}: NegativeNumbersToggleProps) => <div className="flex items-center justify-between border p-4 rounded-lg bg-muted/50 mt-2 py-[12px] my-0">
     <div className="flex items-center space-x-2">
       <Label htmlFor="negative-number-toggle" className="text-base font-medium">
         Include Negative Numbers
