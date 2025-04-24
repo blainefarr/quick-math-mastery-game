@@ -55,10 +55,10 @@ const NumberRangeSection = ({
     if (range1 && range2 && setRange1Min && setRange1Max && setRange2Min && setRange2Max) {
       // Using the new props structure
       return (
-        <div className="flex flex-col sm:flex-row sm:justify-between sm:gap-4 w-full max-w-[800px] mx-auto">
-          <div className="mb-4 sm:mb-0 w-full">
-            <h4 className="text-sm font-medium mb-2">First Number Range</h4>
-            <div className="flex flex-row gap-4">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:gap-6 w-full">
+          <div className="mb-4 sm:mb-0 w-full pl-4">
+            <h4 className="text-sm font-medium mb-2 ml-2">First Number Range</h4>
+            <div className="flex flex-row gap-4 ml-2">
               <div className="flex flex-col items-start">
                 <label className="font-medium text-xs mb-1">Min</label>
                 <input

@@ -65,6 +65,13 @@ export const useScoreManagement = (userId: string | null) => {
     // Debug log to ensure we have the correct score value
     console.log(`Saving score value: ${score} for user ${userId}`);
 
+    // Do not proceed if score is invalid
+    if (score < 0 || typeof score !== 'number' || isNaN(score)) {
+      console.error(`Invalid score value: ${score}`);
+      toast.error('Invalid score value');
+      return false;
+    }
+
     const scoreData = {
       score,
       operation,
