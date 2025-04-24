@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import useGame from '@/context/useGame';
 import { Button } from '@/components/ui/button';
@@ -66,32 +65,7 @@ const GameScreen = () => {
           
           console.log('Game ended, attempting to save score:', finalScore);
           
-          saveScore(
-            finalScore,
-            settings.operation,
-            settings.range,
-            settings.timerSeconds,
-            settings.focusNumber || null,
-            settings.allowNegatives || false
-          )
-            .then(success => {
-              if (success) {
-                console.log('Game ended, score saved successfully:', finalScore);
-                toast.success(`Score of ${finalScore} saved successfully!`);
-              } else {
-                console.log('Game ended, could not save score:', finalScore);
-                if (!isLoggedIn) {
-                  console.log('User not logged in - this is expected');
-                } else if (!userId) {
-                  console.error('No user ID available - this is unexpected');
-                  toast.error("Couldn't save score: no user ID found");
-                }
-              }
-            })
-            .catch(err => {
-              console.error('Error in promise handling when saving score:', err);
-              toast.error("Error saving score");
-            });
+          saveGameScore();
           
           return 0;
         } else {
@@ -129,31 +103,7 @@ const GameScreen = () => {
     const finalScore = finalScoreRef.current;
     console.log('Restarting game, attempting to save score:', finalScore);
     
-    saveScore(
-      finalScore,
-      settings.operation,
-      settings.range,
-      settings.timerSeconds,
-      settings.focusNumber || null,
-      settings.allowNegatives || false
-    )
-      .then(success => {
-        if (success) {
-          console.log('Game restarted, score saved successfully:', finalScore);
-          toast.success(`Score of ${finalScore} saved!`);
-        } else {
-          console.log('Game restarted, could not save score:', finalScore);
-          if (!isLoggedIn) {
-            console.log('User not logged in - this is expected');
-          } else {
-            toast.error("Couldn't save score. Please try again.");
-          }
-        }
-      })
-      .catch(err => {
-        console.error('Error in promise handling when restarting game:', err);
-        toast.error("Error saving score");
-      });
+    saveGameScore();
     
     setGameState('ended');
   };
@@ -198,6 +148,28 @@ const GameScreen = () => {
   };
 
   const showNegativeToggle = settings.allowNegatives;
+
+  const saveGameScore = async () => {
+    if (!isLoggedIn) {
+      toast.info('Register to save your scores');
+      return false;
+    }
+
+    const success = await saveScore(
+      finalScore,
+      settings.operation,
+      settings.range,
+      settings.timerSeconds,
+      settings.focusNumber || null,
+      settings.allowNegatives || false
+    );
+
+    if (success) {
+      toast.success('Game Saved');
+    }
+
+    return success;
+  };
 
   return (
     <div className="flex justify-center items-center min-h-screen p-4 bg-background">

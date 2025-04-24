@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useGame } from '@/context/useGame';
 import { 
@@ -171,17 +172,19 @@ const UserProfile = () => {
           </DialogHeader>
           <div className="flex-1 overflow-y-auto">
             <Tabs defaultValue="history" className="w-full">
-              <TabsList>
+              <TabsList className="relative">
                 <TabsTrigger value="history">Score History</TabsTrigger>
                 <TabsTrigger value="progress">Progress</TabsTrigger>
+                {/* Remove the blue active bar by adding custom styling */}
+                <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-muted"></div>
               </TabsList>
               
               <TabsContent value="history" className="mt-4">
                 <Card>
                   <CardContent className="p-4">
-                    <div className="flex flex-wrap items-center gap-2 mb-4 pb-2 border-b">
+                    <div className="flex items-center gap-2 mb-4 pb-2 border-b">
                       <Label className="mr-2 font-medium whitespace-nowrap">Filter:</Label>
-                      <div className="flex flex-wrap gap-2">
+                      <div className="flex items-center gap-2">
                         <Select
                           value={selectedRange}
                           onValueChange={setSelectedRange}
@@ -201,7 +204,7 @@ const UserProfile = () => {
                           value={selectedOperation}
                           onValueChange={setSelectedOperation}
                         >
-                          <SelectTrigger className="w-[120px] h-8">
+                          <SelectTrigger className="w-[160px] h-8 text-left">
                             <SelectValue placeholder="All Operations" />
                           </SelectTrigger>
                           <SelectContent>
@@ -222,9 +225,9 @@ const UserProfile = () => {
               <TabsContent value="progress" className="mt-4">
                 <Card>
                   <CardContent className="p-4">
-                    <div className="flex flex-wrap items-center gap-2 mb-4 pb-2 border-b">
+                    <div className="flex items-center gap-2 mb-4 pb-2 border-b">
                       <Label className="mr-2 font-medium whitespace-nowrap">Filter:</Label>
-                      <div className="flex flex-wrap gap-2">
+                      <div className="flex items-center gap-2">
                         <Select
                           value={selectedRange}
                           onValueChange={setSelectedRange}
@@ -244,7 +247,7 @@ const UserProfile = () => {
                           value={selectedOperation}
                           onValueChange={setSelectedOperation}
                         >
-                          <SelectTrigger className="w-[120px] h-8">
+                          <SelectTrigger className="w-[160px] h-8 text-left">
                             <SelectValue placeholder="All Operations" />
                           </SelectTrigger>
                           <SelectContent>
