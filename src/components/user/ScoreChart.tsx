@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { UserScore } from '@/types';
 import { Card } from '@/components/ui/card';
@@ -11,10 +10,8 @@ interface ScoreChartProps {
 const ScoreChart = ({ scores = [] }: ScoreChartProps) => {
   const [validScores, setValidScores] = useState<UserScore[]>([]);
   
-  // Process scores on component mount and when scores prop changes
   useEffect(() => {
     console.log('ScoreChart received scores:', scores);
-    // Filter out invalid scores
     const filtered = Array.isArray(scores) ? scores.filter(score => 
       score && 
       typeof score === 'object' && 
@@ -26,11 +23,9 @@ const ScoreChart = ({ scores = [] }: ScoreChartProps) => {
     console.log('Filtered valid scores for chart:', filtered);
   }, [scores]);
   
-  // Format date for display with error handling
   const formatDate = (dateString: string) => {
     try {
       const date = new Date(dateString);
-      // Check if date is valid
       if (isNaN(date.getTime())) {
         return 'Invalid date';
       }
@@ -44,7 +39,6 @@ const ScoreChart = ({ scores = [] }: ScoreChartProps) => {
     }
   };
   
-  // Sort scores by date (chronological order) with error handling
   const sortedScores = [...validScores].sort((a, b) => {
     try {
       return new Date(a.date).getTime() - new Date(b.date).getTime();
@@ -54,7 +48,6 @@ const ScoreChart = ({ scores = [] }: ScoreChartProps) => {
     }
   });
   
-  // Prepare data for chart with error handling
   const chartData = sortedScores.map(score => ({
     date: formatDate(score.date),
     score: score.score,
@@ -63,17 +56,14 @@ const ScoreChart = ({ scores = [] }: ScoreChartProps) => {
     settings: `${score.focusNumber ? 'Focus: ' + score.focusNumber : ''}${score.allowNegatives ? ' Negatives' : ''}`
   }));
   
-  // Calculate average score if there are scores
   const averageScore = sortedScores.length 
     ? Math.round(sortedScores.reduce((sum, score) => sum + score.score, 0) / sortedScores.length)
     : 0;
   
-  // Find personal best
   const personalBest = sortedScores.length 
     ? Math.max(...sortedScores.map(score => score.score))
     : 0;
   
-  // If no valid scores, show empty state
   if (validScores.length === 0) {
     return (
       <div className="text-center py-8">
@@ -85,8 +75,6 @@ const ScoreChart = ({ scores = [] }: ScoreChartProps) => {
 
   return (
     <div>
-      <h3 className="text-lg font-medium mb-4">Your Progress</h3>
-      
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
         <Card className="p-4">
           <div className="text-sm text-muted-foreground">Average Score</div>

@@ -50,8 +50,8 @@ const NumberRangeSection = ({
   const renderRangeInputs = () => {
     if (range1 && range2 && setRange1Min && setRange1Max && setRange2Min && setRange2Max) {
       return (
-        <div className="flex flex-row gap-10 items-start">
-          <div className="flex-1">
+        <div className="flex flex-wrap md:flex-nowrap gap-8 px-4 max-w-[700px] mx-auto">
+          <div className="flex-1 min-w-[240px]">
             <h4 className="text-base font-medium mb-2">First Number Range</h4>
             <div className="flex flex-row gap-4">
               <div className="flex flex-col">
@@ -80,7 +80,7 @@ const NumberRangeSection = ({
               </div>
             </div>
           </div>
-          <div className="flex-1">
+          <div className="flex-1 min-w-[240px]">
             <h4 className="text-base font-medium mb-2">Second Number Range</h4>
             <div className="flex flex-row gap-4">
               <div className="flex flex-col">
@@ -116,8 +116,8 @@ const NumberRangeSection = ({
   };
 
   return (
-    <div className="w-full px-4">
-      {title && <h3 className="font-bold text-md mb-2">{title}</h3>}
+    <div className="w-full">
+      {title && <h3 className="font-bold text-md mb-2 px-4">{title}</h3>}
       {renderRangeInputs()}
     </div>
   );

@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { UserScore } from '@/types';
 import {
@@ -19,10 +18,8 @@ interface ScoreHistoryProps {
 const ScoreHistory = ({ scores = [] }: ScoreHistoryProps) => {
   const [validScores, setValidScores] = useState<UserScore[]>([]);
   
-  // Process scores on component mount and when scores prop changes
   useEffect(() => {
     console.log('ScoreHistory received scores:', scores);
-    // Filter out invalid scores
     const filtered = Array.isArray(scores) ? scores.filter(score => 
       score && 
       typeof score === 'object' && 
@@ -34,7 +31,6 @@ const ScoreHistory = ({ scores = [] }: ScoreHistoryProps) => {
     console.log('Filtered valid scores:', filtered);
   }, [scores]);
   
-  // Get operation name in readable format
   const getOperationName = (operation: string) => {
     switch (operation) {
       case 'addition': return 'Addition';
@@ -45,11 +41,9 @@ const ScoreHistory = ({ scores = [] }: ScoreHistoryProps) => {
     }
   };
   
-  // Format date for display with error handling
   const formatDate = (dateString: string) => {
     try {
       const date = new Date(dateString);
-      // Check if date is valid
       if (isNaN(date.getTime())) {
         return 'Invalid date';
       }
@@ -66,7 +60,6 @@ const ScoreHistory = ({ scores = [] }: ScoreHistoryProps) => {
     }
   };
   
-  // Sort scores by date (newest first) with error handling
   const sortedScores = [...validScores].sort((a, b) => {
     try {
       return new Date(b.date).getTime() - new Date(a.date).getTime();
@@ -76,7 +69,6 @@ const ScoreHistory = ({ scores = [] }: ScoreHistoryProps) => {
     }
   });
   
-  // If no valid scores, show empty state
   if (validScores.length === 0) {
     return (
       <div className="text-center py-8">
@@ -88,8 +80,6 @@ const ScoreHistory = ({ scores = [] }: ScoreHistoryProps) => {
 
   return (
     <div>
-      <h3 className="text-lg font-medium mb-4">Your Score History</h3>
-      
       {sortedScores.length === 0 ? (
         <Card className="p-8 text-center">
           <p>No scores match your selected filters.</p>
