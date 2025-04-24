@@ -6,6 +6,7 @@ import { GameContextType, GameState, GameProviderProps } from './game-context-ty
 import { useGameSettings } from './hooks/useGameSettings';
 import { useProblemGenerator } from './hooks/useProblemGenerator';
 import { useScoreManagement } from './hooks/useScoreManagement';
+import { toast } from 'sonner';
 
 const GameProvider = ({ children }: GameProviderProps) => {
   const { settings, updateSettings, resetSettings } = useGameSettings();
@@ -45,11 +46,21 @@ const GameProvider = ({ children }: GameProviderProps) => {
           // Fetch scores after login
           const scores = await fetchUserScores();
           setScoreHistory(scores);
+          
+          // Only show login toast on SIGNED_IN event
+          if (event === 'SIGNED_IN') {
+            toast.success("Successfully logged in!");
+          }
         } else {
           setIsLoggedIn(false);
           setUserId(null);
           setUsername('');
           setScoreHistory([]);
+          
+          // Only show logout toast on SIGNED_OUT event - REMOVED to fix double toast
+          // if (event === 'SIGNED_OUT') {
+          //   toast.success("You've been logged out");
+          // }
         }
       }
     );

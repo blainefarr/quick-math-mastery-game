@@ -37,11 +37,18 @@ const Header = () => {
         {isLoggedIn ? (
           <UserProfile />
         ) : (
-          <AuthModal>
-            <Button variant="outline" size="sm" className="shadow-sm hover:shadow">
-              Login / Register
-            </Button>
-          </AuthModal>
+          <div className="flex items-center gap-2">
+            <AuthModal defaultView="login">
+              <Button variant="outline" size="sm" className="shadow-sm hover:shadow">
+                Login
+              </Button>
+            </AuthModal>
+            <AuthModal defaultView="register">
+              <Button variant="default" size="sm" className="shadow-sm hover:shadow font-semibold">
+                Sign Up
+              </Button>
+            </AuthModal>
+          </div>
         )}
       </div>
     </header>

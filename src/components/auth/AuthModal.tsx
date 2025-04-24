@@ -15,42 +15,22 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from '@/components/ui/select';
+import { Separator } from '@/components/ui/separator';
+import { Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface AuthModalProps {
   children: React.ReactNode;
+  defaultView?: 'login' | 'register';
 }
 
-const GRADE_OPTIONS = [
-  'Pre-K',
-  'Kindergarten',
-  '1st Grade',
-  '2nd Grade',
-  '3rd Grade',
-  '4th Grade',
-  '5th Grade',
-  '6th Grade',
-  '7th Grade',
-  '8th Grade',
-  'High School',
-  'High School Grad',
-  'College Grad',
-];
-
-const AuthModal = ({ children }: AuthModalProps) => {
+const AuthModal = ({ children, defaultView = 'register' }: AuthModalProps) => {
   const { setIsLoggedIn, setUsername } = useGame();
   const [isOpen, setIsOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<'login' | 'register' | 'forgot'>('login');
+  const [activeTab, setActiveTab] = useState<'login' | 'register'>(defaultView);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
-  const [grade, setGrade] = useState<string>('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
@@ -62,6 +42,13 @@ const AuthModal = ({ children }: AuthModalProps) => {
     };
   }, [isOpen]);
 
+  // Set default tab based on prop when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setActiveTab(defaultView);
+    }
+  }, [isOpen, defaultView]);
+
   const handleOpenChange = (open: boolean) => {
     setIsOpen(open);
     if (!open) {
@@ -70,6 +57,12 @@ const AuthModal = ({ children }: AuthModalProps) => {
       setError('');
       setSuccessMsg('');
       setPassword('');
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Escape') {
+      handleOpenChange(false);
     }
   };
 
@@ -92,19 +85,20 @@ const AuthModal = ({ children }: AuthModalProps) => {
     if (data && data.user) {
       setIsLoggedIn(true);
       setUsername(data.user.user_metadata?.name || data.user.email?.split('@')[0] || data.user.email || "");
+      toast.success("Successfully logged in!");
       handleOpenChange(false);
     }
     setEmail('');
     setPassword('');
   };
 
-  // REGISTER: create user via supabase, then set username/grade in public metadata
+  // REGISTER: create user via supabase
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setSuccessMsg('');
     setIsLoading(true);
-    if (!name || !email || !password || !grade) {
+    if (!name || !email || !password) {
       setError('Please fill in all fields');
       setIsLoading(false);
       return;
@@ -116,8 +110,7 @@ const AuthModal = ({ children }: AuthModalProps) => {
       password,
       options: {
         data: {
-          name,
-          grade
+          name
         }
       }
     });
@@ -136,12 +129,12 @@ const AuthModal = ({ children }: AuthModalProps) => {
       return;
     }
 
+    toast.success("Account created successfully!");
     setIsLoggedIn(true);
     setUsername(name);
     setName('');
     setEmail('');
     setPassword('');
-    setGrade('');
     handleOpenChange(false);
   };
 
@@ -191,235 +184,250 @@ const AuthModal = ({ children }: AuthModalProps) => {
     setSuccessMsg("Password reset email sent! Check your inbox.");
   };
 
+  const renderLoginContent = () => (
+    <div className="space-y-4 py-4">
+      <div className="text-center mb-6">
+        <h2 className="text-2xl font-bold">Login</h2>
+        <p className="text-muted-foreground text-sm">Sign in to your account</p>
+      </div>
+      
+      <Button 
+        type="button" 
+        variant="outline" 
+        onClick={handleGoogleSignIn}
+        disabled={isLoading}
+        className="w-full mb-4"
+      >
+        <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
+          <path
+            d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+            fill="#4285F4"
+          />
+          <path
+            d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+            fill="#34A853"
+          />
+          <path
+            d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+            fill="#FBBC05"
+          />
+          <path
+            d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+            fill="#EA4335"
+          />
+        </svg>
+        Login with Google
+      </Button>
+      
+      <div className="relative">
+        <div className="absolute inset-0 flex items-center">
+          <Separator className="w-full border-muted" />
+        </div>
+        <div className="relative flex justify-center">
+          <span className="bg-background px-3 text-xs uppercase text-muted-foreground font-medium">
+            OR
+          </span>
+        </div>
+      </div>
+      
+      <form onSubmit={handleLogin} className="space-y-4 mt-4">
+        <div className="space-y-2">
+          <Label htmlFor="email">Email</Label>
+          <Input
+            id="email"
+            type="email"
+            placeholder="your@email.com"
+            autoComplete="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+        </div>
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <Label htmlFor="password">Password</Label>
+            <button
+              type="button"
+              className="text-primary text-xs hover:text-accent underline"
+              onClick={(e) => {
+                e.preventDefault();
+                handleForgotPassword(e);
+              }}
+            >
+              Forgot password?
+            </button>
+          </div>
+          <Input
+            id="password"
+            type="password"
+            value={password}
+            autoComplete="current-password"
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+        </div>
+
+        {error && <p className="text-sm text-destructive">{error}</p>}
+        {successMsg && <p className="text-sm text-green-600">{successMsg}</p>}
+
+        <Button type="submit" disabled={isLoading} className="w-full">
+          {isLoading ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Signing in...
+            </>
+          ) : (
+            'Sign In'
+          )}
+        </Button>
+      </form>
+      
+      <div className="text-center mt-4">
+        <p className="text-sm text-muted-foreground">
+          New here?{" "}
+          <button
+            type="button"
+            className="text-primary font-medium hover:text-accent underline"
+            onClick={() => setActiveTab("register")}
+          >
+            Sign up for free
+          </button>
+        </p>
+      </div>
+    </div>
+  );
+  
+  const renderRegisterContent = () => (
+    <div className="space-y-4 py-4">
+      <div className="text-center mb-6">
+        <h2 className="text-2xl font-bold">Sign Up</h2>
+        <p className="text-muted-foreground text-sm">Create an account to save your progress</p>
+      </div>
+      
+      <Button 
+        type="button" 
+        variant="outline" 
+        onClick={handleGoogleSignIn}
+        disabled={isLoading}
+        className="w-full mb-4"
+      >
+        <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
+          <path
+            d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+            fill="#4285F4"
+          />
+          <path
+            d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+            fill="#34A853"
+          />
+          <path
+            d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+            fill="#FBBC05"
+          />
+          <path
+            d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+            fill="#EA4335"
+          />
+        </svg>
+        Sign up with Google
+      </Button>
+      
+      <div className="relative">
+        <div className="absolute inset-0 flex items-center">
+          <Separator className="w-full border-muted" />
+        </div>
+        <div className="relative flex justify-center">
+          <span className="bg-background px-3 text-xs uppercase text-muted-foreground font-medium">
+            OR
+          </span>
+        </div>
+      </div>
+      
+      <form onSubmit={handleRegister} className="space-y-4 mt-4">
+        <div className="space-y-2">
+          <Label htmlFor="name">Name</Label>
+          <Input
+            id="name"
+            type="text"
+            placeholder="Your name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            required
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="reg-email">Email</Label>
+          <Input
+            id="reg-email"
+            type="email"
+            placeholder="your@email.com"
+            autoComplete="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="reg-password">Password</Label>
+          <Input
+            id="reg-password"
+            type="password"
+            value={password}
+            autoComplete="new-password"
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+        </div>
+
+        {error && <p className="text-sm text-destructive">{error}</p>}
+        {successMsg && <p className="text-sm text-green-600">{successMsg}</p>}
+
+        <Button type="submit" disabled={isLoading} className="w-full">
+          {isLoading ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Creating Account...
+            </>
+          ) : (
+            'Create Account'
+          )}
+        </Button>
+      </form>
+      
+      <div className="text-center mt-4">
+        <p className="text-sm text-muted-foreground">
+          Already have an account?{" "}
+          <button
+            type="button"
+            className="text-primary font-medium hover:text-accent underline"
+            onClick={() => setActiveTab("login")}
+          >
+            Log in
+          </button>
+        </p>
+      </div>
+    </div>
+  );
+
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         {children}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Authentication</DialogTitle>
-          <DialogDescription>
-            Sign in or create an account to save your progress
-          </DialogDescription>
-        </DialogHeader>
-        <Tabs defaultValue="login" value={activeTab} onValueChange={(value) => setActiveTab(value as any)}>
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="login">Login</TabsTrigger>
-            <TabsTrigger value="register">Register</TabsTrigger>
-          </TabsList>
-
-          {/* Login Tab */}
-          <TabsContent value="login">
-            <form onSubmit={handleLogin} className="space-y-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="your@email.com"
-                  autoComplete="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={password}
-                  autoComplete="current-password"
-                  onChange={(e) => setPassword(e.target.value)}
-                />
-              </div>
-
-              {error && <p className="text-sm text-destructive">{error}</p>}
-              {successMsg && <p className="text-sm text-success">{successMsg}</p>}
-
-              <DialogFooter className="flex-col space-y-2">
-                <Button type="submit" disabled={isLoading} className="w-full">
-                  {isLoading ? 'Signing in...' : 'Sign In'}
-                </Button>
-                
-                <div className="relative w-full">
-                  <div className="absolute inset-0 flex items-center">
-                    <span className="w-full border-t border-muted" />
-                  </div>
-                  <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-background px-2 text-muted-foreground">
-                      Or continue with
-                    </span>
-                  </div>
-                </div>
-                
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  onClick={handleGoogleSignIn}
-                  disabled={isLoading}
-                  className="w-full"
-                >
-                  <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
-                    <path
-                      d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                      fill="#4285F4"
-                    />
-                    <path
-                      d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                      fill="#34A853"
-                    />
-                    <path
-                      d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-                      fill="#FBBC05"
-                    />
-                    <path
-                      d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-                      fill="#EA4335"
-                    />
-                  </svg>
-                  Google
-                </Button>
-              </DialogFooter>
-              <div className="flex justify-end">
-                <button
-                  type="button"
-                  className="mt-2 text-primary underline text-xs hover:text-accent"
-                  onClick={() => { setActiveTab('forgot'); setError(""); setSuccessMsg(""); }}>
-                  Forgot password?
-                </button>
-              </div>
-            </form>
+      <DialogContent 
+        className="sm:max-w-md" 
+        onKeyDown={handleKeyDown}
+      >
+        <Tabs 
+          value={activeTab} 
+          onValueChange={(value) => setActiveTab(value as 'login' | 'register')}
+          className="w-full"
+        >
+          <TabsContent value="login" className="mt-0 py-2">
+            {renderLoginContent()}
           </TabsContent>
-
-          {/* Register Tab */}
-          <TabsContent value="register">
-            <form onSubmit={handleRegister} className="space-y-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">Name</Label>
-                <Input
-                  id="name"
-                  type="text"
-                  placeholder="Your name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="grade">Grade</Label>
-                <Select value={grade} onValueChange={setGrade}>
-                  <SelectTrigger id="grade">
-                    <SelectValue placeholder="Select grade" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {GRADE_OPTIONS.map(opt => (
-                      <SelectItem key={opt} value={opt}>{opt}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="reg-email">Email</Label>
-                <Input
-                  id="reg-email"
-                  type="email"
-                  placeholder="your@email.com"
-                  autoComplete="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="reg-password">Password</Label>
-                <Input
-                  id="reg-password"
-                  type="password"
-                  value={password}
-                  autoComplete="new-password"
-                  onChange={(e) => setPassword(e.target.value)}
-                />
-              </div>
-
-              {error && <p className="text-sm text-destructive">{error}</p>}
-              {successMsg && <p className="text-sm text-success">{successMsg}</p>}
-
-              <DialogFooter className="flex-col space-y-2">
-                <Button type="submit" disabled={isLoading} className="w-full">
-                  {isLoading ? 'Creating Account...' : 'Create Account'}
-                </Button>
-                
-                <div className="relative w-full">
-                  <div className="absolute inset-0 flex items-center">
-                    <span className="w-full border-t border-muted" />
-                  </div>
-                  <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-background px-2 text-muted-foreground">
-                      Or continue with
-                    </span>
-                  </div>
-                </div>
-                
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  onClick={handleGoogleSignIn}
-                  disabled={isLoading}
-                  className="w-full"
-                >
-                  <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
-                    <path
-                      d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                      fill="#4285F4"
-                    />
-                    <path
-                      d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                      fill="#34A853"
-                    />
-                    <path
-                      d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-                      fill="#FBBC05"
-                    />
-                    <path
-                      d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-                      fill="#EA4335"
-                    />
-                  </svg>
-                  Google
-                </Button>
-              </DialogFooter>
-            </form>
-          </TabsContent>
-
-          {/* Forgot Password Tab */}
-          <TabsContent value="forgot">
-            <form onSubmit={handleForgotPassword} className="space-y-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="forgot-email">Email</Label>
-                <Input
-                  id="forgot-email"
-                  type="email"
-                  placeholder="your@email.com"
-                  autoComplete="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
-              </div>
-              {error && <p className="text-sm text-destructive">{error}</p>}
-              {successMsg && <p className="text-sm text-success">{successMsg}</p>}
-              <DialogFooter>
-                <Button type="submit" disabled={isLoading} className="w-full">
-                  {isLoading ? 'Sending...' : 'Send Reset Email'}
-                </Button>
-              </DialogFooter>
-              <div className="flex justify-end">
-                <button
-                  type="button"
-                  className="mt-2 text-primary underline text-xs hover:text-accent"
-                  onClick={() => { setActiveTab('login'); setError(""); setSuccessMsg(""); }}>
-                  Back to Login
-                </button>
-              </div>
-            </form>
+          <TabsContent value="register" className="mt-0 py-2">
+            {renderRegisterContent()}
           </TabsContent>
         </Tabs>
       </DialogContent>
