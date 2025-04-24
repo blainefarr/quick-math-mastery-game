@@ -7,7 +7,7 @@ import UserProfile from './user/UserProfile';
 import { Clock } from 'lucide-react';
 
 const Header = () => {
-  const { gameState, isLoggedIn, setGameState } = useGame();
+  const { gameState, isLoggedIn, setGameState, username } = useGame();
   
   if (gameState === 'playing') return null;
   
@@ -39,7 +39,7 @@ const Header = () => {
         ) : (
           <div className="flex items-center gap-2">
             <AuthModal defaultView="login">
-              <Button variant="outline" size="sm" className="shadow-sm hover:shadow">
+              <Button variant="ghost" size="sm">
                 Login
               </Button>
             </AuthModal>

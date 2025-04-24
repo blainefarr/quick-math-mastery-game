@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import GameContext from './GameContext';
@@ -20,6 +19,7 @@ const GameProvider = ({ children }: GameProviderProps) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [username, setUsername] = useState('');
   const [userId, setUserId] = useState<string | null>(null);
+  const didSetupRef = React.useRef(false);
 
   const { 
     scoreHistory, 
@@ -29,8 +29,11 @@ const GameProvider = ({ children }: GameProviderProps) => {
     setScoreHistory 
   } = useScoreManagement(userId);
 
-  // Handle authentication state changes
+  // Handle authentication state changes with useRef guard
   useEffect(() => {
+    if (didSetupRef.current) return;
+    didSetupRef.current = true;
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (session?.user) {
@@ -56,11 +59,6 @@ const GameProvider = ({ children }: GameProviderProps) => {
           setUserId(null);
           setUsername('');
           setScoreHistory([]);
-          
-          // Only show logout toast on SIGNED_OUT event - REMOVED to fix double toast
-          // if (event === 'SIGNED_OUT') {
-          //   toast.success("You've been logged out");
-          // }
         }
       }
     );
@@ -83,7 +81,10 @@ const GameProvider = ({ children }: GameProviderProps) => {
       }
     });
 
-    return () => { subscription.unsubscribe(); };
+    return () => { 
+      subscription.unsubscribe();
+      didSetupRef.current = false;
+    };
   }, [fetchUserScores]);
 
   // Refresh scores when gameState changes to 'ended'
