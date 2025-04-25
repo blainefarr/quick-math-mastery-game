@@ -12,6 +12,7 @@ export interface GameContextType {
   // Game settings
   settings: GameSettings;
   updateSettings: (settings: Partial<GameSettings>) => void;
+  resetSettings: () => void;
   
   // Game data
   score: number;
@@ -66,6 +67,13 @@ export interface GameContextType {
   
   // Logout function
   logout: () => Promise<void>;
+  
+  // Operation and range (direct access for convenience)
+  operation: Operation;
+  range: ProblemRange;
+  
+  // Allow negatives flag
+  allowNegatives: boolean;
 }
 
 export interface GameProviderProps {

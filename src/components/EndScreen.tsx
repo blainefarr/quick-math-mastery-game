@@ -1,11 +1,11 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import useGame from '@/context/useGame';
 import { Button } from '@/components/ui/button';
-import { Confetti } from './Confetti';
+import { Confetti } from '@/components/Confetti';
 import { useConfetti } from '@/hooks/use-confetti';
-import { Separator } from '@/components/ui/separator';
-import { ModeToggle } from './ModeToggle';
+import { ModeToggle } from '@/components/ModeToggle';
 import { Github } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -65,7 +65,7 @@ const EndScreen = () => {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center h-screen bg-background">
+    <main className="flex flex-col items-center w-full min-h-screen px-4 pt-10 sm:pt-16">
       <Confetti />
       <div className="text-center">
         <h1 className="text-4xl font-bold mb-4 math-font">
@@ -104,7 +104,7 @@ const EndScreen = () => {
         </Link>
         <ModeToggle />
       </footer>
-    </div>
+    </main>
   );
 };
 

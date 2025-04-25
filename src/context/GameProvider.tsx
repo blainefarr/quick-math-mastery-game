@@ -7,6 +7,7 @@ import { useGameSettings } from './hooks/useGameSettings';
 import { useProblemGenerator } from './hooks/useProblemGenerator';
 import { useScoreManagement } from './hooks/useScoreManagement';
 import { toast } from 'sonner';
+import { Operation, ProblemRange } from '@/types';
 
 const GameProvider = ({ children }: GameProviderProps) => {
   const { settings, updateSettings, resetSettings } = useGameSettings();
@@ -20,6 +21,11 @@ const GameProvider = ({ children }: GameProviderProps) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [username, setUsername] = useState('');
   const [userId, setUserId] = useState<string | null>(null);
+
+  // Derive operation and range directly from settings for easier access
+  const operation: Operation = settings.operation;
+  const range: ProblemRange = settings.range;
+  const allowNegatives: boolean = settings.allowNegatives || false;
 
   const { 
     scoreHistory, 
@@ -66,11 +72,6 @@ const GameProvider = ({ children }: GameProviderProps) => {
           // Fetch scores after login
           const scores = await fetchUserScores();
           setScoreHistory(scores);
-          
-          // Remove login toast notification as requested
-          // if (event === 'SIGNED_IN') {
-          //   toast.success("Successfully logged in!");
-          // }
         }
       }
     );
@@ -134,9 +135,6 @@ const GameProvider = ({ children }: GameProviderProps) => {
       localStorage.clear();
       sessionStorage.clear();
       
-      // No toast message for logout as requested
-      // toast.success("Successfully logged out");
-      
       // Redirect to home page
       window.location.href = '/';
     } catch (error) {
@@ -149,6 +147,7 @@ const GameProvider = ({ children }: GameProviderProps) => {
     setGameState,
     settings,
     updateSettings,
+    resetSettings,
     score,
     incrementScore,
     resetScore,
@@ -168,7 +167,10 @@ const GameProvider = ({ children }: GameProviderProps) => {
     setFocusNumber,
     getIsHighScore,
     userId,
-    logout // Add the logout function to the context
+    logout,
+    operation,
+    range,
+    allowNegatives
   };
 
   return (
