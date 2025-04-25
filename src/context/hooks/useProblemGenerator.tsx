@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Problem, Operation, ProblemRange } from '@/types';
 
@@ -36,20 +35,19 @@ export const useProblemGenerator = () => {
           answer = num1 * num2;
           break;
         case 'division':
-          // For division with focus number, generate random multiples of the focus number
-          num2 = focusNumber; // divisor is the focus number
+          // FIXED: For division with focus number, use focus number as divisor
+          num2 = focusNumber; // focus number is the divisor
           
-          // Generate a random answer (quotient) within the appropriate range
-          answer = random(min1, max1);
+          // Generate a random multiplier from the second range
+          const multiplier = random(min2, max2);
           
-          // Calculate dividend (num1) based on the answer and divisor
-          num1 = answer * num2;
+          // Calculate dividend by multiplying the focus number by the multiplier
+          num1 = num2 * multiplier;
           
-          // If the product exceeds the intended range, adjust the answer
-          if (num1 > max1 * max2) {
-            answer = Math.floor((max1 * max2) / num2);
-            num1 = answer * num2;
-          }
+          // The answer is the multiplier
+          answer = multiplier;
+          
+          console.log(`Generated division problem: ${num1} ÷ ${num2} = ${answer}`);
           break;
         default:
           num1 = 0; num2 = 0; answer = 0;
