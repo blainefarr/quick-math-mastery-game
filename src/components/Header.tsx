@@ -5,55 +5,28 @@ import { Button } from '@/components/ui/button';
 import AuthModal from './auth/AuthModal';
 import UserProfile from './user/UserProfile';
 import { Clock } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
-
-// Custom hook that safely tries to use game context if available
-const useSafeGame = () => {
-  try {
-    // Dynamically import to avoid reference errors
-    const { useGame } = require('@/context/useGame');
-    return useGame();
-  } catch (error) {
-    // Return default values that match the shape of game context
-    return {
-      gameState: undefined,
-      isLoggedIn: false,
-      setGameState: () => {},
-      handleLogout: async () => {
-        await supabase.auth.signOut();
-      },
-    };
-  }
-};
+import useSafeAuth from '@/hooks/useSafeAuth';
+import useGame from '@/context/useGame';
 
 const Header = () => {
   const navigate = useNavigate();
-  const { gameState, isLoggedIn, setGameState } = useSafeGame();
-  const [authStatus, setAuthStatus] = React.useState<boolean | null>(null);
+  const { isLoggedIn } = useSafeAuth();
   
-  // Check authentication status directly from Supabase as a fallback
-  React.useEffect(() => {
-    if (authStatus === null) {
-      const checkAuth = async () => {
-        const { data } = await supabase.auth.getSession();
-        setAuthStatus(!!data.session);
-      };
-      checkAuth();
-    }
-  }, [authStatus]);
+  // Try to use game context, but don't throw if unavailable
+  let gameState;
+  try {
+    const game = useGame();
+    gameState = game.gameState;
+  } catch (error) {
+    gameState = undefined;
+  }
   
   // Skip rendering header during active gameplay
   if (gameState === 'playing') return null;
   
   const handleLogoClick = () => {
-    if (setGameState) {
-      setGameState('selection');
-    }
     navigate('/');
   };
-
-  // Use either the context's isLoggedIn or the direct auth check
-  const userIsLoggedIn = isLoggedIn || authStatus;
   
   return (
     <header className="w-full py-4 px-6 flex justify-between items-center bg-white/50 backdrop-blur-sm shadow-sm">
@@ -74,7 +47,7 @@ const Header = () => {
           Math practice for kids!
         </div>
         
-        {userIsLoggedIn ? (
+        {isLoggedIn ? (
           <UserProfile />
         ) : (
           <div className="flex items-center gap-2">
