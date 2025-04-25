@@ -21,15 +21,22 @@ const EndScreen = () => {
   const isHighScore = getIsHighScore(score, settings.operation, settings.range);
   
   useEffect(() => {
-    // Only show the signup toast for non-logged in users
-    if (!isLoggedIn) {
-      toast.info("Sign up to save your scores and track your progress!");
-    }
-
+    // Play the game completion sound
     const audio = new Audio();
     audio.src = 'data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA/+M4wAAAAAAAAAAAAEluZm8AAAAPAAAAAwAAACsAWlpaWlpaWlpaWlp6enp6enp6enp6enp6epqampqampqampqaurq6urq6urq6urra2tra2tra2tra2vr6+vr6+vr6+vr6GhoaGhoaGhoaGho6Ojo6Ojo6Ojo6OlpaWlpaWlpaWlp6enp6enp6enp6epqampqampqampqa//NCxAAAAANIAAAAAurq6urq6urq6ura2tra2tra2tra2vr6+vr6+vr6+vr6GhoaGhoaGhoaGho6Ojo6Ojo6Ojo6OlpaWlpaWlpaWlpaqqqqqqqqqqqqqqqqqqqqqqqqv/zgMSAAACQABzxQAhAgBgeM4yqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//+ZVZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZ';
     audio.volume = 0.2;
     audio.play();
+
+    // Only show the signup toast for non-logged in users after game completion
+    if (!isLoggedIn) {
+      const toastKey = 'game-completion-toast';
+      if (!sessionStorage.getItem(toastKey)) {
+        toast.info("Sign up to track your scores", {
+          id: toastKey
+        });
+        sessionStorage.setItem(toastKey, 'shown');
+      }
+    }
   }, [isLoggedIn]);
   
   const handleRestart = () => {

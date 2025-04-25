@@ -27,19 +27,30 @@ const GameProvider = ({ children }: GameProviderProps) => {
     setScoreHistory 
   } = useScoreManagement(userId);
 
-  // Handle authentication state changes
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+      setIsLoggedIn(false);
+      setUserId(null);
+      setUsername('');
+      setScoreHistory([]);
+      
+      localStorage.removeItem('supabase.auth.token');
+      sessionStorage.removeItem('supabase.auth.token');
+      localStorage.clear();
+      sessionStorage.clear();
+    } catch (error) {
+      console.error('Error during logout:', error);
+    }
+  };
+
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log('Auth state changed in GameProvider:', event);
         
         if (event === 'SIGNED_OUT') {
-          setIsLoggedIn(false);
-          setUserId(null);
-          setUsername('');
-          setScoreHistory([]);
-          localStorage.clear();
-          sessionStorage.clear();
+          await handleLogout();
           return;
         }
         
@@ -53,14 +64,12 @@ const GameProvider = ({ children }: GameProviderProps) => {
             ""
           );
           
-          // Fetch scores after login
           const scores = await fetchUserScores();
           setScoreHistory(scores);
         }
       }
     );
 
-    // Check initial session
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (session?.user) {
         setIsLoggedIn(true);
@@ -72,7 +81,6 @@ const GameProvider = ({ children }: GameProviderProps) => {
           ""
         );
         
-        // Fetch scores on initial load if logged in
         const scores = await fetchUserScores();
         setScoreHistory(scores);
       }
@@ -83,7 +91,6 @@ const GameProvider = ({ children }: GameProviderProps) => {
     };
   }, [fetchUserScores]);
 
-  // Refresh scores when gameState changes to 'ended'
   useEffect(() => {
     if (gameState === 'ended' && isLoggedIn && userId) {
       fetchUserScores().then(scores => {
@@ -125,7 +132,8 @@ const GameProvider = ({ children }: GameProviderProps) => {
     focusNumber,
     setFocusNumber,
     getIsHighScore,
-    userId
+    userId,
+    handleLogout
   };
 
   return (
