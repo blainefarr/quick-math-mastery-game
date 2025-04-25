@@ -7,7 +7,6 @@ import GameScreen from '@/components/GameScreen';
 import EndScreen from '@/components/EndScreen';
 import useGame from '@/context/useGame';
 import MathBackground from '@/components/common/MathBackground';
-import { Toaster } from 'sonner';
 
 // Main content that uses the game context
 const GameContent = () => {
@@ -31,18 +30,10 @@ const GameContent = () => {
 
 // Index page with context provider
 const Index = () => {
-  console.log('Index page rendered - Toaster setup');
+  console.log('Index page rendered');
   
   return (
     <GameProvider>
-      {/* Use position and closeButton properties to ensure proper toast behavior */}
-      <Toaster 
-        position="top-center" 
-        closeButton={true} 
-        toastOptions={{
-          className: 'unique-toast'
-        }}
-      />
       <GameContent />
     </GameProvider>
   );
