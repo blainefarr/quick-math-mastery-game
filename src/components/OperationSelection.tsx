@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import useGame from '@/context/useGame';
 import { Button } from '@/components/ui/button';
@@ -105,51 +104,59 @@ const OperationSelection = () => {
   };
   
   return (
-    <div className="container mx-auto px-4 py-8 max-w-[650px]">
+    <div className="container mx-auto px-4 py-8">
       <Card className="shadow-lg animate-fade-in max-w-[650px] mx-auto">
         <CardHeader>
           <CardTitle className="text-2xl font-bold text-center">Minute Math Settings</CardTitle>
         </CardHeader>
-        <CardContent className="flex flex-col gap-6">
-          <div>
-            <h3 className="text-lg font-medium mb-3">Operation</h3>
-            <div className="flex flex-wrap gap-3 justify-center items-center rounded-lg p-2 bg-muted/50 w-full">
-              {(['addition', 'subtraction', 'multiplication', 'division'] as Operation[]).map(operation => (
-                <OperationButton 
-                  key={operation} 
-                  active={selectedOperation === operation} 
-                  operation={operation} 
-                  onClick={handleOperationSelect} 
-                />
-              ))}
+        <CardContent>
+          <div className="max-w-xl mx-auto space-y-6">
+            <div>
+              <h3 className="text-lg font-medium mb-3">Operation</h3>
+              <div className="flex flex-wrap gap-3 justify-center items-center rounded-lg p-2 bg-muted/50">
+                {(['addition', 'subtraction', 'multiplication', 'division'] as Operation[]).map(operation => (
+                  <OperationButton 
+                    key={operation} 
+                    active={selectedOperation === operation} 
+                    operation={operation} 
+                    onClick={handleOperationSelect} 
+                  />
+                ))}
+              </div>
             </div>
+
+            <NumberRangeSection 
+              focusNumberEnabled={useFocusNumber}
+              focusNumber={focusNumberValue}
+              negativeNumbersEnabled={negativeNumbersEnabled}
+              range1={{
+                min: range1Min,
+                max: range1Max
+              }}
+              range2={{
+                min: range2Min,
+                max: range2Max
+              }}
+              setRange1Min={v => setRange1Min(parseOrDefault(v, range1Min))}
+              setRange1Max={v => setRange1Max(parseOrDefault(v, range1Max))}
+              setRange2Min={v => setRange2Min(parseOrDefault(v, range2Min))}
+              setRange2Max={v => setRange2Max(parseOrDefault(v, range2Max))}
+            />
+
+            <TimerSelect 
+              value={settings.timerSeconds}
+              onChange={(seconds) => updateSettings({ timerSeconds: seconds })}
+            />
+
+            <AdvancedSettings
+              useFocusNumber={useFocusNumber}
+              focusNumberValue={focusNumberValue}
+              negativeNumbersEnabled={negativeNumbersEnabled}
+              onFocusNumberToggle={handleFocusNumberToggle}
+              onFocusNumberChange={handleFocusNumberChange}
+              onNegativeToggle={handleNegativeToggle}
+            />
           </div>
-
-          <NumberRangeSection 
-            focusNumberEnabled={useFocusNumber}
-            focusNumber={focusNumberValue}
-            negativeNumbersEnabled={negativeNumbersEnabled}
-            range1={{ min: range1Min, max: range1Max }}
-            range2={{ min: range2Min, max: range2Max }}
-            setRange1Min={v => setRange1Min(parseOrDefault(v, range1Min))}
-            setRange1Max={v => setRange1Max(parseOrDefault(v, range1Max))}
-            setRange2Min={v => setRange2Min(parseOrDefault(v, range2Min))}
-            setRange2Max={v => setRange2Max(parseOrDefault(v, range2Max))}
-          />
-
-          <TimerSelect 
-            value={settings.timerSeconds}
-            onChange={(seconds) => updateSettings({ timerSeconds: seconds })}
-          />
-
-          <AdvancedSettings
-            useFocusNumber={useFocusNumber}
-            focusNumberValue={focusNumberValue}
-            negativeNumbersEnabled={negativeNumbersEnabled}
-            onFocusNumberToggle={handleFocusNumberToggle}
-            onFocusNumberChange={handleFocusNumberChange}
-            onNegativeToggle={handleNegativeToggle}
-          />
         </CardContent>
         <CardFooter>
           <Button 
