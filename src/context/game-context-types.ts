@@ -46,13 +46,9 @@ export interface GameContextType {
     allowNegatives?: boolean
   ) => Promise<boolean>;
   
-  // Auth state
+  // Auth state (now pulled from AuthContext)
   isLoggedIn: boolean;
-  setIsLoggedIn: (value: boolean) => void;
-  
-  // Username
   username: string;
-  setUsername: (name: string) => void;
   
   // Focus number
   focusNumber: number | null;
@@ -61,11 +57,8 @@ export interface GameContextType {
   // Check for high score
   getIsHighScore: (newScore: number, operation: Operation, range: ProblemRange) => boolean;
   
-  // User ID
+  // User ID (from AuthContext)
   userId: string | null;
-  
-  // Logout functionality
-  handleLogout: () => Promise<void>;
 }
 
 export interface GameProviderProps {

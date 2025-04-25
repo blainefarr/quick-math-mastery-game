@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useForm } from "react-hook-form";
+import { useForm, FormProvider } from "react-hook-form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/form";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import useAuth from "@/context/auth/useAuth";
 
 type FormData = {
   name: string;
@@ -26,12 +27,12 @@ type FormData = {
 const MyAccount = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { isLoggedIn, userId } = useAuth();
   const form = useForm<FormData>();
 
   React.useEffect(() => {
     const fetchUserProfile = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
+      if (!userId) {
         navigate('/');
         return;
       }
@@ -39,7 +40,7 @@ const MyAccount = () => {
       const { data: profile } = await supabase
         .from('profiles')
         .select('*')
-        .eq('id', user.id)
+        .eq('id', userId)
         .single();
 
       if (profile) {
@@ -52,12 +53,11 @@ const MyAccount = () => {
     };
 
     fetchUserProfile();
-  }, [navigate, form]);
+  }, [navigate, form, userId]);
 
   const onSubmit = async (data: FormData) => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      if (!userId) return;
 
       const { error: profileError } = await supabase
         .from('profiles')
@@ -66,7 +66,7 @@ const MyAccount = () => {
           grade: data.grade,
           email: data.email,
         })
-        .eq('id', user.id);
+        .eq('id', userId);
 
       if (profileError) throw profileError;
 
@@ -149,13 +149,22 @@ const MyAccount = () => {
             <Button
               variant="outline"
               onClick={() => {
-                supabase.auth.resetPasswordForEmail(form.getValues('email'), {
-                  redirectTo: `${window.location.origin}/reset-password`,
-                });
-                toast({
-                  title: "Password Reset Email Sent",
-                  description: "Check your email for the password reset link.",
-                });
+                const email = form.getValues('email');
+                if (email) {
+                  supabase.auth.resetPasswordForEmail(email, {
+                    redirectTo: `${window.location.origin}/reset-password`,
+                  });
+                  toast({
+                    title: "Password Reset Email Sent",
+                    description: "Check your email for the password reset link.",
+                  });
+                } else {
+                  toast({
+                    title: "Error",
+                    description: "Please enter your email first.",
+                    variant: "destructive",
+                  });
+                }
               }}
             >
               Change Password

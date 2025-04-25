@@ -1,26 +1,40 @@
-import { Toaster } from "@/components/ui/toaster";
-import { TooltipProvider } from "@/components/ui/tooltip";
+
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import RootLayout from "./layouts/RootLayout";
+import GameLayout from "./layouts/GameLayout";
+import AppLayout from "./layouts/AppLayout";
+import FormLayout from "./layouts/FormLayout";
 import Index from "./pages/Index";
-import NotFound from "./pages/NotFound";
 import MyAccount from "./pages/MyAccount";
+import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/account" element={<MyAccount />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+    <BrowserRouter>
+      <Routes>
+        <Route element={<RootLayout />}>
+          {/* Game routes with GameProvider */}
+          <Route element={<GameLayout />}>
+            <Route path="/" element={<Index />} />
+          </Route>
+
+          {/* Non-game routes with Header but no GameProvider */}
+          <Route element={<AppLayout />}>
+            <Route element={<FormLayout />}>
+              <Route path="/account" element={<MyAccount />} />
+            </Route>
+            
+            {/* Add future non-game pages here */}
+          </Route>
+
+          {/* Catch-all route */}
           <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
+        </Route>
+      </Routes>
+    </BrowserRouter>
   </QueryClientProvider>
 );
 

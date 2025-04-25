@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useGame } from '@/context/useGame';
+import useAuth from '@/context/auth/useAuth';
+import useGame from '@/context/useGame';
 import { 
   DropdownMenu,
   DropdownMenuContent,
@@ -41,7 +42,8 @@ interface UserProfileProps {
 
 const UserProfile = ({ dropdownLabel = "My Progress" }: UserProfileProps) => {
   const navigate = useNavigate();
-  const { username, isLoggedIn, handleLogout, scoreHistory } = useGame();
+  const { username, handleLogout } = useAuth();
+  const { scoreHistory } = useGame();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [selectedRange, setSelectedRange] = useState<string>("all");
   const [selectedOperation, setSelectedOperation] = useState<string>("all");
@@ -140,7 +142,7 @@ const UserProfile = ({ dropdownLabel = "My Progress" }: UserProfileProps) => {
     }
   };
 
-  if (!isLoggedIn) return null;
+  if (!username) return null;
 
   return (
     <>
@@ -159,7 +161,7 @@ const UserProfile = ({ dropdownLabel = "My Progress" }: UserProfileProps) => {
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
           <DropdownMenuItem 
-            onClick={() => handleOpenChange(true)}
+            onClick={() => setIsProfileOpen(true)}
             className="cursor-pointer hover:bg-accent"
           >
             {dropdownLabel}
@@ -172,7 +174,11 @@ const UserProfile = ({ dropdownLabel = "My Progress" }: UserProfileProps) => {
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem 
-            onClick={handleUserLogout} 
+            onClick={async () => {
+              setIsLoggingOut(true);
+              await handleLogout();
+              setIsLoggingOut(false);
+            }} 
             disabled={isLoggingOut}
             className="cursor-pointer hover:bg-accent"
           >
