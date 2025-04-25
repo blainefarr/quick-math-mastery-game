@@ -40,7 +40,7 @@ export function showToastOnce({
       toast.error(message, { id, duration });
       break;
     case 'info':
-      toast.info(message, { id, duration });
+      toast.message(message, { id, duration });
       break;
     case 'warning':
       toast.warning(message, { id, duration });

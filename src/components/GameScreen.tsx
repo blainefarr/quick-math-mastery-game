@@ -38,21 +38,20 @@ const GameScreen = () => {
 
   useEffect(() => {
     console.log('GameScreen mounted with settings:', settings);
-    console.log('User logged in:', isLoggedIn, 'User ID:', userId);
-    console.log('Initial score:', score);
-    console.log('Game timer from settings:', settings.timerSeconds);
+    console.log('Initial timer value:', settings.timerSeconds);
     
-    // Always generate a new problem when component mounts to avoid operation carryover
-    generateNewProblem(
-      settings.operation, 
-      settings.range,
-      settings.allowNegatives || false,
-      settings.focusNumber || null
-    );
-    initialProblemGeneratedRef.current = true;
-    
-    // IMPORTANT: Make sure to start with the correct timer value from settings
-    setTimeLeft(settings.timerSeconds);
+    if (!initialProblemGeneratedRef.current) {
+      generateNewProblem(
+        settings.operation, 
+        settings.range,
+        settings.allowNegatives || false,
+        settings.focusNumber || null
+      );
+      initialProblemGeneratedRef.current = true;
+      
+      // Only set initial time when starting a new game
+      setTimeLeft(settings.timerSeconds);
+    }
     
     inputRef.current?.focus();
     
@@ -60,23 +59,19 @@ const GameScreen = () => {
       setTimeLeft(prevTime => {
         if (prevTime <= 1) {
           clearInterval(timer);
-          
-          console.log(`Game ending with final score: ${scoreRef.current} (from ref), score state: ${score}`);
-          
           setGameState('ended');
-          
-          console.log('Game ended, attempting to save score:', scoreRef.current);
-          
           saveGameScore();
-          
           return 0;
-        } else {
-          return prevTime - 1;
         }
+        return prevTime - 1;
       });
     }, 1000);
-    return () => clearInterval(timer);
-  }, []);
+
+    return () => {
+      clearInterval(timer);
+      initialProblemGeneratedRef.current = false;
+    };
+  }, [settings.timerSeconds]);
 
   useEffect(() => {
     setIsNegative(false);
@@ -176,7 +171,7 @@ const GameScreen = () => {
             <span className="text-xl font-bold">{timeLeft}</span>
           </Card>
           <Card className="p-3">
-            <span className="font-medium">Score: </span>
+            <span className="font-medium">Score: </span> 
             <span className="text-xl font-bold">{score}</span>
           </Card>
         </div>
