@@ -63,9 +63,6 @@ export interface GameContextType {
   
   // User ID
   userId: string | null;
-  
-  // Logout function
-  logout: () => Promise<boolean>;
 }
 
 export interface GameProviderProps {

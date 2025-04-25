@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import useGame from '@/context/useGame';
 import { Button } from '@/components/ui/button';
@@ -5,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Clock, RefreshCw } from 'lucide-react';
 import MathIcon from './common/MathIcon';
-import { showToastOnce } from '@/utils/toastManager';
+import { toast } from 'sonner';
 
 const GameScreen = () => {
   const {
@@ -29,31 +30,8 @@ const GameScreen = () => {
   const scoreRef = useRef(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const initialProblemGeneratedRef = useRef(false);
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const saveGameScore = async () => {
-    if (!isLoggedIn) {
-      showToastOnce({
-        id: 'signup-prompt',
-        message: "Sign up to track your scores",
-        type: 'info',
-        duration: 5000
-      });
-      return false;
-    }
-
-    const success = await saveScore(
-      scoreRef.current,
-      settings.operation,
-      settings.range,
-      settings.timerSeconds,
-      settings.focusNumber || null,
-      settings.allowNegatives || false
-    );
-
-    return success;
-  };
-
+  // Update the ref whenever score changes
   useEffect(() => {
     scoreRef.current = score;
     console.log(`Score updated to: ${score}, scoreRef set to: ${scoreRef.current}`);
@@ -61,48 +39,41 @@ const GameScreen = () => {
 
   useEffect(() => {
     console.log('GameScreen mounted with settings:', settings);
-    console.log('Initial timer value from settings:', settings.timerSeconds);
+    console.log('User logged in:', isLoggedIn, 'User ID:', userId);
+    console.log('Initial score:', score);
     
-    if (!initialProblemGeneratedRef.current) {
-      generateNewProblem(
-        settings.operation, 
-        settings.range,
-        settings.allowNegatives || false,
-        settings.focusNumber || null
-      );
-      initialProblemGeneratedRef.current = true;
-    }
-    
-    console.log('Setting timeLeft to:', settings.timerSeconds);
-    setTimeLeft(settings.timerSeconds);
+    // Always generate a new problem when component mounts to avoid operation carryover
+    generateNewProblem(
+      settings.operation, 
+      settings.range,
+      settings.allowNegatives || false,
+      settings.focusNumber || null
+    );
+    initialProblemGeneratedRef.current = true;
     
     inputRef.current?.focus();
     
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
-    }
-    
-    timerRef.current = setInterval(() => {
+    const timer = setInterval(() => {
       setTimeLeft(prevTime => {
-        console.log('Timer tick, current time:', prevTime);
         if (prevTime <= 1) {
-          if (timerRef.current) clearInterval(timerRef.current);
-          console.log('Game ending, final score:', scoreRef.current);
+          clearInterval(timer);
+          
+          console.log(`Game ending with final score: ${scoreRef.current} (from ref), score state: ${score}`);
+          
           setGameState('ended');
+          
+          console.log('Game ended, attempting to save score:', scoreRef.current);
+          
           saveGameScore();
+          
           return 0;
+        } else {
+          return prevTime - 1;
         }
-        return prevTime - 1;
       });
     }, 1000);
-
-    return () => {
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-        timerRef.current = null;
-      }
-    };
-  }, [settings.timerSeconds, setTimeLeft, generateNewProblem, setGameState, settings.operation, settings.range, settings.allowNegatives, settings.focusNumber]);
+    return () => clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     setIsNegative(false);
@@ -169,6 +140,24 @@ const GameScreen = () => {
 
   const showNegativeToggle = settings.allowNegatives;
 
+  const saveGameScore = async () => {
+    if (!isLoggedIn) {
+      toast.info('Register to save your scores');
+      return false;
+    }
+
+    const success = await saveScore(
+      scoreRef.current,
+      settings.operation,
+      settings.range,
+      settings.timerSeconds,
+      settings.focusNumber || null,
+      settings.allowNegatives || false
+    );
+
+    return success;
+  };
+
   return (
     <div className="flex justify-center items-center min-h-screen p-4 bg-background">
       <div className="w-full max-w-xl">
@@ -178,7 +167,7 @@ const GameScreen = () => {
             <span className="text-xl font-bold">{timeLeft}</span>
           </Card>
           <Card className="p-3">
-            <span className="font-medium">Score: </span> 
+            <span className="font-medium">Score: </span>
             <span className="text-xl font-bold">{score}</span>
           </Card>
         </div>

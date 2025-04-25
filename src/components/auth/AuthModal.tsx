@@ -18,7 +18,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 
 interface AuthModalProps {
   children: React.ReactNode;
@@ -35,9 +34,6 @@ const AuthModal = ({ children, defaultView = 'register' }: AuthModalProps) => {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
-
-  // Add console logs to debug toast issues
-  console.log('AuthModal rendered, activeTab:', activeTab);
 
   useEffect(() => {
     return () => {
@@ -76,30 +72,22 @@ const AuthModal = ({ children, defaultView = 'register' }: AuthModalProps) => {
     setError('');
     setIsLoading(true);
     setSuccessMsg('');
-    console.log('Attempting login in AuthModal');
-    
     const { data, error: supaError } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
-    
     setIsLoading(false);
-    
     if (supaError) {
-      console.error('Login error:', supaError.message);
       setError(supaError.message === "Invalid login credentials" ?
         "Email or password incorrect" : supaError.message);
       return;
     }
-    
     if (data && data.user) {
-      console.log('Login successful in AuthModal');
       setIsLoggedIn(true);
       setUsername(data.user.user_metadata?.name || data.user.email?.split('@')[0] || data.user.email || "");
-      // The toast is now handled in GameProvider to prevent duplicates
+      toast.success("Successfully logged in!");
       handleOpenChange(false);
     }
-    
     setEmail('');
     setPassword('');
   };
@@ -110,8 +98,6 @@ const AuthModal = ({ children, defaultView = 'register' }: AuthModalProps) => {
     setError('');
     setSuccessMsg('');
     setIsLoading(true);
-    console.log('Attempting registration in AuthModal');
-    
     if (!name || !email || !password) {
       setError('Please fill in all fields');
       setIsLoading(false);
@@ -132,7 +118,6 @@ const AuthModal = ({ children, defaultView = 'register' }: AuthModalProps) => {
     setIsLoading(false);
 
     if (supaError) {
-      console.error('Registration error:', supaError.message);
       setError(supaError.message.includes("already registered") ? 
         "Email already registered." : supaError.message);
       return;
@@ -144,8 +129,7 @@ const AuthModal = ({ children, defaultView = 'register' }: AuthModalProps) => {
       return;
     }
 
-    // Login success is handled by GameProvider
-    console.log('Registration successful in AuthModal');
+    toast.success("Account created successfully!");
     setIsLoggedIn(true);
     setUsername(name);
     setName('');
@@ -158,7 +142,6 @@ const AuthModal = ({ children, defaultView = 'register' }: AuthModalProps) => {
   const handleGoogleSignIn = async () => {
     setError('');
     setIsLoading(true);
-    console.log('Attempting Google sign in');
     
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
@@ -168,7 +151,6 @@ const AuthModal = ({ children, defaultView = 'register' }: AuthModalProps) => {
     });
 
     if (error) {
-      console.error('Google sign in error:', error.message);
       setError(error.message);
       setIsLoading(false);
       return;
@@ -183,7 +165,6 @@ const AuthModal = ({ children, defaultView = 'register' }: AuthModalProps) => {
     setError('');
     setSuccessMsg('');
     setIsLoading(true);
-    console.log('Attempting password reset');
 
     if (!email) {
       setError("Please enter your email");
@@ -197,7 +178,6 @@ const AuthModal = ({ children, defaultView = 'register' }: AuthModalProps) => {
     setIsLoading(false);
 
     if (supaError) {
-      console.error('Password reset error:', supaError.message);
       setError(supaError.message);
       return;
     }
@@ -321,7 +301,7 @@ const AuthModal = ({ children, defaultView = 'register' }: AuthModalProps) => {
     <div className="space-y-4 py-4">
       <div className="text-center mb-6">
         <h2 className="text-2xl font-bold">Sign Up</h2>
-        <p className="text-muted-foreground text-sm">Create an account to track your scores</p>
+        <p className="text-muted-foreground text-sm">Create an account to save your progress</p>
       </div>
       
       <Button 
@@ -438,11 +418,6 @@ const AuthModal = ({ children, defaultView = 'register' }: AuthModalProps) => {
         className="sm:max-w-md" 
         onKeyDown={handleKeyDown}
       >
-        {/* Add a visually hidden DialogTitle for accessibility */}
-        <DialogTitle className="sr-only">
-          <VisuallyHidden>Authentication</VisuallyHidden>
-        </DialogTitle>
-        
         <Tabs 
           value={activeTab} 
           onValueChange={(value) => setActiveTab(value as 'login' | 'register')}

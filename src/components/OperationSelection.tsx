@@ -10,14 +10,7 @@ import FocusNumberSection from './operation/FocusNumberSection';
 import NegativeNumbersToggle from './operation/NegativeNumbersToggle';
 import NumberRangeSection from './operation/NumberRangeSection';
 
-const GAME_DURATION_OPTIONS = [
-  { label: '15 seconds', value: 15 },
-  { label: '30 seconds', value: 30 },
-  { label: '1 minute', value: 60 },
-  { label: '2 minutes', value: 120 }
-];
-
-const DEFAULT_GAME_DURATION = 60; // Default game duration in seconds
+const GAME_DURATION = 15;
 
 const OperationSelection = () => {
   const {
@@ -31,14 +24,13 @@ const OperationSelection = () => {
   } = useGame();
   
   const [selectedOperation, setSelectedOperation] = useState<Operation>(settings.operation);
-  const [negativeNumbersEnabled, setNegativeNumbersEnabled] = useState(settings.allowNegatives || false);
+  const [negativeNumbersEnabled, setNegativeNumbersEnabled] = useState(false);
   const [range1Min, setRange1Min] = useState(settings.range.min1);
   const [range1Max, setRange1Max] = useState(settings.range.max1);
   const [range2Min, setRange2Min] = useState(settings.range.min2);
   const [range2Max, setRange2Max] = useState(settings.range.max2);
   const [useFocusNumber, setUseFocusNumber] = useState(focusNumber !== null);
   const [focusNumberValue, setFocusNumberValue] = useState(focusNumber || 1);
-  const [gameDuration, setGameDuration] = useState(settings.timerSeconds || DEFAULT_GAME_DURATION);
   
   useEffect(() => {
     setSelectedOperation(settings.operation);
@@ -46,9 +38,6 @@ const OperationSelection = () => {
     setRange1Max(settings.range.max1);
     setRange2Min(settings.range.min2);
     setRange2Max(settings.range.max2);
-    setGameDuration(settings.timerSeconds || DEFAULT_GAME_DURATION);
-    setNegativeNumbersEnabled(settings.allowNegatives || false);
-    console.log('OperationSelection initialized with duration:', settings.timerSeconds);
   }, [settings]);
   
   // Update range1 min and max when focus number changes
@@ -93,20 +82,12 @@ const OperationSelection = () => {
   };
   
   const handleNegativeToggle = (checked: boolean) => setNegativeNumbersEnabled(checked);
-
-  const handleDurationChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const newDuration = parseInt(e.target.value);
-    console.log('Setting new game duration:', newDuration);
-    setGameDuration(newDuration);
-  };
   
   const handleStartGame = () => {
     if (range1Max < range1Min || range2Max < range2Min) {
       alert('Maximum value must be greater than or equal to minimum value');
       return;
     }
-    
-    console.log('Starting game with duration:', gameDuration);
     
     resetScore();
     updateSettings({
@@ -117,7 +98,7 @@ const OperationSelection = () => {
         min2: range2Min,
         max2: range2Max
       },
-      timerSeconds: gameDuration, // Use the selected game duration
+      timerSeconds: GAME_DURATION,
       allowNegatives: negativeNumbersEnabled,
       focusNumber: useFocusNumber ? focusNumberValue : null
     });
@@ -125,7 +106,7 @@ const OperationSelection = () => {
     if (useFocusNumber) setFocusNumber(focusNumberValue);
     else setFocusNumber(null);
     
-    setTimeLeft(gameDuration); // Set the time left to the selected duration
+    setTimeLeft(GAME_DURATION);
     setGameState('playing');
   };
   
@@ -148,22 +129,6 @@ const OperationSelection = () => {
                 />
               ))}
             </div>
-          </div>
-          
-          {/* Time Limit Selection */}
-          <div>
-            <h3 className="text-lg font-medium mb-3">Time Limit</h3>
-            <select
-              value={gameDuration}
-              onChange={handleDurationChange}
-              className="w-full p-2 border rounded-md bg-background"
-            >
-              {GAME_DURATION_OPTIONS.map(option => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
           </div>
           
           <FocusNumberSection 

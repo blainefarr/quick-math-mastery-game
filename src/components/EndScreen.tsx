@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import useGame from '@/context/useGame';
 import { Button } from '@/components/ui/button';
@@ -20,7 +21,7 @@ const EndScreen = () => {
   
   useEffect(() => {
     const audio = new Audio();
-    audio.src = 'data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA/+M4wAAAAAAAAAAAAEluZm8AAAAPAAAAAwAAACsAWlpaWlpaWlpaWlp6enp6enp6enp6enp6epqampqampqampqaurq6urq6urq6urra2tra2tra2tra2vr6+vr6+vr6+vr6GhoaGhoaGhoaGho6Ojo6Ojo6Ojo6OlpaWlpaWlpaWlp6enp6enp6enp6epqampqampqampqa//NCxAAAAANIAAAAAurq6urq6urq6ura2tra2tra2tra2vr6+vr6+vr6+vr6GhoaGhoaGhoaGho6Ojo6Ojo6Ojo6OlpaWlpaWlpaWlpaqqqqqqqqqqqqqqqqqqqqqqqqv/zgMSAAACQABzxQAhAgBgeM4yqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//+ZVZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZ';
+    audio.src = 'data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA/+M4wAAAAAAAAAAAAEluZm8AAAAPAAAAAwAAACsAWlpaWlpaWlpaWlp6enp6enp6enp6epqampqampqampqaurq6urq6urq6urra2tra2tra2tra2vr6+vr6+vr6+vr6GhoaGhoaGhoaGho6Ojo6Ojo6Ojo6OlpaWlpaWlpaWlp6enp6enp6enp6epqampqampqampqa//NCxAAAAANIAAAAAurq6urq6urq6ura2tra2tra2tra2vr6+vr6+vr6+vr6GhoaGhoaGhoaGho6Ojo6Ojo6Ojo6OlpaWlpaWlpaWlpaqqqqqqqqqqqqqqqqqqqqqqqqv/zgMSAAACQABzxQAhAgBgeM4yqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//+ZVZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZ';
     audio.volume = 0.2;
     audio.play();
   }, []);
@@ -52,9 +53,9 @@ const EndScreen = () => {
   };
 
   return (
-    <div className="flex flex-col items-center w-full min-h-screen px-4 pt-10 sm:pt-16">
+    <div className="flex justify-center items-center min-h-screen p-4 animate-fade-in">
       <ConfettiEffect score={score} />
-      <Card className="w-full max-w-md shadow-xl">
+      <Card className="w-full max-w-md shadow-xl mt-4 sm:mt-0">
         <CardHeader className="text-center">
           <CardTitle className="text-3xl font-bold text-primary">Game Over!</CardTitle>
           <CardDescription>Your performance summary</CardDescription>

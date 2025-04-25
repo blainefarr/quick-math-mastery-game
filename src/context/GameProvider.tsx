@@ -6,13 +6,11 @@ import { GameContextType, GameState, GameProviderProps } from './game-context-ty
 import { useGameSettings } from './hooks/useGameSettings';
 import { useProblemGenerator } from './hooks/useProblemGenerator';
 import { useScoreManagement } from './hooks/useScoreManagement';
-import { useAuth } from './hooks/useAuth';
-import { showToastOnce } from '@/utils/toastManager';
+import { toast } from 'sonner';
 
 const GameProvider = ({ children }: GameProviderProps) => {
   const { settings, updateSettings, resetSettings } = useGameSettings();
   const { currentProblem, generateNewProblem } = useProblemGenerator();
-  const { logout: authLogout } = useAuth();
   
   const [gameState, setGameState] = useState<GameState>('selection');
   const [score, setScore] = useState(0);
@@ -22,8 +20,6 @@ const GameProvider = ({ children }: GameProviderProps) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [username, setUsername] = useState('');
   const [userId, setUserId] = useState<string | null>(null);
-  const didSetupRef = React.useRef(false);
-  const initialSessionCheckRef = React.useRef(false);
 
   const { 
     scoreHistory, 
@@ -33,22 +29,10 @@ const GameProvider = ({ children }: GameProviderProps) => {
     setScoreHistory 
   } = useScoreManagement(userId);
 
-  // Add console logs to debug toast issues
-  console.log('GameProvider rendered, isLoggedIn:', isLoggedIn);
-
+  // Handle authentication state changes
   useEffect(() => {
-    if (didSetupRef.current) return;
-    didSetupRef.current = true;
-
-    console.log('Setting up session and auth listener in GameProvider');
-    
-    // Check for existing session on mount first
-    if (!initialSessionCheckRef.current) {
-      initialSessionCheckRef.current = true;
-      
-      supabase.auth.getSession().then(async ({ data: { session } }) => {
-        console.log('Initial session check:', session ? 'Session exists' : 'No session');
-        
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
         if (session?.user) {
           setIsLoggedIn(true);
           setUserId(session.user.id);
@@ -59,48 +43,50 @@ const GameProvider = ({ children }: GameProviderProps) => {
             ""
           );
           
+          // Fetch scores after login
           const scores = await fetchUserScores();
           setScoreHistory(scores);
-        }
-      });
-    }
-
-    // Set up auth listener after checking for session
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log('Auth state changed in GameProvider:', event);
-        
-        if (session?.user) {
+          
+          // Only show login toast on SIGNED_IN event
           if (event === 'SIGNED_IN') {
-            console.log('User signed in, updating state');
-            setIsLoggedIn(true);
-            setUserId(session.user.id);
-            setUsername(
-              session.user.user_metadata?.name ??
-              session.user.email?.split('@')[0] ??
-              session.user.email ??
-              ""
-            );
-            
-            const scores = await fetchUserScores();
-            setScoreHistory(scores);
+            toast.success("Successfully logged in!");
           }
-        } else if (event === 'SIGNED_OUT') {
-          console.log('User signed out, updating state');
+        } else {
           setIsLoggedIn(false);
           setUserId(null);
           setUsername('');
           setScoreHistory([]);
+          
+          // Only show logout toast on SIGNED_OUT event - REMOVED to fix double toast
+          // if (event === 'SIGNED_OUT') {
+          //   toast.success("You've been logged out");
+          // }
         }
       }
     );
 
-    return () => { 
-      subscription.unsubscribe();
-      didSetupRef.current = false;
-    };
+    // Check initial session
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (session?.user) {
+        setIsLoggedIn(true);
+        setUserId(session.user.id);
+        setUsername(
+          session.user.user_metadata?.name ??
+          session.user.email?.split('@')[0] ??
+          session.user.email ??
+          ""
+        );
+        
+        // Fetch scores on initial load if logged in
+        const scores = await fetchUserScores();
+        setScoreHistory(scores);
+      }
+    });
+
+    return () => { subscription.unsubscribe(); };
   }, [fetchUserScores]);
 
+  // Refresh scores when gameState changes to 'ended'
   useEffect(() => {
     if (gameState === 'ended' && isLoggedIn && userId) {
       fetchUserScores().then(scores => {
@@ -111,50 +97,12 @@ const GameProvider = ({ children }: GameProviderProps) => {
     }
   }, [gameState, isLoggedIn, userId, fetchUserScores]);
 
-  // Effect to show signup prompt toast when game ends for non-logged-in users
-  useEffect(() => {
-    if (gameState === 'ended' && !isLoggedIn) {
-      console.log('Game ended, showing signup toast to non-logged in user');
-      showToastOnce({
-        id: 'signup-prompt',
-        message: "Sign up to track your scores",
-        type: 'info',
-        duration: 5000
-      });
-    }
-  }, [gameState, isLoggedIn]);
-
-  // Update timeLeft whenever settings.timerSeconds changes
-  useEffect(() => {
-    console.log('Settings timer seconds changed to:', settings.timerSeconds);
-    if (gameState === 'selection') {
-      setTimeLeft(settings.timerSeconds);
-    }
-  }, [settings.timerSeconds, gameState]);
-
   const incrementScore = () => {
     setScore(prev => prev + 1);
   };
   
   const resetScore = () => {
     setScore(0);
-  };
-
-  const handleLogout = async (): Promise<boolean> => {
-    try {
-      console.log('Handling logout in GameProvider');
-      const success = await authLogout();
-      if (success) {
-        setIsLoggedIn(false);
-        setUserId(null);
-        setUsername('');
-        setScoreHistory([]);
-      }
-      return success;
-    } catch (error) {
-      console.error('Error during logout:', error);
-      return false;
-    }
   };
 
   const value: GameContextType = {
@@ -180,8 +128,7 @@ const GameProvider = ({ children }: GameProviderProps) => {
     focusNumber,
     setFocusNumber,
     getIsHighScore,
-    userId,
-    logout: handleLogout
+    userId
   };
 
   return (

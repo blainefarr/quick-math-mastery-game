@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useGame } from '@/context/useGame';
 import { 
@@ -35,9 +36,10 @@ import { User, LogOut } from 'lucide-react';
 import ScoreHistory from './ScoreHistory';
 import ScoreChart from './ScoreChart';
 import { Label } from '@/components/ui/label';
+import { toast } from 'sonner';
 
 const UserProfile = () => {
-  const { username, isLoggedIn, logout, scoreHistory } = useGame();
+  const { username, isLoggedIn, setIsLoggedIn, scoreHistory } = useGame();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [selectedRange, setSelectedRange] = useState<string>("all");
   const [selectedOperation, setSelectedOperation] = useState<string>("all");
@@ -55,6 +57,7 @@ const UserProfile = () => {
       } catch (err) {
         console.error("Error loading scores:", err);
         setError("Could not load scores");
+        toast.error("Failed to load your score history");
         setLoading(false);
       }
     }
@@ -66,8 +69,9 @@ const UserProfile = () => {
   }, [isProfileOpen, scoreHistory]);
 
   const handleLogout = () => {
-    logout();
-    setIsProfileOpen(false);
+    setIsLoggedIn(false);
+    localStorage.removeItem('mathUserData');
+    toast.success("You've been logged out");
   };
 
   const getUniqueRanges = () => {
@@ -171,6 +175,7 @@ const UserProfile = () => {
               <TabsList className="relative">
                 <TabsTrigger value="history">Score History</TabsTrigger>
                 <TabsTrigger value="progress">Progress</TabsTrigger>
+                {/* Remove the blue active bar by adding custom styling */}
                 <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-muted"></div>
               </TabsList>
               

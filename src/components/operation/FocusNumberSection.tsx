@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Info } from "lucide-react";
 import { Label } from '@/components/ui/label';
@@ -44,6 +43,9 @@ const FocusNumberSection = ({
       <div className="pt-2">
         <Label htmlFor="focus-number-input">Focus Number:</Label>
         <Input id="focus-number-input" type="number" inputMode="numeric" pattern="[0-9]*" value={value} onChange={e => onChange(e.target.value)} className="w-24 mt-1" min={1} />
+        <p className="text-sm text-muted-foreground mt-2">
+          All questions will include <span className="font-bold">{value}</span> as one of the numbers.
+        </p>
       </div>
     )}
   </div>
