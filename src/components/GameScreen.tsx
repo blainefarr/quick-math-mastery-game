@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import useGame from '@/context/useGame';
 import { Button } from '@/components/ui/button';
@@ -6,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Clock, RefreshCw } from 'lucide-react';
 import MathIcon from './common/MathIcon';
-import { toast } from 'sonner';
+import { showToastOnce } from '@/utils/toastManager';
 
 const GameScreen = () => {
   const {
@@ -30,7 +29,6 @@ const GameScreen = () => {
   const scoreRef = useRef(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const initialProblemGeneratedRef = useRef(false);
-  const signupToastShownRef = useRef(false);
 
   // Update the ref whenever score changes
   useEffect(() => {
@@ -52,6 +50,9 @@ const GameScreen = () => {
       settings.focusNumber || null
     );
     initialProblemGeneratedRef.current = true;
+    
+    // IMPORTANT: Make sure to start with the correct timer value from settings
+    setTimeLeft(settings.timerSeconds);
     
     inputRef.current?.focus();
     
@@ -144,23 +145,13 @@ const GameScreen = () => {
 
   const saveGameScore = async () => {
     if (!isLoggedIn) {
-      // Use ref to prevent showing multiple toasts
-      if (!signupToastShownRef.current) {
-        signupToastShownRef.current = true;
-        
-        // Dismiss any existing signup prompt toasts
-        toast.dismiss('signup-prompt');
-        
-        toast.info("Sign up to track your scores", { 
-          id: 'signup-prompt',
-          duration: 5000
-        });
-        
-        // Reset the flag after some time
-        setTimeout(() => {
-          signupToastShownRef.current = false;
-        }, 10000);
-      }
+      // Show signup toast for non-logged in users
+      showToastOnce({
+        id: 'signup-prompt',
+        message: "Sign up to track your scores",
+        type: 'info',
+        duration: 5000
+      });
       return false;
     }
 

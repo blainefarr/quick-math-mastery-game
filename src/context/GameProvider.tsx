@@ -6,8 +6,8 @@ import { GameContextType, GameState, GameProviderProps } from './game-context-ty
 import { useGameSettings } from './hooks/useGameSettings';
 import { useProblemGenerator } from './hooks/useProblemGenerator';
 import { useScoreManagement } from './hooks/useScoreManagement';
-import { toast } from 'sonner';
 import { useAuth } from './hooks/useAuth';
+import { showToastOnce } from '@/utils/toastManager';
 
 const GameProvider = ({ children }: GameProviderProps) => {
   const { settings, updateSettings, resetSettings } = useGameSettings();
@@ -24,7 +24,6 @@ const GameProvider = ({ children }: GameProviderProps) => {
   const [userId, setUserId] = useState<string | null>(null);
   const didSetupRef = React.useRef(false);
   const initialSessionCheckRef = React.useRef(false);
-  const signupToastShownRef = React.useRef(false);
 
   const { 
     scoreHistory, 
@@ -112,6 +111,18 @@ const GameProvider = ({ children }: GameProviderProps) => {
     }
   }, [gameState, isLoggedIn, userId, fetchUserScores]);
 
+  // Effect to show signup prompt toast when game ends for non-logged-in users
+  useEffect(() => {
+    if (gameState === 'ended' && !isLoggedIn) {
+      showToastOnce({
+        id: 'signup-prompt',
+        message: "Sign up to track your scores",
+        type: 'info',
+        duration: 5000
+      });
+    }
+  }, [gameState, isLoggedIn]);
+
   const incrementScore = () => {
     setScore(prev => prev + 1);
   };
@@ -136,29 +147,6 @@ const GameProvider = ({ children }: GameProviderProps) => {
       return false;
     }
   };
-
-  // Show sign-up toast for non-logged-in users when game ends
-  useEffect(() => {
-    if (gameState === 'ended' && !isLoggedIn && !signupToastShownRef.current) {
-      signupToastShownRef.current = true;
-      
-      // Dismiss any existing signup prompt toasts
-      toast.dismiss('signup-prompt');
-      
-      // Show signup prompt with a delay
-      setTimeout(() => {
-        toast.info("Sign up to track your scores", { 
-          id: 'signup-prompt',
-          duration: 5000
-        });
-      }, 500);
-      
-      // Reset the flag after a while
-      setTimeout(() => {
-        signupToastShownRef.current = false;
-      }, 10000);
-    }
-  }, [gameState, isLoggedIn]);
 
   const value: GameContextType = {
     gameState,

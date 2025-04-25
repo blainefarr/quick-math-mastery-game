@@ -1,13 +1,11 @@
 
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
+import { showToastOnce } from '@/utils/toastManager';
 
 export const useAuth = () => {
   const [loading, setLoading] = useState(false);
   const authListenerRef = useRef(false);
-  const loginToastShown = useRef(false);
-  const logoutToastShown = useRef(false);
 
   // Add console logs to debug toast issues
   console.log('useAuth hook initialized');
@@ -21,43 +19,21 @@ export const useAuth = () => {
       console.log('Auth state changed:', event);
       
       // Handle sign-in event
-      if (event === 'SIGNED_IN' && !loginToastShown.current) {
-        loginToastShown.current = true;
-        
-        // Dismiss any existing login toasts to avoid duplicates
-        toast.dismiss('login-success');
-        
-        // Show login success toast with delay to avoid duplicates
-        setTimeout(() => {
-          toast.success("Successfully logged in!", { 
-            id: 'login-success'
-          });
-        }, 300);
-        
-        // Reset login toast flag after a while
-        setTimeout(() => {
-          loginToastShown.current = false;
-        }, 3000);
+      if (event === 'SIGNED_IN') {
+        showToastOnce({
+          id: 'login-success',
+          message: "Successfully logged in!",
+          type: 'success'
+        });
       }
       
       // Handle sign-out event
-      if (event === 'SIGNED_OUT' && !logoutToastShown.current) {
-        logoutToastShown.current = true;
-        
-        // Dismiss any existing logout toasts to avoid duplicates
-        toast.dismiss('logout');
-        
-        // Show logout success toast with delay to avoid duplicates
-        setTimeout(() => {
-          toast.success("You've been logged out", { 
-            id: 'logout'
-          });
-        }, 300);
-        
-        // Reset logout toast flag after a while
-        setTimeout(() => {
-          logoutToastShown.current = false;
-        }, 3000);
+      if (event === 'SIGNED_OUT') {
+        showToastOnce({
+          id: 'logout-success',
+          message: "You've been logged out",
+          type: 'success'
+        });
       }
     });
 
@@ -72,18 +48,21 @@ export const useAuth = () => {
       setLoading(true);
       console.log('Attempting login');
       
-      // Dismiss any existing login-related toasts
-      toast.dismiss('login-error');
-      
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
       
-      // Success is handled by the auth listener, no need for a toast here
+      // Success is handled by the auth listener
       console.log('Login successful');
       return true;
     } catch (error: any) {
       console.error('Login error:', error.message);
-      toast.error(error.message, { id: 'login-error' });
+      
+      showToastOnce({
+        id: 'login-error',
+        message: error.message,
+        type: 'error'
+      });
+      
       return false;
     } finally {
       setLoading(false);
@@ -95,20 +74,25 @@ export const useAuth = () => {
       setLoading(true);
       console.log('Attempting registration');
       
-      // Dismiss any existing registration-related toasts
-      toast.dismiss('register-success');
-      toast.dismiss('register-error');
-      
       const { error } = await supabase.auth.signUp({ email, password });
       if (error) throw error;
       
-      toast.success("Registration successful! Check your email to verify your account.", {
-        id: 'register-success'
+      showToastOnce({
+        id: 'register-success',
+        message: "Registration successful! Check your email to verify your account.",
+        type: 'success'
       });
+      
       return true;
     } catch (error: any) {
       console.error('Registration error:', error.message);
-      toast.error(error.message, { id: 'register-error' });
+      
+      showToastOnce({
+        id: 'register-error',
+        message: error.message,
+        type: 'error'
+      });
+      
       return false;
     } finally {
       setLoading(false);
@@ -134,10 +118,12 @@ export const useAuth = () => {
     } catch (error: any) {
       console.error('Logout error:', error.message);
       
-      // Dismiss any existing logout error toasts
-      toast.dismiss('logout-error');
+      showToastOnce({
+        id: 'logout-error',
+        message: error.message,
+        type: 'error'
+      });
       
-      toast.error(error.message, { id: 'logout-error' });
       return false;
     } finally {
       setLoading(false);
