@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useGame } from '@/context/useGame';
 import { supabase } from '@/integrations/supabase/client';
@@ -41,6 +42,7 @@ const AuthModal = ({ children, defaultView = 'register' }: AuthModalProps) => {
     };
   }, [isOpen]);
 
+  // Set default tab based on prop when modal opens
   useEffect(() => {
     if (isOpen) {
       setActiveTab(defaultView);
@@ -64,6 +66,7 @@ const AuthModal = ({ children, defaultView = 'register' }: AuthModalProps) => {
     }
   };
 
+  // LOGIN: check real password/email using supabase
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -82,13 +85,14 @@ const AuthModal = ({ children, defaultView = 'register' }: AuthModalProps) => {
     if (data && data.user) {
       setIsLoggedIn(true);
       setUsername(data.user.user_metadata?.name || data.user.email?.split('@')[0] || data.user.email || "");
-      console.log("Login successful");
+      toast.success("Successfully logged in!");
       handleOpenChange(false);
     }
     setEmail('');
     setPassword('');
   };
 
+  // REGISTER: create user via supabase
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -100,6 +104,7 @@ const AuthModal = ({ children, defaultView = 'register' }: AuthModalProps) => {
       return;
     }
     
+    // Register via supabase with metadata
     const { data, error: supaError } = await supabase.auth.signUp({
       email,
       password,
@@ -118,12 +123,13 @@ const AuthModal = ({ children, defaultView = 'register' }: AuthModalProps) => {
       return;
     }
 
+    // If confirmation required, tell user
     if (!data.user) {
       setSuccessMsg("Please check your email to confirm your registration!");
       return;
     }
 
-    console.log("Account created successfully!");
+    toast.success("Account created successfully!");
     setIsLoggedIn(true);
     setUsername(name);
     setName('');
@@ -132,6 +138,7 @@ const AuthModal = ({ children, defaultView = 'register' }: AuthModalProps) => {
     handleOpenChange(false);
   };
 
+  // Google authentication
   const handleGoogleSignIn = async () => {
     setError('');
     setIsLoading(true);
@@ -152,6 +159,7 @@ const AuthModal = ({ children, defaultView = 'register' }: AuthModalProps) => {
     // The page will be redirected to Google, so we don't need to do anything else here
   };
 
+  // FORGOT PASSWORD flow
   const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
