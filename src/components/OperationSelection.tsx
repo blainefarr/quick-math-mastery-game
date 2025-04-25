@@ -9,8 +9,7 @@ import OperationButton from './operation/OperationButton';
 import FocusNumberSection from './operation/FocusNumberSection';
 import NegativeNumbersToggle from './operation/NegativeNumbersToggle';
 import NumberRangeSection from './operation/NumberRangeSection';
-
-const GAME_DURATION = 15;
+import TimerSelect from './operation/TimerSelect';
 
 const OperationSelection = () => {
   const {
@@ -98,7 +97,7 @@ const OperationSelection = () => {
         min2: range2Min,
         max2: range2Max
       },
-      timerSeconds: GAME_DURATION,
+      timerSeconds: settings.timerSeconds,
       allowNegatives: negativeNumbersEnabled,
       focusNumber: useFocusNumber ? focusNumberValue : null
     });
@@ -106,7 +105,7 @@ const OperationSelection = () => {
     if (useFocusNumber) setFocusNumber(focusNumberValue);
     else setFocusNumber(null);
     
-    setTimeLeft(GAME_DURATION);
+    setTimeLeft(settings.timerSeconds);
     setGameState('playing');
   };
   
@@ -159,6 +158,11 @@ const OperationSelection = () => {
             setRange1Max={v => setRange1Max(parseOrDefault(v, range1Max))}
             setRange2Min={v => setRange2Min(parseOrDefault(v, range2Min))}
             setRange2Max={v => setRange2Max(parseOrDefault(v, range2Max))}
+          />
+
+          <TimerSelect 
+            value={settings.timerSeconds}
+            onChange={(seconds) => updateSettings({ timerSeconds: seconds })}
           />
         </CardContent>
         <CardFooter>

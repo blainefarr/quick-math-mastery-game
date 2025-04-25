@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import useGame from '@/context/useGame';
 import { Button } from '@/components/ui/button';
@@ -6,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Clock, RefreshCw } from 'lucide-react';
 import MathIcon from './common/MathIcon';
-import { toast } from 'sonner';
+import { useToast } from '@/hooks/use-toast';
 
 const GameScreen = () => {
   const {
@@ -31,7 +30,8 @@ const GameScreen = () => {
   const inputRef = useRef<HTMLInputElement>(null);
   const initialProblemGeneratedRef = useRef(false);
 
-  // Update the ref whenever score changes
+  const { toast } = useToast();
+
   useEffect(() => {
     scoreRef.current = score;
     console.log(`Score updated to: ${score}, scoreRef set to: ${scoreRef.current}`);
@@ -42,7 +42,6 @@ const GameScreen = () => {
     console.log('User logged in:', isLoggedIn, 'User ID:', userId);
     console.log('Initial score:', score);
     
-    // Always generate a new problem when component mounts to avoid operation carryover
     generateNewProblem(
       settings.operation, 
       settings.range,
@@ -142,7 +141,10 @@ const GameScreen = () => {
 
   const saveGameScore = async () => {
     if (!isLoggedIn) {
-      toast.info('Register to save your scores');
+      toast({
+        description: "Register to save your scores",
+        variant: "default"
+      });
       return false;
     }
 
