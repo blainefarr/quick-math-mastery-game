@@ -1,24 +1,28 @@
+
 import React from 'react';
 import { Info } from "lucide-react";
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+
 interface FocusNumberSectionProps {
   enabled: boolean;
   value: number;
   onToggle: (checked: boolean) => void;
   onChange: (value: string) => void;
 }
+
 const FocusNumberSection = ({
   enabled,
   value,
   onToggle,
   onChange
-}: FocusNumberSectionProps) => <div className="space-y-2 border p-4 rounded-lg bg-muted/50">
-    <div className="flex items-center justify-between h-[40px] px-[16px]">
+}: FocusNumberSectionProps) => (
+  <div className="space-y-2">
+    <div className="flex items-center justify-between px-3 py-2 rounded-md border shadow-sm bg-muted/50 text-sm h-10">
       <div className="flex items-center space-x-2">
-        <Label htmlFor="focus-number-toggle" className="text-sm">
+        <Label htmlFor="focus-number-toggle">
           Use Focus Number
         </Label>
         <TooltipProvider>
@@ -36,12 +40,26 @@ const FocusNumberSection = ({
       </div>
       <Switch id="focus-number-toggle" checked={enabled} onCheckedChange={onToggle} />
     </div>
-    {enabled && <div className="pt-2">
+
+    {enabled && (
+      <div className="pt-2 px-1">
         <Label htmlFor="focus-number-input">Focus Number:</Label>
-        <Input id="focus-number-input" type="number" inputMode="numeric" pattern="[0-9]*" value={value} onChange={e => onChange(e.target.value)} className="w-24 mt-1" min={1} />
+        <Input 
+          id="focus-number-input" 
+          type="number" 
+          inputMode="numeric" 
+          pattern="[0-9]*" 
+          value={value} 
+          onChange={e => onChange(e.target.value)} 
+          className="w-24 mt-1" 
+          min={1} 
+        />
         <p className="text-sm text-muted-foreground mt-2">
           All questions will include <span className="font-bold">{value}</span> as one of the numbers.
         </p>
-      </div>}
-  </div>;
+      </div>
+    )}
+  </div>
+);
+
 export default FocusNumberSection;
