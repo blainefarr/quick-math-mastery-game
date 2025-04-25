@@ -1,3 +1,4 @@
+
 import { toast } from 'sonner';
 
 // Keep track of shown toasts to prevent duplicates
@@ -40,7 +41,8 @@ export function showToastOnce({
       toast.error(message, { id, duration });
       break;
     case 'info':
-      toast.message(message, { id, duration });
+      // Sonner doesn't have an info method, using default with icon
+      toast(message, { id, duration });
       break;
     case 'warning':
       toast.warning(message, { id, duration });

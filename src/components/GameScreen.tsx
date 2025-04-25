@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import useGame from '@/context/useGame';
 import { Button } from '@/components/ui/button';
@@ -38,7 +39,7 @@ const GameScreen = () => {
 
   useEffect(() => {
     console.log('GameScreen mounted with settings:', settings);
-    console.log('Initial timer value:', settings.timerSeconds);
+    console.log('Initial timer value from settings:', settings.timerSeconds);
     
     if (!initialProblemGeneratedRef.current) {
       generateNewProblem(
@@ -48,17 +49,20 @@ const GameScreen = () => {
         settings.focusNumber || null
       );
       initialProblemGeneratedRef.current = true;
-      
-      // Only set initial time when starting a new game
-      setTimeLeft(settings.timerSeconds);
     }
+    
+    // Always reset the timer when this effect runs
+    console.log('Setting timeLeft to:', settings.timerSeconds);
+    setTimeLeft(settings.timerSeconds);
     
     inputRef.current?.focus();
     
     const timer = setInterval(() => {
       setTimeLeft(prevTime => {
+        console.log('Timer tick, current time:', prevTime);
         if (prevTime <= 1) {
           clearInterval(timer);
+          console.log('Game ending, final score:', scoreRef.current);
           setGameState('ended');
           saveGameScore();
           return 0;
@@ -69,9 +73,8 @@ const GameScreen = () => {
 
     return () => {
       clearInterval(timer);
-      initialProblemGeneratedRef.current = false;
     };
-  }, [settings.timerSeconds]);
+  }, [settings.timerSeconds, setTimeLeft, generateNewProblem, setGameState, saveGameScore]);
 
   useEffect(() => {
     setIsNegative(false);

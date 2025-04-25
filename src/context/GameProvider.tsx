@@ -114,6 +114,7 @@ const GameProvider = ({ children }: GameProviderProps) => {
   // Effect to show signup prompt toast when game ends for non-logged-in users
   useEffect(() => {
     if (gameState === 'ended' && !isLoggedIn) {
+      console.log('Game ended, showing signup toast to non-logged in user');
       showToastOnce({
         id: 'signup-prompt',
         message: "Sign up to track your scores",
@@ -122,6 +123,14 @@ const GameProvider = ({ children }: GameProviderProps) => {
       });
     }
   }, [gameState, isLoggedIn]);
+
+  // Update timeLeft whenever settings.timerSeconds changes
+  useEffect(() => {
+    console.log('Settings timer seconds changed to:', settings.timerSeconds);
+    if (gameState === 'selection') {
+      setTimeLeft(settings.timerSeconds);
+    }
+  }, [settings.timerSeconds, gameState]);
 
   const incrementScore = () => {
     setScore(prev => prev + 1);
