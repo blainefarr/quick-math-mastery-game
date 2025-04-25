@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import useGame from '@/context/useGame';
 import { Button } from '@/components/ui/button';
@@ -10,7 +9,7 @@ import FocusNumberSection from './operation/FocusNumberSection';
 import NegativeNumbersToggle from './operation/NegativeNumbersToggle';
 import NumberRangeSection from './operation/NumberRangeSection';
 
-const GAME_DURATION = 15;
+const GAME_DURATION = 60; // Default game duration in seconds
 
 const OperationSelection = () => {
   const {
@@ -31,6 +30,7 @@ const OperationSelection = () => {
   const [range2Max, setRange2Max] = useState(settings.range.max2);
   const [useFocusNumber, setUseFocusNumber] = useState(focusNumber !== null);
   const [focusNumberValue, setFocusNumberValue] = useState(focusNumber || 1);
+  const [gameDuration, setGameDuration] = useState(settings.timerSeconds || GAME_DURATION);
   
   useEffect(() => {
     setSelectedOperation(settings.operation);
@@ -38,6 +38,7 @@ const OperationSelection = () => {
     setRange1Max(settings.range.max1);
     setRange2Min(settings.range.min2);
     setRange2Max(settings.range.max2);
+    setGameDuration(settings.timerSeconds || GAME_DURATION);
   }, [settings]);
   
   // Update range1 min and max when focus number changes
@@ -98,7 +99,7 @@ const OperationSelection = () => {
         min2: range2Min,
         max2: range2Max
       },
-      timerSeconds: GAME_DURATION,
+      timerSeconds: gameDuration, // Use the selected game duration
       allowNegatives: negativeNumbersEnabled,
       focusNumber: useFocusNumber ? focusNumberValue : null
     });
@@ -106,7 +107,7 @@ const OperationSelection = () => {
     if (useFocusNumber) setFocusNumber(focusNumberValue);
     else setFocusNumber(null);
     
-    setTimeLeft(GAME_DURATION);
+    setTimeLeft(gameDuration); // Set the time left to the selected duration
     setGameState('playing');
   };
   

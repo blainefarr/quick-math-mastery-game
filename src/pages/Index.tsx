@@ -40,7 +40,6 @@ const Index = () => {
         position="top-center" 
         closeButton={true} 
         toastOptions={{
-          id: 'global-toaster',
           className: 'unique-toast'
         }}
       />

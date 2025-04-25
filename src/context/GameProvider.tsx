@@ -12,7 +12,7 @@ import { useAuth } from './hooks/useAuth';
 const GameProvider = ({ children }: GameProviderProps) => {
   const { settings, updateSettings, resetSettings } = useGameSettings();
   const { currentProblem, generateNewProblem } = useProblemGenerator();
-  const { logout } = useAuth();
+  const { logout: authLogout } = useAuth();
   
   const [gameState, setGameState] = useState<GameState>('selection');
   const [score, setScore] = useState(0);
@@ -24,6 +24,7 @@ const GameProvider = ({ children }: GameProviderProps) => {
   const [userId, setUserId] = useState<string | null>(null);
   const didSetupRef = React.useRef(false);
   const initialSessionCheckRef = React.useRef(false);
+  const signupToastShownRef = React.useRef(false);
 
   const { 
     scoreHistory, 
@@ -82,9 +83,6 @@ const GameProvider = ({ children }: GameProviderProps) => {
               ""
             );
             
-            // Show login toast with unique ID to prevent duplicates
-            toast.success("Successfully logged in!", { id: 'login-success' });
-            
             const scores = await fetchUserScores();
             setScoreHistory(scores);
           }
@@ -94,8 +92,6 @@ const GameProvider = ({ children }: GameProviderProps) => {
           setUserId(null);
           setUsername('');
           setScoreHistory([]);
-          
-          // We'll handle the logout toast in useAuth.tsx to avoid duplicates
         }
       }
     );
@@ -124,22 +120,45 @@ const GameProvider = ({ children }: GameProviderProps) => {
     setScore(0);
   };
 
-  const handleLogout = async () => {
+  const handleLogout = async (): Promise<boolean> => {
     try {
       console.log('Handling logout in GameProvider');
-      const success = await logout();
+      const success = await authLogout();
       if (success) {
         setIsLoggedIn(false);
         setUserId(null);
         setUsername('');
         setScoreHistory([]);
       }
-      return success; // Return the boolean result from the logout function
+      return success;
     } catch (error) {
       console.error('Error during logout:', error);
-      return false; // Return false in case of error
+      return false;
     }
   };
+
+  // Show sign-up toast for non-logged-in users when game ends
+  useEffect(() => {
+    if (gameState === 'ended' && !isLoggedIn && !signupToastShownRef.current) {
+      signupToastShownRef.current = true;
+      
+      // Dismiss any existing signup prompt toasts
+      toast.dismiss('signup-prompt');
+      
+      // Show signup prompt with a delay
+      setTimeout(() => {
+        toast.info("Sign up to track your scores", { 
+          id: 'signup-prompt',
+          duration: 5000
+        });
+      }, 500);
+      
+      // Reset the flag after a while
+      setTimeout(() => {
+        signupToastShownRef.current = false;
+      }, 10000);
+    }
+  }, [gameState, isLoggedIn]);
 
   const value: GameContextType = {
     gameState,

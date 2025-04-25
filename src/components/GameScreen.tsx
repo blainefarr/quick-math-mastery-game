@@ -30,6 +30,7 @@ const GameScreen = () => {
   const scoreRef = useRef(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const initialProblemGeneratedRef = useRef(false);
+  const signupToastShownRef = useRef(false);
 
   // Update the ref whenever score changes
   useEffect(() => {
@@ -41,6 +42,7 @@ const GameScreen = () => {
     console.log('GameScreen mounted with settings:', settings);
     console.log('User logged in:', isLoggedIn, 'User ID:', userId);
     console.log('Initial score:', score);
+    console.log('Game timer from settings:', settings.timerSeconds);
     
     // Always generate a new problem when component mounts to avoid operation carryover
     generateNewProblem(
@@ -142,7 +144,23 @@ const GameScreen = () => {
 
   const saveGameScore = async () => {
     if (!isLoggedIn) {
-      toast.info('Register to save your scores');
+      // Use ref to prevent showing multiple toasts
+      if (!signupToastShownRef.current) {
+        signupToastShownRef.current = true;
+        
+        // Dismiss any existing signup prompt toasts
+        toast.dismiss('signup-prompt');
+        
+        toast.info("Sign up to track your scores", { 
+          id: 'signup-prompt',
+          duration: 5000
+        });
+        
+        // Reset the flag after some time
+        setTimeout(() => {
+          signupToastShownRef.current = false;
+        }, 10000);
+      }
       return false;
     }
 
