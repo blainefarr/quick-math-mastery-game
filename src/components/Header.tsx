@@ -1,18 +1,44 @@
 
 import React from 'react';
-import useGame from '@/context/useGame';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import AuthModal from './auth/AuthModal';
 import UserProfile from './user/UserProfile';
 import { Clock } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+
+// Custom hook that safely tries to use game context if available
+const useSafeGame = () => {
+  try {
+    // Dynamically import to avoid reference errors
+    const { useGame } = require('@/context/useGame');
+    return useGame();
+  } catch (error) {
+    // Return default values that match the shape of game context
+    return {
+      gameState: undefined,
+      isLoggedIn: false,
+      setGameState: () => {},
+      handleLogout: async () => {
+        await supabase.auth.signOut();
+      },
+    };
+  }
+};
 
 const Header = () => {
-  const { gameState, isLoggedIn, setGameState } = useGame();
+  const navigate = useNavigate();
+  const { gameState, isLoggedIn, setGameState } = useSafeGame();
   
+  // Skip rendering header during active gameplay
   if (gameState === 'playing') return null;
   
   const handleLogoClick = () => {
-    setGameState('selection');
+    if (setGameState) {
+      setGameState('selection');
+    } else {
+      navigate('/');
+    }
   };
   
   return (

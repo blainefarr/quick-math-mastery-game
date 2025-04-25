@@ -38,34 +38,39 @@ const AdvancedSettings = ({
   };
 
   return (
-    <div className="space-y-2 px-4">
-      <Collapsible 
-        open={isOpen} 
-        onOpenChange={handleToggle}
-        className="w-full"
-      >
-        <CollapsibleTrigger className="flex w-full items-center justify-between rounded-lg border h-[38px] px-3 py-1 text-left hover:bg-muted/50">
-          <div className="flex items-center gap-2">
-            <Settings className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm">Advanced Settings</span>
-          </div>
-          <ChevronDown className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
-        </CollapsibleTrigger>
-        <CollapsibleContent>
-          <div className="rounded-lg border bg-muted/5 p-4 space-y-4 mt-2">
-            <FocusNumberSection
-              enabled={useFocusNumber}
-              value={focusNumberValue}
-              onToggle={onFocusNumberToggle}
-              onChange={onFocusNumberChange}
-            />
-            <NegativeNumbersToggle
-              enabled={negativeNumbersEnabled}
-              onToggle={onNegativeToggle}
-            />
-          </div>
-        </CollapsibleContent>
-      </Collapsible>
+    <div className="w-full">
+      <div className="flex items-center mb-2">
+        <div className="flex-1 text-sm font-medium">
+          Advanced Settings
+        </div>
+        <Collapsible 
+          open={isOpen} 
+          onOpenChange={handleToggle}
+          className="max-w-[250px]"
+        >
+          <CollapsibleTrigger className="flex w-full items-center justify-between rounded-lg border h-[38px] px-3 py-1 text-left hover:bg-muted/50">
+            <div className="flex items-center gap-2">
+              <Settings className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm">Settings</span>
+            </div>
+            <ChevronDown className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <div className="rounded-lg border bg-muted/5 p-4 space-y-4 mt-2">
+              <FocusNumberSection
+                enabled={useFocusNumber}
+                value={focusNumberValue}
+                onToggle={onFocusNumberToggle}
+                onChange={onFocusNumberChange}
+              />
+              <NegativeNumbersToggle
+                enabled={negativeNumbersEnabled}
+                onToggle={onNegativeToggle}
+              />
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
+      </div>
     </div>
   );
 };

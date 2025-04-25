@@ -1,10 +1,10 @@
+
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from "react-hook-form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import Header from "@/components/Header";
 import { ArrowLeft } from "lucide-react";
 import {
@@ -91,11 +91,11 @@ const MyAccount = () => {
       <div className="container mx-auto px-4 py-8">
         <Button 
           variant="ghost" 
-          className="mb-4" 
+          className="mb-4 flex items-center" 
           onClick={() => navigate('/')}
         >
           <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Game
+          Back to Home
         </Button>
         <Card className="max-w-xl mx-auto">
           <CardHeader>
@@ -153,7 +153,7 @@ const MyAccount = () => {
             </Form>
 
             <div className="mt-8 pt-6 border-t">
-              <Label className="text-base">Password</Label>
+              <FormLabel className="text-base">Password</FormLabel>
               <p className="text-sm text-muted-foreground mb-4">
                 Update your password to keep your account secure.
               </p>
