@@ -1,3 +1,4 @@
+
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -14,10 +15,8 @@ export const useAuth = () => {
       if (event === 'SIGNED_OUT') {
         // Dismiss any existing logout toasts before creating a new one
         toast.dismiss('logout');
-        toast({
-          id: 'logout',
-          title: 'Successfully logged out',
-          variant: 'default'
+        toast.success("Successfully logged out", {
+          id: 'logout'
         });
       }
     });
