@@ -152,7 +152,7 @@ const OperationSelection = () => {
           
           {/* Game Duration Selection */}
           <div>
-            <h3 className="text-lg font-medium mb-3">Game Duration</h3>
+            <h3 className="text-lg font-medium mb-3">Time Limit</h3>
             <select
               value={gameDuration}
               onChange={handleDurationChange}

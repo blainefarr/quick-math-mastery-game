@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import useGame from '@/context/useGame';
 import { Button } from '@/components/ui/button';
@@ -31,7 +30,29 @@ const GameScreen = () => {
   const inputRef = useRef<HTMLInputElement>(null);
   const initialProblemGeneratedRef = useRef(false);
 
-  // Update the ref whenever score changes
+  const saveGameScore = async () => {
+    if (!isLoggedIn) {
+      showToastOnce({
+        id: 'signup-prompt',
+        message: "Sign up to track your scores",
+        type: 'info',
+        duration: 5000
+      });
+      return false;
+    }
+
+    const success = await saveScore(
+      scoreRef.current,
+      settings.operation,
+      settings.range,
+      settings.timerSeconds,
+      settings.focusNumber || null,
+      settings.allowNegatives || false
+    );
+
+    return success;
+  };
+
   useEffect(() => {
     scoreRef.current = score;
     console.log(`Score updated to: ${score}, scoreRef set to: ${scoreRef.current}`);
@@ -51,7 +72,6 @@ const GameScreen = () => {
       initialProblemGeneratedRef.current = true;
     }
     
-    // Always reset the timer when this effect runs
     console.log('Setting timeLeft to:', settings.timerSeconds);
     setTimeLeft(settings.timerSeconds);
     
@@ -74,7 +94,7 @@ const GameScreen = () => {
     return () => {
       clearInterval(timer);
     };
-  }, [settings.timerSeconds, setTimeLeft, generateNewProblem, setGameState, saveGameScore]);
+  }, [settings.timerSeconds, setTimeLeft, generateNewProblem, setGameState]);
 
   useEffect(() => {
     setIsNegative(false);
@@ -140,30 +160,6 @@ const GameScreen = () => {
   };
 
   const showNegativeToggle = settings.allowNegatives;
-
-  const saveGameScore = async () => {
-    if (!isLoggedIn) {
-      // Show signup toast for non-logged in users
-      showToastOnce({
-        id: 'signup-prompt',
-        message: "Sign up to track your scores",
-        type: 'info',
-        duration: 5000
-      });
-      return false;
-    }
-
-    const success = await saveScore(
-      scoreRef.current,
-      settings.operation,
-      settings.range,
-      settings.timerSeconds,
-      settings.focusNumber || null,
-      settings.allowNegatives || false
-    );
-
-    return success;
-  };
 
   return (
     <div className="flex justify-center items-center min-h-screen p-4 bg-background">
