@@ -1,5 +1,5 @@
+
 import React, { useState, useEffect } from 'react';
-import { useGame } from '@/context/useGame';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,6 +17,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { useAuth } from '@/context/auth/useAuth';
 
 interface AuthModalProps {
   children: React.ReactNode;
@@ -24,7 +25,7 @@ interface AuthModalProps {
 }
 
 const AuthModal = ({ children, defaultView = 'register' }: AuthModalProps) => {
-  const { setIsLoggedIn, setUsername } = useGame();
+  const { setIsLoggedIn, setUsername } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'login' | 'register'>(defaultView);
   const [email, setEmail] = useState('');
