@@ -38,7 +38,8 @@ const AdvancedSettings = ({
   };
 
   return (
-    <div className="w-full">
+    <div className="space-y-2 p-4 rounded-lg my-0 bg-black/0 py-0">
+      <h3 className="text-base font-medium">Advanced Settings</h3>
       <Collapsible 
         open={isOpen} 
         onOpenChange={handleToggle}
