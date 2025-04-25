@@ -109,12 +109,18 @@ const GameProvider = ({ children }: GameProviderProps) => {
   };
 
   const handleLogout = async () => {
-    const success = await logout();
-    if (success) {
-      setIsLoggedIn(false);
-      setUserId(null);
-      setUsername('');
-      setScoreHistory([]);
+    try {
+      const success = await logout();
+      if (success) {
+        setIsLoggedIn(false);
+        setUserId(null);
+        setUsername('');
+        setScoreHistory([]);
+      }
+      return success; // Return the boolean result from the logout function
+    } catch (error) {
+      console.error('Error during logout:', error);
+      return false; // Return false in case of error
     }
   };
 
