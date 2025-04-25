@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useGame } from '@/context/useGame';
 import { 
@@ -161,6 +160,9 @@ const UserProfile = ({ dropdownLabel = "My Progress" }: UserProfileProps) => {
           <DropdownMenuItem onClick={() => handleOpenChange(true)}>
             {dropdownLabel}
           </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => navigate('/account')}>
+            My Account
+          </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={handleUserLogout} disabled={isLoggingOut}>
             <LogOut className="mr-2 h-4 w-4" />
@@ -179,7 +181,6 @@ const UserProfile = ({ dropdownLabel = "My Progress" }: UserProfileProps) => {
               <TabsList className="relative">
                 <TabsTrigger value="history">Score History</TabsTrigger>
                 <TabsTrigger value="progress">Progress</TabsTrigger>
-                {/* Remove the blue active bar by adding custom styling */}
                 <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-muted"></div>
               </TabsList>
               
