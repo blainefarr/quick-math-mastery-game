@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useGame } from '@/context/useGame';
 import { 
   DropdownMenu,
@@ -13,7 +14,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
 } from '@/components/ui/dialog';
 import { 
   Tabs, 
@@ -40,6 +40,7 @@ interface UserProfileProps {
 }
 
 const UserProfile = ({ dropdownLabel = "My Progress" }: UserProfileProps) => {
+  const navigate = useNavigate();
   const { username, isLoggedIn, handleLogout, scoreHistory } = useGame();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [selectedRange, setSelectedRange] = useState<string>("all");
@@ -157,14 +158,24 @@ const UserProfile = ({ dropdownLabel = "My Progress" }: UserProfileProps) => {
             </div>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => handleOpenChange(true)}>
+          <DropdownMenuItem 
+            onClick={() => handleOpenChange(true)}
+            className="cursor-pointer hover:bg-accent"
+          >
             {dropdownLabel}
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => navigate('/account')}>
+          <DropdownMenuItem 
+            onClick={() => navigate('/account')}
+            className="cursor-pointer hover:bg-accent"
+          >
             My Account
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={handleUserLogout} disabled={isLoggingOut}>
+          <DropdownMenuItem 
+            onClick={handleUserLogout} 
+            disabled={isLoggingOut}
+            className="cursor-pointer hover:bg-accent"
+          >
             <LogOut className="mr-2 h-4 w-4" />
             <span>{isLoggingOut ? "Logging out..." : "Log out"}</span>
           </DropdownMenuItem>
