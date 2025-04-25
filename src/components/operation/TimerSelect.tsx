@@ -21,7 +21,7 @@ const TimerSelect = ({
     value: 120,
     label: '2 minutes'
   }];
-  return <div className="flex items-center justify-between gap-4 p-2 rounded-lg bg-muted/50">
+  return <div className="flex items-center justify-between gap-4 p-2 rounded-lg bg-muted/50 px-[16px] py-[8px] border p-4">
       <span className="font-medium text-base">Time Limit</span>
       <Select value={value.toString()} onValueChange={val => onChange(parseInt(val))}>
         <SelectTrigger className="w-[140px]">
