@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import useGame from '@/context/useGame';
 import { Button } from '@/components/ui/button';
@@ -26,6 +27,7 @@ const GameScreen = () => {
 
   const [feedback, setFeedback] = useState<'correct' | 'incorrect' | null>(null);
   const [isNegative, setIsNegative] = useState(false);
+  const [isGameEndedNaturally, setIsGameEndedNaturally] = useState(false);
   const scoreRef = useRef(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const initialProblemGeneratedRef = useRef(false);
@@ -59,9 +61,11 @@ const GameScreen = () => {
           
           console.log(`Game ending with final score: ${scoreRef.current} (from ref), score state: ${score}`);
           
+          // Mark the game as ended naturally
+          setIsGameEndedNaturally(true);
           setGameState('ended');
           
-          console.log('Game ended, attempting to save score:', scoreRef.current);
+          console.log('Game ended naturally, attempting to save score:', scoreRef.current);
           
           saveGameScore();
           
@@ -98,10 +102,8 @@ const GameScreen = () => {
   };
 
   const handleRestartGame = () => {
-    console.log('Restarting game, attempting to save score:', scoreRef.current);
-    
-    saveGameScore();
-    
+    console.log('Restarting game early, not saving the score');
+    // Don't save the score when manually restarting
     setGameState('ended');
   };
 
@@ -140,6 +142,12 @@ const GameScreen = () => {
   const showNegativeToggle = settings.allowNegatives;
 
   const saveGameScore = async () => {
+    // Only save score if game ended naturally (timer ran out)
+    if (!isGameEndedNaturally) {
+      console.log("Game was ended early, not saving score");
+      return false;
+    }
+
     if (!isLoggedIn) {
       toast({
         description: "Register to save your scores",

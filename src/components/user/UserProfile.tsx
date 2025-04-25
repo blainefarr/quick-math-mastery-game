@@ -36,7 +36,11 @@ import ScoreHistory from './ScoreHistory';
 import ScoreChart from './ScoreChart';
 import { Label } from '@/components/ui/label';
 
-const UserProfile = () => {
+interface UserProfileProps {
+  dropdownLabel?: string;
+}
+
+const UserProfile = ({ dropdownLabel = "My Progress" }: UserProfileProps) => {
   const { username, isLoggedIn, handleLogout, scoreHistory } = useGame();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [selectedRange, setSelectedRange] = useState<string>("all");
@@ -44,6 +48,7 @@ const UserProfile = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [profileScores, setProfileScores] = useState([]);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   useEffect(() => {
     if (isProfileOpen) {
@@ -124,6 +129,17 @@ const UserProfile = () => {
     }
   };
 
+  const handleUserLogout = async () => {
+    try {
+      setIsLoggingOut(true);
+      await handleLogout();
+    } catch (error) {
+      console.error("Error during logout:", error);
+    } finally {
+      setIsLoggingOut(false);
+    }
+  };
+
   if (!isLoggedIn) return null;
 
   return (
@@ -143,12 +159,12 @@ const UserProfile = () => {
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={() => handleOpenChange(true)}>
-            My Profile
+            {dropdownLabel}
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={handleLogout}>
+          <DropdownMenuItem onClick={handleUserLogout} disabled={isLoggingOut}>
             <LogOut className="mr-2 h-4 w-4" />
-            <span>Log out</span>
+            <span>{isLoggingOut ? "Logging out..." : "Log out"}</span>
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -156,10 +172,7 @@ const UserProfile = () => {
       <Dialog open={isProfileOpen} onOpenChange={handleOpenChange}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
           <DialogHeader>
-            <DialogTitle className="text-xl">My Profile - {username}</DialogTitle>
-            <DialogDescription>
-              View and manage your profile and score history
-            </DialogDescription>
+            <DialogTitle className="text-xl">My Progress - {username}</DialogTitle>
           </DialogHeader>
           <div className="flex-1 overflow-y-auto">
             <Tabs defaultValue="history" className="w-full">

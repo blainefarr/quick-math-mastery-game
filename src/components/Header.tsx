@@ -35,7 +35,7 @@ const Header = () => {
         </div>
         
         {isLoggedIn ? (
-          <UserProfile dropdownLabel="My Progress" />
+          <UserProfile />
         ) : (
           <div className="flex items-center gap-2">
             <AuthModal defaultView="login">
