@@ -7,7 +7,6 @@ import GameScreen from '@/components/GameScreen';
 import EndScreen from '@/components/EndScreen';
 import useGame from '@/context/useGame';
 import MathBackground from '@/components/common/MathBackground';
-import { Toaster } from 'sonner';
 
 // Main content that uses the game context
 const GameContent = () => {
@@ -33,7 +32,6 @@ const GameContent = () => {
 const Index = () => {
   return (
     <GameProvider>
-      <Toaster position="top-center" />
       <GameContent />
     </GameProvider>
   );

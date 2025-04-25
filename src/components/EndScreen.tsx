@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import useGame from '@/context/useGame';
 import { Button } from '@/components/ui/button';
@@ -5,7 +6,6 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { ArrowLeft, RefreshCw } from 'lucide-react';
 import MathIcon from './common/MathIcon';
 import ConfettiEffect from './common/ConfettiEffect';
-import { toast } from 'sonner';
 
 const EndScreen = () => {
   const { 
@@ -26,18 +26,7 @@ const EndScreen = () => {
     audio.src = 'data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA/+M4wAAAAAAAAAAAAEluZm8AAAAPAAAAAwAAACsAWlpaWlpaWlpaWlp6enp6enp6enp6enp6epqampqampqampqaurq6urq6urq6urra2tra2tra2tra2vr6+vr6+vr6+vr6GhoaGhoaGhoaGho6Ojo6Ojo6Ojo6OlpaWlpaWlpaWlp6enp6enp6enp6epqampqampqampqa//NCxAAAAANIAAAAAurq6urq6urq6ura2tra2tra2tra2vr6+vr6+vr6+vr6GhoaGhoaGhoaGho6Ojo6Ojo6Ojo6OlpaWlpaWlpaWlpaqqqqqqqqqqqqqqqqqqqqqqqqv/zgMSAAACQABzxQAhAgBgeM4yqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//+ZVZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZ';
     audio.volume = 0.2;
     audio.play();
-
-    // Only show the signup toast for non-logged in users after game completion
-    if (!isLoggedIn) {
-      const toastKey = 'game-completion-toast';
-      if (!sessionStorage.getItem(toastKey)) {
-        toast.info("Sign up to track your scores", {
-          id: toastKey
-        });
-        sessionStorage.setItem(toastKey, 'shown');
-      }
-    }
-  }, [isLoggedIn]);
+  }, []);
   
   const handleRestart = () => {
     resetScore();

@@ -14,7 +14,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogClose,
   DialogDescription,
 } from '@/components/ui/dialog';
 import { 
@@ -36,10 +35,9 @@ import { User, LogOut } from 'lucide-react';
 import ScoreHistory from './ScoreHistory';
 import ScoreChart from './ScoreChart';
 import { Label } from '@/components/ui/label';
-import { toast } from 'sonner';
 
 const UserProfile = () => {
-  const { username, isLoggedIn, setIsLoggedIn, scoreHistory } = useGame();
+  const { username, isLoggedIn, handleLogout, scoreHistory } = useGame();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [selectedRange, setSelectedRange] = useState<string>("all");
   const [selectedOperation, setSelectedOperation] = useState<string>("all");
@@ -57,7 +55,6 @@ const UserProfile = () => {
       } catch (err) {
         console.error("Error loading scores:", err);
         setError("Could not load scores");
-        toast.error("Failed to load your score history");
         setLoading(false);
       }
     }
@@ -67,12 +64,6 @@ const UserProfile = () => {
       document.body.style.pointerEvents = '';
     };
   }, [isProfileOpen, scoreHistory]);
-
-  const handleLogout = () => {
-    setIsLoggedIn(false);
-    localStorage.removeItem('mathUserData');
-    toast.success("You've been logged out");
-  };
 
   const getUniqueRanges = () => {
     if (!profileScores || profileScores.length === 0) {
