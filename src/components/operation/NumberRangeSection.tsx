@@ -1,11 +1,5 @@
+
 import React from 'react';
-import { 
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Info } from "lucide-react";
 import { Label } from '@/components/ui/label';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -26,8 +20,6 @@ interface NumberRangeSectionProps {
   setRange1Max?: (value: any) => void;
   setRange2Min?: (value: any) => void;
   setRange2Max?: (value: any) => void;
-  timeLimit?: number;
-  onTimeChange?: (value: string) => void;
 }
 
 const NumberRangeSection = ({
@@ -39,9 +31,7 @@ const NumberRangeSection = ({
   setRange1Min,
   setRange1Max,
   setRange2Min,
-  setRange2Max,
-  timeLimit = 60,
-  onTimeChange
+  setRange2Max
 }: NumberRangeSectionProps) => {
   const selectAllOnFocus = (e: React.FocusEvent<HTMLInputElement>) => {
     e.target.select();
@@ -122,33 +112,6 @@ const NumberRangeSection = ({
             </div>
           </div>
         </div>
-      </div>
-
-      <div className="px-4 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Label className="text-base font-medium">Time Limit</Label>
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Info size={16} className="text-muted-foreground" />
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Choose how long each round lasts</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        </div>
-        <Select defaultValue={timeLimit?.toString() || '60'} onValueChange={onTimeChange}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Select time limit" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="15">15 seconds</SelectItem>
-            <SelectItem value="30">30 seconds</SelectItem>
-            <SelectItem value="60">1 minute</SelectItem>
-            <SelectItem value="120">2 minutes</SelectItem>
-          </SelectContent>
-        </Select>
       </div>
     </div>
   );

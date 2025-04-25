@@ -150,7 +150,7 @@ const OperationSelection = () => {
             </div>
           </div>
           
-          {/* Game Duration Selection */}
+          {/* Time Limit Selection */}
           <div>
             <h3 className="text-lg font-medium mb-3">Time Limit</h3>
             <select

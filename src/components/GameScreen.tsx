@@ -29,6 +29,7 @@ const GameScreen = () => {
   const scoreRef = useRef(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const initialProblemGeneratedRef = useRef(false);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const saveGameScore = async () => {
     if (!isLoggedIn) {
@@ -77,11 +78,15 @@ const GameScreen = () => {
     
     inputRef.current?.focus();
     
-    const timer = setInterval(() => {
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+    }
+    
+    timerRef.current = setInterval(() => {
       setTimeLeft(prevTime => {
         console.log('Timer tick, current time:', prevTime);
         if (prevTime <= 1) {
-          clearInterval(timer);
+          if (timerRef.current) clearInterval(timerRef.current);
           console.log('Game ending, final score:', scoreRef.current);
           setGameState('ended');
           saveGameScore();
@@ -92,9 +97,12 @@ const GameScreen = () => {
     }, 1000);
 
     return () => {
-      clearInterval(timer);
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
     };
-  }, [settings.timerSeconds, setTimeLeft, generateNewProblem, setGameState]);
+  }, [settings.timerSeconds, setTimeLeft, generateNewProblem, setGameState, settings.operation, settings.range, settings.allowNegatives, settings.focusNumber]);
 
   useEffect(() => {
     setIsNegative(false);
