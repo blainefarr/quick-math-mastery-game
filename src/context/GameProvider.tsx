@@ -56,6 +56,8 @@ const GameProvider = ({ children }: GameProviderProps) => {
           setUserId(null);
           setUsername('');
           setScoreHistory([]);
+          toast.dismiss('logout');
+          toast.success("You've been logged out", { id: 'logout' });
         }
       }
     );
