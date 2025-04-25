@@ -37,7 +37,7 @@ const AdvancedSettings = ({
         <CollapsibleTrigger className="flex w-full items-center justify-between rounded-lg border h-[38px] px-3 py-1 text-left hover:bg-muted/50">
           <div className="flex items-center gap-2">
             <Settings className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm">Advanced Settings</span>
+            <span className="text-sm font-medium">Advanced Settings</span>
           </div>
           <ChevronDown className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
         </CollapsibleTrigger>
