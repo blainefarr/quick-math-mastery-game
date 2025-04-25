@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import GameContext from './GameContext';
@@ -30,12 +29,10 @@ const GameProvider = ({ children }: GameProviderProps) => {
     setScoreHistory 
   } = useScoreManagement(userId);
 
-  // Handle authentication state changes with useRef guard
   useEffect(() => {
     if (didSetupRef.current) return;
     didSetupRef.current = true;
 
-    // Set up the auth state listener first
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (session?.user) {
@@ -48,7 +45,6 @@ const GameProvider = ({ children }: GameProviderProps) => {
             ""
           );
           
-          // Fetch scores after login
           if (event === 'SIGNED_IN') {
             toast.success("Successfully logged in!");
             const scores = await fetchUserScores();
@@ -63,7 +59,6 @@ const GameProvider = ({ children }: GameProviderProps) => {
       }
     );
 
-    // Then check initial session
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (session?.user) {
         setIsLoggedIn(true);
@@ -75,7 +70,6 @@ const GameProvider = ({ children }: GameProviderProps) => {
           ""
         );
         
-        // Fetch scores on initial load if logged in
         const scores = await fetchUserScores();
         setScoreHistory(scores);
       }
@@ -87,7 +81,6 @@ const GameProvider = ({ children }: GameProviderProps) => {
     };
   }, [fetchUserScores]);
 
-  // Refresh scores when gameState changes to 'ended'
   useEffect(() => {
     if (gameState === 'ended' && isLoggedIn && userId) {
       fetchUserScores().then(scores => {

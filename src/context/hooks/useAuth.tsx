@@ -1,4 +1,3 @@
-
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -13,8 +12,13 @@ export const useAuth = () => {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === 'SIGNED_OUT') {
+        // Dismiss any existing logout toasts before creating a new one
         toast.dismiss('logout');
-        toast("Successfully logged out", { id: 'logout' });
+        toast({
+          id: 'logout',
+          title: 'Successfully logged out',
+          variant: 'default'
+        });
       }
     });
 
@@ -38,25 +42,6 @@ export const useAuth = () => {
     return true;
   }, []);
 
-  const logout = useCallback(async () => {
-    try {
-      setLoading(true);
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
-      
-      // Clear any stored auth tokens
-      localStorage.removeItem('supabase.auth.token');
-      sessionStorage.removeItem('supabase.auth.token');
-      
-    } catch (error: any) {
-      toast.error(error.message);
-      return false;
-    } finally {
-      setLoading(false);
-    }
-    return true;
-  }, []);
-
   const register = useCallback(async ({ email, password }: { email: string; password: string }) => {
     try {
       setLoading(true);
@@ -70,6 +55,25 @@ export const useAuth = () => {
       setLoading(false);
     }
     return true;
+  }, []);
+
+  const logout = useCallback(async () => {
+    try {
+      setLoading(true);
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      
+      // Clear any stored auth tokens
+      localStorage.removeItem('supabase.auth.token');
+      sessionStorage.removeItem('supabase.auth.token');
+      
+      return true;
+    } catch (error: any) {
+      toast.error(error.message);
+      return false;
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   return {
