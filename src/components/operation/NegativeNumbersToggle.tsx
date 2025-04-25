@@ -14,25 +14,27 @@ const NegativeNumbersToggle = ({
   enabled,
   onToggle
 }: NegativeNumbersToggleProps) => (
-  <div className="flex items-center justify-between border p-4 rounded-lg bg-muted/50 h-[40px]">
-    <div className="flex items-center space-x-2">
-      <Label htmlFor="negative-number-toggle" className="text-sm">
-        Include Negatives
-      </Label>
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Info size={16} className="text-muted-foreground" />
-          </TooltipTrigger>
-          <TooltipContent>
-            <p className="max-w-xs">
-              Allow randomly chosen negative numbers in range inputs (question numbers may be negative).
-            </p>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
+  <div className="space-y-2 border p-4 rounded-lg bg-muted/50">
+    <div className="flex items-center justify-between px-3 py-2 rounded-md border shadow-sm bg-muted/50 text-sm">
+      <div className="flex items-center space-x-2">
+        <Label htmlFor="negative-number-toggle" className="text-sm">
+          Include Negatives
+        </Label>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Info size={16} className="text-muted-foreground" />
+            </TooltipTrigger>
+            <TooltipContent>
+              <p className="max-w-xs">
+                Allow randomly chosen negative numbers in range inputs (question numbers may be negative).
+              </p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      </div>
+      <Switch id="negative-number-toggle" checked={enabled} onCheckedChange={onToggle} />
     </div>
-    <Switch id="negative-number-toggle" checked={enabled} onCheckedChange={onToggle} />
   </div>
 );
 
