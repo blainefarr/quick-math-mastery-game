@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useGame } from '@/context/useGame';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,7 +17,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-import useSafeAuth from '@/hooks/useSafeAuth';
 
 interface AuthModalProps {
   children: React.ReactNode;
@@ -24,6 +24,7 @@ interface AuthModalProps {
 }
 
 const AuthModal = ({ children, defaultView = 'register' }: AuthModalProps) => {
+  const { setIsLoggedIn, setUsername } = useGame();
   const [isOpen, setIsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'login' | 'register'>(defaultView);
   const [email, setEmail] = useState('');
@@ -79,6 +80,8 @@ const AuthModal = ({ children, defaultView = 'register' }: AuthModalProps) => {
       return;
     }
     if (data && data.user) {
+      setIsLoggedIn(true);
+      setUsername(data.user.user_metadata?.name || data.user.email?.split('@')[0] || data.user.email || "");
       toast.success("Successfully logged in!");
       handleOpenChange(false);
     }
@@ -120,6 +123,8 @@ const AuthModal = ({ children, defaultView = 'register' }: AuthModalProps) => {
       return;
     }
 
+    setIsLoggedIn(true);
+    setUsername(name);
     setName('');
     setEmail('');
     setPassword('');

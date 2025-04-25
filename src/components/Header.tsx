@@ -1,31 +1,18 @@
 
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import useGame from '@/context/useGame';
 import { Button } from '@/components/ui/button';
 import AuthModal from './auth/AuthModal';
 import UserProfile from './user/UserProfile';
 import { Clock } from 'lucide-react';
-import useSafeAuth from '@/hooks/useSafeAuth';
-import useGame from '@/context/useGame';
 
 const Header = () => {
-  const navigate = useNavigate();
-  const { isLoggedIn } = useSafeAuth();
+  const { gameState, isLoggedIn, setGameState } = useGame();
   
-  // Try to use game context, but don't throw if unavailable
-  let gameState;
-  try {
-    const game = useGame();
-    gameState = game.gameState;
-  } catch (error) {
-    gameState = undefined;
-  }
-  
-  // Skip rendering header during active gameplay
   if (gameState === 'playing') return null;
   
   const handleLogoClick = () => {
-    navigate('/');
+    setGameState('selection');
   };
   
   return (
