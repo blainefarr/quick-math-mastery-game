@@ -31,6 +31,7 @@ const GameProvider = ({ children }: GameProviderProps) => {
 
   // Handle authentication state changes
   useEffect(() => {
+    // First set up the auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log('Auth state changed in GameProvider:', event);
@@ -40,8 +41,14 @@ const GameProvider = ({ children }: GameProviderProps) => {
           setUserId(null);
           setUsername('');
           setScoreHistory([]);
+          
+          // Explicitly clear stored sessions to prevent auto-login on refresh
+          localStorage.removeItem('supabase.auth.token');
+          sessionStorage.removeItem('supabase.auth.token');
           localStorage.clear();
           sessionStorage.clear();
+          
+          // Force redirect to home page after logout
           window.location.href = '/';
           return;
         }
@@ -60,15 +67,15 @@ const GameProvider = ({ children }: GameProviderProps) => {
           const scores = await fetchUserScores();
           setScoreHistory(scores);
           
-          // Only show login toast on SIGNED_IN event
-          if (event === 'SIGNED_IN') {
-            toast.success("Successfully logged in!");
-          }
+          // Remove login toast notification as requested
+          // if (event === 'SIGNED_IN') {
+          //   toast.success("Successfully logged in!");
+          // }
         }
       }
     );
 
-    // Check initial session
+    // Then check initial session
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (session?.user) {
         setIsLoggedIn(true);
@@ -110,6 +117,33 @@ const GameProvider = ({ children }: GameProviderProps) => {
     setScore(0);
   };
 
+  // Custom logout function that thoroughly cleans up session data
+  const logout = async () => {
+    try {
+      await supabase.auth.signOut();
+      
+      // Clear local state
+      setIsLoggedIn(false);
+      setUserId(null);
+      setUsername('');
+      setScoreHistory([]);
+      
+      // Explicitly clear stored tokens
+      localStorage.removeItem('supabase.auth.token');
+      sessionStorage.removeItem('supabase.auth.token');
+      localStorage.clear();
+      sessionStorage.clear();
+      
+      // No toast message for logout as requested
+      // toast.success("Successfully logged out");
+      
+      // Redirect to home page
+      window.location.href = '/';
+    } catch (error) {
+      console.error("Error during logout:", error);
+    }
+  };
+
   const value: GameContextType = {
     gameState,
     setGameState,
@@ -133,7 +167,8 @@ const GameProvider = ({ children }: GameProviderProps) => {
     focusNumber,
     setFocusNumber,
     getIsHighScore,
-    userId
+    userId,
+    logout // Add the logout function to the context
   };
 
   return (

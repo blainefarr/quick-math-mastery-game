@@ -1,139 +1,110 @@
-import React, { useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import useGame from '@/context/useGame';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, RefreshCw } from 'lucide-react';
-import MathIcon from './common/MathIcon';
-import ConfettiEffect from './common/ConfettiEffect';
+import { Confetti } from './Confetti';
+import { useConfetti } from '@/hooks/use-confetti';
+import { Separator } from '@/components/ui/separator';
+import { ModeToggle } from './ModeToggle';
+import { Github } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { toast } from 'sonner';
 
 const EndScreen = () => {
+  const navigate = useNavigate();
   const { 
     score, 
     resetScore, 
     settings, 
-    setGameState, 
-    setTimeLeft,
-    getIsHighScore 
+    resetSettings, 
+    generateNewProblem, 
+    operation, 
+    range, 
+    setGameState,
+    saveScore,
+    isLoggedIn,
+    getIsHighScore,
+    focusNumber,
+    allowNegatives
   } = useGame();
-  
-  const isHighScore = getIsHighScore(score, settings.operation, settings.range);
-  
+  const { fireConfetti } = useConfetti();
+  const [isSaving, setIsSaving] = useState(false);
+  const isHighScore = getIsHighScore(score, operation, range);
+
   useEffect(() => {
-    const audio = new Audio();
-    audio.src = 'data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA/+M4wAAAAAAAAAAAAEluZm8AAAAPAAAAAwAAACsAWlpaWlpaWlpaWlp6enp6enp6enp6enp6epqampqampqampqaurq6urq6urq6urra2tra2tra2tra2vr6+vr6+vr6+vr6GhoaGhoaGhoaGho6Ojo6Ojo6Ojo6OlpaWlpaWlpaWlp6enp6enp6enp6epqampqampqampqa//NCxAAAAANIAAAAAurq6urq6urq6ura2tra2tra2tra2vr6+vr6+vr6+vr6GhoaGhoaGhoaGho6Ojo6Ojo6Ojo6OlpaWlpaWlpaWlpaqqqqqqqqqqqqqqqqqqqqqqqqv/zgMSAAACQABzxQAhAgBgeM4yqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//+ZVZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZ';
-    audio.volume = 0.2;
-    audio.play();
-  }, []);
-  
-  const handleRestart = () => {
+    if (isHighScore) {
+      fireConfetti();
+    }
+  }, [isHighScore, fireConfetti]);
+
+  const handlePlayAgain = () => {
     resetScore();
-    setTimeLeft(settings.timerSeconds);
+    generateNewProblem(operation, range, allowNegatives, focusNumber);
     setGameState('playing');
   };
-  
-  const handleBackToSelection = () => {
+
+  const handleGoBack = () => {
     resetScore();
+    resetSettings();
     setGameState('selection');
+    navigate('/');
   };
-  
-  const getOperationName = () => {
-    switch (settings.operation) {
-      case 'addition': return 'Addition';
-      case 'subtraction': return 'Subtraction';
-      case 'multiplication': return 'Multiplication';
-      case 'division': return 'Division';
-      default: return '';
+
+  const handleSaveScore = async () => {
+    setIsSaving(true);
+    const saved = await saveScore(score, operation, range, settings.timerSeconds, focusNumber, allowNegatives);
+    setIsSaving(false);
+
+    if (saved) {
+      if (!isLoggedIn) {
+        toast.info("Sign up to save your score!");
+      }
+    } else {
+      toast.error("Failed to save score.");
     }
-  };
-  
-  const getRangeDescription = () => {
-    const { min1, max1, min2, max2 } = settings.range;
-    return `${min1}-${max1} and ${min2}-${max2}`;
   };
 
   return (
-    <main className="flex flex-col items-center w-full min-h-screen px-4 pt-10 sm:pt-16">
-      <ConfettiEffect score={score} />
-      <Card className="w-full max-w-md shadow-xl">
-        <CardHeader className="text-center">
-          <CardTitle className="text-3xl font-bold text-primary">Game Over!</CardTitle>
-          <CardDescription>Your performance summary</CardDescription>
-        </CardHeader>
-        
-        <CardContent className="space-y-6">
-          <div className="flex justify-center">
-            <div className="text-center bg-gradient-to-r from-primary/20 to-secondary/20 rounded-full w-36 h-36 flex flex-col justify-center items-center shadow-inner animate-pop">
-              <span className="text-sm text-muted-foreground">Final Score</span>
-              <span className="text-5xl font-bold text-primary">{score}</span>
-              {isHighScore && score > 0 ? (
-                <span className="text-xs text-accent mt-1 font-bold bg-accent/20 px-2 py-1 rounded-full">
-                  New High Score!
-                </span>
-              ) : score > 10 ? (
-                <span className="text-xs text-accent mt-1">Amazing work!</span>
-              ) : null}
-            </div>
-          </div>
-          
-          {isHighScore && score > 0 && (
-            <div className="bg-accent/10 p-3 rounded-lg text-center text-sm">
-              <p className="font-medium text-accent">
-                New high score for {getOperationName()} with range {getRangeDescription()}!
-              </p>
-            </div>
-          )}
-          
-          <div className="space-y-2">
-            <h3 className="text-lg font-semibold flex items-center">
-              <span>Game Settings</span>
-              <MathIcon operation={settings.operation} className="ml-2 text-accent" />
-            </h3>
-            <div className="bg-muted p-4 rounded-lg">
-              <p className="mb-2 flex items-center">
-                <span className="font-medium mr-2">Operation:</span> 
-                <span className="flex items-center bg-primary/10 px-2 py-1 rounded-md">
-                  <MathIcon operation={settings.operation} size={16} className="mr-1" />
-                  {getOperationName()}
-                </span>
-              </p>
-              <p className="mb-2">
-                <span className="font-medium">Number Range 1:</span> 
-                <span className="ml-2 bg-secondary/10 px-2 py-1 rounded-md">{settings.range.min1} to {settings.range.max1}</span>
-              </p>
-              <p className="mb-2">
-                <span className="font-medium">Number Range 2:</span> 
-                <span className="ml-2 bg-secondary/10 px-2 py-1 rounded-md">{settings.range.min2} to {settings.range.max2}</span>
-              </p>
-              <p>
-                <span className="font-medium">Time Limit:</span> 
-                <span className="ml-2 bg-secondary/10 px-2 py-1 rounded-md">{settings.timerSeconds} seconds</span>
-              </p>
-            </div>
-          </div>
-        </CardContent>
-        
-        <CardFooter className="flex flex-col gap-2">
-          <Button 
-            onClick={handleRestart}
-            className="w-full bg-primary hover:bg-primary/90 flex items-center"
-            type="button"
-          >
-            <RefreshCw className="mr-2" size={16} />
-            Restart with Same Settings
+    <div className="flex flex-col items-center justify-center h-screen bg-background">
+      <Confetti />
+      <div className="text-center">
+        <h1 className="text-4xl font-bold mb-4 math-font">
+          {isHighScore ? '🎉 New High Score!' : 'Game Over!'}
+        </h1>
+        <p className="text-lg text-muted-foreground mb-6">
+          Your Score: <span className="font-semibold text-primary">{score}</span>
+        </p>
+
+        <div className="space-x-4">
+          <Button onClick={handlePlayAgain} variant="outline">
+            Play Again
           </Button>
-          
-          <Button 
-            onClick={handleBackToSelection}
-            variant="outline"
-            className="w-full border-primary text-primary hover:bg-primary/10 flex items-center"
-            type="button"
-          >
-            <ArrowLeft className="mr-2" size={16} />
-            Back to Selection
+          <Button onClick={handleGoBack} variant="secondary">
+            Back to Menu
           </Button>
-        </CardFooter>
-      </Card>
-    </main>
+          <Button 
+            onClick={handleSaveScore} 
+            disabled={isSaving}
+            className="disabled:cursor-not-allowed"
+          >
+            {isSaving ? 'Saving...' : 'Save Score'}
+          </Button>
+        </div>
+      </div>
+
+      <footer className="absolute bottom-4 left-0 w-full flex items-center justify-between p-4 border-t border-border mt-8">
+        <Link 
+          to="https://github.com/jimmyhmiller/minute-math" 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
+        >
+          <Github size={16} className="inline-block mr-1" />
+          Open Source
+        </Link>
+        <ModeToggle />
+      </footer>
+    </div>
   );
 };
 
