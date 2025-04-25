@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import useAuth from '@/context/auth/useAuth';
-import useGame from '@/context/useGame';
 import { 
   DropdownMenu,
   DropdownMenuContent,
@@ -43,7 +42,6 @@ interface UserProfileProps {
 const UserProfile = ({ dropdownLabel = "My Progress" }: UserProfileProps) => {
   const navigate = useNavigate();
   const { username, handleLogout } = useAuth();
-  const { scoreHistory } = useGame();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [selectedRange, setSelectedRange] = useState<string>("all");
   const [selectedOperation, setSelectedOperation] = useState<string>("all");
@@ -51,6 +49,18 @@ const UserProfile = ({ dropdownLabel = "My Progress" }: UserProfileProps) => {
   const [error, setError] = useState<string | null>(null);
   const [profileScores, setProfileScores] = useState([]);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  
+  const useContextSafely = () => {
+    try {
+      const useGame = require('@/context/useGame').default;
+      return { gameContext: useGame(), hasGameContext: true };
+    } catch (err) {
+      return { gameContext: { scoreHistory: [] }, hasGameContext: false };
+    }
+  };
+  
+  const { gameContext, hasGameContext } = useContextSafely();
+  const scoreHistory = hasGameContext ? gameContext.scoreHistory : [];
 
   useEffect(() => {
     if (isProfileOpen) {
@@ -160,12 +170,14 @@ const UserProfile = ({ dropdownLabel = "My Progress" }: UserProfileProps) => {
             </div>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <DropdownMenuItem 
-            onClick={() => setIsProfileOpen(true)}
-            className="cursor-pointer hover:bg-accent"
-          >
-            {dropdownLabel}
-          </DropdownMenuItem>
+          {hasGameContext && (
+            <DropdownMenuItem 
+              onClick={() => setIsProfileOpen(true)}
+              className="cursor-pointer hover:bg-accent"
+            >
+              {dropdownLabel}
+            </DropdownMenuItem>
+          )}
           <DropdownMenuItem 
             onClick={() => navigate('/account')}
             className="cursor-pointer hover:bg-accent"
@@ -188,108 +200,110 @@ const UserProfile = ({ dropdownLabel = "My Progress" }: UserProfileProps) => {
         </DropdownMenuContent>
       </DropdownMenu>
       
-      <Dialog open={isProfileOpen} onOpenChange={handleOpenChange}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
-          <DialogHeader>
-            <DialogTitle className="text-xl">My Progress - {username}</DialogTitle>
-          </DialogHeader>
-          <div className="flex-1 overflow-y-auto">
-            <Tabs defaultValue="history" className="w-full">
-              <TabsList className="relative">
-                <TabsTrigger value="history">Score History</TabsTrigger>
-                <TabsTrigger value="progress">Progress</TabsTrigger>
-                <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-muted"></div>
-              </TabsList>
-              
-              <TabsContent value="history" className="mt-4">
-                <Card>
-                  <CardContent className="p-4">
-                    <div className="flex items-center gap-2 mb-4 pb-2 border-b">
-                      <Label className="mr-2 font-medium whitespace-nowrap">Filter:</Label>
-                      <div className="flex items-center gap-2">
-                        <Select
-                          value={selectedRange}
-                          onValueChange={setSelectedRange}
-                        >
-                          <SelectTrigger className="w-[140px] h-8">
-                            <SelectValue placeholder="All Ranges" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="all">All Ranges</SelectItem>
-                            {uniqueRanges.map((range, index) => (
-                              <SelectItem key={index} value={range}>{range}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        
-                        <Select
-                          value={selectedOperation}
-                          onValueChange={setSelectedOperation}
-                        >
-                          <SelectTrigger className="w-[160px] h-8 text-left">
-                            <SelectValue placeholder="All Operations" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="all">All Operations</SelectItem>
-                            <SelectItem value="addition">Addition</SelectItem>
-                            <SelectItem value="subtraction">Subtraction</SelectItem>
-                            <SelectItem value="multiplication">Multiplication</SelectItem>
-                            <SelectItem value="division">Division</SelectItem>
-                          </SelectContent>
-                        </Select>
+      {hasGameContext && (
+        <Dialog open={isProfileOpen} onOpenChange={handleOpenChange}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+            <DialogHeader>
+              <DialogTitle className="text-xl">My Progress - {username}</DialogTitle>
+            </DialogHeader>
+            <div className="flex-1 overflow-y-auto">
+              <Tabs defaultValue="history" className="w-full">
+                <TabsList className="relative">
+                  <TabsTrigger value="history">Score History</TabsTrigger>
+                  <TabsTrigger value="progress">Progress</TabsTrigger>
+                  <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-muted"></div>
+                </TabsList>
+                
+                <TabsContent value="history" className="mt-4">
+                  <Card>
+                    <CardContent className="p-4">
+                      <div className="flex items-center gap-2 mb-4 pb-2 border-b">
+                        <Label className="mr-2 font-medium whitespace-nowrap">Filter:</Label>
+                        <div className="flex items-center gap-2">
+                          <Select
+                            value={selectedRange}
+                            onValueChange={setSelectedRange}
+                          >
+                            <SelectTrigger className="w-[140px] h-8">
+                              <SelectValue placeholder="All Ranges" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="all">All Ranges</SelectItem>
+                              {uniqueRanges.map((range, index) => (
+                                <SelectItem key={index} value={range}>{range}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          
+                          <Select
+                            value={selectedOperation}
+                            onValueChange={setSelectedOperation}
+                          >
+                            <SelectTrigger className="w-[160px] h-8 text-left">
+                              <SelectValue placeholder="All Operations" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="all">All Operations</SelectItem>
+                              <SelectItem value="addition">Addition</SelectItem>
+                              <SelectItem value="subtraction">Subtraction</SelectItem>
+                              <SelectItem value="multiplication">Multiplication</SelectItem>
+                              <SelectItem value="division">Division</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
                       </div>
-                    </div>
-                    <ScoreHistory scores={filteredScores} />
-                  </CardContent>
-                </Card>
-              </TabsContent>
-              
-              <TabsContent value="progress" className="mt-4">
-                <Card>
-                  <CardContent className="p-4">
-                    <div className="flex items-center gap-2 mb-4 pb-2 border-b">
-                      <Label className="mr-2 font-medium whitespace-nowrap">Filter:</Label>
-                      <div className="flex items-center gap-2">
-                        <Select
-                          value={selectedRange}
-                          onValueChange={setSelectedRange}
-                        >
-                          <SelectTrigger className="w-[140px] h-8">
-                            <SelectValue placeholder="All Ranges" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="all">All Ranges</SelectItem>
-                            {uniqueRanges.map((range, index) => (
-                              <SelectItem key={index} value={range}>{range}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        
-                        <Select
-                          value={selectedOperation}
-                          onValueChange={setSelectedOperation}
-                        >
-                          <SelectTrigger className="w-[160px] h-8 text-left">
-                            <SelectValue placeholder="All Operations" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="all">All Operations</SelectItem>
-                            <SelectItem value="addition">Addition</SelectItem>
-                            <SelectItem value="subtraction">Subtraction</SelectItem>
-                            <SelectItem value="multiplication">Multiplication</SelectItem>
-                            <SelectItem value="division">Division</SelectItem>
-                          </SelectContent>
-                        </Select>
+                      <ScoreHistory scores={filteredScores} />
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+                
+                <TabsContent value="progress" className="mt-4">
+                  <Card>
+                    <CardContent className="p-4">
+                      <div className="flex items-center gap-2 mb-4 pb-2 border-b">
+                        <Label className="mr-2 font-medium whitespace-nowrap">Filter:</Label>
+                        <div className="flex items-center gap-2">
+                          <Select
+                            value={selectedRange}
+                            onValueChange={setSelectedRange}
+                          >
+                            <SelectTrigger className="w-[140px] h-8">
+                              <SelectValue placeholder="All Ranges" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="all">All Ranges</SelectItem>
+                              {uniqueRanges.map((range, index) => (
+                                <SelectItem key={index} value={range}>{range}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          
+                          <Select
+                            value={selectedOperation}
+                            onValueChange={setSelectedOperation}
+                          >
+                            <SelectTrigger className="w-[160px] h-8 text-left">
+                              <SelectValue placeholder="All Operations" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="all">All Operations</SelectItem>
+                              <SelectItem value="addition">Addition</SelectItem>
+                              <SelectItem value="subtraction">Subtraction</SelectItem>
+                              <SelectItem value="multiplication">Multiplication</SelectItem>
+                              <SelectItem value="division">Division</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
                       </div>
-                    </div>
-                    <ScoreChart scores={filteredScores} />
-                  </CardContent>
-                </Card>
-              </TabsContent>
-            </Tabs>
-          </div>
-        </DialogContent>
-      </Dialog>
+                      <ScoreChart scores={filteredScores} />
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+              </Tabs>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </>
   );
 };
