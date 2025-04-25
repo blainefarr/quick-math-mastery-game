@@ -7,10 +7,12 @@ import { useGameSettings } from './hooks/useGameSettings';
 import { useProblemGenerator } from './hooks/useProblemGenerator';
 import { useScoreManagement } from './hooks/useScoreManagement';
 import { toast } from 'sonner';
+import { useAuth } from './hooks/useAuth';
 
 const GameProvider = ({ children }: GameProviderProps) => {
   const { settings, updateSettings, resetSettings } = useGameSettings();
   const { currentProblem, generateNewProblem } = useProblemGenerator();
+  const { logout } = useAuth();
   
   const [gameState, setGameState] = useState<GameState>('selection');
   const [score, setScore] = useState(0);
@@ -34,35 +36,7 @@ const GameProvider = ({ children }: GameProviderProps) => {
     if (didSetupRef.current) return;
     didSetupRef.current = true;
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (session?.user) {
-          setIsLoggedIn(true);
-          setUserId(session.user.id);
-          setUsername(
-            session.user.user_metadata?.name ??
-            session.user.email?.split('@')[0] ??
-            session.user.email ??
-            ""
-          );
-          
-          if (event === 'SIGNED_IN') {
-            toast.success("Successfully logged in!");
-            const scores = await fetchUserScores();
-            setScoreHistory(scores);
-          }
-        } else if (event === 'SIGNED_OUT') {
-          setIsLoggedIn(false);
-          setUserId(null);
-          setUsername('');
-          setScoreHistory([]);
-          toast.dismiss('logout');
-          toast.success("You've been logged out", { id: 'logout' });
-        }
-      }
-    );
-
-    // Check for existing session on mount
+    // Check for existing session on mount first
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (session?.user) {
         setIsLoggedIn(true);
@@ -78,6 +52,37 @@ const GameProvider = ({ children }: GameProviderProps) => {
         setScoreHistory(scores);
       }
     });
+
+    // Set up auth listener after checking for session
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (session?.user) {
+          if (event === 'SIGNED_IN') {
+            setIsLoggedIn(true);
+            setUserId(session.user.id);
+            setUsername(
+              session.user.user_metadata?.name ??
+              session.user.email?.split('@')[0] ??
+              session.user.email ??
+              ""
+            );
+            
+            // Only show toast for actual sign-in events, not session recovery
+            toast.success("Successfully logged in!");
+            
+            const scores = await fetchUserScores();
+            setScoreHistory(scores);
+          }
+        } else if (event === 'SIGNED_OUT') {
+          setIsLoggedIn(false);
+          setUserId(null);
+          setUsername('');
+          setScoreHistory([]);
+          
+          // We'll handle the logout toast in useAuth.tsx to avoid duplicates
+        }
+      }
+    );
 
     return () => { 
       subscription.unsubscribe();
@@ -103,6 +108,16 @@ const GameProvider = ({ children }: GameProviderProps) => {
     setScore(0);
   };
 
+  const handleLogout = async () => {
+    const success = await logout();
+    if (success) {
+      setIsLoggedIn(false);
+      setUserId(null);
+      setUsername('');
+      setScoreHistory([]);
+    }
+  };
+
   const value: GameContextType = {
     gameState,
     setGameState,
@@ -126,7 +141,8 @@ const GameProvider = ({ children }: GameProviderProps) => {
     focusNumber,
     setFocusNumber,
     getIsHighScore,
-    userId
+    userId,
+    logout: handleLogout
   };
 
   return (

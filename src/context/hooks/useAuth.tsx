@@ -6,7 +6,7 @@ import { toast } from 'sonner';
 export const useAuth = () => {
   const [loading, setLoading] = useState(false);
   const authListenerRef = useRef(false);
-  
+
   useEffect(() => {
     if (authListenerRef.current) return;
     authListenerRef.current = true;
@@ -15,7 +15,7 @@ export const useAuth = () => {
       if (event === 'SIGNED_OUT') {
         // Dismiss any existing logout toasts before creating a new one
         toast.dismiss('logout');
-        toast.success("Successfully logged out", {
+        toast.success("You've been logged out", { 
           id: 'logout'
         });
       }
