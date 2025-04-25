@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Settings } from "lucide-react";
+import { Settings, ChevronDown } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import FocusNumberSection from './FocusNumberSection';
 import NegativeNumbersToggle from './NegativeNumbersToggle';
