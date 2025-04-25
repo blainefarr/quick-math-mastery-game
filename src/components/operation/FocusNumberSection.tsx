@@ -20,9 +20,9 @@ const FocusNumberSection = ({
   onChange
 }: FocusNumberSectionProps) => (
   <div className="space-y-2">
-    <div className="flex items-center justify-between px-3 py-2 rounded-md border shadow-sm bg-muted/50 text-sm h-10">
-      <div className="flex items-center space-x-2">
-        <Label htmlFor="focus-number-toggle">
+    <div className="flex items-center justify-between h-10 px-4 border rounded-md bg-muted/50">
+      <div className="flex items-center gap-2">
+        <Label htmlFor="focus-number-toggle" className="text-sm">
           Use Focus Number
         </Label>
         <TooltipProvider>
