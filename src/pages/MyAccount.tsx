@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from "react-hook-form";
@@ -6,6 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import Header from "@/components/Header";
+import { ArrowLeft } from "lucide-react";
 import {
   Form,
   FormControl,
@@ -85,84 +86,95 @@ const MyAccount = () => {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <Card className="max-w-xl mx-auto">
-        <CardHeader>
-          <CardTitle className="text-2xl font-bold">My Account</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Name</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+    <div className="min-h-screen bg-background">
+      <Header />
+      <div className="container mx-auto px-4 py-8">
+        <Button 
+          variant="ghost" 
+          className="mb-4" 
+          onClick={() => navigate('/')}
+        >
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Back to Game
+        </Button>
+        <Card className="max-w-xl mx-auto">
+          <CardHeader>
+            <CardTitle className="text-2xl font-bold">My Account</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Name</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-              <FormField
-                control={form.control}
-                name="grade"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Grade</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                <FormField
+                  control={form.control}
+                  name="grade"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Grade</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email</FormLabel>
-                    <FormControl>
-                      <Input {...field} type="email" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email</FormLabel>
+                      <FormControl>
+                        <Input {...field} type="email" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-              <div className="flex justify-end">
-                <Button type="submit">Save Changes</Button>
-              </div>
-            </form>
-          </Form>
+                <div className="flex justify-end">
+                  <Button type="submit">Save Changes</Button>
+                </div>
+              </form>
+            </Form>
 
-          <div className="mt-8 pt-6 border-t">
-            <Label className="text-base">Password</Label>
-            <p className="text-sm text-muted-foreground mb-4">
-              Update your password to keep your account secure.
-            </p>
-            <Button
-              variant="outline"
-              onClick={() => {
-                supabase.auth.resetPasswordForEmail(form.getValues('email'), {
-                  redirectTo: `${window.location.origin}/reset-password`,
-                });
-                toast({
-                  title: "Password Reset Email Sent",
-                  description: "Check your email for the password reset link.",
-                });
-              }}
-            >
-              Change Password
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+            <div className="mt-8 pt-6 border-t">
+              <Label className="text-base">Password</Label>
+              <p className="text-sm text-muted-foreground mb-4">
+                Update your password to keep your account secure.
+              </p>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  supabase.auth.resetPasswordForEmail(form.getValues('email'), {
+                    redirectTo: `${window.location.origin}/reset-password`,
+                  });
+                  toast({
+                    title: "Password Reset Email Sent",
+                    description: "Check your email for the password reset link.",
+                  });
+                }}
+              >
+                Change Password
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };

@@ -38,7 +38,7 @@ const AdvancedSettings = ({
   };
 
   return (
-    <div className="w-full">
+    <div className="space-y-2 px-4">
       <Collapsible 
         open={isOpen} 
         onOpenChange={handleToggle}
