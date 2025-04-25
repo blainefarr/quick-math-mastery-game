@@ -139,8 +139,8 @@ const UserProfile = () => {
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" className="h-8 w-8 rounded-full p-0 border">
-            <User size={16} />
+          <Button variant="ghost" className="h-8 px-3 rounded-full border">
+            {username}
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">

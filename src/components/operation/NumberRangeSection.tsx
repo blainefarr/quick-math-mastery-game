@@ -57,10 +57,7 @@ const NumberRangeSection = ({
       return (
         <div className="flex flex-wrap md:flex-nowrap gap-8 px-4 max-w-[700px] mx-auto">
           <div className="flex-1 min-w-[240px]">
-            <h4 className="text-base font-medium mb-2">
-              Number Range 1 
-              {focusNumberEnabled && <span className="ml-2 text-xs text-muted-foreground">(locked to focus number)</span>}
-            </h4>
+            <h4 className="text-base font-medium mb-2">Number Range 1</h4>
             <div className="flex flex-row gap-4">
               <div className="flex flex-col">
                 <label className="text-xs font-medium block mb-1">Min</label>
@@ -89,6 +86,11 @@ const NumberRangeSection = ({
                 />
               </div>
             </div>
+            {focusNumberEnabled && (
+              <p className="text-xs text-muted-foreground mt-2">
+                (locked to focus number)
+              </p>
+            )}
           </div>
 
           <div className="flex-1 min-w-[240px]">

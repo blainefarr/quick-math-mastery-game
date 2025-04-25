@@ -33,6 +33,19 @@ const GameProvider = ({ children }: GameProviderProps) => {
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        console.log('Auth state changed in GameProvider:', event);
+        
+        if (event === 'SIGNED_OUT') {
+          setIsLoggedIn(false);
+          setUserId(null);
+          setUsername('');
+          setScoreHistory([]);
+          localStorage.clear();
+          sessionStorage.clear();
+          window.location.href = '/';
+          return;
+        }
+        
         if (session?.user) {
           setIsLoggedIn(true);
           setUserId(session.user.id);
@@ -51,16 +64,6 @@ const GameProvider = ({ children }: GameProviderProps) => {
           if (event === 'SIGNED_IN') {
             toast.success("Successfully logged in!");
           }
-        } else {
-          setIsLoggedIn(false);
-          setUserId(null);
-          setUsername('');
-          setScoreHistory([]);
-          
-          // Only show logout toast on SIGNED_OUT event - REMOVED to fix double toast
-          // if (event === 'SIGNED_OUT') {
-          //   toast.success("You've been logged out");
-          // }
         }
       }
     );
@@ -83,7 +86,9 @@ const GameProvider = ({ children }: GameProviderProps) => {
       }
     });
 
-    return () => { subscription.unsubscribe(); };
+    return () => {
+      subscription.unsubscribe();
+    };
   }, [fetchUserScores]);
 
   // Refresh scores when gameState changes to 'ended'
