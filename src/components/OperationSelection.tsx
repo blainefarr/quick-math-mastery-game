@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import useGame from '@/context/useGame';
 import { Button } from '@/components/ui/button';
@@ -6,10 +5,9 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import { ArrowRight } from 'lucide-react';
 import { Operation } from '@/types';
 import OperationButton from './operation/OperationButton';
-import FocusNumberSection from './operation/FocusNumberSection';
-import NegativeNumbersToggle from './operation/NegativeNumbersToggle';
 import NumberRangeSection from './operation/NumberRangeSection';
 import TimerSelect from './operation/TimerSelect';
+import AdvancedSettings from './operation/AdvancedSettings';
 
 const OperationSelection = () => {
   const {
@@ -39,7 +37,6 @@ const OperationSelection = () => {
     setRange2Max(settings.range.max2);
   }, [settings]);
   
-  // Update range1 min and max when focus number changes
   useEffect(() => {
     if (useFocusNumber && focusNumberValue !== null) {
       setRange1Min(focusNumberValue);
@@ -58,12 +55,10 @@ const OperationSelection = () => {
     setUseFocusNumber(checked);
     if (!checked) {
       setFocusNumber(null);
-      // Reset range1 values when focus number is disabled
       setRange1Min(1);
       setRange1Max(10);
     } else {
       setFocusNumber(focusNumberValue);
-      // Set range1 to match focus number when enabled
       setRange1Min(focusNumberValue);
       setRange1Max(focusNumberValue);
     }
@@ -74,7 +69,6 @@ const OperationSelection = () => {
     setFocusNumberValue(numValue);
     if (useFocusNumber) {
       setFocusNumber(numValue);
-      // Update range1 to match focus number
       setRange1Min(numValue);
       setRange1Max(numValue);
     }
@@ -129,31 +123,13 @@ const OperationSelection = () => {
               ))}
             </div>
           </div>
-          
-          <FocusNumberSection 
-            enabled={useFocusNumber} 
-            value={focusNumberValue} 
-            onToggle={handleFocusNumberToggle} 
-            onChange={handleFocusNumberChange} 
-          />
-          
-          <NegativeNumbersToggle 
-            enabled={negativeNumbersEnabled} 
-            onToggle={handleNegativeToggle}
-          />
-          
+
           <NumberRangeSection 
             focusNumberEnabled={useFocusNumber}
             focusNumber={focusNumberValue}
             negativeNumbersEnabled={negativeNumbersEnabled}
-            range1={{
-              min: range1Min,
-              max: range1Max
-            }}
-            range2={{
-              min: range2Min,
-              max: range2Max
-            }}
+            range1={range1}
+            range2={range2}
             setRange1Min={v => setRange1Min(parseOrDefault(v, range1Min))}
             setRange1Max={v => setRange1Max(parseOrDefault(v, range1Max))}
             setRange2Min={v => setRange2Min(parseOrDefault(v, range2Min))}
@@ -163,6 +139,15 @@ const OperationSelection = () => {
           <TimerSelect 
             value={settings.timerSeconds}
             onChange={(seconds) => updateSettings({ timerSeconds: seconds })}
+          />
+
+          <AdvancedSettings
+            useFocusNumber={useFocusNumber}
+            focusNumberValue={focusNumberValue}
+            negativeNumbersEnabled={negativeNumbersEnabled}
+            onFocusNumberToggle={handleFocusNumberToggle}
+            onFocusNumberChange={handleFocusNumberChange}
+            onNegativeToggle={handleNegativeToggle}
           />
         </CardContent>
         <CardFooter>
