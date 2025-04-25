@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/form";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import GameProvider from "@/context/GameProvider";
 
 type FormData = {
   name: string;
@@ -24,10 +25,16 @@ type FormData = {
   email: string;
 };
 
-const MyAccount = () => {
+const MyAccountContent = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const form = useForm<FormData>();
+  const form = useForm<FormData>({
+    defaultValues: {
+      name: '',
+      grade: '',
+      email: ''
+    }
+  });
 
   React.useEffect(() => {
     const fetchUserProfile = async () => {
@@ -176,6 +183,15 @@ const MyAccount = () => {
         </Card>
       </div>
     </div>
+  );
+};
+
+// Wrap the MyAccount component with GameProvider to ensure context is available
+const MyAccount = () => {
+  return (
+    <GameProvider>
+      <MyAccountContent />
+    </GameProvider>
   );
 };
 

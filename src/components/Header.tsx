@@ -29,6 +29,18 @@ const useSafeGame = () => {
 const Header = () => {
   const navigate = useNavigate();
   const { gameState, isLoggedIn, setGameState } = useSafeGame();
+  const [authStatus, setAuthStatus] = React.useState<boolean | null>(null);
+  
+  // Check authentication status directly from Supabase as a fallback
+  React.useEffect(() => {
+    if (authStatus === null) {
+      const checkAuth = async () => {
+        const { data } = await supabase.auth.getSession();
+        setAuthStatus(!!data.session);
+      };
+      checkAuth();
+    }
+  }, [authStatus]);
   
   // Skip rendering header during active gameplay
   if (gameState === 'playing') return null;
@@ -36,10 +48,12 @@ const Header = () => {
   const handleLogoClick = () => {
     if (setGameState) {
       setGameState('selection');
-    } else {
-      navigate('/');
     }
+    navigate('/');
   };
+
+  // Use either the context's isLoggedIn or the direct auth check
+  const userIsLoggedIn = isLoggedIn || authStatus;
   
   return (
     <header className="w-full py-4 px-6 flex justify-between items-center bg-white/50 backdrop-blur-sm shadow-sm">
@@ -60,7 +74,7 @@ const Header = () => {
           Math practice for kids!
         </div>
         
-        {isLoggedIn ? (
+        {userIsLoggedIn ? (
           <UserProfile />
         ) : (
           <div className="flex items-center gap-2">

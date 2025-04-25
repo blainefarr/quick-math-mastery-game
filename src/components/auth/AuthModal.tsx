@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useGame } from '@/context/useGame';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,13 +17,26 @@ import { Separator } from '@/components/ui/separator';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
+const useSafeGameContext = () => {
+  try {
+    const { useGame } = require('@/context/useGame');
+    return useGame();
+  } catch (error) {
+    return {
+      setIsLoggedIn: () => {},
+      setUsername: () => {},
+      isLoggedIn: false
+    };
+  }
+};
+
 interface AuthModalProps {
   children: React.ReactNode;
   defaultView?: 'login' | 'register';
 }
 
 const AuthModal = ({ children, defaultView = 'register' }: AuthModalProps) => {
-  const { setIsLoggedIn, setUsername } = useGame();
+  const { setIsLoggedIn, setUsername } = useSafeGameContext();
   const [isOpen, setIsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'login' | 'register'>(defaultView);
   const [email, setEmail] = useState('');

@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useGame } from '@/context/useGame';
 import { 
   DropdownMenu,
   DropdownMenuContent,
@@ -34,6 +33,23 @@ import { User, LogOut } from 'lucide-react';
 import ScoreHistory from './ScoreHistory';
 import ScoreChart from './ScoreChart';
 import { Label } from '@/components/ui/label';
+import { supabase } from '@/integrations/supabase/client';
+
+const useSafeGame = () => {
+  try {
+    const { useGame } = require('@/context/useGame');
+    return useGame();
+  } catch (error) {
+    return {
+      username: '',
+      isLoggedIn: false,
+      handleLogout: async () => {
+        await supabase.auth.signOut();
+      },
+      scoreHistory: []
+    };
+  }
+};
 
 interface UserProfileProps {
   dropdownLabel?: string;
@@ -41,21 +57,42 @@ interface UserProfileProps {
 
 const UserProfile = ({ dropdownLabel = "My Progress" }: UserProfileProps) => {
   const navigate = useNavigate();
-  const { username, isLoggedIn, handleLogout, scoreHistory } = useGame();
+  const gameContext = useSafeGame();
+  const [userInfo, setUserInfo] = useState<{username: string, userId: string | null}>({
+    username: gameContext.username || '',
+    userId: null
+  });
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [selectedRange, setSelectedRange] = useState<string>("all");
   const [selectedOperation, setSelectedOperation] = useState<string>("all");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [profileScores, setProfileScores] = useState([]);
+  const [profileScores, setProfileScores] = useState(gameContext.scoreHistory || []);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  useEffect(() => {
+    if (!userInfo.username) {
+      const getUser = async () => {
+        const { data } = await supabase.auth.getUser();
+        if (data.user) {
+          setUserInfo({
+            username: data.user.user_metadata?.name || 
+                     data.user.email?.split('@')[0] || 
+                     data.user.email || "",
+            userId: data.user.id
+          });
+        }
+      };
+      getUser();
+    }
+  }, [userInfo.username]);
 
   useEffect(() => {
     if (isProfileOpen) {
       setLoading(true);
       try {
-        console.log('Profile dialog opened, current scoreHistory:', scoreHistory);
-        setProfileScores(scoreHistory ? [...scoreHistory] : []);
+        console.log('Profile dialog opened, current scoreHistory:', gameContext.scoreHistory);
+        setProfileScores(gameContext.scoreHistory ? [...gameContext.scoreHistory] : []);
         setLoading(false);
       } catch (err) {
         console.error("Error loading scores:", err);
@@ -68,7 +105,7 @@ const UserProfile = ({ dropdownLabel = "My Progress" }: UserProfileProps) => {
       document.body.classList.remove('ReactModal__Body--open');
       document.body.style.pointerEvents = '';
     };
-  }, [isProfileOpen, scoreHistory]);
+  }, [isProfileOpen, gameContext.scoreHistory]);
 
   const getUniqueRanges = () => {
     if (!profileScores || profileScores.length === 0) {
@@ -132,7 +169,12 @@ const UserProfile = ({ dropdownLabel = "My Progress" }: UserProfileProps) => {
   const handleUserLogout = async () => {
     try {
       setIsLoggingOut(true);
-      await handleLogout();
+      if (gameContext.handleLogout) {
+        await gameContext.handleLogout();
+      } else {
+        await supabase.auth.signOut();
+      }
+      navigate('/');
     } catch (error) {
       console.error("Error during logout:", error);
     } finally {
@@ -140,6 +182,7 @@ const UserProfile = ({ dropdownLabel = "My Progress" }: UserProfileProps) => {
     }
   };
 
+  const isLoggedIn = gameContext.isLoggedIn || !!userInfo.userId;
   if (!isLoggedIn) return null;
 
   return (
@@ -147,13 +190,13 @@ const UserProfile = ({ dropdownLabel = "My Progress" }: UserProfileProps) => {
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" className="h-8 px-3 rounded-full border">
-            {username}
+            {userInfo.username || gameContext.username}
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuLabel>
             <div className="flex flex-col">
-              <span>Hi, {username}!</span>
+              <span>Hi, {userInfo.username || gameContext.username}!</span>
               <span className="text-xs text-muted-foreground">Logged in</span>
             </div>
           </DropdownMenuLabel>
@@ -185,7 +228,7 @@ const UserProfile = ({ dropdownLabel = "My Progress" }: UserProfileProps) => {
       <Dialog open={isProfileOpen} onOpenChange={handleOpenChange}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
           <DialogHeader>
-            <DialogTitle className="text-xl">My Progress - {username}</DialogTitle>
+            <DialogTitle className="text-xl">My Progress - {userInfo.username || gameContext.username}</DialogTitle>
           </DialogHeader>
           <div className="flex-1 overflow-y-auto">
             <Tabs defaultValue="history" className="w-full">
