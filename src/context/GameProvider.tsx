@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import GameContext from './GameContext';
@@ -6,7 +5,6 @@ import { GameContextType, GameState, GameProviderProps } from './game-context-ty
 import { useGameSettings } from './hooks/useGameSettings';
 import { useProblemGenerator } from './hooks/useProblemGenerator';
 import { useScoreManagement } from './hooks/useScoreManagement';
-import { toast } from 'sonner';
 
 const GameProvider = ({ children }: GameProviderProps) => {
   const { settings, updateSettings, resetSettings } = useGameSettings();
@@ -42,7 +40,6 @@ const GameProvider = ({ children }: GameProviderProps) => {
           setScoreHistory([]);
           localStorage.clear();
           sessionStorage.clear();
-          window.location.href = '/';
           return;
         }
         
@@ -59,11 +56,6 @@ const GameProvider = ({ children }: GameProviderProps) => {
           // Fetch scores after login
           const scores = await fetchUserScores();
           setScoreHistory(scores);
-          
-          // Only show login toast on SIGNED_IN event
-          if (event === 'SIGNED_IN') {
-            toast.success("Successfully logged in!");
-          }
         }
       }
     );

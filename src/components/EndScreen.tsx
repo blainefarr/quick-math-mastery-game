@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { ArrowLeft, RefreshCw } from 'lucide-react';
 import MathIcon from './common/MathIcon';
 import ConfettiEffect from './common/ConfettiEffect';
+import { toast } from 'sonner';
 
 const EndScreen = () => {
   const { 
@@ -13,17 +14,23 @@ const EndScreen = () => {
     settings, 
     setGameState, 
     setTimeLeft,
-    getIsHighScore 
+    getIsHighScore,
+    isLoggedIn 
   } = useGame();
   
   const isHighScore = getIsHighScore(score, settings.operation, settings.range);
   
   useEffect(() => {
+    // Only show the signup toast for non-logged in users
+    if (!isLoggedIn) {
+      toast.info("Sign up to save your scores and track your progress!");
+    }
+
     const audio = new Audio();
     audio.src = 'data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA/+M4wAAAAAAAAAAAAEluZm8AAAAPAAAAAwAAACsAWlpaWlpaWlpaWlp6enp6enp6enp6enp6epqampqampqampqaurq6urq6urq6urra2tra2tra2tra2vr6+vr6+vr6+vr6GhoaGhoaGhoaGho6Ojo6Ojo6Ojo6OlpaWlpaWlpaWlp6enp6enp6enp6epqampqampqampqa//NCxAAAAANIAAAAAurq6urq6urq6ura2tra2tra2tra2vr6+vr6+vr6+vr6GhoaGhoaGhoaGho6Ojo6Ojo6Ojo6OlpaWlpaWlpaWlpaqqqqqqqqqqqqqqqqqqqqqqqqv/zgMSAAACQABzxQAhAgBgeM4yqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//+ZVZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZ';
     audio.volume = 0.2;
     audio.play();
-  }, []);
+  }, [isLoggedIn]);
   
   const handleRestart = () => {
     resetScore();
