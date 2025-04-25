@@ -31,9 +31,19 @@ const GameContent = () => {
 
 // Index page with context provider
 const Index = () => {
+  console.log('Index page rendered - Toaster setup');
+  
   return (
     <GameProvider>
-      <Toaster position="top-center" />
+      {/* Use position and closeButton properties to ensure proper toast behavior */}
+      <Toaster 
+        position="top-center" 
+        closeButton={true} 
+        toastOptions={{
+          id: 'global-toaster',
+          className: 'unique-toast'
+        }}
+      />
       <GameContent />
     </GameProvider>
   );

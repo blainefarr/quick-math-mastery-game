@@ -23,6 +23,7 @@ const GameProvider = ({ children }: GameProviderProps) => {
   const [username, setUsername] = useState('');
   const [userId, setUserId] = useState<string | null>(null);
   const didSetupRef = React.useRef(false);
+  const initialSessionCheckRef = React.useRef(false);
 
   const { 
     scoreHistory, 
@@ -32,32 +33,46 @@ const GameProvider = ({ children }: GameProviderProps) => {
     setScoreHistory 
   } = useScoreManagement(userId);
 
+  // Add console logs to debug toast issues
+  console.log('GameProvider rendered, isLoggedIn:', isLoggedIn);
+
   useEffect(() => {
     if (didSetupRef.current) return;
     didSetupRef.current = true;
 
+    console.log('Setting up session and auth listener in GameProvider');
+    
     // Check for existing session on mount first
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      if (session?.user) {
-        setIsLoggedIn(true);
-        setUserId(session.user.id);
-        setUsername(
-          session.user.user_metadata?.name ??
-          session.user.email?.split('@')[0] ??
-          session.user.email ??
-          ""
-        );
+    if (!initialSessionCheckRef.current) {
+      initialSessionCheckRef.current = true;
+      
+      supabase.auth.getSession().then(async ({ data: { session } }) => {
+        console.log('Initial session check:', session ? 'Session exists' : 'No session');
         
-        const scores = await fetchUserScores();
-        setScoreHistory(scores);
-      }
-    });
+        if (session?.user) {
+          setIsLoggedIn(true);
+          setUserId(session.user.id);
+          setUsername(
+            session.user.user_metadata?.name ??
+            session.user.email?.split('@')[0] ??
+            session.user.email ??
+            ""
+          );
+          
+          const scores = await fetchUserScores();
+          setScoreHistory(scores);
+        }
+      });
+    }
 
     // Set up auth listener after checking for session
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        console.log('Auth state changed in GameProvider:', event);
+        
         if (session?.user) {
           if (event === 'SIGNED_IN') {
+            console.log('User signed in, updating state');
             setIsLoggedIn(true);
             setUserId(session.user.id);
             setUsername(
@@ -67,13 +82,14 @@ const GameProvider = ({ children }: GameProviderProps) => {
               ""
             );
             
-            // Only show toast for actual sign-in events, not session recovery
-            toast.success("Successfully logged in!");
+            // Show login toast with unique ID to prevent duplicates
+            toast.success("Successfully logged in!", { id: 'login-success' });
             
             const scores = await fetchUserScores();
             setScoreHistory(scores);
           }
         } else if (event === 'SIGNED_OUT') {
+          console.log('User signed out, updating state');
           setIsLoggedIn(false);
           setUserId(null);
           setUsername('');
@@ -110,6 +126,7 @@ const GameProvider = ({ children }: GameProviderProps) => {
 
   const handleLogout = async () => {
     try {
+      console.log('Handling logout in GameProvider');
       const success = await logout();
       if (success) {
         setIsLoggedIn(false);
