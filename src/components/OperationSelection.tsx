@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import useGame from '@/context/useGame';
 import { Button } from '@/components/ui/button';
@@ -128,8 +129,8 @@ const OperationSelection = () => {
             focusNumberEnabled={useFocusNumber}
             focusNumber={focusNumberValue}
             negativeNumbersEnabled={negativeNumbersEnabled}
-            range1={range1}
-            range2={range2}
+            range1={{ min: range1Min, max: range1Max }}
+            range2={{ min: range2Min, max: range2Max }}
             setRange1Min={v => setRange1Min(parseOrDefault(v, range1Min))}
             setRange1Max={v => setRange1Max(parseOrDefault(v, range1Max))}
             setRange2Min={v => setRange2Min(parseOrDefault(v, range2Min))}
