@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import GameContext from './GameContext';
@@ -59,6 +60,7 @@ const GameProvider = ({ children }: GameProviderProps) => {
       }
     );
 
+    // Check for existing session on mount
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (session?.user) {
         setIsLoggedIn(true);

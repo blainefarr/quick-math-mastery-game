@@ -32,13 +32,13 @@ export const useAuth = () => {
       setLoading(true);
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
+      return true;
     } catch (error: any) {
       toast.error(error.message);
       return false;
     } finally {
       setLoading(false);
     }
-    return true;
   }, []);
 
   const register = useCallback(async ({ email, password }: { email: string; password: string }) => {
@@ -47,13 +47,13 @@ export const useAuth = () => {
       const { error } = await supabase.auth.signUp({ email, password });
       if (error) throw error;
       toast.success("Registration successful! Check your email to verify your account.");
+      return true;
     } catch (error: any) {
       toast.error(error.message);
       return false;
     } finally {
       setLoading(false);
     }
-    return true;
   }, []);
 
   const logout = useCallback(async () => {
