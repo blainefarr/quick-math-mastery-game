@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import useAuth from '@/context/auth/useAuth';
@@ -30,10 +31,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { User, LogOut } from 'lucide-react';
+import { LogOut } from 'lucide-react';
 import ScoreHistory from './ScoreHistory';
 import ScoreChart from './ScoreChart';
 import { Label } from '@/components/ui/label';
+import GameContext from '@/context/GameContext';
+import { useContext } from 'react';
 
 interface UserProfileProps {
   dropdownLabel?: string;
@@ -50,17 +53,19 @@ const UserProfile = ({ dropdownLabel = "My Progress" }: UserProfileProps) => {
   const [profileScores, setProfileScores] = useState([]);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   
-  const useContextSafely = () => {
+  // Safe game context hook that doesn't throw if we're not in a GameProvider
+  const useGameContextSafely = () => {
     try {
-      const useGame = require('@/context/useGame').default;
-      return { gameContext: useGame(), hasGameContext: true };
+      const gameContext = useContext(GameContext);
+      return { gameContext, hasGameContext: !!gameContext };
     } catch (err) {
+      console.error("Failed to access game context:", err);
       return { gameContext: { scoreHistory: [] }, hasGameContext: false };
     }
   };
   
-  const { gameContext, hasGameContext } = useContextSafely();
-  const scoreHistory = hasGameContext ? gameContext.scoreHistory : [];
+  const { gameContext, hasGameContext } = useGameContextSafely();
+  const scoreHistory = hasGameContext && gameContext.scoreHistory ? gameContext.scoreHistory : [];
 
   useEffect(() => {
     if (isProfileOpen) {
@@ -186,11 +191,7 @@ const UserProfile = ({ dropdownLabel = "My Progress" }: UserProfileProps) => {
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem 
-            onClick={async () => {
-              setIsLoggingOut(true);
-              await handleLogout();
-              setIsLoggingOut(false);
-            }} 
+            onClick={handleUserLogout} 
             disabled={isLoggingOut}
             className="cursor-pointer hover:bg-accent"
           >
