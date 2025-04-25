@@ -16,7 +16,7 @@ const NegativeNumbersToggle = ({
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
-            <Info size={16} className="text-muted-foreground" />
+            <Info size={16} className="text-muted-foreground px-0 my-0" />
           </TooltipTrigger>
           <TooltipContent>
             <p className="max-w-xs">
