@@ -36,9 +36,15 @@ export const useProblemGenerator = () => {
           answer = num1 * num2;
           break;
         case 'division':
-          num2 = focusNumber;
-          answer = random(min1, max1);
-          num1 = answer * num2;
+          // For division with focus number, generate random multiples of the focus number
+          num2 = focusNumber; // divisor is the focus number
+          const possibleAnswers = Array.from(
+            { length: max1 - min1 + 1 },
+            (_, i) => min1 + i
+          ).filter(n => n * focusNumber <= max1 * max2); // ensure product doesn't exceed range
+          
+          answer = possibleAnswers[Math.floor(Math.random() * possibleAnswers.length)];
+          num1 = answer * num2; // dividend is answer * divisor
           break;
         default:
           num1 = 0; num2 = 0; answer = 0;
