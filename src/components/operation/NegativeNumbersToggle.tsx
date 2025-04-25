@@ -14,9 +14,9 @@ const NegativeNumbersToggle = ({
   enabled,
   onToggle
 }: NegativeNumbersToggleProps) => (
-  <div className="flex items-center justify-between border p-4 rounded-lg bg-muted/50">
+  <div className="flex items-center justify-between border p-4 rounded-lg bg-muted/50 h-[40px]">
     <div className="flex items-center space-x-2">
-      <Label htmlFor="negative-number-toggle" className="text-sm font-medium">
+      <Label htmlFor="negative-number-toggle" className="text-sm">
         Include Negatives
       </Label>
       <TooltipProvider>

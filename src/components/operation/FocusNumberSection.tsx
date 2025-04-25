@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Info } from "lucide-react";
 import { Label } from '@/components/ui/label';
@@ -19,9 +20,9 @@ const FocusNumberSection = ({
   onChange
 }: FocusNumberSectionProps) => (
   <div className="space-y-2 border p-4 rounded-lg bg-muted/50">
-    <div className="flex items-center justify-between">
+    <div className="flex items-center justify-between h-[40px]">
       <div className="flex items-center space-x-2">
-        <Label htmlFor="focus-number-toggle" className="text-sm font-medium">
+        <Label htmlFor="focus-number-toggle" className="text-sm">
           Use Focus Number
         </Label>
         <TooltipProvider>
