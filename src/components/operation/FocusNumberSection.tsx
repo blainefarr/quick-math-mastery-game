@@ -20,7 +20,7 @@ const FocusNumberSection = ({
   onChange
 }: FocusNumberSectionProps) => (
   <div className="space-y-2 border p-4 rounded-lg bg-muted/50">
-    <div className="flex items-center justify-between px-3 py-2 rounded-md border shadow-sm bg-muted/50 text-sm">
+    <div className="flex items-center justify-between h-[40px]">
       <div className="flex items-center space-x-2">
         <Label htmlFor="focus-number-toggle" className="text-sm">
           Use Focus Number
