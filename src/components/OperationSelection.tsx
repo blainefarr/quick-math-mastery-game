@@ -89,7 +89,7 @@ const OperationSelection = () => {
     setGameState('playing');
   };
   return <div className="container mx-auto px-4 py-8">
-      <Card className="shadow-lg animate-fade-in mx-auto max-w-[600px] min-w-[300px]">
+      <Card className="shadow-lg animate-fade-in mx-auto max-w-[535px] min-w-[300px]">
         <CardHeader>
           <CardTitle className="text-2xl font-bold text-center">Minute Math Settings</CardTitle>
         </CardHeader>
