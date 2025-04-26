@@ -1,11 +1,14 @@
-import React, { useEffect } from 'react';
+
+import React, { useEffect, useState } from 'react';
 import useGame from '@/context/useGame';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft, RefreshCw, TrendingUp } from 'lucide-react';
 import MathIcon from './common/MathIcon';
 import ConfettiEffect from './common/ConfettiEffect';
-import { Link } from 'react-router-dom';
+import AuthModal from './auth/AuthModal';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
+import ScoreChart from './user/ScoreChart';
 
 const EndScreen = () => {
   const { 
@@ -18,6 +21,8 @@ const EndScreen = () => {
     isLoggedIn,
     setUserAnswer
   } = useGame();
+
+  const [showScores, setShowScores] = useState(false);
   
   const isHighScore = getIsHighScore(score, settings.operation, settings.range);
   
@@ -129,28 +134,27 @@ const EndScreen = () => {
             Restart with Same Settings
           </Button>
           
-          {!isLoggedIn ? (
-            <Link to="/account?tab=signup" className="w-full">
-              <Button 
-                variant="outline"
-                className="w-full border-primary text-primary hover:bg-primary/10 flex items-center"
-                type="button"
-              >
-                <TrendingUp className="mr-2" size={16} />
-                Sign Up to Track Your Progress
-              </Button>
-            </Link>
+          {isLoggedIn ? (
+            <Button 
+              variant="outline"
+              className="w-full border-primary text-primary hover:bg-primary/10 flex items-center"
+              onClick={() => setShowScores(true)}
+              type="button"
+            >
+              <TrendingUp className="mr-2" size={16} />
+              See Your Progress
+            </Button>
           ) : (
-            <Link to="/account?tab=progress" className="w-full">
+            <AuthModal>
               <Button 
                 variant="outline"
                 className="w-full border-primary text-primary hover:bg-primary/10 flex items-center"
                 type="button"
               >
                 <TrendingUp className="mr-2" size={16} />
-                See Your Progress
+                Sign Up to Track Progress
               </Button>
-            </Link>
+            </AuthModal>
           )}
           
           <Button 
@@ -164,6 +168,12 @@ const EndScreen = () => {
           </Button>
         </CardFooter>
       </Card>
+
+      <Dialog open={showScores} onOpenChange={setShowScores}>
+        <DialogContent className="sm:max-w-xl">
+          <ScoreChart scores={[]} />
+        </DialogContent>
+      </Dialog>
     </main>
   );
 };
