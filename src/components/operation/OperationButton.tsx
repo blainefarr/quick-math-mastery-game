@@ -21,7 +21,7 @@ const OperationButton = ({ active, operation, onClick }: Props) => (
     type="button"
     className={`
       flex items-center justify-center
-      w-14 h-14 rounded-lg transition-all
+      h-14 w-16 rounded-lg transition-all
       flex-shrink-0
       ${active ? operationStyles[operation] : "bg-white border-2 border-transparent text-muted-foreground shadow hover:bg-muted"}
     `}
