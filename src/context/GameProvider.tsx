@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import GameContext from './GameContext';
 import { GameContextType, GameState, GameProviderProps, GameEndReason } from './game-context-types';
 import { useGameSettings } from './hooks/useGameSettings';
@@ -17,6 +17,8 @@ const GameProvider = ({ children }: GameProviderProps) => {
   const [timeLeft, setTimeLeft] = useState(settings.timerSeconds);
   const [userAnswer, setUserAnswer] = useState('');
   const [focusNumber, setFocusNumber] = useState<number | null>(null);
+  const scoreRef = useRef(0);
+  const timerRef = useRef<number | null>(null);
 
   const { 
     scoreHistory, 
@@ -36,29 +38,70 @@ const GameProvider = ({ children }: GameProviderProps) => {
     }
   }, [gameState, userId, fetchUserScores]);
 
+  useEffect(() => {
+    scoreRef.current = score;
+  }, [score]);
+
   const incrementScore = () => {
-    setScore(prev => prev + 1);
+    setScore(prev => {
+      const newScore = prev + 1;
+      scoreRef.current = newScore;
+      return newScore;
+    });
   };
   
   const resetScore = () => {
     setScore(0);
+    scoreRef.current = 0;
   };
 
   // Get auth state from useAuth
   const { isLoggedIn, username } = useAuth();
   
-  // Updated endGame function to capture the current score accurately
-  const endGame = async (reason: GameEndReason) => {
-    // We need to access the current score value directly to avoid closure issues
-    const currentScore = score;
-    console.log(`Ending game with reason: ${reason}, final score: ${currentScore}`);
+  const startGameTimer = () => {
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+    }
     
-    // Only save the score if the game ended because the timer ran out
+    timerRef.current = window.setInterval(() => {
+      setTimeLeft(prevTime => {
+        if (prevTime <= 1) {
+          if (timerRef.current) {
+            clearInterval(timerRef.current);
+          }
+          endGame('timeout');
+          return 0;
+        }
+        return prevTime - 1;
+      });
+    }, 1000);
+  };
+
+  useEffect(() => {
+    if (gameState === 'playing') {
+      startGameTimer();
+    }
+    
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+    };
+  }, [gameState]);
+  
+  const endGame = async (reason: GameEndReason) => {
+    const finalScore = scoreRef.current;
+    console.log(`Ending game with reason: ${reason}, final score: ${finalScore}`);
+    
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+    }
+    
     if (reason === 'timeout' && isLoggedIn) {
-      console.log(`Attempting to save score: ${currentScore}`);
+      console.log(`Attempting to save score: ${finalScore}`);
       try {
         await saveScore(
-          currentScore,
+          finalScore,
           settings.operation,
           settings.range,
           settings.timerSeconds,
@@ -69,13 +112,8 @@ const GameProvider = ({ children }: GameProviderProps) => {
       } catch (error) {
         console.error("Failed to save score:", error);
       }
-    } else if (reason === 'manual') {
-      console.log("Game was ended manually, not saving score");
-    } else if (!isLoggedIn) {
-      console.log("User not logged in, not saving score");
     }
     
-    // Change the game state to ended
     setGameState('ended');
   };
 

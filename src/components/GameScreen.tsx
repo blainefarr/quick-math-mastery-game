@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import useGame from '@/context/useGame';
 import { Button } from '@/components/ui/button';
@@ -6,7 +5,6 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Clock, RefreshCw } from 'lucide-react';
 import MathIcon from './common/MathIcon';
-import { useToast } from '@/hooks/use-toast';
 
 const GameScreen = () => {
   const {
@@ -15,13 +13,8 @@ const GameScreen = () => {
     currentProblem,
     generateNewProblem,
     timeLeft,
-    setTimeLeft,
-    userAnswer,
     setUserAnswer,
-    setGameState,
     settings,
-    userId,
-    isLoggedIn,
     endGame
   } = useGame();
 
@@ -30,41 +23,27 @@ const GameScreen = () => {
   const inputRef = useRef<HTMLInputElement>(null);
   const initialProblemGeneratedRef = useRef(false);
 
-  const { toast } = useToast();
-
   useEffect(() => {
     console.log('GameScreen mounted with settings:', settings);
-    console.log('User logged in:', isLoggedIn, 'User ID:', userId);
-    console.log('Initial score:', score);
     
     // Clear any previous answer when starting a new game
     setUserAnswer('');
     
-    generateNewProblem(
-      settings.operation, 
-      settings.range,
-      settings.allowNegatives || false,
-      settings.focusNumber || null
-    );
-    initialProblemGeneratedRef.current = true;
+    if (!initialProblemGeneratedRef.current) {
+      generateNewProblem(
+        settings.operation, 
+        settings.range,
+        settings.allowNegatives || false,
+        settings.focusNumber || null
+      );
+      initialProblemGeneratedRef.current = true;
+    }
     
     inputRef.current?.focus();
     
-    const timer = setInterval(() => {
-      setTimeLeft(prevTime => {
-        if (prevTime <= 1) {
-          clearInterval(timer);
-          
-          // Use the new endGame function with 'timeout' reason
-          endGame('timeout');
-          
-          return 0;
-        } else {
-          return prevTime - 1;
-        }
-      });
-    }, 1000);
-    return () => clearInterval(timer);
+    return () => {
+      initialProblemGeneratedRef.current = false;
+    };
   }, []);
 
   useEffect(() => {
@@ -92,7 +71,6 @@ const GameScreen = () => {
 
   const handleRestartGame = () => {
     console.log('Restarting game early, not saving the score');
-    // Use the new endGame function with 'manual' reason
     endGame('manual');
   };
 
@@ -117,7 +95,7 @@ const GameScreen = () => {
             settings.allowNegatives || false,
             settings.focusNumber || null
           );
-          focusInput();
+          inputRef.current?.focus();
         }, 100);
       }
     }

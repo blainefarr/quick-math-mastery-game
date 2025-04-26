@@ -4,7 +4,6 @@ import { useNavigate } from 'react-router-dom';
 import { useForm, FormProvider } from "react-hook-form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Form,
@@ -14,6 +13,14 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import useAuth from "@/context/auth/useAuth";
@@ -23,6 +30,22 @@ type FormData = {
   grade: string;
   email: string;
 };
+
+const gradeOptions = [
+  "Kindergarten",
+  "1st Grade",
+  "2nd Grade",
+  "3rd Grade",
+  "4th Grade",
+  "5th Grade",
+  "6th Grade",
+  "7th Grade",
+  "8th Grade",
+  "9th Grade",
+  "10th Grade",
+  "11th Grade",
+  "12th Grade",
+];
 
 const MyAccount = () => {
   const navigate = useNavigate();
@@ -88,7 +111,9 @@ const MyAccount = () => {
     <div className="container mx-auto px-4 py-8">
       <Card className="max-w-xl mx-auto">
         <CardHeader>
-          <CardTitle className="text-2xl font-bold">My Account</CardTitle>
+          <div className="flex items-center">
+            <CardTitle className="text-2xl font-bold">My Account</CardTitle>
+          </div>
         </CardHeader>
         <CardContent>
           <Form {...form}>
@@ -113,9 +138,23 @@ const MyAccount = () => {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Grade</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
+                    <Select 
+                      onValueChange={field.onChange} 
+                      defaultValue={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select grade" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {gradeOptions.map((grade) => (
+                          <SelectItem key={grade} value={grade}>
+                            {grade}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}
