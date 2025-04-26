@@ -1,10 +1,9 @@
-
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import AuthModal from './auth/AuthModal';
 import UserProfile from './user/UserProfile';
-import { Clock, ArrowLeft } from 'lucide-react';
+import { Clock } from 'lucide-react';
 import useAuth from '@/context/auth/useAuth';
 import useGame from '@/context/useGame';
 
@@ -28,34 +27,19 @@ const Header = () => {
       navigate('/');
     }
   };
-
-  const showBackButton = location.pathname !== '/';
   
   return (
     <header className="w-full py-4 px-6 flex justify-between items-center bg-white/50 backdrop-blur-sm shadow-sm">
-      <div className="flex items-center">
-        {showBackButton ? (
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="mr-2"
-            onClick={() => navigate(-1)}
-          >
-            <ArrowLeft size={20} />
-          </Button>
-        ) : null}
-        
-        <div 
-          className="flex items-center cursor-pointer" 
-          onClick={handleLogoClick}
-        >
-          <div className="bg-primary text-white rounded-full w-10 h-10 flex items-center justify-center mr-3 shadow-md">
-            <Clock size={20} />
-          </div>
-          <h1 className="text-2xl font-bold text-primary math-font">
-            <span className="text-accent">Minute</span> Math
-          </h1>
+      <div 
+        className="flex items-center cursor-pointer" 
+        onClick={handleLogoClick}
+      >
+        <div className="bg-primary text-white rounded-full w-10 h-10 flex items-center justify-center mr-3 shadow-md">
+          <Clock size={20} />
         </div>
+        <h1 className="text-2xl font-bold text-primary math-font">
+          <span className="text-accent">Minute</span> Math
+        </h1>
       </div>
       
       <div className="flex items-center">

@@ -1,10 +1,10 @@
-
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm, FormProvider } from "react-hook-form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { ArrowLeft } from 'lucide-react';
 import {
   Form,
   FormControl,
@@ -32,6 +32,7 @@ type FormData = {
 };
 
 const gradeOptions = [
+  "Pre-k",
   "Kindergarten",
   "1st Grade",
   "2nd Grade",
@@ -39,12 +40,9 @@ const gradeOptions = [
   "4th Grade",
   "5th Grade",
   "6th Grade",
-  "7th Grade",
-  "8th Grade",
-  "9th Grade",
-  "10th Grade",
-  "11th Grade",
-  "12th Grade",
+  "7th - 9th Grade",
+  "High School",
+  "Adult"
 ];
 
 const MyAccount = () => {
@@ -111,7 +109,15 @@ const MyAccount = () => {
     <div className="container mx-auto px-4 py-8">
       <Card className="max-w-xl mx-auto">
         <CardHeader>
-          <div className="flex items-center">
+          <div className="flex items-center gap-4">
+            <Button 
+              variant="ghost" 
+              size="icon"
+              onClick={() => navigate(-1)}
+              className="h-8 w-8"
+            >
+              <ArrowLeft size={20} />
+            </Button>
             <CardTitle className="text-2xl font-bold">My Account</CardTitle>
           </div>
         </CardHeader>
