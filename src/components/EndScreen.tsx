@@ -1,11 +1,11 @@
-
 import React, { useEffect } from 'react';
 import useGame from '@/context/useGame';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, RefreshCw } from 'lucide-react';
+import { ArrowLeft, RefreshCw, TrendingUp } from 'lucide-react';
 import MathIcon from './common/MathIcon';
 import ConfettiEffect from './common/ConfettiEffect';
+import { Link } from 'react-router-dom';
 
 const EndScreen = () => {
   const { 
@@ -22,7 +22,6 @@ const EndScreen = () => {
   const isHighScore = getIsHighScore(score, settings.operation, settings.range);
   
   useEffect(() => {
-    // Play the game completion sound
     const audio = new Audio();
     audio.src = 'data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA/+M4wAAAAAAAAAAAAEluZm8AAAAPAAAAAwAAACsAWlpaWlpaWlpaWlp6enp6enp6enp6enp6enp6epqampqampqampqaurq6urq6urq6urra2tra2tra2tra2vr6+vr6+vr6+vr6GhoaGhoaGhoaGho6Ojo6Ojo6Ojo6OlpaWlpaWlpaWlp6enp6enp6enp6epqampqampqampqa//NCxAAAAANIAAAAAurq6urq6urq6ura2tra2tra2tra2vr6+vr6+vr6+vr6GhoaGhoaGhoaGho6Ojo6Ojo6Ojo6OlpaWlpaWlpaWlpaqqqqqqqqqqqqqqqqqqqqqqqqv/zgMSAAACQABzxQAhAgBgeM4yqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//+ZVZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZ';
     audio.volume = 0.2;
@@ -129,6 +128,30 @@ const EndScreen = () => {
             <RefreshCw className="mr-2" size={16} />
             Restart with Same Settings
           </Button>
+          
+          {!isLoggedIn ? (
+            <Link to="/account" className="w-full">
+              <Button 
+                variant="outline"
+                className="w-full border-primary text-primary hover:bg-primary/10 flex items-center"
+                type="button"
+              >
+                <TrendingUp className="mr-2" size={16} />
+                Sign Up to Track Your Progress
+              </Button>
+            </Link>
+          ) : (
+            <Link to="/account" className="w-full">
+              <Button 
+                variant="outline"
+                className="w-full border-primary text-primary hover:bg-primary/10 flex items-center"
+                type="button"
+              >
+                <TrendingUp className="mr-2" size={16} />
+                See Your Progress
+              </Button>
+            </Link>
+          )}
           
           <Button 
             onClick={handleBackToSelection}
