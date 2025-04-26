@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import useGame from '@/context/useGame';
 import { Button } from '@/components/ui/button';
@@ -7,8 +6,7 @@ import { ArrowLeft, RefreshCw, TrendingUp } from 'lucide-react';
 import MathIcon from './common/MathIcon';
 import ConfettiEffect from './common/ConfettiEffect';
 import AuthModal from './auth/AuthModal';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
-import ScoreChart from './user/ScoreChart';
+import UserProfile from './user/UserProfile';
 
 const EndScreen = () => {
   const { 
@@ -29,7 +27,7 @@ const EndScreen = () => {
   
   useEffect(() => {
     const audio = new Audio();
-    audio.src = 'data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA/+M4wAAAAAAAAAAAAEluZm8AAAAPAAAAAwAAACsAWlpaWlpaWlpaWlp6enp6enp6enp6enp6enp6epqampqampqampqaurq6urq6urq6urra2tra2tra2tra2vr6+vr6+vr6+vr6GhoaGhoaGhoaGho6Ojo6Ojo6Ojo6OlpaWlpaWlpaWlp6enp6enp6enp6epqampqampqampqa//NCxAAAAANIAAAAAurq6urq6urq6ura2tra2tra2tra2vr6+vr6+vr6+vr6GhoaGhoaGhoaGho6Ojo6Ojo6Ojo6OlpaWlpaWlpaWlpaqqqqqqqqqqqqqqqqqqqqqqqqv/zgMSAAACQABzxQAhAgBgeM4yqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//+ZVZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZ';
+    audio.src = 'data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA/+M4wAAAAAAAAAAAAEluZm8AAAAPAAAAAwAAACsAWlpaWlpaWlpaWlp6enp6enp6enp6enp6enp6enp6epqampqampqampqaurq6urq6urq6urra2tra2tra2tra2vr6+vr6+vr6+vr6GhoaGhoaGhoaGho6Ojo6Ojo6Ojo6OlpaWlpaWlpaWlp6enp6enp6enp6epqampqampqampqa//NCxAAAAANIAAAAAurq6urq6urq6ura2tra2tra2tra2vr6+vr6+vr6+vr6GhoaGhoaGhoaGho6Ojo6Ojo6Ojo6OlpaWlpaWlpaWlpaqqqqqqqqqqqqqqqqqqqqqqqqv/zgMSAAACQABzxQAhAgBgeM4yqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//+ZVZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZ';
     audio.volume = 0.2;
     audio.play().catch(err => console.error("Failed to play sound:", err));
   }, []);
@@ -170,11 +168,9 @@ const EndScreen = () => {
         </CardFooter>
       </Card>
 
-      <Dialog open={showScores} onOpenChange={setShowScores}>
-        <DialogContent className="sm:max-w-xl">
-          <ScoreChart scores={scoreHistory} />
-        </DialogContent>
-      </Dialog>
+      {showScores && (
+        <UserProfile dropdownLabel="My Progress" />
+      )}
     </main>
   );
 };
