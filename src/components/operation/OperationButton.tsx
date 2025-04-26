@@ -20,23 +20,23 @@ const OperationButton = ({ active, operation, onClick }: Props) => (
   <button
     type="button"
     className={`
-      flex items-center justify-center gap-2
-      px-4 py-2 rounded-lg transition-all font-semibold select-none 
+      flex items-center justify-center gap-1 sm:gap-2
+      p-1 sm:px-3 sm:py-2 rounded-lg transition-all font-semibold select-none flex-shrink
       border-2 focus:outline-none focus:ring-2 focus:ring-primary
       ${active ? operationStyles[operation] : "bg-white border-transparent text-muted-foreground shadow hover:bg-muted"}
     `}
     style={{
-      minWidth: 72,
-      fontSize: "1.14rem",
+      minWidth: "unset",
+      fontSize: "1rem",
       margin: 0
     }}
     aria-pressed={active}
     onClick={() => onClick(operation)}
   >
-    <span className="flex items-center justify-center w-6 h-6">
-      <MathIcon operation={operation} size={22} />
+    <span className="flex items-center justify-center w-5 h-5 sm:w-6 sm:h-6">
+      <MathIcon operation={operation} size={18} />
     </span>
-    <span className="capitalize hidden xs:inline">{operation.charAt(0).toUpperCase() + operation.slice(1)}</span>
+    <span className="capitalize hidden xs:inline text-xs sm:text-sm">{operation.charAt(0).toUpperCase() + operation.slice(1)}</span>
   </button>
 );
 

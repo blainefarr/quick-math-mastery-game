@@ -21,14 +21,14 @@ const FocusNumberSection = ({
 }: FocusNumberSectionProps) => (
   <div className="space-y-2">
     <div className="flex items-center justify-between h-10 px-4 border rounded-md bg-muted/50">
-      <div className="flex items-center gap-2">
-        <Label htmlFor="focus-number-toggle" className="text-sm">
+      <div className="flex items-center gap-2 overflow-hidden">
+        <Label htmlFor="focus-number-toggle" className="text-sm whitespace-nowrap">
           Use Focus Number
         </Label>
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <Info size={16} className="text-muted-foreground" />
+              <Info size={16} className="text-muted-foreground flex-shrink-0" />
             </TooltipTrigger>
             <TooltipContent>
               <p className="max-w-xs">
@@ -38,7 +38,7 @@ const FocusNumberSection = ({
           </Tooltip>
         </TooltipProvider>
       </div>
-      <Switch id="focus-number-toggle" checked={enabled} onCheckedChange={onToggle} />
+      <Switch id="focus-number-toggle" checked={enabled} onCheckedChange={onToggle} className="flex-shrink-0" />
     </div>
 
     {enabled && (

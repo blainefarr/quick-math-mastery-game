@@ -37,7 +37,7 @@ const AdvancedSettings = ({
     localStorage.setItem('advancedSettingsOpen', JSON.stringify(open));
   };
 
-  return <div className="space-y-2 p-4 rounded-lg my-0 bg-black/0 py-0">
+  return <div className="space-y-2">
     <Collapsible open={isOpen} onOpenChange={handleToggle} className="w-full">
       <CollapsibleTrigger className="flex w-full items-center justify-between rounded-lg border h-[40px] px-3 py-1 text-left hover:bg-muted/50">
         <div className="flex items-center gap-2">

@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm, FormProvider } from "react-hook-form";
@@ -49,7 +50,13 @@ const MyAccount = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { isLoggedIn, userId } = useAuth();
-  const form = useForm<FormData>();
+  const form = useForm<FormData>({
+    defaultValues: {
+      name: '',
+      grade: '',
+      email: '',
+    }
+  });
 
   React.useEffect(() => {
     const fetchUserProfile = async () => {
@@ -58,23 +65,38 @@ const MyAccount = () => {
         return;
       }
 
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single();
+      try {
+        const { data: profile, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', userId)
+          .single();
 
-      if (profile) {
-        form.reset({
-          name: profile.name || '',
-          grade: profile.grade || '',
-          email: profile.email || '',
-        });
+        if (error) {
+          console.error('Error fetching profile:', error);
+          toast({
+            title: "Error",
+            description: "Could not load profile data. Please try again.",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        if (profile) {
+          console.log('Loaded profile:', profile);
+          form.reset({
+            name: profile.name || '',
+            grade: profile.grade || '',
+            email: profile.email || '',
+          });
+        }
+      } catch (err) {
+        console.error('Error in profile fetch:', err);
       }
     };
 
     fetchUserProfile();
-  }, [navigate, form, userId]);
+  }, [navigate, form, userId, toast]);
 
   const onSubmit = async (data: FormData) => {
     try {
@@ -145,7 +167,8 @@ const MyAccount = () => {
                   <FormItem>
                     <FormLabel>Grade</FormLabel>
                     <Select 
-                      onValueChange={field.onChange} 
+                      onValueChange={field.onChange}
+                      value={field.value}
                       defaultValue={field.value}
                     >
                       <FormControl>

@@ -105,15 +105,15 @@ const OperationSelection = () => {
   
   return (
     <div className="container mx-auto px-4 py-8">
-      <Card className="shadow-lg animate-fade-in max-w-[650px] mx-auto">
+      <Card className="shadow-lg animate-fade-in mx-auto max-w-[650px] min-w-[300px]">
         <CardHeader>
           <CardTitle className="text-2xl font-bold text-center">Minute Math Settings</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="max-w-xl mx-auto space-y-6">
+          <div className="mx-auto space-y-6 px-4">
             <div>
               <h3 className="text-lg font-medium mb-3">Operation</h3>
-              <div className="flex flex-wrap gap-3 justify-center items-center rounded-lg p-2 bg-muted/50">
+              <div className="flex flex-nowrap gap-2 justify-center items-center rounded-lg p-2 bg-muted/50 overflow-x-auto">
                 {(['addition', 'subtraction', 'multiplication', 'division'] as Operation[]).map(operation => (
                   <OperationButton 
                     key={operation} 
@@ -158,7 +158,7 @@ const OperationSelection = () => {
             />
           </div>
         </CardContent>
-        <CardFooter>
+        <CardFooter className="px-4">
           <Button 
             onClick={handleStartGame} 
             className="w-full py-6 text-lg font-bold bg-primary hover:bg-primary/90 transition-all"
