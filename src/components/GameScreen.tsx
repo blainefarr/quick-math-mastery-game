@@ -44,6 +44,9 @@ const GameScreen = () => {
     console.log('User logged in:', isLoggedIn, 'User ID:', userId);
     console.log('Initial score:', score);
     
+    // Clear any previous answer when starting a new game
+    setUserAnswer('');
+    
     generateNewProblem(
       settings.operation, 
       settings.range,
@@ -63,11 +66,11 @@ const GameScreen = () => {
           
           // Mark the game as ended naturally
           setIsGameEndedNaturally(true);
-          setGameState('ended');
           
-          console.log('Game ended naturally, attempting to save score:', scoreRef.current);
-          
-          saveGameScore();
+          // Save the score before changing the game state
+          saveGameScore().then(() => {
+            setGameState('ended');
+          });
           
           return 0;
         } else {
@@ -104,6 +107,7 @@ const GameScreen = () => {
   const handleRestartGame = () => {
     console.log('Restarting game early, not saving the score');
     // Don't save the score when manually restarting
+    setIsGameEndedNaturally(false);
     setGameState('ended');
   };
 
@@ -142,6 +146,8 @@ const GameScreen = () => {
   const showNegativeToggle = settings.allowNegatives;
 
   const saveGameScore = async () => {
+    console.log("Checking if game should save score. isGameEndedNaturally:", isGameEndedNaturally);
+    
     // Only save score if game ended naturally (timer ran out)
     if (!isGameEndedNaturally) {
       console.log("Game was ended early, not saving score");
@@ -156,16 +162,29 @@ const GameScreen = () => {
       return false;
     }
 
-    const success = await saveScore(
-      scoreRef.current,
-      settings.operation,
-      settings.range,
-      settings.timerSeconds,
-      settings.focusNumber || null,
-      settings.allowNegatives || false
-    );
-
-    return success;
+    console.log("Attempting to save score:", scoreRef.current);
+    
+    try {
+      const success = await saveScore(
+        scoreRef.current,
+        settings.operation,
+        settings.range,
+        settings.timerSeconds,
+        settings.focusNumber || null,
+        settings.allowNegatives || false
+      );
+      
+      if (success) {
+        console.log("Score saved successfully");
+      } else {
+        console.error("Failed to save score");
+      }
+      
+      return success;
+    } catch (error) {
+      console.error("Error saving score:", error);
+      return false;
+    }
   };
 
   return (

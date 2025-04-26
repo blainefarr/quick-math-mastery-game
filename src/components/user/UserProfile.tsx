@@ -2,14 +2,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import useAuth from '@/context/auth/useAuth';
-import { 
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import {
   Dialog,
   DialogContent,
@@ -22,7 +14,6 @@ import {
   TabsList, 
   TabsTrigger 
 } from '@/components/ui/tabs';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { 
   Select,
@@ -31,12 +22,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { LogOut } from 'lucide-react';
-import ScoreHistory from './ScoreHistory';
-import ScoreChart from './ScoreChart';
 import { Label } from '@/components/ui/label';
 import GameContext from '@/context/GameContext';
 import { useContext } from 'react';
+import ScoreHistory from './ScoreHistory';
+import ScoreChart from './ScoreChart';
+import UserDropdown from './UserDropdown';
 
 interface UserProfileProps {
   dropdownLabel?: string;
@@ -44,14 +35,13 @@ interface UserProfileProps {
 
 const UserProfile = ({ dropdownLabel = "My Progress" }: UserProfileProps) => {
   const navigate = useNavigate();
-  const { username, handleLogout } = useAuth();
+  const { username } = useAuth();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [selectedRange, setSelectedRange] = useState<string>("all");
   const [selectedOperation, setSelectedOperation] = useState<string>("all");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [profileScores, setProfileScores] = useState([]);
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
   
   // Safe game context hook that doesn't throw if we're not in a GameProvider
   const useGameContextSafely = () => {
@@ -146,60 +136,15 @@ const UserProfile = ({ dropdownLabel = "My Progress" }: UserProfileProps) => {
     }
   };
 
-  const handleUserLogout = async () => {
-    try {
-      setIsLoggingOut(true);
-      await handleLogout();
-    } catch (error) {
-      console.error("Error during logout:", error);
-    } finally {
-      setIsLoggingOut(false);
-    }
-  };
-
   if (!username) return null;
 
   return (
     <>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" className="h-8 px-3 rounded-full border">
-            {username}
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuLabel>
-            <div className="flex flex-col">
-              <span>Hi, {username}!</span>
-              <span className="text-xs text-muted-foreground">Logged in</span>
-            </div>
-          </DropdownMenuLabel>
-          <DropdownMenuSeparator />
-          {hasGameContext && (
-            <DropdownMenuItem 
-              onClick={() => setIsProfileOpen(true)}
-              className="cursor-pointer hover:bg-accent"
-            >
-              {dropdownLabel}
-            </DropdownMenuItem>
-          )}
-          <DropdownMenuItem 
-            onClick={() => navigate('/account')}
-            className="cursor-pointer hover:bg-accent"
-          >
-            My Account
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem 
-            onClick={handleUserLogout} 
-            disabled={isLoggingOut}
-            className="cursor-pointer hover:bg-accent"
-          >
-            <LogOut className="mr-2 h-4 w-4" />
-            <span>{isLoggingOut ? "Logging out..." : "Log out"}</span>
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+      <UserDropdown 
+        username={username} 
+        onOpenProfile={hasGameContext ? () => setIsProfileOpen(true) : undefined} 
+        dropdownLabel={dropdownLabel} 
+      />
       
       {hasGameContext && (
         <Dialog open={isProfileOpen} onOpenChange={handleOpenChange}>
