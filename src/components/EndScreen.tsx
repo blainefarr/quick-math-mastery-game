@@ -19,7 +19,8 @@ const EndScreen = () => {
     setTimeLeft,
     getIsHighScore,
     isLoggedIn,
-    setUserAnswer
+    setUserAnswer,
+    scoreHistory
   } = useGame();
 
   const [showScores, setShowScores] = useState(false);
@@ -171,7 +172,7 @@ const EndScreen = () => {
 
       <Dialog open={showScores} onOpenChange={setShowScores}>
         <DialogContent className="sm:max-w-xl">
-          <ScoreChart scores={[]} />
+          <ScoreChart scores={scoreHistory} />
         </DialogContent>
       </Dialog>
     </main>
