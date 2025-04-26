@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import useGame from '@/context/useGame';
 import { Button } from '@/components/ui/button';
@@ -13,6 +14,7 @@ const GameScreen = () => {
     currentProblem,
     generateNewProblem,
     timeLeft,
+    userAnswer,
     setUserAnswer,
     settings,
     endGame
@@ -143,9 +145,6 @@ const GameScreen = () => {
                 onChange={handleInputChange}
                 className="text-4xl md:text-6xl w-24 md:w-32 h-16 text-center font-bold p-0 border-b-4 focus-visible:ring-0 focus-visible:ring-offset-0 appearance-none"
                 autoFocus
-                toggleNegative={showNegativeToggle}
-                isNegative={isNegative}
-                onToggleNegative={toggleNegative}
                 style={{
                   MozAppearance: 'textfield',
                   WebkitAppearance: 'none',
