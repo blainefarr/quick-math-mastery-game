@@ -21,8 +21,8 @@ const OperationButton = ({ active, operation, onClick }: Props) => (
     type="button"
     className={`
       flex items-center justify-center
-      h-14 w-16 rounded-lg transition-all
-      flex-shrink-0
+      h-12 w-18 rounded-lg transition-all
+      flex-shrink-0 gap-2
       ${active ? operationStyles[operation] : "bg-white border-2 border-transparent text-muted-foreground shadow hover:bg-muted"}
     `}
     aria-pressed={active}
