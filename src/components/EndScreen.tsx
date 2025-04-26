@@ -1,4 +1,5 @@
-import React, { useEffect } from 'react';
+
+import React, { useEffect, useState } from 'react';
 import useGame from '@/context/useGame';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,6 +7,8 @@ import { ArrowLeft, RefreshCw, TrendingUp } from 'lucide-react';
 import MathIcon from './common/MathIcon';
 import ConfettiEffect from './common/ConfettiEffect';
 import { Link } from 'react-router-dom';
+import UserProfile from './user/UserProfile';
+import useAuth from '@/context/auth/useAuth';
 
 const EndScreen = () => {
   const { 
@@ -18,6 +21,10 @@ const EndScreen = () => {
     isLoggedIn,
     setUserAnswer
   } = useGame();
+  
+  const { handleLogout } = useAuth();
+  const [showProgressModal, setShowProgressModal] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
   
   const isHighScore = getIsHighScore(score, settings.operation, settings.range);
   
@@ -130,27 +137,20 @@ const EndScreen = () => {
           </Button>
           
           {!isLoggedIn ? (
-            <Link to="/account?tab=signup" className="w-full">
-              <Button 
-                variant="outline"
-                className="w-full border-primary text-primary hover:bg-primary/10 flex items-center"
-                type="button"
-              >
-                <TrendingUp className="mr-2" size={16} />
-                Sign Up to Track Your Progress
-              </Button>
-            </Link>
+            <Button 
+              variant="outline"
+              className="w-full border-primary text-primary hover:bg-primary/10 flex items-center"
+              type="button"
+              onClick={() => {
+                // Redirect to the authentication page with signup tab
+                window.location.href = "/account?tab=signup";
+              }}
+            >
+              <TrendingUp className="mr-2" size={16} />
+              Sign Up to Track Progress
+            </Button>
           ) : (
-            <Link to="/account?tab=progress" className="w-full">
-              <Button 
-                variant="outline"
-                className="w-full border-primary text-primary hover:bg-primary/10 flex items-center"
-                type="button"
-              >
-                <TrendingUp className="mr-2" size={16} />
-                See Your Progress
-              </Button>
-            </Link>
+            <UserProfile dropdownLabel="See Your Progress" />
           )}
           
           <Button 
