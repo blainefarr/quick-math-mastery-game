@@ -1,13 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import useGame from '@/context/useGame';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft, RefreshCw, TrendingUp } from 'lucide-react';
 import MathIcon from './common/MathIcon';
 import ConfettiEffect from './common/ConfettiEffect';
-import UserProfile from './user/UserProfile';
-import useAuth from '@/context/auth/useAuth';
-import { AuthModal } from './auth/AuthModal';
+import { Link } from 'react-router-dom';
 
 const EndScreen = () => {
   const { 
@@ -21,36 +19,28 @@ const EndScreen = () => {
     setUserAnswer
   } = useGame();
   
-  const [showAuthModal, setShowAuthModal] = useState(false);
-  const { isLoggedIn: userLoggedIn } = useAuth();
   const isHighScore = getIsHighScore(score, settings.operation, settings.range);
-
+  
   useEffect(() => {
     const audio = new Audio();
     audio.src = 'data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA/+M4wAAAAAAAAAAAAEluZm8AAAAPAAAAAwAAACsAWlpaWlpaWlpaWlp6enp6enp6enp6enp6enp6epqampqampqampqaurq6urq6urq6urra2tra2tra2tra2vr6+vr6+vr6+vr6GhoaGhoaGhoaGho6Ojo6Ojo6Ojo6OlpaWlpaWlpaWlp6enp6enp6enp6epqampqampqampqa//NCxAAAAANIAAAAAurq6urq6urq6ura2tra2tra2tra2vr6+vr6+vr6+vr6GhoaGhoaGhoaGho6Ojo6Ojo6Ojo6OlpaWlpaWlpaWlpaqqqqqqqqqqqqqqqqqqqqqqqqv/zgMSAAACQABzxQAhAgBgeM4yqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//+ZVZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZ';
     audio.volume = 0.2;
     audio.play().catch(err => console.error("Failed to play sound:", err));
   }, []);
-
+  
   const handleRestart = () => {
     resetScore();
     setTimeLeft(settings.timerSeconds);
     setUserAnswer(''); // Clear any previous answer
     setGameState('playing');
   };
-
+  
   const handleBackToSelection = () => {
     resetScore();
     setUserAnswer(''); // Clear any previous answer
     setGameState('selection');
   };
-
-  const handleProgressClick = () => {
-    if (!userLoggedIn) {
-      setShowAuthModal(true);
-    }
-  };
-
+  
   const getOperationName = () => {
     switch (settings.operation) {
       case 'addition': return 'Addition';
@@ -60,7 +50,7 @@ const EndScreen = () => {
       default: return '';
     }
   };
-
+  
   const getRangeDescription = () => {
     const { min1, max1, min2, max2 } = settings.range;
     return `${min1}-${max1} and ${min2}-${max2}`;
@@ -139,18 +129,28 @@ const EndScreen = () => {
             Restart with Same Settings
           </Button>
           
-          {userLoggedIn ? (
-            <UserProfile dropdownLabel="See Your Progress" />
+          {!isLoggedIn ? (
+            <Link to="/account?tab=signup" className="w-full">
+              <Button 
+                variant="outline"
+                className="w-full border-primary text-primary hover:bg-primary/10 flex items-center"
+                type="button"
+              >
+                <TrendingUp className="mr-2" size={16} />
+                Sign Up to Track Your Progress
+              </Button>
+            </Link>
           ) : (
-            <Button 
-              variant="outline"
-              className="w-full border-primary text-primary hover:bg-primary/10 flex items-center"
-              onClick={handleProgressClick}
-              type="button"
-            >
-              <TrendingUp className="mr-2" size={16} />
-              Sign Up to Track Progress
-            </Button>
+            <Link to="/account?tab=progress" className="w-full">
+              <Button 
+                variant="outline"
+                className="w-full border-primary text-primary hover:bg-primary/10 flex items-center"
+                type="button"
+              >
+                <TrendingUp className="mr-2" size={16} />
+                See Your Progress
+              </Button>
+            </Link>
           )}
           
           <Button 
