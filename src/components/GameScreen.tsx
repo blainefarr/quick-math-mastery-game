@@ -55,8 +55,6 @@ const GameScreen = () => {
         if (prevTime <= 1) {
           clearInterval(timer);
           
-          console.log(`Game ending with timer expired, score: ${score}`);
-          
           // Use the new endGame function with 'timeout' reason
           endGame('timeout');
           
@@ -204,12 +202,12 @@ const GameScreen = () => {
 
         <div className="mt-8 text-center text-sm text-muted-foreground flex justify-center items-center">
           <span>Current mode: </span>
-          <span className="ml-1 inline-flex items-center bg-primary/10 px-2 py-1 rounded-full text-primary font-medium">
+          <div className="ml-1 inline-flex items-center bg-primary/10 px-2 py-1 rounded-full text-primary font-medium">
             <MathIcon operation={currentProblem?.operation || 'addition'} size={14} className="mr-1" />
             {currentProblem?.operation === 'addition' ? 'Addition' :
               currentProblem?.operation === 'subtraction' ? 'Subtraction' :
                 currentProblem?.operation === 'multiplication' ? 'Multiplication' : 'Division'}
-          </span>
+          </div>
         </div>
       </div>
     </div>

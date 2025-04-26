@@ -26,7 +26,7 @@ const EndScreen = () => {
     const audio = new Audio();
     audio.src = 'data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA/+M4wAAAAAAAAAAAAEluZm8AAAAPAAAAAwAAACsAWlpaWlpaWlpaWlp6enp6enp6enp6enp6enp6epqampqampqampqaurq6urq6urq6urra2tra2tra2tra2vr6+vr6+vr6+vr6GhoaGhoaGhoaGho6Ojo6Ojo6Ojo6OlpaWlpaWlpaWlp6enp6enp6enp6epqampqampqampqa//NCxAAAAANIAAAAAurq6urq6urq6ura2tra2tra2tra2vr6+vr6+vr6+vr6GhoaGhoaGhoaGho6Ojo6Ojo6Ojo6OlpaWlpaWlpaWlpaqqqqqqqqqqqqqqqqqqqqqqqqv/zgMSAAACQABzxQAhAgBgeM4yqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//+ZVZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZ';
     audio.volume = 0.2;
-    audio.play();
+    audio.play().catch(err => console.error("Failed to play sound:", err));
   }, []);
   
   const handleRestart = () => {
@@ -97,25 +97,25 @@ const EndScreen = () => {
               <MathIcon operation={settings.operation} className="ml-2 text-accent" />
             </h3>
             <div className="bg-muted p-4 rounded-lg">
-              <p className="mb-2 flex items-center">
+              <div className="mb-2 flex items-center">
                 <span className="font-medium mr-2">Operation:</span> 
-                <span className="flex items-center bg-primary/10 px-2 py-1 rounded-md">
+                <div className="flex items-center bg-primary/10 px-2 py-1 rounded-md">
                   <MathIcon operation={settings.operation} size={16} className="mr-1" />
                   {getOperationName()}
-                </span>
-              </p>
-              <p className="mb-2">
+                </div>
+              </div>
+              <div className="mb-2">
                 <span className="font-medium">Number Range 1:</span> 
                 <span className="ml-2 bg-secondary/10 px-2 py-1 rounded-md">{settings.range.min1} to {settings.range.max1}</span>
-              </p>
-              <p className="mb-2">
+              </div>
+              <div className="mb-2">
                 <span className="font-medium">Number Range 2:</span> 
                 <span className="ml-2 bg-secondary/10 px-2 py-1 rounded-md">{settings.range.min2} to {settings.range.max2}</span>
-              </p>
-              <p>
+              </div>
+              <div>
                 <span className="font-medium">Time Limit:</span> 
                 <span className="ml-2 bg-secondary/10 px-2 py-1 rounded-md">{settings.timerSeconds} seconds</span>
-              </p>
+              </div>
             </div>
           </div>
         </CardContent>

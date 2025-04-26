@@ -47,16 +47,18 @@ const GameProvider = ({ children }: GameProviderProps) => {
   // Get auth state from useAuth
   const { isLoggedIn, username } = useAuth();
   
-  // New endGame function to handle game end in a centralized way
+  // Updated endGame function to capture the current score accurately
   const endGame = async (reason: GameEndReason) => {
-    console.log(`Ending game with reason: ${reason}, final score: ${score}`);
+    // We need to access the current score value directly to avoid closure issues
+    const currentScore = score;
+    console.log(`Ending game with reason: ${reason}, final score: ${currentScore}`);
     
     // Only save the score if the game ended because the timer ran out
     if (reason === 'timeout' && isLoggedIn) {
-      console.log(`Attempting to save score: ${score}`);
+      console.log(`Attempting to save score: ${currentScore}`);
       try {
         await saveScore(
-          score,
+          currentScore,
           settings.operation,
           settings.range,
           settings.timerSeconds,
