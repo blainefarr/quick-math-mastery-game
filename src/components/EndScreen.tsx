@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import useGame from '@/context/useGame';
 import { Button } from '@/components/ui/button';
@@ -14,7 +15,8 @@ const EndScreen = () => {
     setGameState, 
     setTimeLeft,
     getIsHighScore,
-    isLoggedIn 
+    isLoggedIn,
+    setUserAnswer
   } = useGame();
   
   const isHighScore = getIsHighScore(score, settings.operation, settings.range);
@@ -30,11 +32,13 @@ const EndScreen = () => {
   const handleRestart = () => {
     resetScore();
     setTimeLeft(settings.timerSeconds);
+    setUserAnswer(''); // Clear any previous answer
     setGameState('playing');
   };
   
   const handleBackToSelection = () => {
     resetScore();
+    setUserAnswer(''); // Clear any previous answer
     setGameState('selection');
   };
   

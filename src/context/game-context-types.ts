@@ -3,6 +3,7 @@ import { ReactNode } from "react";
 import { GameSettings, Operation, Problem, ProblemRange, UserScore } from "@/types";
 
 export type GameState = 'selection' | 'playing' | 'ended';
+export type GameEndReason = 'timeout' | 'manual';
 
 export interface GameContextType {
   // Game state
@@ -59,6 +60,9 @@ export interface GameContextType {
   
   // User ID (from AuthContext)
   userId: string | null;
+  
+  // Game end handler
+  endGame: (reason: GameEndReason) => Promise<void>;
 }
 
 export interface GameProviderProps {

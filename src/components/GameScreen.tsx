@@ -19,25 +19,18 @@ const GameScreen = () => {
     userAnswer,
     setUserAnswer,
     setGameState,
-    saveScore,
     settings,
     userId,
-    isLoggedIn
+    isLoggedIn,
+    endGame
   } = useGame();
 
   const [feedback, setFeedback] = useState<'correct' | 'incorrect' | null>(null);
   const [isNegative, setIsNegative] = useState(false);
-  const [isGameEndedNaturally, setIsGameEndedNaturally] = useState(false);
-  const scoreRef = useRef(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const initialProblemGeneratedRef = useRef(false);
 
   const { toast } = useToast();
-
-  useEffect(() => {
-    scoreRef.current = score;
-    console.log(`Score updated to: ${score}, scoreRef set to: ${scoreRef.current}`);
-  }, [score]);
 
   useEffect(() => {
     console.log('GameScreen mounted with settings:', settings);
@@ -62,15 +55,10 @@ const GameScreen = () => {
         if (prevTime <= 1) {
           clearInterval(timer);
           
-          console.log(`Game ending with final score: ${scoreRef.current} (from ref), score state: ${score}`);
+          console.log(`Game ending with timer expired, score: ${score}`);
           
-          // Mark the game as ended naturally
-          setIsGameEndedNaturally(true);
-          
-          // Save the score before changing the game state
-          saveGameScore().then(() => {
-            setGameState('ended');
-          });
+          // Use the new endGame function with 'timeout' reason
+          endGame('timeout');
           
           return 0;
         } else {
@@ -106,9 +94,8 @@ const GameScreen = () => {
 
   const handleRestartGame = () => {
     console.log('Restarting game early, not saving the score');
-    // Don't save the score when manually restarting
-    setIsGameEndedNaturally(false);
-    setGameState('ended');
+    // Use the new endGame function with 'manual' reason
+    endGame('manual');
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -144,48 +131,6 @@ const GameScreen = () => {
   };
 
   const showNegativeToggle = settings.allowNegatives;
-
-  const saveGameScore = async () => {
-    console.log("Checking if game should save score. isGameEndedNaturally:", isGameEndedNaturally);
-    
-    // Only save score if game ended naturally (timer ran out)
-    if (!isGameEndedNaturally) {
-      console.log("Game was ended early, not saving score");
-      return false;
-    }
-
-    if (!isLoggedIn) {
-      toast({
-        description: "Register to save your scores",
-        variant: "default"
-      });
-      return false;
-    }
-
-    console.log("Attempting to save score:", scoreRef.current);
-    
-    try {
-      const success = await saveScore(
-        scoreRef.current,
-        settings.operation,
-        settings.range,
-        settings.timerSeconds,
-        settings.focusNumber || null,
-        settings.allowNegatives || false
-      );
-      
-      if (success) {
-        console.log("Score saved successfully");
-      } else {
-        console.error("Failed to save score");
-      }
-      
-      return success;
-    } catch (error) {
-      console.error("Error saving score:", error);
-      return false;
-    }
-  };
 
   return (
     <div className="flex justify-center items-center min-h-screen p-4 bg-background">

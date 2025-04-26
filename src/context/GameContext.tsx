@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { GameContextType } from './game-context-types';
+import { GameContextType, GameEndReason } from './game-context-types';
 
 // Create the context with a default value only for non-critical properties
 // This avoids TypeScript errors while maintaining runtime safety

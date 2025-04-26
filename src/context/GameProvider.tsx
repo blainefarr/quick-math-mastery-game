@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import GameContext from './GameContext';
-import { GameContextType, GameState, GameProviderProps } from './game-context-types';
+import { GameContextType, GameState, GameProviderProps, GameEndReason } from './game-context-types';
 import { useGameSettings } from './hooks/useGameSettings';
 import { useProblemGenerator } from './hooks/useProblemGenerator';
 import { useScoreManagement } from './hooks/useScoreManagement';
@@ -46,6 +46,36 @@ const GameProvider = ({ children }: GameProviderProps) => {
 
   // Get auth state from useAuth
   const { isLoggedIn, username } = useAuth();
+  
+  // New endGame function to handle game end in a centralized way
+  const endGame = async (reason: GameEndReason) => {
+    console.log(`Ending game with reason: ${reason}, final score: ${score}`);
+    
+    // Only save the score if the game ended because the timer ran out
+    if (reason === 'timeout' && isLoggedIn) {
+      console.log(`Attempting to save score: ${score}`);
+      try {
+        await saveScore(
+          score,
+          settings.operation,
+          settings.range,
+          settings.timerSeconds,
+          settings.focusNumber || null,
+          settings.allowNegatives || false
+        );
+        console.log("Score saved successfully");
+      } catch (error) {
+        console.error("Failed to save score:", error);
+      }
+    } else if (reason === 'manual') {
+      console.log("Game was ended manually, not saving score");
+    } else if (!isLoggedIn) {
+      console.log("User not logged in, not saving score");
+    }
+    
+    // Change the game state to ended
+    setGameState('ended');
+  };
 
   const value: GameContextType = {
     gameState,
@@ -68,7 +98,8 @@ const GameProvider = ({ children }: GameProviderProps) => {
     focusNumber,
     setFocusNumber,
     getIsHighScore,
-    userId
+    userId,
+    endGame
   };
 
   return (
