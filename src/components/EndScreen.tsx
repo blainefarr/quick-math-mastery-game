@@ -130,7 +130,7 @@ const EndScreen = () => {
           </Button>
           
           {!isLoggedIn ? (
-            <Link to="/account" className="w-full">
+            <Link to="/account?tab=progress" className="w-full">
               <Button 
                 variant="outline"
                 className="w-full border-primary text-primary hover:bg-primary/10 flex items-center"
@@ -141,7 +141,7 @@ const EndScreen = () => {
               </Button>
             </Link>
           ) : (
-            <Link to="/account" className="w-full">
+            <Link to="/account?tab=progress" className="w-full">
               <Button 
                 variant="outline"
                 className="w-full border-primary text-primary hover:bg-primary/10 flex items-center"
