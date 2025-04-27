@@ -11,7 +11,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { LogOut } from 'lucide-react';
+import { LogOut, Trophy } from 'lucide-react';
 
 interface UserDropdownProps {
   username: string;
@@ -63,6 +63,13 @@ const UserDropdown = ({
               {dropdownLabel}
             </DropdownMenuItem>
           )}
+          <DropdownMenuItem 
+            onClick={() => navigate('/leaderboard')}
+            className="cursor-pointer hover:bg-accent"
+          >
+            <Trophy className="mr-2 h-4 w-4" />
+            Leaderboard
+          </DropdownMenuItem>
           <DropdownMenuItem 
             onClick={() => navigate('/account')}
             className="cursor-pointer hover:bg-accent"

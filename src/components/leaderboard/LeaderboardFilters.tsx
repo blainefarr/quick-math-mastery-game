@@ -1,11 +1,11 @@
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { LeaderboardFilters } from "@/hooks/useLeaderboard";
+import { LeaderboardFilters as LeaderboardFiltersType } from "@/hooks/useLeaderboard";
 import { Operation } from "@/types";
 
 type Props = {
-  filters: LeaderboardFilters;
-  onFilterChange: (filters: Partial<LeaderboardFilters>) => void;
+  filters: LeaderboardFiltersType;
+  onFilterChange: (filters: Partial<LeaderboardFiltersType>) => void;
   className?: string;
 };
 

@@ -85,7 +85,13 @@ export const useLeaderboard = () => {
 
       if (countError) throw countError;
 
-      setEntries(leaderboardData || []);
+      // Cast the operation field to Operation type
+      const typedEntries = leaderboardData?.map(entry => ({
+        ...entry,
+        operation: entry.operation as Operation
+      })) || [];
+      
+      setEntries(typedEntries as LeaderboardEntry[]);
       setTotalPages(Math.ceil((countData || 0) / 25));
 
       // Fetch user rank if authenticated
