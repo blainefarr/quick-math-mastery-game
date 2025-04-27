@@ -1,5 +1,5 @@
 
-import { useCallback, useState } from 'react';
+import { useCallback, useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Operation, ProblemRange } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
@@ -44,6 +44,8 @@ export const useLeaderboard = () => {
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
   const [totalPages, setTotalPages] = useState(1);
   const [userRank, setUserRank] = useState<number | null>(null);
+  const initialLoadDone = useRef(false);
+  const fetchInProgress = useRef(false);
 
   // Parse numeric values from search params
   const parseNumericParam = (param: string | null): number | null => {
@@ -52,7 +54,8 @@ export const useLeaderboard = () => {
     return isNaN(value) ? null : value;
   };
 
-  const currentFilters = {
+  // Use ref for currentFilters to avoid re-renders
+  const filtersRef = useRef<LeaderboardFilters>({
     operation: (searchParams.get('operation') as Operation) || DEFAULT_FILTERS.operation,
     min1: parseNumericParam(searchParams.get('min1')) ?? DEFAULT_FILTERS.min1,
     max1: parseNumericParam(searchParams.get('max1')) ?? DEFAULT_FILTERS.max1,
@@ -60,12 +63,31 @@ export const useLeaderboard = () => {
     max2: parseNumericParam(searchParams.get('max2')) ?? DEFAULT_FILTERS.max2,
     grade: searchParams.get('grade') || DEFAULT_FILTERS.grade,
     page: parseInt(searchParams.get('page') || String(DEFAULT_FILTERS.page)),
-  };
+  });
+
+  // Update filters from URL params when search params change
+  useEffect(() => {
+    filtersRef.current = {
+      operation: (searchParams.get('operation') as Operation) || DEFAULT_FILTERS.operation,
+      min1: parseNumericParam(searchParams.get('min1')) ?? DEFAULT_FILTERS.min1,
+      max1: parseNumericParam(searchParams.get('max1')) ?? DEFAULT_FILTERS.max1,
+      min2: parseNumericParam(searchParams.get('min2')) ?? DEFAULT_FILTERS.min2,
+      max2: parseNumericParam(searchParams.get('max2')) ?? DEFAULT_FILTERS.max2,
+      grade: searchParams.get('grade') || DEFAULT_FILTERS.grade,
+      page: parseInt(searchParams.get('page') || String(DEFAULT_FILTERS.page)),
+    };
+  }, [searchParams]);
 
   const fetchLeaderboard = useCallback(async () => {
+    // Prevent concurrent fetches
+    if (fetchInProgress.current) return;
+    
+    fetchInProgress.current = true;
     setIsLoading(true);
     setError(null);
 
+    const currentFilters = filtersRef.current;
+    
     try {
       console.log('Fetching leaderboard with filters:', currentFilters);
       
@@ -76,7 +98,7 @@ export const useLeaderboard = () => {
           p_max1: currentFilters.max1,
           p_min2: currentFilters.min2,
           p_max2: currentFilters.max2,
-          p_grade: currentFilters.grade,
+          p_grade: currentFilters.grade === "all" ? null : currentFilters.grade,
           p_page: currentFilters.page,
         });
 
@@ -91,7 +113,7 @@ export const useLeaderboard = () => {
           p_max1: currentFilters.max1,
           p_min2: currentFilters.min2,
           p_max2: currentFilters.max2,
-          p_grade: currentFilters.grade,
+          p_grade: currentFilters.grade === "all" ? null : currentFilters.grade,
         });
 
       if (countError) throw countError;
@@ -121,11 +143,13 @@ export const useLeaderboard = () => {
             p_max1: currentFilters.max1,
             p_min2: currentFilters.min2,
             p_max2: currentFilters.max2,
-            p_grade: currentFilters.grade,
+            p_grade: currentFilters.grade === "all" ? null : currentFilters.grade,
           });
 
-        if (!rankError) {
+        if (!rankError && rankData !== null) {
           setUserRank(rankData);
+        } else {
+          setUserRank(null);
         }
       }
     } catch (err) {
@@ -133,17 +157,29 @@ export const useLeaderboard = () => {
       setError(err instanceof Error ? err.message : 'Failed to load leaderboard');
     } finally {
       setIsLoading(false);
+      fetchInProgress.current = false;
     }
-  }, [currentFilters]);
+  }, []); // No dependencies to prevent infinite loop
 
-  const updateFilters = (newFilters: Partial<LeaderboardFilters>) => {
-    // For a filter change, reset to page 1
+  // Initial fetch on mount and when URL changes
+  useEffect(() => {
+    if (!initialLoadDone.current) {
+      fetchLeaderboard();
+      initialLoadDone.current = true;
+    }
+  }, [fetchLeaderboard]);
+
+  const updateFilters = useCallback((newFilters: Partial<LeaderboardFilters>) => {
+    // For a filter change, reset to page 1 if it's not a page change
+    const shouldResetPage = !('page' in newFilters);
+    
     const updatedFilters = {
-      ...currentFilters,
+      ...filtersRef.current,
       ...newFilters,
-      page: newFilters.page ?? 1,
+      ...(shouldResetPage ? { page: 1 } : {}),
     };
 
+    // Update the URL without causing extra re-renders
     setSearchParams(
       Object.entries(updatedFilters).reduce((params, [key, value]) => {
         if (value !== null && value !== undefined) {
@@ -153,12 +189,19 @@ export const useLeaderboard = () => {
           params.set(key, 'null');
         }
         return params;
-      }, new URLSearchParams())
+      }, new URLSearchParams()),
+      { replace: true } // Use replace to avoid adding to browser history
     );
-  };
+
+    // Update the ref directly
+    filtersRef.current = updatedFilters;
+    
+    // Fetch with updated filters
+    setTimeout(() => fetchLeaderboard(), 0);
+  }, [fetchLeaderboard, setSearchParams]);
 
   return {
-    filters: currentFilters,
+    filters: filtersRef.current,
     entries,
     isLoading,
     error,

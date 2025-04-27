@@ -22,11 +22,7 @@ const Leaderboard = () => {
     fetchLeaderboard,
   } = useLeaderboard();
 
-  useEffect(() => {
-    fetchLeaderboard();
-  }, [fetchLeaderboard]);
-
-  // Deep linking from game end screen
+  // Deep linking from game end screen - only run once on mount
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const operation = params.get('operation');
@@ -44,7 +40,7 @@ const Leaderboard = () => {
         max2: parseInt(max2),
       });
     }
-  }, [location.search]);
+  }, []); // Empty dependency array to run once
 
   return (
     <div className="container mx-auto py-8 px-4 max-w-4xl space-y-6">
