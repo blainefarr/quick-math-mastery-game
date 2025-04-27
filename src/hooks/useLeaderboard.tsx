@@ -3,6 +3,7 @@ import { useCallback, useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Operation, ProblemRange } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 export type LeaderboardFilters = {
   operation: Operation;
@@ -61,7 +62,7 @@ export const useLeaderboard = () => {
     max1: parseNumericParam(searchParams.get('max1')) ?? DEFAULT_FILTERS.max1,
     min2: parseNumericParam(searchParams.get('min2')) ?? DEFAULT_FILTERS.min2,
     max2: parseNumericParam(searchParams.get('max2')) ?? DEFAULT_FILTERS.max2,
-    grade: searchParams.get('grade') || DEFAULT_FILTERS.grade,
+    grade: searchParams.get('grade') === "null" ? null : searchParams.get('grade') || DEFAULT_FILTERS.grade,
     page: parseInt(searchParams.get('page') || String(DEFAULT_FILTERS.page)),
   });
 
@@ -73,7 +74,7 @@ export const useLeaderboard = () => {
       max1: parseNumericParam(searchParams.get('max1')) ?? DEFAULT_FILTERS.max1,
       min2: parseNumericParam(searchParams.get('min2')) ?? DEFAULT_FILTERS.min2,
       max2: parseNumericParam(searchParams.get('max2')) ?? DEFAULT_FILTERS.max2,
-      grade: searchParams.get('grade') || DEFAULT_FILTERS.grade,
+      grade: searchParams.get('grade') === "null" ? null : searchParams.get('grade') || DEFAULT_FILTERS.grade,
       page: parseInt(searchParams.get('page') || String(DEFAULT_FILTERS.page)),
     };
   }, [searchParams]);
@@ -102,7 +103,10 @@ export const useLeaderboard = () => {
           p_page: currentFilters.page,
         });
 
-      if (leaderboardError) throw leaderboardError;
+      if (leaderboardError) {
+        console.error('Leaderboard error:', leaderboardError);
+        throw leaderboardError;
+      }
       
       console.log('Leaderboard data:', leaderboardData);
 
@@ -116,7 +120,10 @@ export const useLeaderboard = () => {
           p_grade: currentFilters.grade === "all" ? null : currentFilters.grade,
         });
 
-      if (countError) throw countError;
+      if (countError) {
+        console.error('Count error:', countError);
+        throw countError;
+      }
       
       console.log('Total count:', countData);
 
@@ -127,7 +134,7 @@ export const useLeaderboard = () => {
       })) || [];
       
       setEntries(typedEntries as LeaderboardEntry[]);
-      setTotalPages(Math.ceil((countData || 0) / 25));
+      setTotalPages(Math.max(1, Math.ceil((countData || 0) / 25)));
 
       // Fetch user rank if authenticated
       const {
@@ -146,15 +153,17 @@ export const useLeaderboard = () => {
             p_grade: currentFilters.grade === "all" ? null : currentFilters.grade,
           });
 
-        if (!rankError && rankData !== null) {
-          setUserRank(rankData);
+        if (rankError) {
+          console.error('Rank error:', rankError);
+          // Don't throw here, just log the error
         } else {
-          setUserRank(null);
+          setUserRank(rankData);
         }
       }
     } catch (err) {
       console.error('Leaderboard error:', err);
       setError(err instanceof Error ? err.message : 'Failed to load leaderboard');
+      toast.error("Couldn't load the leaderboard data. Please try again.");
     } finally {
       setIsLoading(false);
       fetchInProgress.current = false;
@@ -179,19 +188,14 @@ export const useLeaderboard = () => {
       ...(shouldResetPage ? { page: 1 } : {}),
     };
 
+    // Convert null to "null" strings for URL
+    const paramsToSet = new URLSearchParams();
+    Object.entries(updatedFilters).forEach(([key, value]) => {
+      paramsToSet.set(key, value === null ? "null" : String(value));
+    });
+
     // Update the URL without causing extra re-renders
-    setSearchParams(
-      Object.entries(updatedFilters).reduce((params, [key, value]) => {
-        if (value !== null && value !== undefined) {
-          params.set(key, String(value));
-        } else {
-          // For null values, explicitly set 'null' string to maintain in URL
-          params.set(key, 'null');
-        }
-        return params;
-      }, new URLSearchParams()),
-      { replace: true } // Use replace to avoid adding to browser history
-    );
+    setSearchParams(paramsToSet, { replace: true });
 
     // Update the ref directly
     filtersRef.current = updatedFilters;

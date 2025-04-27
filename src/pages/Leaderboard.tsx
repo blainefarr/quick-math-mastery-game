@@ -7,10 +7,13 @@ import { Pagination, PaginationContent, PaginationItem, PaginationNext, Paginati
 import { useAuth } from '@/context/auth/useAuth';
 import { Card } from '@/components/ui/card';
 import { useLocation } from 'react-router-dom';
+import { Info, Trophy } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Link } from 'react-router-dom';
 
 const Leaderboard = () => {
   const location = useLocation();
-  const { userId } = useAuth();
+  const { userId, isAuthenticated } = useAuth();
   const {
     filters,
     entries,
@@ -42,6 +45,8 @@ const Leaderboard = () => {
     }
   }, []); // Empty dependency array to run once
 
+  const hasNoEntries = !isLoading && entries.length === 0;
+
   return (
     <div className="container mx-auto py-8 px-4 max-w-4xl space-y-6">
       <div className="text-center">
@@ -64,14 +69,48 @@ const Leaderboard = () => {
       />
 
       {error ? (
-        <div className="text-center text-destructive">{error}</div>
+        <div className="text-center text-destructive p-8 rounded-lg border border-destructive/20 bg-destructive/5">
+          <p className="mb-2">{error}</p>
+          <Button onClick={() => fetchLeaderboard()} variant="outline" size="sm" className="mt-2">
+            Try Again
+          </Button>
+        </div>
       ) : (
         <>
-          <LeaderboardTable
-            entries={entries}
-            currentUserId={userId}
-            className={isLoading ? 'opacity-50' : ''}
-          />
+          {hasNoEntries ? (
+            <Card className="p-8 text-center">
+              <div className="flex flex-col items-center gap-4">
+                <Trophy className="w-12 h-12 text-muted-foreground/30" />
+                <h3 className="text-xl font-medium">No Scores Yet</h3>
+                <p className="text-muted-foreground max-w-md mx-auto">
+                  There are no scores on the leaderboard matching your current filters. 
+                  Try changing your filters or be the first to submit a score!
+                </p>
+                {!isAuthenticated && (
+                  <div className="flex flex-col items-center mt-2 p-4 bg-muted/30 rounded-lg">
+                    <Info className="w-5 h-5 mb-2 text-primary" />
+                    <p className="text-sm text-muted-foreground mb-2">
+                      Sign in to track your scores and compete on the leaderboard
+                    </p>
+                    <Button size="sm" asChild>
+                      <Link to="/login">Sign In</Link>
+                    </Button>
+                  </div>
+                )}
+                {isAuthenticated && (
+                  <Button className="mt-2" asChild>
+                    <Link to="/">Play Now</Link>
+                  </Button>
+                )}
+              </div>
+            </Card>
+          ) : (
+            <LeaderboardTable
+              entries={entries}
+              currentUserId={userId}
+              className={isLoading ? 'opacity-50' : ''}
+            />
+          )}
 
           {totalPages > 1 && (
             <Pagination className="mt-4">

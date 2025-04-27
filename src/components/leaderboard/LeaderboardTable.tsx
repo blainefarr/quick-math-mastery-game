@@ -25,11 +25,7 @@ const getRankIcon = (rank: number) => {
 
 export const LeaderboardTable = ({ entries, currentUserId, className = '' }: Props) => {
   if (entries.length === 0) {
-    return (
-      <div className="text-center py-8 text-muted-foreground">
-        No leaders yet. Play to earn your spot!
-      </div>
-    );
+    return null; // Return null as we'll handle the empty state in the parent component
   }
 
   return (
