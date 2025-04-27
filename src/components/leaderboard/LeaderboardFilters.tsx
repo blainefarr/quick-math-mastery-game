@@ -10,7 +10,11 @@ type Props = {
 };
 
 const OPERATIONS: Operation[] = ['addition', 'subtraction', 'multiplication', 'division'];
-const GRADES = ['1st', '2nd', '3rd', '4th', '5th', '6th'];
+const GRADES = [
+  '1st', '2nd', '3rd', '4th', '5th', '6th', 
+  '7th', '8th', '9th',
+  'High School', 'Adult'
+];
 const RANGES = [
   { label: '1-10', min1: 1, max1: 10, min2: 1, max2: 10 },
   { label: '1-20', min1: 1, max1: 20, min2: 1, max2: 20 },
