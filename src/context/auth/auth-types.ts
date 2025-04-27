@@ -8,6 +8,7 @@ export interface AuthContextType {
   setIsLoggedIn: (value: boolean) => void;
   setUsername: (name: string) => void;
   handleLogout: () => Promise<void>;
+  isAuthenticated: boolean; // Added this property
 }
 
 export interface AuthProviderProps {

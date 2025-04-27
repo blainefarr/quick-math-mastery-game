@@ -114,7 +114,8 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
     userId,
     setIsLoggedIn,
     setUsername,
-    handleLogout
+    handleLogout,
+    isAuthenticated: isLoggedIn // Map isAuthenticated to isLoggedIn
   };
 
   return (

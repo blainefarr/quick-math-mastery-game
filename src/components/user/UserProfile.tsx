@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import useAuth from '@/context/auth/useAuth';
@@ -28,6 +27,9 @@ import { useContext } from 'react';
 import ScoreHistory from './ScoreHistory';
 import ScoreChart from './ScoreChart';
 import UserDropdown from './UserDropdown';
+import { supabase } from '@/integrations/supabase/client';
+import { UserScore, Operation } from '@/types';
+import { toast } from 'sonner';
 
 interface UserProfileProps {
   dropdownLabel?: string;
@@ -35,13 +37,14 @@ interface UserProfileProps {
 
 const UserProfile = ({ dropdownLabel = "My Progress" }: UserProfileProps) => {
   const navigate = useNavigate();
-  const { username } = useAuth();
+  const { username, userId } = useAuth();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [selectedRange, setSelectedRange] = useState<string>("all");
   const [selectedOperation, setSelectedOperation] = useState<string>("all");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [profileScores, setProfileScores] = useState([]);
+  const [profileScores, setProfileScores] = useState<UserScore[]>([]);
+  const [hasAttemptedFetch, setHasAttemptedFetch] = useState(false);
   
   // Safe game context hook that doesn't throw if we're not in a GameProvider
   const useGameContextSafely = () => {
@@ -57,25 +60,90 @@ const UserProfile = ({ dropdownLabel = "My Progress" }: UserProfileProps) => {
   const { gameContext, hasGameContext } = useGameContextSafely();
   const scoreHistory = hasGameContext && gameContext.scoreHistory ? gameContext.scoreHistory : [];
 
+  // Function to fetch scores from Supabase
+  const fetchScoresFromSupabase = async () => {
+    if (!userId) return [];
+    
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('scores')
+        .select('*')
+        .eq('user_id', userId)
+        .order('date', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching scores:', error);
+        toast.error('Failed to load your scores');
+        return [];
+      }
+
+      const transformedData: UserScore[] = (data || []).map(item => ({
+        score: item.score,
+        operation: item.operation as Operation,
+        range: {
+          min1: item.min1,
+          max1: item.max1,
+          min2: item.min2,
+          max2: item.max2,
+        },
+        date: item.date,
+        duration: item.duration,
+        focusNumber: item.focus_number,
+        allowNegatives: item.allow_negatives
+      }));
+      
+      return transformedData;
+    } catch (error) {
+      console.error('Error fetching scores:', error);
+      return [];
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (isProfileOpen) {
       setLoading(true);
-      try {
-        console.log('Profile dialog opened, current scoreHistory:', scoreHistory);
-        setProfileScores(scoreHistory ? [...scoreHistory] : []);
-        setLoading(false);
-      } catch (err) {
-        console.error("Error loading scores:", err);
-        setError("Could not load scores");
-        setLoading(false);
-      }
+      
+      const initializeScores = async () => {
+        try {
+          console.log('Profile dialog opened, current scoreHistory:', scoreHistory);
+          
+          // If we have scores in the game context, use those first
+          if (scoreHistory && scoreHistory.length > 0) {
+            setProfileScores([...scoreHistory]);
+          } 
+          // Otherwise, if we haven't attempted to fetch yet, get scores from Supabase
+          else if (!hasAttemptedFetch && userId) {
+            console.log('No scores in game context, fetching from Supabase');
+            const supabaseScores = await fetchScoresFromSupabase();
+            setProfileScores(supabaseScores);
+            setHasAttemptedFetch(true);
+          }
+        } catch (err) {
+          console.error("Error loading scores:", err);
+          setError("Could not load scores");
+        } finally {
+          setLoading(false);
+        }
+      };
+      
+      initializeScores();
     }
     
     return () => {
       document.body.classList.remove('ReactModal__Body--open');
       document.body.style.pointerEvents = '';
     };
-  }, [isProfileOpen, scoreHistory]);
+  }, [isProfileOpen, scoreHistory, userId, hasAttemptedFetch]);
+
+  // Reset attempted fetch flag when dialog closes
+  useEffect(() => {
+    if (!isProfileOpen) {
+      setHasAttemptedFetch(false);
+    }
+  }, [isProfileOpen]);
 
   const getUniqueRanges = () => {
     if (!profileScores || profileScores.length === 0) {
@@ -163,42 +231,50 @@ const UserProfile = ({ dropdownLabel = "My Progress" }: UserProfileProps) => {
                 <TabsContent value="history" className="mt-4">
                   <Card>
                     <CardContent className="p-4">
-                      <div className="flex items-center gap-2 mb-4 pb-2 border-b">
-                        <Label className="mr-2 font-medium whitespace-nowrap">Filter:</Label>
-                        <div className="flex items-center gap-2">
-                          <Select
-                            value={selectedRange}
-                            onValueChange={setSelectedRange}
-                          >
-                            <SelectTrigger className="w-[140px] h-8">
-                              <SelectValue placeholder="All Ranges" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="all">All Ranges</SelectItem>
-                              {uniqueRanges.map((range, index) => (
-                                <SelectItem key={index} value={range}>{range}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          
-                          <Select
-                            value={selectedOperation}
-                            onValueChange={setSelectedOperation}
-                          >
-                            <SelectTrigger className="w-[160px] h-8 text-left">
-                              <SelectValue placeholder="All Operations" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="all">All Operations</SelectItem>
-                              <SelectItem value="addition">Addition</SelectItem>
-                              <SelectItem value="subtraction">Subtraction</SelectItem>
-                              <SelectItem value="multiplication">Multiplication</SelectItem>
-                              <SelectItem value="division">Division</SelectItem>
-                            </SelectContent>
-                          </Select>
+                      {loading ? (
+                        <div className="text-center py-8">
+                          <p className="text-muted-foreground">Loading scores...</p>
                         </div>
-                      </div>
-                      <ScoreHistory scores={filteredScores} />
+                      ) : (
+                        <>
+                          <div className="flex items-center gap-2 mb-4 pb-2 border-b">
+                            <Label className="mr-2 font-medium whitespace-nowrap">Filter:</Label>
+                            <div className="flex items-center gap-2">
+                              <Select
+                                value={selectedRange}
+                                onValueChange={setSelectedRange}
+                              >
+                                <SelectTrigger className="w-[140px] h-8">
+                                  <SelectValue placeholder="All Ranges" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="all">All Ranges</SelectItem>
+                                  {uniqueRanges.map((range, index) => (
+                                    <SelectItem key={index} value={range}>{range}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              
+                              <Select
+                                value={selectedOperation}
+                                onValueChange={setSelectedOperation}
+                              >
+                                <SelectTrigger className="w-[160px] h-8 text-left">
+                                  <SelectValue placeholder="All Operations" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="all">All Operations</SelectItem>
+                                  <SelectItem value="addition">Addition</SelectItem>
+                                  <SelectItem value="subtraction">Subtraction</SelectItem>
+                                  <SelectItem value="multiplication">Multiplication</SelectItem>
+                                  <SelectItem value="division">Division</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </div>
+                          <ScoreHistory scores={filteredScores} />
+                        </>
+                      )}
                     </CardContent>
                   </Card>
                 </TabsContent>
@@ -206,42 +282,50 @@ const UserProfile = ({ dropdownLabel = "My Progress" }: UserProfileProps) => {
                 <TabsContent value="progress" className="mt-4">
                   <Card>
                     <CardContent className="p-4">
-                      <div className="flex items-center gap-2 mb-4 pb-2 border-b">
-                        <Label className="mr-2 font-medium whitespace-nowrap">Filter:</Label>
-                        <div className="flex items-center gap-2">
-                          <Select
-                            value={selectedRange}
-                            onValueChange={setSelectedRange}
-                          >
-                            <SelectTrigger className="w-[140px] h-8">
-                              <SelectValue placeholder="All Ranges" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="all">All Ranges</SelectItem>
-                              {uniqueRanges.map((range, index) => (
-                                <SelectItem key={index} value={range}>{range}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          
-                          <Select
-                            value={selectedOperation}
-                            onValueChange={setSelectedOperation}
-                          >
-                            <SelectTrigger className="w-[160px] h-8 text-left">
-                              <SelectValue placeholder="All Operations" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="all">All Operations</SelectItem>
-                              <SelectItem value="addition">Addition</SelectItem>
-                              <SelectItem value="subtraction">Subtraction</SelectItem>
-                              <SelectItem value="multiplication">Multiplication</SelectItem>
-                              <SelectItem value="division">Division</SelectItem>
-                            </SelectContent>
-                          </Select>
+                      {loading ? (
+                        <div className="text-center py-8">
+                          <p className="text-muted-foreground">Loading scores...</p>
                         </div>
-                      </div>
-                      <ScoreChart scores={filteredScores} />
+                      ) : (
+                        <>
+                          <div className="flex items-center gap-2 mb-4 pb-2 border-b">
+                            <Label className="mr-2 font-medium whitespace-nowrap">Filter:</Label>
+                            <div className="flex items-center gap-2">
+                              <Select
+                                value={selectedRange}
+                                onValueChange={setSelectedRange}
+                              >
+                                <SelectTrigger className="w-[140px] h-8">
+                                  <SelectValue placeholder="All Ranges" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="all">All Ranges</SelectItem>
+                                  {uniqueRanges.map((range, index) => (
+                                    <SelectItem key={index} value={range}>{range}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              
+                              <Select
+                                value={selectedOperation}
+                                onValueChange={setSelectedOperation}
+                              >
+                                <SelectTrigger className="w-[160px] h-8 text-left">
+                                  <SelectValue placeholder="All Operations" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="all">All Operations</SelectItem>
+                                  <SelectItem value="addition">Addition</SelectItem>
+                                  <SelectItem value="subtraction">Subtraction</SelectItem>
+                                  <SelectItem value="multiplication">Multiplication</SelectItem>
+                                  <SelectItem value="division">Division</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </div>
+                          <ScoreChart scores={filteredScores} />
+                        </>
+                      )}
                     </CardContent>
                   </Card>
                 </TabsContent>
