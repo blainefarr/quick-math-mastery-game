@@ -1,0 +1,80 @@
+
+import { Award, Trophy } from "lucide-react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { LeaderboardEntry } from "@/hooks/useLeaderboard";
+
+type Props = {
+  entries: LeaderboardEntry[];
+  currentUserId?: string | null;
+  className?: string;
+};
+
+const getRankIcon = (rank: number) => {
+  if (rank === 1) return <Trophy className="h-5 w-5 text-yellow-500" />;
+  if (rank === 2) return <Award className="h-5 w-5 text-gray-400" />;
+  if (rank === 3) return <Award className="h-5 w-5 text-amber-600" />;
+  return null;
+};
+
+export const LeaderboardTable = ({ entries, currentUserId, className = '' }: Props) => {
+  if (entries.length === 0) {
+    return (
+      <div className="text-center py-8 text-muted-foreground">
+        No leaders yet. Play to earn your spot!
+      </div>
+    );
+  }
+
+  return (
+    <div className={`rounded-md border ${className}`}>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead className="w-[100px]">Rank</TableHead>
+            <TableHead>Player</TableHead>
+            <TableHead>Operation</TableHead>
+            <TableHead>Range</TableHead>
+            <TableHead className="text-right">Score</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {entries.map((entry) => (
+            <TableRow
+              key={entry.user_id}
+              className={entry.user_id === currentUserId ? "bg-muted" : undefined}
+            >
+              <TableCell className="font-medium">
+                <div className="flex items-center gap-2">
+                  {getRankIcon(entry.rank)}
+                  <span>{entry.rank}</span>
+                </div>
+              </TableCell>
+              <TableCell>
+                <div className="flex flex-col">
+                  <span>{entry.name.split(' ')[0]}</span>
+                  {entry.grade && (
+                    <span className="text-xs text-muted-foreground">
+                      Grade: {entry.grade}
+                    </span>
+                  )}
+                </div>
+              </TableCell>
+              <TableCell>
+                {entry.operation.charAt(0).toUpperCase() + entry.operation.slice(1)}
+              </TableCell>
+              <TableCell>{`${entry.min1}-${entry.max1}`}</TableCell>
+              <TableCell className="text-right font-bold">{entry.best_score}</TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
+  );
+};

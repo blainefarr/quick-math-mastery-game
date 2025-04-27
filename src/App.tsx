@@ -1,4 +1,3 @@
-
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import RootLayout from "./layouts/RootLayout";
@@ -8,6 +7,7 @@ import FormLayout from "./layouts/FormLayout";
 import Index from "./pages/Index";
 import MyAccount from "./pages/MyAccount";
 import NotFound from "./pages/NotFound";
+import Leaderboard from "./pages/Leaderboard";
 
 const queryClient = new QueryClient();
 
@@ -26,7 +26,7 @@ const App = () => (
             <Route element={<FormLayout />}>
               <Route path="/account" element={<MyAccount />} />
             </Route>
-            
+            <Route path="/leaderboard" element={<Leaderboard />} />
             {/* Add future non-game pages here */}
           </Route>
 

@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import AuthModal from './auth/AuthModal';
 import UserProfile from './user/UserProfile';
-import { Clock } from 'lucide-react';
+import { Clock, Trophy } from 'lucide-react';
 import useAuth from '@/context/auth/useAuth';
 import useGame from '@/context/useGame';
 
@@ -12,12 +12,9 @@ const Header = () => {
   const navigate = useNavigate();
   const location = useLocation();
   
-  // Check if we're on a game route
   const isGameRoute = location.pathname === '/';
-  // Try to safely access gameState only if we're on a game route
   const gameState = isGameRoute ? useGame()?.gameState : null;
   
-  // Hide header during gameplay
   if (isGameRoute && gameState === 'playing') return null;
   
   const handleLogoClick = () => {
@@ -42,7 +39,17 @@ const Header = () => {
         </h1>
       </div>
       
-      <div className="flex items-center">
+      <div className="flex items-center gap-4">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="hidden sm:flex items-center gap-2"
+          onClick={() => navigate('/leaderboard')}
+        >
+          <Trophy size={18} />
+          Leaderboard
+        </Button>
+
         <div className="mr-2 text-xs bg-accent/10 rounded-full px-3 py-1 text-accent-foreground hidden sm:block">
           Math practice for kids!
         </div>

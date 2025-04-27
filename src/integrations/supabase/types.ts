@@ -89,7 +89,53 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_leaderboard: {
+        Args: {
+          p_operation?: string
+          p_min1?: number
+          p_max1?: number
+          p_min2?: number
+          p_max2?: number
+          p_grade?: string
+          p_page?: number
+          p_page_size?: number
+        }
+        Returns: {
+          rank: number
+          user_id: string
+          name: string
+          grade: string
+          best_score: number
+          operation: string
+          min1: number
+          max1: number
+          min2: number
+          max2: number
+        }[]
+      }
+      get_leaderboard_count: {
+        Args: {
+          p_operation?: string
+          p_min1?: number
+          p_max1?: number
+          p_min2?: number
+          p_max2?: number
+          p_grade?: string
+        }
+        Returns: number
+      }
+      get_user_rank: {
+        Args: {
+          p_user_id: string
+          p_operation?: string
+          p_min1?: number
+          p_max1?: number
+          p_min2?: number
+          p_max2?: number
+          p_grade?: string
+        }
+        Returns: number
+      }
     }
     Enums: {
       [_ in never]: never
