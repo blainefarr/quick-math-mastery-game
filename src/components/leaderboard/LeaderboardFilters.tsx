@@ -56,14 +56,14 @@ export const LeaderboardFilters = ({ filters, onFilterChange, className = '' }: 
       </Select>
 
       <Select
-        value={filters.grade || ''}
-        onValueChange={(value) => onFilterChange({ grade: value || null })}
+        value={filters.grade || "all"}
+        onValueChange={(value) => onFilterChange({ grade: value === "all" ? null : value })}
       >
         <SelectTrigger className="w-full sm:w-[180px]">
           <SelectValue placeholder="All Grades" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="">All Grades</SelectItem>
+          <SelectItem value="all">All Grades</SelectItem>
           {GRADES.map((grade) => (
             <SelectItem key={grade} value={grade}>
               {grade}
