@@ -6,10 +6,10 @@ import { supabase } from '@/integrations/supabase/client';
 
 export type LeaderboardFilters = {
   operation: Operation;
-  min1: number;
-  max1: number;
-  min2: number;
-  max2: number;
+  min1: number | null;
+  max1: number | null;
+  min2: number | null;
+  max2: number | null;
   grade: string | null;
   page: number;
 };
@@ -45,12 +45,19 @@ export const useLeaderboard = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [userRank, setUserRank] = useState<number | null>(null);
 
+  // Parse numeric values from search params
+  const parseNumericParam = (param: string | null): number | null => {
+    if (param === null || param === 'null') return null;
+    const value = parseInt(param);
+    return isNaN(value) ? null : value;
+  };
+
   const currentFilters = {
     operation: (searchParams.get('operation') as Operation) || DEFAULT_FILTERS.operation,
-    min1: parseInt(searchParams.get('min1') || String(DEFAULT_FILTERS.min1)),
-    max1: parseInt(searchParams.get('max1') || String(DEFAULT_FILTERS.max1)),
-    min2: parseInt(searchParams.get('min2') || String(DEFAULT_FILTERS.min2)),
-    max2: parseInt(searchParams.get('max2') || String(DEFAULT_FILTERS.max2)),
+    min1: parseNumericParam(searchParams.get('min1')) ?? DEFAULT_FILTERS.min1,
+    max1: parseNumericParam(searchParams.get('max1')) ?? DEFAULT_FILTERS.max1,
+    min2: parseNumericParam(searchParams.get('min2')) ?? DEFAULT_FILTERS.min2,
+    max2: parseNumericParam(searchParams.get('max2')) ?? DEFAULT_FILTERS.max2,
     grade: searchParams.get('grade') || DEFAULT_FILTERS.grade,
     page: parseInt(searchParams.get('page') || String(DEFAULT_FILTERS.page)),
   };
@@ -60,6 +67,8 @@ export const useLeaderboard = () => {
     setError(null);
 
     try {
+      console.log('Fetching leaderboard with filters:', currentFilters);
+      
       const { data: leaderboardData, error: leaderboardError } = await supabase
         .rpc('get_leaderboard', {
           p_operation: currentFilters.operation,
@@ -72,6 +81,8 @@ export const useLeaderboard = () => {
         });
 
       if (leaderboardError) throw leaderboardError;
+      
+      console.log('Leaderboard data:', leaderboardData);
 
       const { data: countData, error: countError } = await supabase
         .rpc('get_leaderboard_count', {
@@ -84,6 +95,8 @@ export const useLeaderboard = () => {
         });
 
       if (countError) throw countError;
+      
+      console.log('Total count:', countData);
 
       // Cast the operation field to Operation type
       const typedEntries = leaderboardData?.map(entry => ({
@@ -116,6 +129,7 @@ export const useLeaderboard = () => {
         }
       }
     } catch (err) {
+      console.error('Leaderboard error:', err);
       setError(err instanceof Error ? err.message : 'Failed to load leaderboard');
     } finally {
       setIsLoading(false);
@@ -123,16 +137,20 @@ export const useLeaderboard = () => {
   }, [currentFilters]);
 
   const updateFilters = (newFilters: Partial<LeaderboardFilters>) => {
+    // For a filter change, reset to page 1
     const updatedFilters = {
       ...currentFilters,
       ...newFilters,
-      page: newFilters.page ?? 1, // Reset to page 1 when filters change
+      page: newFilters.page ?? 1,
     };
 
     setSearchParams(
       Object.entries(updatedFilters).reduce((params, [key, value]) => {
         if (value !== null && value !== undefined) {
           params.set(key, String(value));
+        } else {
+          // For null values, explicitly set 'null' string to maintain in URL
+          params.set(key, 'null');
         }
         return params;
       }, new URLSearchParams())

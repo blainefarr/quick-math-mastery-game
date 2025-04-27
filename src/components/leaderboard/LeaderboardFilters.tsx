@@ -12,12 +12,25 @@ type Props = {
 const OPERATIONS: Operation[] = ['addition', 'subtraction', 'multiplication', 'division'];
 const GRADES = ['1st', '2nd', '3rd', '4th', '5th', '6th'];
 const RANGES = [
-  { label: '1-10', min: 1, max: 10 },
-  { label: '1-20', min: 1, max: 20 },
-  { label: '1-100', min: 1, max: 100 },
+  { label: '1-10', min1: 1, max1: 10, min2: 1, max2: 10 },
+  { label: '1-20', min1: 1, max1: 20, min2: 1, max2: 20 },
+  { label: '1-100', min1: 1, max1: 100, min2: 1, max2: 100 },
+  { label: 'All Ranges', min1: null, max1: null, min2: null, max2: null },
 ];
 
 export const LeaderboardFilters = ({ filters, onFilterChange, className = '' }: Props) => {
+  // Helper to get current range label
+  const getCurrentRangeLabel = () => {
+    if (!filters.min1 && !filters.max1) return 'All Ranges';
+    
+    const matchedRange = RANGES.find(
+      r => r.min1 === filters.min1 && r.max1 === filters.max1 && 
+           r.min2 === filters.min2 && r.max2 === filters.max2
+    );
+    
+    return matchedRange ? matchedRange.label : `${filters.min1}-${filters.max1}`;
+  };
+
   return (
     <div className={`flex flex-col gap-4 sm:flex-row sm:items-center ${className}`}>
       <Select
@@ -37,10 +50,17 @@ export const LeaderboardFilters = ({ filters, onFilterChange, className = '' }: 
       </Select>
 
       <Select
-        value={`${filters.min1}-${filters.max1}`}
-        onValueChange={(value) => {
-          const [min, max] = value.split('-').map(Number);
-          onFilterChange({ min1: min, max1: max, min2: min, max2: max });
+        value={getCurrentRangeLabel()}
+        onValueChange={(label) => {
+          const selectedRange = RANGES.find(r => r.label === label);
+          if (selectedRange) {
+            onFilterChange({ 
+              min1: selectedRange.min1, 
+              max1: selectedRange.max1, 
+              min2: selectedRange.min2, 
+              max2: selectedRange.max2 
+            });
+          }
         }}
       >
         <SelectTrigger className="w-full sm:w-[180px]">
@@ -48,8 +68,8 @@ export const LeaderboardFilters = ({ filters, onFilterChange, className = '' }: 
         </SelectTrigger>
         <SelectContent>
           {RANGES.map((range) => (
-            <SelectItem key={range.label} value={`${range.min}-${range.max}`}>
-              Range: {range.label}
+            <SelectItem key={range.label} value={range.label}>
+              {range.label === 'All Ranges' ? range.label : `Range: ${range.label}`}
             </SelectItem>
           ))}
         </SelectContent>

@@ -84,14 +84,14 @@ const Leaderboard = () => {
                   <PaginationPrevious
                     onClick={() => updateFilters({ page: Math.max(1, filters.page - 1) })}
                     aria-disabled={filters.page === 1}
-                    className={filters.page === 1 ? "pointer-events-none opacity-50" : ""}
+                    className={filters.page === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
                   />
                 </PaginationItem>
                 <PaginationItem>
                   <PaginationNext
                     onClick={() => updateFilters({ page: Math.min(totalPages, filters.page + 1) })}
                     aria-disabled={filters.page === totalPages}
-                    className={filters.page === totalPages ? "pointer-events-none opacity-50" : ""}
+                    className={filters.page === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
                   />
                 </PaginationItem>
               </PaginationContent>
