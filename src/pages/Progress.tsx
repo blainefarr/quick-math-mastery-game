@@ -133,7 +133,7 @@ const Progress = () => {
           <p className="text-muted-foreground">Loading scores...</p>
         </Card> : <Card className="overflow-hidden">
           <div className="p-4 sticky top-0 backdrop-blur z-10 bg-white">
-            <div className="flex items-center gap-2 mb-4">
+            <div className="flex items-center gap-2">
               <Label className="mr-2 font-medium whitespace-nowrap">Filter:</Label>
               <div className="flex flex-wrap gap-2">
                 <Select value={selectedRange} onValueChange={setSelectedRange}>
