@@ -97,7 +97,7 @@ const Leaderboard = () => {
                       <Link to="/">Play Now</Link>
                     </Button>}
                 </div>
-              </Card> : <div className="overflow-x-auto px-[16px] py-0">
+              </Card> : <div className="overflow-x-auto px-[16px] py-[16px]">
                 <LeaderboardTable entries={entries} currentUserId={userId} className={isLoading ? 'opacity-50' : ''} />
               </div>}
 
