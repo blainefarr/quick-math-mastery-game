@@ -25,6 +25,17 @@ const GameScreen = () => {
   const inputRef = useRef<HTMLInputElement>(null);
   const initialProblemGeneratedRef = useRef(false);
 
+  // Track if the game has 0 time left to prevent further answers
+  const hasEndedRef = useRef(false);
+
+  useEffect(() => {
+    if (timeLeft <= 0) {
+      hasEndedRef.current = true;
+    } else {
+      hasEndedRef.current = false;
+    }
+  }, [timeLeft]);
+
   useEffect(() => {
     console.log('GameScreen mounted with settings:', settings);
     
@@ -80,6 +91,12 @@ const GameScreen = () => {
     const rawValue = e.target.value;
     const cleanValue = rawValue.replace(/^-/, '');
     setUserAnswer(cleanValue);
+
+    // Don't process answers if the game has ended
+    if (hasEndedRef.current) {
+      console.log('Game has ended, not processing answer');
+      return;
+    }
 
     if (currentProblem && cleanValue.trim() !== "") {
       const numericValue = isNegative ? -Number(cleanValue) : Number(cleanValue);

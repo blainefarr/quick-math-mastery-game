@@ -22,6 +22,8 @@ const GameProvider = ({ children }: GameProviderProps) => {
   const scoreRef = useRef(0);
   const gameStateRef = useRef<GameState>('selection');
   const timerRef = useRef<number | null>(null);
+  // Add a new ref to track if the game is ending
+  const isEndingRef = useRef(false);
 
   const { 
     scoreHistory, 
@@ -44,6 +46,8 @@ const GameProvider = ({ children }: GameProviderProps) => {
   useEffect(() => {
     if (gameState === 'playing') {
       startGameTimer();
+      // Reset the isEnding flag when starting a new game
+      isEndingRef.current = false;
     } else if (gameState === 'ended' && userId) {
       fetchUserScores().then(scores => {
         if (scores) {
@@ -62,6 +66,12 @@ const GameProvider = ({ children }: GameProviderProps) => {
   }, [gameState, userId, fetchUserScores]);
 
   const incrementScore = () => {
+    // Don't increment score if the game is ending
+    if (isEndingRef.current) {
+      console.log('Game is ending, not incrementing score');
+      return;
+    }
+    
     setScore(prev => {
       const newScore = prev + 1;
       console.log('Score incremented:', newScore);
@@ -105,6 +115,9 @@ const GameProvider = ({ children }: GameProviderProps) => {
   };
   
   const endGame = async (reason: GameEndReason) => {
+    // Set the ending flag to prevent further score increments
+    isEndingRef.current = true;
+    
     // Use the ref to get the accurate score regardless of state updates
     const finalScore = scoreRef.current;
     console.log(`Ending game with reason: ${reason}, final score: ${finalScore}`);
