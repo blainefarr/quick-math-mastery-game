@@ -132,7 +132,7 @@ const Progress = () => {
       {loading ? <Card className="p-8 text-center">
           <p className="text-muted-foreground">Loading scores...</p>
         </Card> : <Card className="overflow-hidden">
-          <div className="p-4 sticky top-0 backdrop-blur z-10 bg-white">
+          <div className="sticky top-0 backdrop-blur z-10 bg-white px-[16px] py-[16px]">
             <div className="flex items-center gap-2">
               <Label className="mr-2 font-medium whitespace-nowrap">Filter:</Label>
               <div className="flex flex-wrap gap-2">
