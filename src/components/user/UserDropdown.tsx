@@ -16,11 +16,13 @@ import { LogOut, Trophy, TrendingUp, Settings } from 'lucide-react';
 interface UserDropdownProps {
   username: string;
   dropdownLabel?: string;
+  onOpenProfile?: () => void;
 }
 
 const UserDropdown = ({ 
   username, 
-  dropdownLabel = "My Progress" 
+  dropdownLabel = "My Progress",
+  onOpenProfile
 }: UserDropdownProps) => {
   const navigate = useNavigate();
   const { handleLogout } = useAuth();
@@ -45,7 +47,7 @@ const UserDropdown = ({
             {username}
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-[300px]">
+        <DropdownMenuContent align="end" className="w-[450px]">
           <DropdownMenuLabel>
             <div className="flex flex-col">
               <span>Hi, {username}!</span>
@@ -54,7 +56,7 @@ const UserDropdown = ({
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
           <DropdownMenuItem 
-            onClick={() => navigate('/progress')}
+            onClick={() => onOpenProfile ? onOpenProfile() : navigate('/progress')}
             className="cursor-pointer hover:bg-accent"
           >
             <TrendingUp className="mr-2 h-4 w-4" />
