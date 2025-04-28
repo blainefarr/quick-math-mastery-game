@@ -4,7 +4,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import AuthModal from './auth/AuthModal';
 import UserProfile from './user/UserProfile';
-import { Clock, Trophy } from 'lucide-react';
+import { Clock, Trophy, TrendingUp } from 'lucide-react';
 import useAuth from '@/context/auth/useAuth';
 import useGame from '@/context/useGame';
 
@@ -41,15 +41,28 @@ const Header = () => {
       </div>
       
       <div className="flex items-center gap-4">
-        <Button
-          variant="ghost"
-          size="sm"
-          className="hidden sm:flex items-center gap-2"
-          onClick={() => navigate('/leaderboard')}
-        >
-          <Trophy size={18} />
-          Leaderboard
-        </Button>
+        {isLoggedIn && (
+          <>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="hidden sm:flex items-center gap-2"
+              onClick={() => navigate('/progress')}
+            >
+              <TrendingUp size={18} />
+              My Progress
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="hidden sm:flex items-center gap-2"
+              onClick={() => navigate('/leaderboard')}
+            >
+              <Trophy size={18} />
+              Leaderboard
+            </Button>
+          </>
+        )}
 
         <div className="mr-2 text-xs bg-accent/10 rounded-full px-3 py-1 text-accent-foreground hidden sm:block">
           Math practice for kids!

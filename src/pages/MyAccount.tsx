@@ -128,22 +128,26 @@ const MyAccount = () => {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto py-8 px-4 max-w-4xl space-y-6">
+      <div className="flex items-center gap-4 mb-2">
+        <Button 
+          variant="outline" 
+          size="sm"
+          onClick={() => navigate('/')}
+          className="h-8 rounded-full"
+        >
+          <ArrowLeft size={16} className="mr-1" />
+          Back to Game
+        </Button>
+      </div>
+      
+      <div className="text-center">
+        <h1 className="text-4xl font-bold text-primary mb-2">My Account</h1>
+        <p className="text-muted-foreground">Manage your profile settings</p>
+      </div>
+      
       <Card className="max-w-xl mx-auto">
-        <CardHeader>
-          <div className="flex items-center gap-4">
-            <Button 
-              variant="ghost" 
-              size="icon"
-              onClick={() => navigate(-1)}
-              className="h-8 w-8"
-            >
-              <ArrowLeft size={20} />
-            </Button>
-            <CardTitle className="text-2xl font-bold">My Account</CardTitle>
-          </div>
-        </CardHeader>
-        <CardContent>
+        <CardContent className="pt-6">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               <FormField

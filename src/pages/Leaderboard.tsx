@@ -6,13 +6,14 @@ import { LeaderboardTable } from '@/components/leaderboard/LeaderboardTable';
 import { Pagination, PaginationContent, PaginationItem, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
 import { useAuth } from '@/context/auth/useAuth';
 import { Card } from '@/components/ui/card';
-import { useLocation } from 'react-router-dom';
-import { Info, Trophy } from 'lucide-react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { Info, Trophy, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 
 const Leaderboard = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const { userId, isAuthenticated } = useAuth();
   const {
     filters,
@@ -49,6 +50,18 @@ const Leaderboard = () => {
 
   return (
     <div className="container mx-auto py-8 px-4 max-w-4xl space-y-6">
+      <div className="flex items-center gap-4 mb-2">
+        <Button 
+          variant="outline" 
+          size="sm"
+          onClick={() => navigate('/')}
+          className="h-8 rounded-full"
+        >
+          <ArrowLeft size={16} className="mr-1" />
+          Back to Game
+        </Button>
+      </div>
+
       <div className="text-center">
         <h1 className="text-4xl font-bold text-primary mb-2">Leaderboard</h1>
         <p className="text-muted-foreground">See how you stack up!</p>
@@ -105,11 +118,13 @@ const Leaderboard = () => {
               </div>
             </Card>
           ) : (
-            <LeaderboardTable
-              entries={entries}
-              currentUserId={userId}
-              className={isLoading ? 'opacity-50' : ''}
-            />
+            <div className="overflow-x-auto">
+              <LeaderboardTable
+                entries={entries}
+                currentUserId={userId}
+                className={isLoading ? 'opacity-50' : ''}
+              />
+            </div>
           )}
 
           {totalPages > 1 && (
