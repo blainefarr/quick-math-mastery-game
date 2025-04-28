@@ -12,6 +12,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { UserScore, Operation } from '@/types';
 import { useAuth } from '@/context/auth/useAuth';
 import { toast } from 'sonner';
+
 const Progress = () => {
   const navigate = useNavigate();
   const {
@@ -23,6 +24,7 @@ const Progress = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [profileScores, setProfileScores] = useState<UserScore[]>([]);
+
   useEffect(() => {
     if (!isAuthenticated) {
       navigate('/');
@@ -68,6 +70,7 @@ const Progress = () => {
     };
     fetchScores();
   }, [userId, isAuthenticated, navigate]);
+
   const getUniqueRanges = () => {
     if (!profileScores || profileScores.length === 0) {
       return [];
@@ -87,6 +90,7 @@ const Progress = () => {
     });
     return Array.from(uniqueRanges);
   };
+
   const getUniqueOperations = () => {
     if (!profileScores || profileScores.length === 0) {
       return [];
@@ -97,6 +101,7 @@ const Progress = () => {
     });
     return Array.from(uniqueOps);
   };
+
   const getFilteredScores = () => {
     let filtered = profileScores ?? [];
     if (selectedRange !== "all") {
@@ -114,8 +119,10 @@ const Progress = () => {
     }
     return filtered;
   };
+
   const filteredScores = getFilteredScores();
   const uniqueRanges = getUniqueRanges();
+
   return <div className="container mx-auto py-8 px-4 max-w-4xl space-y-6">
       <div className="flex items-center gap-4 mb-2">
         <Button variant="outline" size="sm" onClick={() => navigate('/')} className="h-8 rounded-full">
@@ -163,24 +170,25 @@ const Progress = () => {
           </div>
 
           <div className="mt-4">
-            <Tabs defaultValue="history" className="w-full">
+            <Tabs defaultValue="progress" className="w-full">
               <div className="px-4">
                 <TabsList className="bg-muted/50">
-                  <TabsTrigger value="history">Scores</TabsTrigger>
                   <TabsTrigger value="progress">Charts</TabsTrigger>
+                  <TabsTrigger value="history">Scores</TabsTrigger>
                 </TabsList>
               </div>
               
-              <TabsContent value="history" className="p-4">
-                <ScoreHistory scores={filteredScores} />
-              </TabsContent>
-              
               <TabsContent value="progress" className="p-4">
                 <ScoreChart scores={filteredScores} />
+              </TabsContent>
+              
+              <TabsContent value="history" className="p-4">
+                <ScoreHistory scores={filteredScores} />
               </TabsContent>
             </Tabs>
           </div>
         </Card>}
     </div>;
 };
+
 export default Progress;

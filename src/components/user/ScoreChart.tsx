@@ -48,7 +48,14 @@ const ScoreChart = ({ scores = [] }: ScoreChartProps) => {
       return 0;
     }
   });
-  
+
+  const calculateImprovement = () => {
+    if (sortedScores.length < 2) return 0;
+    const firstScore = sortedScores[0].score;
+    const lastScore = sortedScores[sortedScores.length - 1].score;
+    return lastScore - firstScore;
+  };
+
   const chartData = sortedScores.map(score => ({
     date: formatDate(score.date),
     score: score.score,
@@ -56,8 +63,9 @@ const ScoreChart = ({ scores = [] }: ScoreChartProps) => {
     duration: score.duration || 60,
     settings: `${score.focusNumber ? 'Focus: ' + score.focusNumber : ''}${score.allowNegatives ? ' Negatives' : ''}`
   }));
-  
+
   const gamesPlayed = validScores.length;
+  const improvement = calculateImprovement();
   
   if (validScores.length === 0) {
     return (
@@ -70,7 +78,7 @@ const ScoreChart = ({ scores = [] }: ScoreChartProps) => {
 
   return (
     <div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
         <Card className="p-4">
           <div className="text-sm text-muted-foreground">Games Played</div>
           <div className="text-3xl font-bold text-primary">{gamesPlayed}</div>
@@ -78,18 +86,25 @@ const ScoreChart = ({ scores = [] }: ScoreChartProps) => {
         
         <Card className="p-4">
           <div className="text-sm text-muted-foreground">Personal Best</div>
-          <div className="text-3xl font-bold text-accent">{sortedScores.length ? Math.max(...sortedScores.map(score => score.score)) : 0}</div>
+          <div className="text-3xl font-bold text-accent">
+            {sortedScores.length ? Math.max(...sortedScores.map(score => score.score)) : 0}
+          </div>
+        </Card>
+
+        <Card className="p-4">
+          <div className="text-sm text-muted-foreground">Improvement</div>
+          <div className="text-3xl font-bold text-emerald-500">{improvement}</div>
         </Card>
       </div>
       
-      {chartData.length === 0 ? (
+      {sortedScores.length === 0 ? (
         <Card className="p-8 text-center">
           <p>No scores match your selected filters.</p>
         </Card>
       ) : (
         <div className="h-72 w-full mt-4">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={chartData} margin={{ top: 5, right: 5, left: 5, bottom: 5 }}>
+            <BarChart data={chartData} margin={{ top: 5, right: 0, left: 0, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="date" />
               <YAxis />

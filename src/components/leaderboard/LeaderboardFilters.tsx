@@ -1,5 +1,6 @@
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 import { LeaderboardFilters as LeaderboardFiltersType } from "@/hooks/useLeaderboard";
 import { Operation } from "@/types";
 
@@ -33,78 +34,81 @@ const RANGES = [
 ];
 
 export const LeaderboardFilters = ({ filters, onFilterChange, className = '' }: Props) => {
-  // Helper to get current range label
-  const getCurrentRangeLabel = () => {
-    if (!filters.min1 && !filters.max1) return 'All Ranges';
-    
-    const matchedRange = RANGES.find(
-      r => r.min1 === filters.min1 && r.max1 === filters.max1 && 
-           r.min2 === filters.min2 && r.max2 === filters.max2
-    );
-    
-    return matchedRange ? matchedRange.label : `${filters.min1}-${filters.max1}`;
-  };
-
   return (
-    <div className={`flex flex-col gap-4 sm:flex-row sm:items-center ${className}`}>
-      <Select
-        value={filters.operation}
-        onValueChange={(value: Operation) => onFilterChange({ operation: value })}
-      >
-        <SelectTrigger className="w-full sm:w-[180px]">
-          <SelectValue placeholder="Select operation" />
-        </SelectTrigger>
-        <SelectContent>
-          {OPERATIONS.map((op) => (
-            <SelectItem key={op} value={op}>
-              {op.charAt(0).toUpperCase() + op.slice(1)}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+    <div className={`flex items-center gap-2 ${className}`}>
+      <Label className="mr-2 font-medium whitespace-nowrap">Filter:</Label>
+      <div className="flex items-center gap-2">
+        <Select
+          value={filters.operation}
+          onValueChange={(value: Operation) => onFilterChange({ operation: value })}
+        >
+          <SelectTrigger className="w-[140px] h-8">
+            <SelectValue placeholder="All Operations" />
+          </SelectTrigger>
+          <SelectContent>
+            {OPERATIONS.map((op) => (
+              <SelectItem key={op} value={op}>
+                {op.charAt(0).toUpperCase() + op.slice(1)}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
 
-      <Select
-        value={getCurrentRangeLabel()}
-        onValueChange={(label) => {
-          const selectedRange = RANGES.find(r => r.label === label);
-          if (selectedRange) {
-            onFilterChange({ 
-              min1: selectedRange.min1, 
-              max1: selectedRange.max1, 
-              min2: selectedRange.min2, 
-              max2: selectedRange.max2 
-            });
-          }
-        }}
-      >
-        <SelectTrigger className="w-full sm:w-[180px]">
-          <SelectValue placeholder="Select range" />
-        </SelectTrigger>
-        <SelectContent>
-          {RANGES.map((range) => (
-            <SelectItem key={range.label} value={range.label}>
-              {range.label === 'All Ranges' ? range.label : `Range: ${range.label}`}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+        <Select
+          value={getCurrentRangeLabel(filters)}
+          onValueChange={(label) => {
+            const selectedRange = RANGES.find(r => r.label === label);
+            if (selectedRange) {
+              onFilterChange({ 
+                min1: selectedRange.min1, 
+                max1: selectedRange.max1, 
+                min2: selectedRange.min2, 
+                max2: selectedRange.max2 
+              });
+            }
+          }}
+        >
+          <SelectTrigger className="w-[140px] h-8">
+            <SelectValue placeholder="All Ranges" />
+          </SelectTrigger>
+          <SelectContent>
+            {RANGES.map((range) => (
+              <SelectItem key={range.label} value={range.label}>
+                {range.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
 
-      <Select
-        value={filters.grade || "all"}
-        onValueChange={(value) => onFilterChange({ grade: value === "all" ? null : value })}
-      >
-        <SelectTrigger className="w-full sm:w-[180px]">
-          <SelectValue placeholder="All Grades" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="all">All Grades</SelectItem>
-          {GRADES.map((grade) => (
-            <SelectItem key={grade} value={grade}>
-              {grade}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+        <Select
+          value={filters.grade || "all"}
+          onValueChange={(value) => onFilterChange({ grade: value === "all" ? null : value })}
+        >
+          <SelectTrigger className="w-[140px] h-8">
+            <SelectValue placeholder="All Grades" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Grades</SelectItem>
+            {GRADES.map((grade) => (
+              <SelectItem key={grade} value={grade}>
+                {grade}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
     </div>
   );
+};
+
+// Helper to get current range label
+const getCurrentRangeLabel = (filters: LeaderboardFiltersType) => {
+  if (!filters.min1 && !filters.max1) return 'All Ranges';
+  
+  const matchedRange = RANGES.find(
+    r => r.min1 === filters.min1 && r.max1 === filters.max1 && 
+         r.min2 === filters.min2 && r.max2 === filters.max2
+  );
+  
+  return matchedRange ? matchedRange.label : 'All Ranges';
 };
