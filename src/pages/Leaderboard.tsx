@@ -1,4 +1,3 @@
-
 import { useEffect } from 'react';
 import { useLeaderboard } from '@/hooks/useLeaderboard';
 import { LeaderboardFilters } from '@/components/leaderboard/LeaderboardFilters';
@@ -26,7 +25,6 @@ const Leaderboard = () => {
     fetchLeaderboard,
   } = useLeaderboard();
 
-  // Deep linking from game end screen - only run once on mount
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const operation = params.get('operation');
@@ -44,7 +42,7 @@ const Leaderboard = () => {
         max2: parseInt(max2),
       });
     }
-  }, []); // Empty dependency array to run once
+  }, []);
 
   const hasNoEntries = !isLoading && entries.length === 0;
 
@@ -67,6 +65,12 @@ const Leaderboard = () => {
         <p className="text-muted-foreground">See how you stack up!</p>
       </div>
 
+      <LeaderboardFilters
+        filters={filters}
+        onFilterChange={updateFilters}
+        className="mt-6 sticky top-0 bg-muted/30 backdrop-blur supports-[backdrop-filter]:bg-muted/20 p-4 rounded-lg shadow-sm z-10"
+      />
+
       {userRank && (
         <Card className="p-4 text-center bg-accent/10">
           <p className="text-accent font-semibold">
@@ -74,12 +78,6 @@ const Leaderboard = () => {
           </p>
         </Card>
       )}
-
-      <LeaderboardFilters
-        filters={filters}
-        onFilterChange={updateFilters}
-        className="sticky top-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 p-4 rounded-lg shadow-sm z-10"
-      />
 
       {error ? (
         <div className="text-center text-destructive p-8 rounded-lg border border-destructive/20 bg-destructive/5">
