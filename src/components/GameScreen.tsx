@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import useGame from '@/context/useGame';
 import { Button } from '@/components/ui/button';
@@ -6,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Clock, RefreshCw } from 'lucide-react';
 import MathIcon from './common/MathIcon';
+import { useCompactHeight } from '@/hooks/use-compact-height';
 
 const GameScreen = () => {
   const {
@@ -25,8 +25,9 @@ const GameScreen = () => {
   const inputRef = useRef<HTMLInputElement>(null);
   const initialProblemGeneratedRef = useRef(false);
 
-  // Track if the game has 0 time left to prevent further answers
   const hasEndedRef = useRef(false);
+
+  const isCompactHeight = useCompactHeight();
 
   useEffect(() => {
     if (timeLeft <= 0) {
@@ -39,7 +40,6 @@ const GameScreen = () => {
   useEffect(() => {
     console.log('GameScreen mounted with settings:', settings);
     
-    // Clear any previous answer when starting a new game
     setUserAnswer('');
     
     if (!initialProblemGeneratedRef.current) {
@@ -92,7 +92,6 @@ const GameScreen = () => {
     const cleanValue = rawValue.replace(/^-/, '');
     setUserAnswer(cleanValue);
 
-    // Don't process answers if the game has ended
     if (hasEndedRef.current) {
       console.log('Game has ended, not processing answer');
       return;
@@ -128,9 +127,15 @@ const GameScreen = () => {
   const showNegativeToggle = settings.allowNegatives;
 
   return (
-    <div className="flex justify-center items-center min-h-screen p-4 bg-background">
-      <div className="w-full max-w-xl">
-        <div className="flex justify-between mb-8">
+    <div className={`flex justify-center items-center min-h-screen p-4 bg-background ${
+      isCompactHeight ? 'pt-0 mt-0' : 'pt-4'
+    }`}>
+      <div className={`w-full max-w-xl ${
+        isCompactHeight ? 'mt-0' : 'mt-8'
+      }`}>
+        <div className={`flex justify-between ${
+          isCompactHeight ? 'mb-4' : 'mb-8'
+        }`}>
           <Card className={`p-3 flex items-center ${timeLeft < 10 ? 'animate-timer-tick text-destructive' : ''}`}>
             <Clock className="mr-2" />
             <span className="text-xl font-bold">{timeLeft}</span>
@@ -141,7 +146,12 @@ const GameScreen = () => {
           </Card>
         </div>
 
-        <Card className={`mb-6 py-10 px-6 shadow-lg animate-bounce-in ${feedback === 'correct' ? 'bg-success/10 border-success' : feedback === 'incorrect' ? 'bg-destructive/10 border-destructive' : ''}`}>
+        <Card className={`${
+          isCompactHeight ? 'mb-4 py-6' : 'mb-6 py-10'
+        } px-6 shadow-lg animate-bounce-in ${
+          feedback === 'correct' ? 'bg-success/10 border-success' : 
+          feedback === 'incorrect' ? 'bg-destructive/10 border-destructive' : ''
+        }`}>
           <CardContent className="flex justify-center items-center text-4xl md:text-6xl font-bold">
             {currentProblem && (
               <>
