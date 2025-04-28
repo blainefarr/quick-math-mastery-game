@@ -73,15 +73,16 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
         return null;
       }
       
-      const { data: profile, error } = await supabase
+      // Try to get the default profile first, but handle the case where multiple might be marked as default
+      let { data: profiles, error: profilesError } = await supabase
         .from('profiles')
-        .select('id, name')
+        .select('id, name, is_default')
         .eq('account_id', accountId)
-        .eq('is_default', true)
-        .single();
-
-      if (error) {
-        console.error('Error fetching default profile:', error);
+        .eq('is_default', true);
+      
+      // If there are multiple default profiles or no default profiles
+      if (profilesError || !profiles || profiles.length !== 1) {
+        console.log('Multiple default profiles or no default profile found, getting any profile');
         
         // If no default profile, try to get any profile
         const { data: anyProfile, error: anyProfileError } = await supabase
@@ -125,7 +126,9 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
         return null;
       }
 
-      if (profile) {
+      // We have exactly one default profile
+      if (profiles && profiles.length === 1) {
+        const profile = profiles[0];
         console.log('Found default profile:', profile);
         setDefaultProfileId(profile.id);
         setUsername(profile.name || 'User');

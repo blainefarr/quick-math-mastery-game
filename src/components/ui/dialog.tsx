@@ -28,22 +28,38 @@ const DialogOverlay = React.forwardRef<
 ))
 DialogOverlay.displayName = DialogPrimitive.Overlay.displayName
 
-// Remove onOpenChange from DialogContent and handle open changes with Dialog root
 const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
 >(({ className, children, ...props }, ref) => {
-  // Add cleanup function to ensure body styles are reset when dialog closes
+  // More comprehensive cleanup for all possible modal-related styles
   React.useEffect(() => {
-    const originalPointerEvents = document.body.style.pointerEvents;
+    // Store original body styles to restore later
+    const originalStyles = {
+      pointerEvents: document.body.style.pointerEvents,
+      overflow: document.body.style.overflow,
+      position: document.body.style.position
+    };
     
-    // Remove any leftover modal classes that might be interfering
+    // Remove any modal-related classes that might interfere
     document.body.classList.remove('ReactModal__Body--open');
     
+    // Ensure body can receive pointer events while dialog is open
+    document.body.style.pointerEvents = '';
+    
     return () => {
-      // Reset body classes and pointer events when unmounting
+      // Complete cleanup on unmount
       document.body.classList.remove('ReactModal__Body--open');
-      document.body.style.pointerEvents = originalPointerEvents;
+      document.body.style.pointerEvents = originalStyles.pointerEvents;
+      document.body.style.overflow = originalStyles.overflow;
+      document.body.style.position = originalStyles.position;
+      
+      // Force enable pointer events after a short delay to ensure cleanup completes
+      setTimeout(() => {
+        if (document.body.style.pointerEvents === 'none') {
+          document.body.style.pointerEvents = '';
+        }
+      }, 100);
     };
   }, []);
 
@@ -63,8 +79,10 @@ const DialogContent = React.forwardRef<
         <DialogPrimitive.Close 
           className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground"
           onClick={() => {
-            // Ensure body styling is fully reset
+            // More comprehensive reset of body styles
             document.body.style.pointerEvents = '';
+            document.body.style.overflow = '';
+            document.body.style.position = '';
             document.body.classList.remove('ReactModal__Body--open');
           }}
         >
