@@ -1,4 +1,3 @@
-
 import { useEffect } from 'react';
 import { useLeaderboard } from '@/hooks/useLeaderboard';
 import { LeaderboardFilters } from '@/components/leaderboard/LeaderboardFilters';
@@ -7,7 +6,7 @@ import { Pagination, PaginationContent, PaginationItem, PaginationNext, Paginati
 import { useAuth } from '@/context/auth/useAuth';
 import { Card } from '@/components/ui/card';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Info, Trophy, ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Trophy, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 
@@ -26,7 +25,6 @@ const Leaderboard = () => {
     fetchLeaderboard,
   } = useLeaderboard();
 
-  // Deep linking from game end screen - only run once on mount
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const operation = params.get('operation');
@@ -44,7 +42,7 @@ const Leaderboard = () => {
         max2: parseInt(max2),
       });
     }
-  }, []); // Empty dependency array to run once
+  }, []);
 
   const hasNoEntries = !isLoading && entries.length === 0;
 
@@ -67,88 +65,95 @@ const Leaderboard = () => {
         <p className="text-muted-foreground">See how you stack up!</p>
       </div>
 
-      {userRank && (
-        <Card className="p-4 text-center bg-accent/10">
-          <p className="text-accent font-semibold">
-            Your Current Rank: #{userRank}
-          </p>
-        </Card>
-      )}
-
-      <LeaderboardFilters
-        filters={filters}
-        onFilterChange={updateFilters}
-        className="sticky top-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 p-4 rounded-lg shadow-sm z-10"
-      />
-
-      {error ? (
-        <div className="text-center text-destructive p-8 rounded-lg border border-destructive/20 bg-destructive/5">
-          <p className="mb-2">{error}</p>
-          <Button onClick={() => fetchLeaderboard()} variant="outline" size="sm" className="mt-2">
-            Try Again
-          </Button>
+      <Card className="overflow-hidden">
+        <div className="p-4 sticky top-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 z-10">
+          <LeaderboardFilters
+            filters={filters}
+            onFilterChange={updateFilters}
+          />
         </div>
-      ) : (
-        <>
-          {hasNoEntries ? (
-            <Card className="p-8 text-center">
-              <div className="flex flex-col items-center gap-4">
-                <Trophy className="w-12 h-12 text-muted-foreground/30" />
-                <h3 className="text-xl font-medium">No Scores Yet</h3>
-                <p className="text-muted-foreground max-w-md mx-auto">
-                  There are no scores on the leaderboard matching your current filters. 
-                  Try changing your filters or be the first to submit a score!
-                </p>
-                {!isAuthenticated && (
-                  <div className="flex flex-col items-center mt-2 p-4 bg-muted/30 rounded-lg">
-                    <Info className="w-5 h-5 mb-2 text-primary" />
-                    <p className="text-sm text-muted-foreground mb-2">
-                      Sign in to track your scores and compete on the leaderboard
-                    </p>
-                    <Button size="sm" asChild>
-                      <Link to="/login">Sign In</Link>
-                    </Button>
-                  </div>
-                )}
-                {isAuthenticated && (
-                  <Button className="mt-2" asChild>
-                    <Link to="/">Play Now</Link>
-                  </Button>
-                )}
-              </div>
-            </Card>
-          ) : (
-            <div className="overflow-x-auto">
-              <LeaderboardTable
-                entries={entries}
-                currentUserId={userId}
-                className={isLoading ? 'opacity-50' : ''}
-              />
-            </div>
-          )}
 
-          {totalPages > 1 && (
-            <Pagination className="mt-4">
-              <PaginationContent>
-                <PaginationItem>
-                  <PaginationPrevious
-                    onClick={() => updateFilters({ page: Math.max(1, filters.page - 1) })}
-                    aria-disabled={filters.page === 1}
-                    className={filters.page === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                  />
-                </PaginationItem>
-                <PaginationItem>
-                  <PaginationNext
-                    onClick={() => updateFilters({ page: Math.min(totalPages, filters.page + 1) })}
-                    aria-disabled={filters.page === totalPages}
-                    className={filters.page === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                  />
-                </PaginationItem>
-              </PaginationContent>
-            </Pagination>
-          )}
-        </>
-      )}
+        {userRank && (
+          <div className="px-4 pb-4">
+            <Card className="p-4 text-center bg-accent/10">
+              <p className="text-accent font-semibold">
+                Your Current Rank: #{userRank}
+              </p>
+            </Card>
+          </div>
+        )}
+
+        {error ? (
+          <div className="text-center text-destructive p-8 rounded-lg border border-destructive/20 bg-destructive/5">
+            <p className="mb-2">{error}</p>
+            <Button onClick={() => fetchLeaderboard()} variant="outline" size="sm" className="mt-2">
+              Try Again
+            </Button>
+          </div>
+        ) : (
+          <>
+            {entries.length === 0 ? (
+              <Card className="p-8 text-center">
+                <div className="flex flex-col items-center gap-4">
+                  <Trophy className="w-12 h-12 text-muted-foreground/30" />
+                  <h3 className="text-xl font-medium">No Scores Yet</h3>
+                  <p className="text-muted-foreground max-w-md mx-auto">
+                    There are no scores on the leaderboard matching your current filters. 
+                    Try changing your filters or be the first to submit a score!
+                  </p>
+                  {!isAuthenticated && (
+                    <div className="flex flex-col items-center mt-2 p-4 bg-muted/30 rounded-lg">
+                      <Info className="w-5 h-5 mb-2 text-primary" />
+                      <p className="text-sm text-muted-foreground mb-2">
+                        Sign in to track your scores and compete on the leaderboard
+                      </p>
+                      <Button size="sm" asChild>
+                        <Link to="/login">Sign In</Link>
+                      </Button>
+                    </div>
+                  )}
+                  {isAuthenticated && (
+                    <Button className="mt-2" asChild>
+                      <Link to="/">Play Now</Link>
+                    </Button>
+                  )}
+                </div>
+              </Card>
+            ) : (
+              <div className="overflow-x-auto">
+                <LeaderboardTable
+                  entries={entries}
+                  currentUserId={userId}
+                  className={isLoading ? 'opacity-50' : ''}
+                />
+              </div>
+            )}
+
+            {totalPages > 1 && (
+              <div className="p-4">
+                <Pagination>
+                  <PaginationContent>
+                    <PaginationItem>
+                      <PaginationPrevious
+                        onClick={() => updateFilters({ page: Math.max(1, filters.page - 1) })}
+                        aria-disabled={filters.page === 1}
+                        className={filters.page === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                      />
+                    </PaginationItem>
+                    <PaginationItem>
+                      <PaginationNext
+                        onClick={() => updateFilters({ page: Math.min(totalPages, filters.page + 1) })}
+                        aria-disabled={filters.page === totalPages}
+                        className={filters.page === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                      />
+                    </PaginationItem>
+                  </PaginationContent>
+                </Pagination>
+              </div>
+            )}
+          </>
+        )}
+      </Card>
     </div>
   );
 };

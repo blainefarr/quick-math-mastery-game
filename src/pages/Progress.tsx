@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -24,14 +23,12 @@ const Progress = () => {
   const [profileScores, setProfileScores] = useState<UserScore[]>([]);
   
   useEffect(() => {
-    // Redirect if not authenticated
     if (!isAuthenticated) {
       navigate('/');
       toast.error("You need to be logged in to view your progress");
       return;
     }
     
-    // Fetch scores from Supabase
     const fetchScores = async () => {
       if (!userId) return;
       
@@ -151,7 +148,7 @@ const Progress = () => {
         </Card>
       ) : (
         <Card className="overflow-hidden">
-          <div className="p-4 sticky top-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 rounded-t-lg shadow-sm z-10">
+          <div className="p-4 sticky top-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 z-10">
             <div className="flex items-center gap-2 mb-4">
               <Label className="mr-2 font-medium whitespace-nowrap">Filter:</Label>
               <div className="flex flex-wrap gap-2">
@@ -189,22 +186,24 @@ const Progress = () => {
             </div>
           </div>
 
-          <Tabs defaultValue="history" className="w-full">
-            <div className="px-4">
-              <TabsList>
-                <TabsTrigger value="history">Score History</TabsTrigger>
-                <TabsTrigger value="progress">Progress Chart</TabsTrigger>
-              </TabsList>
-            </div>
-            
-            <TabsContent value="history" className="p-4 overflow-x-auto">
-              <ScoreHistory scores={filteredScores} />
-            </TabsContent>
-            
-            <TabsContent value="progress" className="p-4">
-              <ScoreChart scores={filteredScores} />
-            </TabsContent>
-          </Tabs>
+          <div className="mt-4">
+            <Tabs defaultValue="history" className="w-full">
+              <div className="px-4">
+                <TabsList className="bg-muted/50">
+                  <TabsTrigger value="history">Scores</TabsTrigger>
+                  <TabsTrigger value="progress">Charts</TabsTrigger>
+                </TabsList>
+              </div>
+              
+              <TabsContent value="history" className="p-4">
+                <ScoreHistory scores={filteredScores} />
+              </TabsContent>
+              
+              <TabsContent value="progress" className="p-4">
+                <ScoreChart scores={filteredScores} />
+              </TabsContent>
+            </Tabs>
+          </div>
         </Card>
       )}
     </div>
