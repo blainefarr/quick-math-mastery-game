@@ -28,6 +28,7 @@ import useAuth from "@/context/auth/useAuth";
 import { ProfileSwitcherDialog } from "@/components/user/ProfileSwitcherDialog";
 import { CreateProfileForm } from '@/components/user/CreateProfileForm';
 import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 
 type FormData = {
   name: string;
@@ -236,24 +237,6 @@ const MyAccount = () => {
         <p className="text-muted-foreground">Manage your profile settings</p>
       </div>
       
-      <div className="flex justify-between items-center">
-        <div className="flex items-center space-x-2">
-          <h2 className="text-lg font-medium">Active Profile</h2>
-          {isProfileOwner && (
-            <Badge variant="secondary" className="text-xs">Account Owner</Badge>
-          )}
-        </div>
-        <Button 
-          variant="outline" 
-          size="sm"
-          onClick={() => setShowProfileSwitcher(true)}
-          className="flex items-center gap-2"
-        >
-          <Users size={16} />
-          Switch Profile
-        </Button>
-      </div>
-      
       <Card className="max-w-xl mx-auto">
         <CardContent className="pt-6">
           {isEditingProfile ? (
@@ -313,6 +296,18 @@ const MyAccount = () => {
                   )}
                 />
 
+                {/* New Profile Role field (non-editable) */}
+                <div className="space-y-2">
+                  <Label htmlFor="profile-role">Profile Role</Label>
+                  <Input 
+                    id="profile-role" 
+                    value={isProfileOwner ? "Primary Owner" : "User"} 
+                    readOnly 
+                    disabled 
+                    className="bg-muted"
+                  />
+                </div>
+
                 {isProfileOwner && (
                   <FormField
                     control={form.control}
@@ -351,6 +346,20 @@ const MyAccount = () => {
             </Form>
           )}
 
+          {/* Manage Profiles Section */}
+          <div className="mt-8 pt-6 border-t">
+            <h3 className="text-lg font-medium mb-4">Manage Profiles</h3>
+            <Button 
+              variant="outline" 
+              onClick={() => setShowProfileSwitcher(true)}
+              className="flex items-center gap-2 w-full justify-center"
+            >
+              <Users size={16} />
+              Switch Profile
+            </Button>
+          </div>
+
+          {/* Password section - only for account owner */}
           {isProfileOwner && (
             <div className="mt-8 pt-6 border-t">
               <Label className="text-base">Password</Label>
