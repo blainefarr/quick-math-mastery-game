@@ -1,3 +1,4 @@
+
 import { useEffect } from 'react';
 import { useLeaderboard } from '@/hooks/useLeaderboard';
 import { LeaderboardFilters } from '@/components/leaderboard/LeaderboardFilters';
@@ -9,12 +10,15 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Trophy, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
+
 const Leaderboard = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const {
     userId,
-    isAuthenticated
+    isAuthenticated,
+    isLoadingProfile,
+    defaultProfileId
   } = useAuth();
   const {
     filters,
@@ -26,6 +30,7 @@ const Leaderboard = () => {
     updateFilters,
     fetchLeaderboard
   } = useLeaderboard();
+  
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const operation = params.get('operation');
@@ -43,7 +48,17 @@ const Leaderboard = () => {
       });
     }
   }, []);
+  
+  // Trigger a leaderboard refresh when the profile is loaded
+  useEffect(() => {
+    if (defaultProfileId && !isLoadingProfile) {
+      console.log('Profile loaded, refreshing leaderboard data');
+      fetchLeaderboard();
+    }
+  }, [isLoadingProfile, defaultProfileId, fetchLeaderboard]);
+
   const hasNoEntries = !isLoading && entries.length === 0;
+  
   return <div className="container mx-auto py-8 px-4 max-w-4xl space-y-6">
       <div className="flex items-center gap-4 mb-2">
         <Button variant="outline" size="sm" onClick={() => navigate('/')} className="h-8 rounded-full">
@@ -57,68 +72,75 @@ const Leaderboard = () => {
         <p className="text-muted-foreground">See how you stack up!</p>
       </div>
 
-      <Card className="overflow-hidden">
-        <div className="p-4 sticky top-0 backdrop-blur z-10 bg-white">
-          <LeaderboardFilters filters={filters} onFilterChange={updateFilters} />
-        </div>
+      {isLoadingProfile ? (
+        <Card className="p-8 flex items-center justify-center">
+          <p className="text-muted-foreground">Loading your profile...</p>
+        </Card>
+      ) : (
+        <Card className="overflow-hidden">
+          <div className="p-4 sticky top-0 backdrop-blur z-10 bg-white">
+            <LeaderboardFilters filters={filters} onFilterChange={updateFilters} />
+          </div>
 
-        {userRank && <div className="px-4">
-            <Card className="p-4 text-center bg-accent/10">
-              <p className="text-accent font-semibold">
-                Your Current Rank: #{userRank}
-              </p>
-            </Card>
-          </div>}
+          {userRank && <div className="px-4">
+              <Card className="p-4 text-center bg-accent/10">
+                <p className="text-accent font-semibold">
+                  Your Current Rank: #{userRank}
+                </p>
+              </Card>
+            </div>}
 
-        {error ? <div className="text-center text-destructive p-8 rounded-lg border border-destructive/20 bg-destructive/5">
-            <p className="mb-2">{error}</p>
-            <Button onClick={() => fetchLeaderboard()} variant="outline" size="sm" className="mt-2">
-              Try Again
-            </Button>
-          </div> : <>
-            {entries.length === 0 ? <Card className="p-8 text-center">
-                <div className="flex flex-col items-center gap-4">
-                  <Trophy className="w-12 h-12 text-muted-foreground/30" />
-                  <h3 className="text-xl font-medium">No Scores Yet</h3>
-                  <p className="text-muted-foreground max-w-md mx-auto">
-                    There are no scores on the leaderboard matching your current filters. 
-                    Try changing your filters or be the first to submit a score!
-                  </p>
-                  {!isAuthenticated && <div className="flex flex-col items-center mt-2 p-4 bg-muted/30 rounded-lg">
-                      <Info className="w-5 h-5 mb-2 text-primary" />
-                      <p className="text-sm text-muted-foreground mb-2">
-                        Sign in to track your scores and compete on the leaderboard
-                      </p>
-                      <Button size="sm" asChild>
-                        <Link to="/login">Sign In</Link>
-                      </Button>
-                    </div>}
-                  {isAuthenticated && <Button className="mt-2" asChild>
-                      <Link to="/">Play Now</Link>
-                    </Button>}
-                </div>
-              </Card> : <div className="overflow-x-auto px-[16px] py-[16px]">
-                <LeaderboardTable entries={entries} currentUserId={userId} className={isLoading ? 'opacity-50' : ''} />
-              </div>}
+          {error ? <div className="text-center text-destructive p-8 rounded-lg border border-destructive/20 bg-destructive/5">
+              <p className="mb-2">{error}</p>
+              <Button onClick={() => fetchLeaderboard()} variant="outline" size="sm" className="mt-2">
+                Try Again
+              </Button>
+            </div> : <>
+              {entries.length === 0 ? <Card className="p-8 text-center">
+                  <div className="flex flex-col items-center gap-4">
+                    <Trophy className="w-12 h-12 text-muted-foreground/30" />
+                    <h3 className="text-xl font-medium">No Scores Yet</h3>
+                    <p className="text-muted-foreground max-w-md mx-auto">
+                      There are no scores on the leaderboard matching your current filters. 
+                      Try changing your filters or be the first to submit a score!
+                    </p>
+                    {!isAuthenticated && <div className="flex flex-col items-center mt-2 p-4 bg-muted/30 rounded-lg">
+                        <Info className="w-5 h-5 mb-2 text-primary" />
+                        <p className="text-sm text-muted-foreground mb-2">
+                          Sign in to track your scores and compete on the leaderboard
+                        </p>
+                        <Button size="sm" asChild>
+                          <Link to="/login">Sign In</Link>
+                        </Button>
+                      </div>}
+                    {isAuthenticated && <Button className="mt-2" asChild>
+                        <Link to="/">Play Now</Link>
+                      </Button>}
+                  </div>
+                </Card> : <div className="overflow-x-auto px-[16px] py-[16px]">
+                  <LeaderboardTable entries={entries} className={isLoading ? 'opacity-50' : ''} />
+                </div>}
 
-            {totalPages > 1 && <div className="p-4">
-                <Pagination>
-                  <PaginationContent>
-                    <PaginationItem>
-                      <PaginationPrevious onClick={() => updateFilters({
-                  page: Math.max(1, filters.page - 1)
-                })} aria-disabled={filters.page === 1} className={filters.page === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"} />
-                    </PaginationItem>
-                    <PaginationItem>
-                      <PaginationNext onClick={() => updateFilters({
-                  page: Math.min(totalPages, filters.page + 1)
-                })} aria-disabled={filters.page === totalPages} className={filters.page === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"} />
-                    </PaginationItem>
-                  </PaginationContent>
-                </Pagination>
-              </div>}
-          </>}
-      </Card>
+              {totalPages > 1 && <div className="p-4">
+                  <Pagination>
+                    <PaginationContent>
+                      <PaginationItem>
+                        <PaginationPrevious onClick={() => updateFilters({
+                    page: Math.max(1, filters.page - 1)
+                  })} aria-disabled={filters.page === 1} className={filters.page === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"} />
+                      </PaginationItem>
+                      <PaginationItem>
+                        <PaginationNext onClick={() => updateFilters({
+                    page: Math.min(totalPages, filters.page + 1)
+                  })} aria-disabled={filters.page === totalPages} className={filters.page === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"} />
+                      </PaginationItem>
+                    </PaginationContent>
+                  </Pagination>
+                </div>}
+            </>}
+        </Card>
+      )}
     </div>;
 };
+
 export default Leaderboard;

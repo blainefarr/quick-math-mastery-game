@@ -4,6 +4,7 @@ import { useSearchParams } from 'react-router-dom';
 import { Operation } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useAuth } from '@/context/auth/useAuth';
 
 export type LeaderboardFilters = {
   operation: Operation;
@@ -48,7 +49,8 @@ export const useLeaderboard = () => {
   const [userRank, setUserRank] = useState<number | null>(null);
   const initialLoadDone = useRef(false);
   const fetchInProgress = useRef(false);
-
+  const { defaultProfileId, isLoadingProfile } = useAuth();
+  
   // Parse numeric values from search params
   const parseNumericParam = (param: string | null): number | null => {
     if (param === null || param === 'null') return null;
@@ -81,6 +83,12 @@ export const useLeaderboard = () => {
   }, [searchParams]);
 
   const fetchLeaderboard = useCallback(async () => {
+    // Don't fetch if profile is still loading
+    if (isLoadingProfile) {
+      console.log('Profile still loading, deferring leaderboard fetch');
+      return;
+    }
+    
     // Prevent concurrent fetches
     if (fetchInProgress.current) return;
     
@@ -137,42 +145,29 @@ export const useLeaderboard = () => {
       setEntries(typedEntries as LeaderboardEntry[]);
       setTotalPages(Math.max(1, Math.ceil((countData || 0) / 25)));
 
-      // Fetch user rank if authenticated
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+      // Skip user rank if we have no profile ID
+      if (!defaultProfileId) {
+        console.log('No profile ID available, skipping user rank fetch');
+        return;
+      }
 
-      if (session?.user) {
-        // Fetch the default profile for the user
-        const { data: profileData, error: profileError } = await supabase
-          .from('profiles')
-          .select('id')
-          .eq('account_id', session.user.id)
-          .eq('is_default', true)
-          .single();
+      // Fetch user rank using the profile ID
+      const { data: rankData, error: rankError } = await supabase
+        .rpc('get_user_rank', {
+          p_profile_id: defaultProfileId,
+          p_operation: currentFilters.operation,
+          p_min1: currentFilters.min1,
+          p_max1: currentFilters.max1,
+          p_min2: currentFilters.min2,
+          p_max2: currentFilters.max2,
+          p_grade: currentFilters.grade === "all" ? null : currentFilters.grade,
+        });
 
-        if (profileError) {
-          console.error('Error fetching user profile:', profileError);
-        } else if (profileData) {
-          // Get the user rank using the profile ID
-          const { data: rankData, error: rankError } = await supabase
-            .rpc('get_user_rank', {
-              p_profile_id: profileData.id,
-              p_operation: currentFilters.operation,
-              p_min1: currentFilters.min1,
-              p_max1: currentFilters.max1,
-              p_min2: currentFilters.min2,
-              p_max2: currentFilters.max2,
-              p_grade: currentFilters.grade === "all" ? null : currentFilters.grade,
-            });
-
-          if (rankError) {
-            console.error('Rank error:', rankError);
-          } else {
-            setUserRank(rankData);
-            console.log('User rank:', rankData);
-          }
-        }
+      if (rankError) {
+        console.error('Rank error:', rankError);
+      } else {
+        setUserRank(rankData);
+        console.log('User rank:', rankData);
       }
     } catch (err) {
       console.error('Leaderboard error:', err);
@@ -182,16 +177,24 @@ export const useLeaderboard = () => {
       setIsLoading(false);
       fetchInProgress.current = false;
     }
-  }, []); // No dependencies to prevent infinite loop
+  }, [defaultProfileId, isLoadingProfile]); 
 
   // Initial fetch on mount and when URL changes
   useEffect(() => {
-    if (!initialLoadDone.current) {
+    if (!initialLoadDone.current && !isLoadingProfile) {
       console.log('Initial leaderboard fetch');
       fetchLeaderboard();
       initialLoadDone.current = true;
     }
-  }, [fetchLeaderboard]);
+  }, [fetchLeaderboard, isLoadingProfile]);
+
+  // Listen for profile loading completion to trigger refresh
+  useEffect(() => {
+    if (!isLoadingProfile && defaultProfileId && initialLoadDone.current) {
+      console.log('Profile loaded, refreshing leaderboard');
+      fetchLeaderboard();
+    }
+  }, [isLoadingProfile, defaultProfileId, fetchLeaderboard]);
 
   const updateFilters = useCallback((newFilters: Partial<LeaderboardFilters>) => {
     // For a filter change, reset to page 1 if it's not a page change

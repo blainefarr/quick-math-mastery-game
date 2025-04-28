@@ -18,7 +18,8 @@ const Progress = () => {
   const {
     isAuthenticated,
     userId,
-    defaultProfileId
+    defaultProfileId,
+    isLoadingProfile
   } = useAuth();
   const [selectedRange, setSelectedRange] = useState<string>("all");
   const [selectedOperation, setSelectedOperation] = useState<string>("all");
@@ -34,6 +35,11 @@ const Progress = () => {
     }
     
     const fetchScores = async () => {
+      if (isLoadingProfile) {
+        console.log('Still loading profile, deferring score fetch');
+        return;
+      }
+      
       if (!defaultProfileId) {
         console.log('No defaultProfileId available, cannot fetch scores');
         return;
@@ -80,8 +86,10 @@ const Progress = () => {
       }
     };
     
-    fetchScores();
-  }, [userId, isAuthenticated, navigate, defaultProfileId]);
+    if (defaultProfileId && !isLoadingProfile) {
+      fetchScores();
+    }
+  }, [userId, isAuthenticated, navigate, defaultProfileId, isLoadingProfile]);
 
   const getUniqueRanges = () => {
     if (!profileScores || profileScores.length === 0) {
@@ -148,9 +156,16 @@ const Progress = () => {
         <p className="text-muted-foreground">Track your math skills over time</p>
       </div>
 
-      {loading ? <Card className="p-8 text-center">
+      {isLoadingProfile ? (
+        <Card className="p-8 flex items-center justify-center">
+          <p className="text-muted-foreground">Loading your profile...</p>
+        </Card>
+      ) : loading ? (
+        <Card className="p-8 text-center">
           <p className="text-muted-foreground">Loading scores...</p>
-        </Card> : <Card className="overflow-hidden">
+        </Card>
+      ) : (
+        <Card className="overflow-hidden">
           <div className="sticky top-0 backdrop-blur z-10 bg-white px-[16px] py-[16px]">
             <div className="flex items-center gap-2">
               <Label className="mr-2 font-medium whitespace-nowrap">Filter:</Label>
@@ -199,7 +214,8 @@ const Progress = () => {
               </TabsContent>
             </Tabs>
           </div>
-        </Card>}
+        </Card>
+      )}
     </div>;
 };
 
