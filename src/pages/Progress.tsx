@@ -12,40 +12,38 @@ import { supabase } from '@/integrations/supabase/client';
 import { UserScore, Operation } from '@/types';
 import { useAuth } from '@/context/auth/useAuth';
 import { toast } from 'sonner';
-
 const Progress = () => {
   const navigate = useNavigate();
-  const { isAuthenticated, userId } = useAuth();
+  const {
+    isAuthenticated,
+    userId
+  } = useAuth();
   const [selectedRange, setSelectedRange] = useState<string>("all");
   const [selectedOperation, setSelectedOperation] = useState<string>("all");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [profileScores, setProfileScores] = useState<UserScore[]>([]);
-  
   useEffect(() => {
     if (!isAuthenticated) {
       navigate('/');
       toast.error("You need to be logged in to view your progress");
       return;
     }
-    
     const fetchScores = async () => {
       if (!userId) return;
-      
       setLoading(true);
       try {
-        const { data, error } = await supabase
-          .from('scores')
-          .select('*')
-          .eq('user_id', userId)
-          .order('date', { ascending: false });
-
+        const {
+          data,
+          error
+        } = await supabase.from('scores').select('*').eq('user_id', userId).order('date', {
+          ascending: false
+        });
         if (error) {
           console.error('Error fetching scores:', error);
           toast.error('Failed to load your scores');
           return;
         }
-
         const transformedData: UserScore[] = (data || []).map(item => ({
           score: item.score,
           operation: item.operation as Operation,
@@ -53,14 +51,13 @@ const Progress = () => {
             min1: item.min1,
             max1: item.max1,
             min2: item.min2,
-            max2: item.max2,
+            max2: item.max2
           },
           date: item.date,
           duration: item.duration,
           focusNumber: item.focus_number,
           allowNegatives: item.allow_negatives
         }));
-        
         setProfileScores(transformedData);
       } catch (error) {
         console.error('Error fetching scores:', error);
@@ -69,28 +66,27 @@ const Progress = () => {
         setLoading(false);
       }
     };
-    
     fetchScores();
   }, [userId, isAuthenticated, navigate]);
-
   const getUniqueRanges = () => {
     if (!profileScores || profileScores.length === 0) {
       return [];
     }
-    
     const uniqueRanges = new Set<string>();
-    
     profileScores.forEach(score => {
       if (score && score.range) {
-        const { min1, max1, min2, max2 } = score.range;
+        const {
+          min1,
+          max1,
+          min2,
+          max2
+        } = score.range;
         const rangeString = `${min1}-${max1}, ${min2}-${max2}`;
         uniqueRanges.add(rangeString);
       }
     });
-    
     return Array.from(uniqueRanges);
   };
-
   const getUniqueOperations = () => {
     if (!profileScores || profileScores.length === 0) {
       return [];
@@ -101,7 +97,6 @@ const Progress = () => {
     });
     return Array.from(uniqueOps);
   };
-
   const getFilteredScores = () => {
     let filtered = profileScores ?? [];
     if (selectedRange !== "all") {
@@ -119,19 +114,11 @@ const Progress = () => {
     }
     return filtered;
   };
-
   const filteredScores = getFilteredScores();
   const uniqueRanges = getUniqueRanges();
-
-  return (
-    <div className="container mx-auto py-8 px-4 max-w-4xl space-y-6">
+  return <div className="container mx-auto py-8 px-4 max-w-4xl space-y-6">
       <div className="flex items-center gap-4 mb-2">
-        <Button 
-          variant="outline" 
-          size="sm"
-          onClick={() => navigate('/')}
-          className="h-8 rounded-full"
-        >
+        <Button variant="outline" size="sm" onClick={() => navigate('/')} className="h-8 rounded-full">
           <ArrowLeft size={16} className="mr-1" />
           Back to Game
         </Button>
@@ -142,35 +129,24 @@ const Progress = () => {
         <p className="text-muted-foreground">Track your math skills over time</p>
       </div>
 
-      {loading ? (
-        <Card className="p-8 text-center">
+      {loading ? <Card className="p-8 text-center">
           <p className="text-muted-foreground">Loading scores...</p>
-        </Card>
-      ) : (
-        <Card className="overflow-hidden">
-          <div className="p-4 sticky top-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 z-10">
+        </Card> : <Card className="overflow-hidden">
+          <div className="p-4 sticky top-0 backdrop-blur z-10 bg-white">
             <div className="flex items-center gap-2 mb-4">
               <Label className="mr-2 font-medium whitespace-nowrap">Filter:</Label>
               <div className="flex flex-wrap gap-2">
-                <Select
-                  value={selectedRange}
-                  onValueChange={setSelectedRange}
-                >
+                <Select value={selectedRange} onValueChange={setSelectedRange}>
                   <SelectTrigger className="w-[140px] h-8">
                     <SelectValue placeholder="All Ranges" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Ranges</SelectItem>
-                    {uniqueRanges.map((range, index) => (
-                      <SelectItem key={index} value={range}>{range}</SelectItem>
-                    ))}
+                    {uniqueRanges.map((range, index) => <SelectItem key={index} value={range}>{range}</SelectItem>)}
                   </SelectContent>
                 </Select>
                 
-                <Select
-                  value={selectedOperation}
-                  onValueChange={setSelectedOperation}
-                >
+                <Select value={selectedOperation} onValueChange={setSelectedOperation}>
                   <SelectTrigger className="w-[160px] h-8">
                     <SelectValue placeholder="All Operations" />
                   </SelectTrigger>
@@ -204,10 +180,7 @@ const Progress = () => {
               </TabsContent>
             </Tabs>
           </div>
-        </Card>
-      )}
-    </div>
-  );
+        </Card>}
+    </div>;
 };
-
 export default Progress;
