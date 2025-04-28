@@ -170,6 +170,7 @@ export const useLeaderboard = () => {
             console.error('Rank error:', rankError);
           } else {
             setUserRank(rankData);
+            console.log('User rank:', rankData);
           }
         }
       }

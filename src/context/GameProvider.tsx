@@ -144,18 +144,24 @@ const GameProvider = ({ children }: GameProviderProps) => {
         
         if (success) {
           console.log("Score saved successfully");
+          // Set game state to ended only after successful save
+          setGameState('ended');
         } else {
           console.error("Failed to save score");
           toast.error("Failed to save your score");
+          // Still move to ended state
+          setGameState('ended');
         }
       } catch (error) {
         console.error("Failed to save score:", error);
         toast.error("Failed to save your score");
+        // Still move to ended state
+        setGameState('ended');
       }
+    } else {
+      // If not saving score, just set game state to ended
+      setGameState('ended');
     }
-    
-    // Update game state to ended
-    setGameState('ended');
   };
 
   const value: GameContextType = {

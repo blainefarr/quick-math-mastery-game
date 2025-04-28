@@ -42,8 +42,7 @@ export const LeaderboardTable = ({ entries, currentUserId, className = '' }: Pro
         </TableHeader>
         <TableBody>
           {entries.map((entry) => {
-            // Check if the current user matches either user_id (for backward compatibility) 
-            // or profile_id if we're looking at a profile view
+            // Check if the current user matches either user_id or profile_id
             const isCurrentUser = entry.user_id === currentUserId;
             
             return (

@@ -39,6 +39,7 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
       });
 
       console.log('Logout completed successfully');
+      window.location.href = '/'; // Redirect to home page after logout
     } catch (error) {
       console.error('Error during logout process:', error);
       // Even if error occurs, still reset client-side state
@@ -76,23 +77,30 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
               
             if (profile?.name) {
               setUsername(profile.name);
+              console.log('Found profile name:', profile.name);
             } else {
-              // Fallback to user email or metadata if profile not found
+              // Fallback to account data if profile not found
+              const { data: account } = await supabase
+                .from('accounts')
+                .select('name')
+                .eq('id', session.user.id)
+                .single();
+                
               setUsername(
-                session.user.user_metadata?.name ??
-                session.user.email?.split('@')[0] ??
-                session.user.email ??
-                ""
+                account?.name || 
+                session.user.user_metadata?.name ||
+                session.user.email?.split('@')[0] ||
+                "User"
               );
             }
           } catch (error) {
             console.error('Error fetching profile:', error);
             // Fallback to user email or metadata
             setUsername(
-              session.user.user_metadata?.name ??
-              session.user.email?.split('@')[0] ??
-              session.user.email ??
-              ""
+              session.user.user_metadata?.name ||
+              session.user.email?.split('@')[0] ||
+              session.user.email ||
+              "User"
             );
           }
         }
@@ -120,23 +128,30 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
               
             if (profile?.name) {
               setUsername(profile.name);
+              console.log('Found profile name:', profile.name);
             } else {
-              // Fallback to user email or metadata if profile not found
+              // Fallback to account data if profile not found
+              const { data: account } = await supabase
+                .from('accounts')
+                .select('name')
+                .eq('id', session.user.id)
+                .single();
+                
               setUsername(
-                session.user.user_metadata?.name ??
-                session.user.email?.split('@')[0] ??
-                session.user.email ??
-                ""
+                account?.name || 
+                session.user.user_metadata?.name ||
+                session.user.email?.split('@')[0] ||
+                "User"
               );
             }
           } catch (error) {
             console.error('Error fetching profile:', error);
             // Fallback to user email or metadata
             setUsername(
-              session.user.user_metadata?.name ??
-              session.user.email?.split('@')[0] ??
-              session.user.email ??
-              ""
+              session.user.user_metadata?.name ||
+              session.user.email?.split('@')[0] ||
+              session.user.email ||
+              "User"
             );
           }
         } else {

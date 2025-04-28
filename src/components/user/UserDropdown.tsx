@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { LogOut, Trophy, TrendingUp, Settings } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface UserDropdownProps {
   username: string;
@@ -31,9 +32,14 @@ const UserDropdown = ({
   const handleUserLogout = async () => {
     try {
       setIsLoggingOut(true);
+      toast.loading('Logging out...');
       await handleLogout();
+      toast.dismiss();
+      toast.success('Logged out successfully');
+      navigate('/');
     } catch (error) {
       console.error("Error during logout:", error);
+      toast.error("Error during logout. Please try again.");
     } finally {
       setIsLoggingOut(false);
     }

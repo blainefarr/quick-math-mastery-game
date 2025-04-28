@@ -14,6 +14,7 @@ export const useScoreManagement = (userId: string | null) => {
     if (!userId) return null;
     
     try {
+      console.log('Fetching default profile for user ID:', userId);
       const { data, error } = await supabase
         .from('profiles')
         .select('id')
@@ -27,6 +28,7 @@ export const useScoreManagement = (userId: string | null) => {
       }
 
       if (data) {
+        console.log('Found default profile ID:', data.id);
         setDefaultProfileId(data.id);
         return data.id;
       }
@@ -57,10 +59,10 @@ export const useScoreManagement = (userId: string | null) => {
         return [];
       }
 
+      console.log('Fetching scores for profile ID:', profileId);
       const { data, error } = await supabase
         .from('scores')
         .select('*')
-        .eq('user_id', userId)
         .eq('profile_id', profileId)
         .order('date', { ascending: false });
 
@@ -70,6 +72,7 @@ export const useScoreManagement = (userId: string | null) => {
         return [];
       }
 
+      console.log('Retrieved scores data:', data);
       const transformedData: UserScore[] = (data || []).map(item => ({
         score: item.score,
         operation: item.operation as Operation,
@@ -131,15 +134,21 @@ export const useScoreManagement = (userId: string | null) => {
       setSavingScore(true);
       
       // Make sure we have the default profile ID
-      const profileId = defaultProfileId || await fetchDefaultProfileId();
+      let profileId = defaultProfileId;
       
       if (!profileId) {
-        console.error('No default profile found for user');
+        console.log('No default profile ID in state, fetching it now');
+        profileId = await fetchDefaultProfileId();
+      }
+      
+      if (!profileId) {
+        console.error('Could not find or create default profile for user');
         toast.error('Unable to save score - no profile found');
         setSavingScore(false);
         return false;
       }
 
+      console.log('Using profile ID for score:', profileId);
       const scoreData = {
         score,
         operation,
