@@ -20,15 +20,18 @@ interface Profile {
   id: string;
   name: string;
   grade?: string;
-  is_default: boolean;
+  is_active: boolean;
   created_at: string;
-  account_owner?: boolean;  // Property to track the account owner profile
+  is_owner: boolean;  // Updated to use the new is_owner field
 }
 
 interface ProfileSwitcherDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
+
+// Local storage key for active profile
+const ACTIVE_PROFILE_KEY = 'math_game_active_profile';
 
 export function ProfileSwitcherDialog({ open, onOpenChange }: ProfileSwitcherDialogProps) {
   const [profiles, setProfiles] = useState<Profile[]>([]);
@@ -59,7 +62,7 @@ export function ProfileSwitcherDialog({ open, onOpenChange }: ProfileSwitcherDia
     }
   }, [open]);
 
-  // Fetch all profiles for this account and identify the account owner (first created profile)
+  // Fetch all profiles for this account
   const fetchProfiles = async () => {
     if (!userId) return;
     
@@ -79,10 +82,14 @@ export function ProfileSwitcherDialog({ open, onOpenChange }: ProfileSwitcherDia
         return;
       }
       
-      // Mark the first created profile (oldest) as the account owner
-      const processedProfiles = data?.map((profile, index) => ({
+      // Get the active profile ID from localStorage
+      const activeProfileId = localStorage.getItem(ACTIVE_PROFILE_KEY);
+      
+      const processedProfiles = data?.map(profile => ({
         ...profile,
-        account_owner: index === 0  // First profile is the account owner
+        // Mark as active if it matches the localStorage active profile ID
+        // This is purely for UI display purposes
+        active: profile.id === activeProfileId
       })) || [];
       
       setProfiles(processedProfiles);
@@ -106,29 +113,11 @@ export function ProfileSwitcherDialog({ open, onOpenChange }: ProfileSwitcherDia
       setDefaultProfileId(profile.id);
       setUsername(profile.name || 'User');
       
+      // Store the active profile ID in localStorage
+      localStorage.setItem(ACTIVE_PROFILE_KEY, profile.id);
+      
       // Show success message
       toast.success(`Switched to ${profile.name}`);
-      
-      // Update the database to mark this as the default profile
-      const { error } = await supabase
-        .from('profiles')
-        .update({ is_default: true })
-        .eq('id', profile.id);
-      
-      if (error) {
-        console.error('Error updating default profile:', error);
-      }
-      
-      // Reset the is_default flag for all other profiles
-      const { error: resetError } = await supabase
-        .from('profiles')
-        .update({ is_default: false })
-        .eq('account_id', userId)
-        .neq('id', profile.id);
-      
-      if (resetError) {
-        console.error('Error resetting other profiles:', resetError);
-      }
       
       // Close the dialog and ensure cleanup
       onOpenChange(false);
@@ -213,7 +202,7 @@ export function ProfileSwitcherDialog({ open, onOpenChange }: ProfileSwitcherDia
                               <span>Active</span>
                             </Badge>
                           )}
-                          {profile.account_owner && (
+                          {profile.is_owner && (
                             <Badge variant="secondary" className="flex items-center gap-1">
                               <User className="h-3 w-3" />
                               <span>Primary</span>

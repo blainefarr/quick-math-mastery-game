@@ -5,6 +5,9 @@ import { UserScore, Operation, ProblemRange } from '@/types';
 import { toast } from 'sonner';
 import { useAuth } from '@/context/auth/useAuth';
 
+// Local storage key for active profile
+const ACTIVE_PROFILE_KEY = 'math_game_active_profile';
+
 export const useScoreManagement = (userId: string | null) => {
   const [scoreHistory, setScoreHistory] = useState<UserScore[]>([]);
   const [savingScore, setSavingScore] = useState(false);
@@ -17,17 +20,20 @@ export const useScoreManagement = (userId: string | null) => {
       return [];
     }
 
-    if (!userId || !defaultProfileId) {
-      console.log('Missing userId or defaultProfileId in fetchUserScores', { userId, defaultProfileId });
+    // Get the profile ID from defaultProfileId context or localStorage
+    const profileId = defaultProfileId || localStorage.getItem(ACTIVE_PROFILE_KEY);
+
+    if (!userId || !profileId) {
+      console.log('Missing userId or profileId in fetchUserScores', { userId, profileId });
       return [];
     }
 
     try {
-      console.log('Fetching scores for profile ID:', defaultProfileId);
+      console.log('Fetching scores for profile ID:', profileId);
       const { data, error } = await supabase
         .from('scores')
         .select('*')
-        .eq('profile_id', defaultProfileId)
+        .eq('profile_id', profileId)
         .order('date', { ascending: false });
 
       if (error) {
@@ -63,8 +69,9 @@ export const useScoreManagement = (userId: string | null) => {
 
   // Effect to fetch scores when profile ID changes or loading completes
   useEffect(() => {
-    if (defaultProfileId && !isLoadingProfile) {
-      console.log('Profile ID available and loading complete, fetching scores', defaultProfileId);
+    const profileId = defaultProfileId || localStorage.getItem(ACTIVE_PROFILE_KEY);
+    if (profileId && !isLoadingProfile) {
+      console.log('Profile ID available and loading complete, fetching scores', profileId);
       fetchUserScores();
     }
   }, [defaultProfileId, fetchUserScores, isLoadingProfile]);
@@ -84,8 +91,7 @@ export const useScoreManagement = (userId: string | null) => {
       timerSeconds,
       focusNumber,
       allowNegatives,
-      userId,
-      profileId: defaultProfileId
+      userId
     });
 
     if (savingScore) {
@@ -103,14 +109,17 @@ export const useScoreManagement = (userId: string | null) => {
       return false;
     }
 
-    if (!defaultProfileId) {
+    // Get the profile ID from context or localStorage
+    const profileId = defaultProfileId || localStorage.getItem(ACTIVE_PROFILE_KEY);
+    
+    if (!profileId) {
       console.error('No profile ID available, cannot save score');
       toast.error('Unable to save score - no profile found');
       return false;
     }
 
     return saveScoreWithProfileId(
-      defaultProfileId,
+      profileId,
       score,
       operation,
       range,

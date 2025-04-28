@@ -46,7 +46,8 @@ export type Database = {
           created_at: string
           grade: string | null
           id: string
-          is_default: boolean | null
+          is_active: boolean | null
+          is_owner: boolean
           name: string
           updated_at: string
         }
@@ -56,7 +57,8 @@ export type Database = {
           created_at?: string
           grade?: string | null
           id?: string
-          is_default?: boolean | null
+          is_active?: boolean | null
+          is_owner?: boolean
           name: string
           updated_at?: string
         }
@@ -66,7 +68,8 @@ export type Database = {
           created_at?: string
           grade?: string | null
           id?: string
-          is_default?: boolean | null
+          is_active?: boolean | null
+          is_owner?: boolean
           name?: string
           updated_at?: string
         }

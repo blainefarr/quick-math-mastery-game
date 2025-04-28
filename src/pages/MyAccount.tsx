@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm, FormProvider } from "react-hook-form";
@@ -50,6 +49,8 @@ const gradeOptions = [
   "Adult"
 ];
 
+const ACTIVE_PROFILE_KEY = 'math_game_active_profile';
+
 const MyAccount = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -94,16 +95,19 @@ const MyAccount = () => {
 
         setAccountEmail(account?.email || '');
 
+        // Get the profile ID from defaultProfileId context or localStorage
+        const profileId = defaultProfileId || localStorage.getItem(ACTIVE_PROFILE_KEY);
+
         // Then, get the active profile for this user
-        if (!defaultProfileId) {
-          console.log('No default profile ID set');
+        if (!profileId) {
+          console.log('No profile ID set');
           return;
         }
 
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
           .select('*')
-          .eq('id', defaultProfileId)
+          .eq('id', profileId)
           .single();
 
         if (profileError) {
@@ -118,16 +122,8 @@ const MyAccount = () => {
 
         if (profile) {
           console.log('Loaded profile:', profile);
-          // Check if this is the primary profile (first created)
-          const { data: firstProfile } = await supabase
-            .from('profiles')
-            .select('id')
-            .eq('account_id', userId)
-            .order('created_at', { ascending: true })
-            .limit(1)
-            .single();
-            
-          setIsProfileOwner(profile.id === firstProfile?.id);
+          // Check if this is the primary profile (owner)
+          setIsProfileOwner(profile.is_owner);
           
           form.reset({
             name: profile.name || '',
@@ -145,7 +141,19 @@ const MyAccount = () => {
 
   const onSubmit = async (data: FormData) => {
     try {
-      if (!userId || !defaultProfileId) return;
+      if (!userId) return;
+
+      // Get the profile ID from defaultProfileId context or localStorage
+      const profileId = defaultProfileId || localStorage.getItem(ACTIVE_PROFILE_KEY);
+      
+      if (!profileId) {
+        toast({
+          title: "Error",
+          description: "No active profile found",
+          variant: "destructive",
+        });
+        return;
+      }
 
       // Update profile information
       const { error: profileError } = await supabase
@@ -154,7 +162,7 @@ const MyAccount = () => {
           name: data.name,
           grade: data.grade,
         })
-        .eq('id', defaultProfileId);
+        .eq('id', profileId);
 
       if (profileError) throw profileError;
 
@@ -188,13 +196,25 @@ const MyAccount = () => {
 
   const handleProfileUpdated = async () => {
     try {
-      if (!userId || !defaultProfileId) return;
+      if (!userId) return;
+      
+      // Get the profile ID from defaultProfileId context or localStorage
+      const profileId = defaultProfileId || localStorage.getItem(ACTIVE_PROFILE_KEY);
+      
+      if (!profileId) {
+        toast({
+          title: "Error",
+          description: "No active profile found",
+          variant: "destructive",
+        });
+        return;
+      }
       
       // Refresh the profile data
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('*')
-        .eq('id', defaultProfileId)
+        .eq('id', profileId)
         .single();
 
       if (profileError) throw profileError;

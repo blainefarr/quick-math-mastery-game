@@ -5,6 +5,9 @@ import AuthContext from './AuthContext';
 import { AuthContextType, AuthProviderProps } from './auth-types';
 import { toast } from 'sonner';
 
+// Local storage key for active profile
+const ACTIVE_PROFILE_KEY = 'math_game_active_profile';
+
 const AuthProvider = ({ children }: AuthProviderProps) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [username, setUsername] = useState('');
@@ -32,7 +35,10 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
       setUsername('');
       setDefaultProfileId(null);
       
-      // Clear all local storage and session storage
+      // Clear active profile from localStorage
+      localStorage.removeItem(ACTIVE_PROFILE_KEY);
+      
+      // Clear all local storage and session storage related to auth
       localStorage.removeItem('supabase.auth.token');
       sessionStorage.removeItem('supabase.auth.token');
       
@@ -56,11 +62,11 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   };
 
-  // Fetch the default profile for a user with retry logic
+  // Fetch the profile for a user with retry logic
   const fetchDefaultProfile = async (accountId: string) => {
     try {
       setIsLoadingProfile(true);
-      console.log('Fetching default profile for account ID:', accountId);
+      console.log('Fetching profile for account ID:', accountId);
       
       // Give the session a moment to fully establish
       await new Promise(resolve => setTimeout(resolve, 300));
@@ -72,19 +78,34 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
         setIsLoadingProfile(false);
         return null;
       }
+
+      // First check if we have a stored profile ID in localStorage
+      const storedProfileId = localStorage.getItem(ACTIVE_PROFILE_KEY);
+      let profile = null;
       
-      // Try to get the default profile first, but handle the case where multiple might be marked as default
-      let { data: profiles, error: profilesError } = await supabase
-        .from('profiles')
-        .select('id, name, is_default')
-        .eq('account_id', accountId)
-        .eq('is_default', true);
-      
-      // If there are multiple default profiles or no default profiles
-      if (profilesError || !profiles || profiles.length !== 1) {
-        console.log('Multiple default profiles or no default profile found, getting any profile');
+      if (storedProfileId) {
+        console.log('Found stored profile ID in localStorage:', storedProfileId);
         
-        // If no default profile, try to get any profile
+        // Try to get the stored profile
+        const { data: storedProfile, error: storedProfileError } = await supabase
+          .from('profiles')
+          .select('id, name')
+          .eq('id', storedProfileId)
+          .eq('account_id', accountId)
+          .single();
+          
+        if (!storedProfileError && storedProfile) {
+          console.log('Successfully retrieved stored profile:', storedProfile);
+          profile = storedProfile;
+        } else {
+          console.log('Stored profile not found or error, will try to find another profile');
+          // If there's an error or no profile found, we'll fall back to getting any profile
+          localStorage.removeItem(ACTIVE_PROFILE_KEY);
+        }
+      }
+      
+      if (!profile) {
+        // Try to get any profile for this account
         const { data: anyProfile, error: anyProfileError } = await supabase
           .from('profiles')
           .select('id, name')
@@ -113,32 +134,24 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
         }
         
         if (anyProfile) {
-          console.log('Found profile (non-default):', anyProfile);
-          setDefaultProfileId(anyProfile.id);
-          setUsername(anyProfile.name || 'User');
-          setProfileFetchAttempts(0); // Reset attempts count on success
-          setIsLoadingProfile(false);
-          return anyProfile;
+          console.log('Found profile:', anyProfile);
+          profile = anyProfile;
+          
+          // Store the found profile ID in localStorage
+          localStorage.setItem(ACTIVE_PROFILE_KEY, anyProfile.id);
         }
-        
-        console.log('No profiles found for user');
-        setIsLoadingProfile(false);
-        return null;
       }
 
-      // We have exactly one default profile
-      if (profiles && profiles.length === 1) {
-        const profile = profiles[0];
-        console.log('Found default profile:', profile);
+      if (profile) {
         setDefaultProfileId(profile.id);
         setUsername(profile.name || 'User');
         setProfileFetchAttempts(0); // Reset attempts count on success
-        setIsLoadingProfile(false);
-        return profile;
+      } else {
+        console.log('No profiles found for user');
       }
       
       setIsLoadingProfile(false);
-      return null;
+      return profile;
     } catch (error) {
       console.error('Error in fetchDefaultProfile:', error);
       setIsLoadingProfile(false);
@@ -160,6 +173,10 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
           setUserId(null);
           setUsername('');
           setDefaultProfileId(null);
+          
+          // Clear active profile from localStorage on signout
+          localStorage.removeItem(ACTIVE_PROFILE_KEY);
+          
           setIsLoadingProfile(false);
           return;
         }
