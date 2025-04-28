@@ -9,6 +9,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { LeaderboardEntry } from "@/hooks/useLeaderboard";
+import { useAuth } from "@/context/auth/useAuth";
 
 type Props = {
   entries: LeaderboardEntry[];
@@ -23,7 +24,9 @@ const getRankIcon = (rank: number) => {
   return null;
 };
 
-export const LeaderboardTable = ({ entries, currentUserId, className = '' }: Props) => {
+export const LeaderboardTable = ({ entries, className = '' }: Props) => {
+  const { defaultProfileId } = useAuth();
+  
   if (entries.length === 0) {
     return null; // Return null as we'll handle the empty state in the parent component
   }
@@ -42,8 +45,8 @@ export const LeaderboardTable = ({ entries, currentUserId, className = '' }: Pro
         </TableHeader>
         <TableBody>
           {entries.map((entry) => {
-            // Check if the current user matches either user_id or profile_id
-            const isCurrentUser = entry.user_id === currentUserId;
+            // Check if the current user matches the profile_id
+            const isCurrentUser = entry.profile_id === defaultProfileId;
             
             return (
               <TableRow

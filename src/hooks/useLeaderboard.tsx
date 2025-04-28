@@ -139,15 +139,15 @@ export const useLeaderboard = () => {
 
       // Fetch user rank if authenticated
       const {
-        data: { user },
-      } = await supabase.auth.getUser();
+        data: { session },
+      } = await supabase.auth.getSession();
 
-      if (user) {
+      if (session?.user) {
         // Fetch the default profile for the user
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
           .select('id')
-          .eq('account_id', user.id)
+          .eq('account_id', session.user.id)
           .eq('is_default', true)
           .single();
 
@@ -187,6 +187,7 @@ export const useLeaderboard = () => {
   // Initial fetch on mount and when URL changes
   useEffect(() => {
     if (!initialLoadDone.current) {
+      console.log('Initial leaderboard fetch');
       fetchLeaderboard();
       initialLoadDone.current = true;
     }

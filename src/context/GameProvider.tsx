@@ -5,13 +5,13 @@ import { GameContextType, GameState, GameProviderProps, GameEndReason } from './
 import { useGameSettings } from './hooks/useGameSettings';
 import { useProblemGenerator } from './hooks/useProblemGenerator';
 import { useScoreManagement } from './hooks/useScoreManagement';
-import useAuth from './auth/useAuth';
+import { useAuth } from './auth/useAuth';
 import { toast } from 'sonner';
 
 const GameProvider = ({ children }: GameProviderProps) => {
   const { settings, updateSettings, resetSettings } = useGameSettings();
   const { currentProblem, generateNewProblem } = useProblemGenerator();
-  const { userId } = useAuth();
+  const { userId, defaultProfileId } = useAuth();
   
   const [gameState, setGameState] = useState<GameState>('selection');
   const [score, setScore] = useState(0);
@@ -49,7 +49,7 @@ const GameProvider = ({ children }: GameProviderProps) => {
       startGameTimer();
       // Reset the isEnding flag when starting a new game
       isEndingRef.current = false;
-    } else if (gameState === 'ended' && userId) {
+    } else if (gameState === 'ended' && userId && defaultProfileId) {
       fetchUserScores().then(scores => {
         if (scores) {
           setScoreHistory(scores);
@@ -64,7 +64,7 @@ const GameProvider = ({ children }: GameProviderProps) => {
         timerRef.current = null;
       }
     };
-  }, [gameState, userId, fetchUserScores, setScoreHistory]);
+  }, [gameState, userId, fetchUserScores, setScoreHistory, defaultProfileId]);
 
   const incrementScore = () => {
     // Don't increment score if the game is ending
@@ -130,7 +130,7 @@ const GameProvider = ({ children }: GameProviderProps) => {
     }
     
     // Only save score on timeout (normal game end) and when user is logged in
-    if (reason === 'timeout' && isLoggedIn) {
+    if (reason === 'timeout' && isLoggedIn && defaultProfileId) {
       console.log(`Attempting to save score: ${finalScore}`);
       try {
         const success = await saveScore(

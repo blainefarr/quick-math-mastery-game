@@ -8,6 +8,7 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [username, setUsername] = useState('');
   const [userId, setUserId] = useState<string | null>(null);
+  const [defaultProfileId, setDefaultProfileId] = useState<string | null>(null);
 
   // Comprehensive logout function that ensures all session data is cleared
   const handleLogout = async () => {
@@ -25,6 +26,7 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
       setIsLoggedIn(false);
       setUserId(null);
       setUsername('');
+      setDefaultProfileId(null);
       
       // Clear all local storage and session storage
       localStorage.removeItem('supabase.auth.token');
@@ -46,6 +48,59 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
       setIsLoggedIn(false);
       setUserId(null);
       setUsername('');
+      setDefaultProfileId(null);
+    }
+  };
+
+  // Fetch the default profile for a user
+  const fetchDefaultProfile = async (accountId: string) => {
+    try {
+      console.log('Fetching default profile for account ID:', accountId);
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('id, name')
+        .eq('account_id', accountId)
+        .eq('is_default', true)
+        .single();
+
+      if (error) {
+        console.error('Error fetching default profile:', error);
+        return null;
+      }
+
+      if (profile) {
+        console.log('Found default profile:', profile);
+        setDefaultProfileId(profile.id);
+        setUsername(profile.name || 'User');
+        return profile;
+      }
+      
+      // If no default profile found, try to get any profile
+      const { data: anyProfile, error: anyProfileError } = await supabase
+        .from('profiles')
+        .select('id, name')
+        .eq('account_id', accountId)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+        
+      if (anyProfileError) {
+        console.error('Error fetching any profile:', anyProfileError);
+        return null;
+      }
+      
+      if (anyProfile) {
+        console.log('Found profile (non-default):', anyProfile);
+        setDefaultProfileId(anyProfile.id);
+        setUsername(anyProfile.name || 'User');
+        return anyProfile;
+      }
+      
+      console.log('No profiles found for user');
+      return null;
+    } catch (error) {
+      console.error('Error in fetchDefaultProfile:', error);
+      return null;
     }
   };
 
@@ -59,6 +114,7 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
           setIsLoggedIn(false);
           setUserId(null);
           setUsername('');
+          setDefaultProfileId(null);
           return;
         }
         
@@ -67,39 +123,13 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
           setUserId(session.user.id);
           
           // Fetch the default profile to get the username
-          try {
-            const { data: profile } = await supabase
-              .from('profiles')
-              .select('name')
-              .eq('account_id', session.user.id)
-              .eq('is_default', true)
-              .single();
-              
-            if (profile?.name) {
-              setUsername(profile.name);
-              console.log('Found profile name:', profile.name);
-            } else {
-              // Fallback to account data if profile not found
-              const { data: account } = await supabase
-                .from('accounts')
-                .select('name')
-                .eq('id', session.user.id)
-                .single();
-                
-              setUsername(
-                account?.name || 
-                session.user.user_metadata?.name ||
-                session.user.email?.split('@')[0] ||
-                "User"
-              );
-            }
-          } catch (error) {
-            console.error('Error fetching profile:', error);
-            // Fallback to user email or metadata
+          const profile = await fetchDefaultProfile(session.user.id);
+          
+          if (!profile) {
+            // Fallback to user metadata if no profile
             setUsername(
               session.user.user_metadata?.name ||
               session.user.email?.split('@')[0] ||
-              session.user.email ||
               "User"
             );
           }
@@ -117,49 +147,15 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
           setIsLoggedIn(true);
           setUserId(session.user.id);
           
-          // Fetch the default profile to get the username
-          try {
-            const { data: profile } = await supabase
-              .from('profiles')
-              .select('name')
-              .eq('account_id', session.user.id)
-              .eq('is_default', true)
-              .single();
-              
-            if (profile?.name) {
-              setUsername(profile.name);
-              console.log('Found profile name:', profile.name);
-            } else {
-              // Fallback to account data if profile not found
-              const { data: account } = await supabase
-                .from('accounts')
-                .select('name')
-                .eq('id', session.user.id)
-                .single();
-                
-              setUsername(
-                account?.name || 
-                session.user.user_metadata?.name ||
-                session.user.email?.split('@')[0] ||
-                "User"
-              );
-            }
-          } catch (error) {
-            console.error('Error fetching profile:', error);
-            // Fallback to user email or metadata
-            setUsername(
-              session.user.user_metadata?.name ||
-              session.user.email?.split('@')[0] ||
-              session.user.email ||
-              "User"
-            );
-          }
+          // Fetch the default profile
+          await fetchDefaultProfile(session.user.id);
         } else {
           console.log('No existing session found');
           // Ensure we're truly logged out
           setIsLoggedIn(false);
           setUserId(null);
           setUsername('');
+          setDefaultProfileId(null);
         }
       } catch (error) {
         console.error('Error checking session:', error);
@@ -177,6 +173,7 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
     isLoggedIn,
     username,
     userId,
+    defaultProfileId,
     setIsLoggedIn,
     setUsername,
     handleLogout,

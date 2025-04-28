@@ -4,7 +4,11 @@ import UserDropdown from './UserDropdown';
 import { useAuth } from '@/context/auth/useAuth';
 
 const UserProfile = () => {
-  const { username } = useAuth();
+  const { username, isAuthenticated } = useAuth();
+  
+  if (!isAuthenticated) {
+    return null;
+  }
   
   return (
     <div className="flex items-center gap-2">

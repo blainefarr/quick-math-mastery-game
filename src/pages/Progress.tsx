@@ -17,7 +17,8 @@ const Progress = () => {
   const navigate = useNavigate();
   const {
     isAuthenticated,
-    userId
+    userId,
+    defaultProfileId
   } = useAuth();
   const [selectedRange, setSelectedRange] = useState<string>("all");
   const [selectedOperation, setSelectedOperation] = useState<string>("all");
@@ -31,21 +32,30 @@ const Progress = () => {
       toast.error("You need to be logged in to view your progress");
       return;
     }
+    
     const fetchScores = async () => {
-      if (!userId) return;
+      if (!defaultProfileId) {
+        console.log('No defaultProfileId available, cannot fetch scores');
+        return;
+      }
+      
       setLoading(true);
       try {
-        const {
-          data,
-          error
-        } = await supabase.from('scores').select('*').eq('user_id', userId).order('date', {
-          ascending: false
-        });
+        console.log('Fetching scores for profile:', defaultProfileId);
+        const { data, error } = await supabase
+          .from('scores')
+          .select('*')
+          .eq('profile_id', defaultProfileId)
+          .order('date', { ascending: false });
+
         if (error) {
           console.error('Error fetching scores:', error);
           toast.error('Failed to load your scores');
+          setError("Could not load scores");
           return;
         }
+
+        console.log('Retrieved progress scores:', data);
         const transformedData: UserScore[] = (data || []).map(item => ({
           score: item.score,
           operation: item.operation as Operation,
@@ -60,6 +70,7 @@ const Progress = () => {
           focusNumber: item.focus_number,
           allowNegatives: item.allow_negatives
         }));
+        
         setProfileScores(transformedData);
       } catch (error) {
         console.error('Error fetching scores:', error);
@@ -68,8 +79,9 @@ const Progress = () => {
         setLoading(false);
       }
     };
+    
     fetchScores();
-  }, [userId, isAuthenticated, navigate]);
+  }, [userId, isAuthenticated, navigate, defaultProfileId]);
 
   const getUniqueRanges = () => {
     if (!profileScores || profileScores.length === 0) {

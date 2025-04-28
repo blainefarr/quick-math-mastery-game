@@ -3,67 +3,26 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { UserScore, Operation, ProblemRange } from '@/types';
 import { toast } from 'sonner';
+import { useAuth } from '@/context/auth/useAuth';
 
 export const useScoreManagement = (userId: string | null) => {
   const [scoreHistory, setScoreHistory] = useState<UserScore[]>([]);
   const [savingScore, setSavingScore] = useState(false);
-  const [defaultProfileId, setDefaultProfileId] = useState<string | null>(null);
+  const { defaultProfileId } = useAuth();
 
-  // Fetch the default profile ID for the user
-  const fetchDefaultProfileId = useCallback(async () => {
-    if (!userId) return null;
-    
-    try {
-      console.log('Fetching default profile for user ID:', userId);
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('account_id', userId)
-        .eq('is_default', true)
-        .single();
-
-      if (error) {
-        console.error('Error fetching default profile:', error);
-        return null;
-      }
-
-      if (data) {
-        console.log('Found default profile ID:', data.id);
-        setDefaultProfileId(data.id);
-        return data.id;
-      }
-      
-      return null;
-    } catch (error) {
-      console.error('Error fetching default profile:', error);
-      return null;
-    }
-  }, [userId]);
-
-  // Fetch default profile ID when component mounts or userId changes
-  useEffect(() => {
-    if (userId && !defaultProfileId) {
-      fetchDefaultProfileId();
-    }
-  }, [userId, defaultProfileId, fetchDefaultProfileId]);
-
+  // Fetch the user scores based on profile ID
   const fetchUserScores = useCallback(async () => {
-    if (!userId) return [];
+    if (!userId || !defaultProfileId) {
+      console.log('Missing userId or defaultProfileId in fetchUserScores', { userId, defaultProfileId });
+      return [];
+    }
 
     try {
-      // Make sure we have the default profile ID
-      const profileId = defaultProfileId || await fetchDefaultProfileId();
-      
-      if (!profileId) {
-        console.error('No default profile found for user');
-        return [];
-      }
-
-      console.log('Fetching scores for profile ID:', profileId);
+      console.log('Fetching scores for profile ID:', defaultProfileId);
       const { data, error } = await supabase
         .from('scores')
         .select('*')
-        .eq('profile_id', profileId)
+        .eq('profile_id', defaultProfileId)
         .order('date', { ascending: false });
 
       if (error) {
@@ -88,13 +47,22 @@ export const useScoreManagement = (userId: string | null) => {
         allowNegatives: item.allow_negatives
       }));
 
+      setScoreHistory(transformedData);
       return transformedData;
     } catch (error) {
       console.error('Error fetching scores:', error);
       toast.error('Failed to load your scores');
       return [];
     }
-  }, [userId, defaultProfileId, fetchDefaultProfileId]);
+  }, [userId, defaultProfileId]);
+
+  // Effect to fetch scores when profile ID changes
+  useEffect(() => {
+    if (defaultProfileId) {
+      console.log('Profile ID changed, fetching scores', defaultProfileId);
+      fetchUserScores();
+    }
+  }, [defaultProfileId, fetchUserScores]);
 
   const saveScore = useCallback(async (
     score: number, 
@@ -111,7 +79,8 @@ export const useScoreManagement = (userId: string | null) => {
       timerSeconds,
       focusNumber,
       allowNegatives,
-      userId
+      userId,
+      profileId: defaultProfileId
     });
 
     if (savingScore) {
@@ -124,6 +93,12 @@ export const useScoreManagement = (userId: string | null) => {
       return false;
     }
 
+    if (!defaultProfileId) {
+      console.error('No profile ID available, cannot save score');
+      toast.error('Unable to save score - no profile found');
+      return false;
+    }
+
     if (score < 0 || typeof score !== 'number' || isNaN(score)) {
       console.error(`Invalid score value: ${score}`);
       toast.error('Invalid score value');
@@ -133,22 +108,6 @@ export const useScoreManagement = (userId: string | null) => {
     try {
       setSavingScore(true);
       
-      // Make sure we have the default profile ID
-      let profileId = defaultProfileId;
-      
-      if (!profileId) {
-        console.log('No default profile ID in state, fetching it now');
-        profileId = await fetchDefaultProfileId();
-      }
-      
-      if (!profileId) {
-        console.error('Could not find or create default profile for user');
-        toast.error('Unable to save score - no profile found');
-        setSavingScore(false);
-        return false;
-      }
-
-      console.log('Using profile ID for score:', profileId);
       const scoreData = {
         score,
         operation,
@@ -157,7 +116,7 @@ export const useScoreManagement = (userId: string | null) => {
         min2: range.min2 ?? 0, 
         max2: range.max2 ?? 0,
         user_id: userId,
-        profile_id: profileId,
+        profile_id: defaultProfileId,
         duration: timerSeconds ?? 0,
         focus_number: focusNumber ?? null,
         allow_negatives: allowNegatives ?? false,
@@ -189,7 +148,7 @@ export const useScoreManagement = (userId: string | null) => {
       setSavingScore(false);
       return false;
     }
-  }, [userId, fetchUserScores, savingScore, defaultProfileId, fetchDefaultProfileId]);
+  }, [userId, fetchUserScores, savingScore, defaultProfileId]);
 
   const getIsHighScore = useCallback((
     newScore: number, 
@@ -215,7 +174,6 @@ export const useScoreManagement = (userId: string | null) => {
     fetchUserScores, 
     saveScore, 
     getIsHighScore,
-    savingScore,
-    defaultProfileId
+    savingScore
   };
 };
