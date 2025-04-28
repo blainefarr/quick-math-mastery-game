@@ -62,6 +62,17 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
       setIsLoadingProfile(true);
       console.log('Fetching default profile for account ID:', accountId);
       
+      // Give the session a moment to fully establish
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      // Get a fresh session to ensure RLS policies are properly applied
+      const { data: { session: refreshedSession } } = await supabase.auth.getSession();
+      if (!refreshedSession?.user) {
+        console.log('No valid session found after refreshing');
+        setIsLoadingProfile(false);
+        return null;
+      }
+      
       const { data: profile, error } = await supabase
         .from('profiles')
         .select('id, name')
@@ -234,6 +245,7 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
     isLoadingProfile,
     setIsLoggedIn,
     setUsername,
+    setDefaultProfileId,
     handleLogout,
     isAuthenticated: isLoggedIn
   };

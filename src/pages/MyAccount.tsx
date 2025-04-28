@@ -5,7 +5,7 @@ import { useForm, FormProvider } from "react-hook-form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Users } from 'lucide-react';
 import {
   Form,
   FormControl,
@@ -25,6 +25,9 @@ import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import useAuth from "@/context/auth/useAuth";
+import { ProfileSwitcherDialog } from "@/components/user/ProfileSwitcherDialog";
+import { CreateProfileForm } from '@/components/user/CreateProfileForm';
+import { Badge } from "@/components/ui/badge";
 
 type FormData = {
   name: string;
@@ -49,8 +52,12 @@ const gradeOptions = [
 const MyAccount = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { isLoggedIn, userId } = useAuth();
-  const [defaultProfileId, setDefaultProfileId] = useState<string | null>(null);
+  const { isLoggedIn, userId, defaultProfileId } = useAuth();
+  const [isProfileOwner, setIsProfileOwner] = useState(true);
+  const [accountEmail, setAccountEmail] = useState('');
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [showProfileSwitcher, setShowProfileSwitcher] = useState(false);
+  
   const form = useForm<FormData>({
     defaultValues: {
       name: '',
@@ -84,12 +91,18 @@ const MyAccount = () => {
           return;
         }
 
-        // Then, get the default profile for this user
+        setAccountEmail(account?.email || '');
+
+        // Then, get the active profile for this user
+        if (!defaultProfileId) {
+          console.log('No default profile ID set');
+          return;
+        }
+
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
           .select('*')
-          .eq('account_id', userId)
-          .eq('is_default', true)
+          .eq('id', defaultProfileId)
           .single();
 
         if (profileError) {
@@ -104,7 +117,17 @@ const MyAccount = () => {
 
         if (profile) {
           console.log('Loaded profile:', profile);
-          setDefaultProfileId(profile.id);
+          // Check if this is the primary profile (first created)
+          const { data: firstProfile } = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('account_id', userId)
+            .order('created_at', { ascending: true })
+            .limit(1)
+            .single();
+            
+          setIsProfileOwner(profile.id === firstProfile?.id);
+          
           form.reset({
             name: profile.name || '',
             grade: profile.grade || '',
@@ -117,7 +140,7 @@ const MyAccount = () => {
     };
 
     fetchUserProfile();
-  }, [navigate, form, userId, toast]);
+  }, [navigate, form, userId, defaultProfileId, toast]);
 
   const onSubmit = async (data: FormData) => {
     try {
@@ -134,20 +157,24 @@ const MyAccount = () => {
 
       if (profileError) throw profileError;
 
-      // Update account email
-      const { error: accountError } = await supabase
-        .from('accounts')
-        .update({
-          email: data.email,
-        })
-        .eq('id', userId);
+      if (isProfileOwner) {
+        // Update account email only if this is the account owner
+        const { error: accountError } = await supabase
+          .from('accounts')
+          .update({
+            email: data.email,
+          })
+          .eq('id', userId);
 
-      if (accountError) throw accountError;
+        if (accountError) throw accountError;
+      }
 
       toast({
         title: "Success",
         description: "Your profile has been updated.",
       });
+      
+      setIsEditingProfile(false);
     } catch (error) {
       console.error('Error updating profile:', error);
       toast({
@@ -155,6 +182,38 @@ const MyAccount = () => {
         description: "Could not update profile. Please try again.",
         variant: "destructive",
       });
+    }
+  };
+
+  const handleProfileUpdated = async () => {
+    try {
+      if (!userId || !defaultProfileId) return;
+      
+      // Refresh the profile data
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', defaultProfileId)
+        .single();
+
+      if (profileError) throw profileError;
+
+      if (profile) {
+        form.reset({
+          name: profile.name || '',
+          grade: profile.grade || '',
+          email: form.getValues().email,
+        });
+      }
+      
+      setIsEditingProfile(false);
+      
+      toast({
+        title: "Success",
+        description: "Profile updated successfully.",
+      });
+    } catch (error) {
+      console.error('Error refreshing profile:', error);
     }
   };
 
@@ -177,104 +236,159 @@ const MyAccount = () => {
         <p className="text-muted-foreground">Manage your profile settings</p>
       </div>
       
+      <div className="flex justify-between items-center">
+        <div className="flex items-center space-x-2">
+          <h2 className="text-lg font-medium">Active Profile</h2>
+          {isProfileOwner && (
+            <Badge variant="secondary" className="text-xs">Account Owner</Badge>
+          )}
+        </div>
+        <Button 
+          variant="outline" 
+          size="sm"
+          onClick={() => setShowProfileSwitcher(true)}
+          className="flex items-center gap-2"
+        >
+          <Users size={16} />
+          Switch Profile
+        </Button>
+      </div>
+      
       <Card className="max-w-xl mx-auto">
         <CardContent className="pt-6">
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Name</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="grade"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Grade</FormLabel>
-                    <Select 
-                      onValueChange={field.onChange}
-                      value={field.value}
-                      defaultValue={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select grade" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {gradeOptions.map((grade) => (
-                          <SelectItem key={grade} value={grade}>
-                            {grade}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email</FormLabel>
-                    <FormControl>
-                      <Input {...field} type="email" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <div className="flex justify-end">
-                <Button type="submit">Save Changes</Button>
-              </div>
-            </form>
-          </Form>
-
-          <div className="mt-8 pt-6 border-t">
-            <Label className="text-base">Password</Label>
-            <p className="text-sm text-muted-foreground mb-4">
-              Update your password to keep your account secure.
-            </p>
-            <Button
-              variant="outline"
-              onClick={() => {
-                const email = form.getValues('email');
-                if (email) {
-                  supabase.auth.resetPasswordForEmail(email, {
-                    redirectTo: `${window.location.origin}/reset-password`,
-                  });
-                  toast({
-                    title: "Password Reset Email Sent",
-                    description: "Check your email for the password reset link.",
-                  });
-                } else {
-                  toast({
-                    title: "Error",
-                    description: "Please enter your email first.",
-                    variant: "destructive",
-                  });
-                }
+          {isEditingProfile ? (
+            <CreateProfileForm 
+              onSuccess={handleProfileUpdated}
+              onCancel={() => setIsEditingProfile(false)}
+              initialValues={{
+                name: form.getValues().name,
+                grade: form.getValues().grade,
               }}
-            >
-              Change Password
-            </Button>
-          </div>
+              isEditing={true}
+              profileId={defaultProfileId || undefined}
+            />
+          ) : (
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Name</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="grade"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Grade</FormLabel>
+                      <Select 
+                        onValueChange={field.onChange}
+                        value={field.value}
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select grade" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {gradeOptions.map((grade) => (
+                            <SelectItem key={grade} value={grade}>
+                              {grade}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {isProfileOwner && (
+                  <FormField
+                    control={form.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Email</FormLabel>
+                        <FormControl>
+                          <Input {...field} type="email" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
+                
+                {!isProfileOwner && accountEmail && (
+                  <div className="space-y-2">
+                    <Label>Account Email</Label>
+                    <p className="text-sm text-muted-foreground">{accountEmail}</p>
+                    <p className="text-xs text-muted-foreground">
+                      This profile is using the account created with this email.
+                    </p>
+                  </div>
+                )}
+
+                <div className="flex justify-end">
+                  <Button 
+                    type="button" 
+                    onClick={() => setIsEditingProfile(true)}
+                  >
+                    Edit Profile
+                  </Button>
+                </div>
+              </form>
+            </Form>
+          )}
+
+          {isProfileOwner && (
+            <div className="mt-8 pt-6 border-t">
+              <Label className="text-base">Password</Label>
+              <p className="text-sm text-muted-foreground mb-4">
+                Update your password to keep your account secure.
+              </p>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  const email = form.getValues('email');
+                  if (email) {
+                    supabase.auth.resetPasswordForEmail(email, {
+                      redirectTo: `${window.location.origin}/reset-password`,
+                    });
+                    toast({
+                      title: "Password Reset Email Sent",
+                      description: "Check your email for the password reset link.",
+                    });
+                  } else {
+                    toast({
+                      title: "Error",
+                      description: "Please enter your email first.",
+                      variant: "destructive",
+                    });
+                  }
+                }}
+              >
+                Change Password
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
+      
+      <ProfileSwitcherDialog 
+        open={showProfileSwitcher}
+        onOpenChange={setShowProfileSwitcher}
+      />
     </div>
   );
 };

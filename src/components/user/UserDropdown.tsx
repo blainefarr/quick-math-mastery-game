@@ -11,8 +11,9 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { LogOut, Trophy, TrendingUp, Settings } from 'lucide-react';
+import { LogOut, Trophy, TrendingUp, Settings, Users } from 'lucide-react';
 import { toast } from 'sonner';
+import { ProfileSwitcherDialog } from './ProfileSwitcherDialog';
 
 interface UserDropdownProps {
   username: string;
@@ -28,6 +29,7 @@ const UserDropdown = ({
   const navigate = useNavigate();
   const { handleLogout } = useAuth();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [showProfileSwitcher, setShowProfileSwitcher] = useState(false);
 
   const handleUserLogout = async () => {
     try {
@@ -65,6 +67,13 @@ const UserDropdown = ({
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
           <DropdownMenuItem 
+            onClick={() => setShowProfileSwitcher(true)}
+            className="cursor-pointer hover:bg-accent"
+          >
+            <Users className="mr-2 h-4 w-4" />
+            Switch Profile
+          </DropdownMenuItem>
+          <DropdownMenuItem 
             onClick={() => navigate('/progress')}
             className="cursor-pointer hover:bg-accent"
           >
@@ -96,6 +105,12 @@ const UserDropdown = ({
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
+
+      {/* Profile Switcher Dialog */}
+      <ProfileSwitcherDialog 
+        open={showProfileSwitcher} 
+        onOpenChange={setShowProfileSwitcher} 
+      />
     </div>
   );
 };

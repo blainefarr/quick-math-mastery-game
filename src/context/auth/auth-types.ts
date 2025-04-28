@@ -5,9 +5,10 @@ export interface AuthContextType {
   userId: string | null;
   defaultProfileId: string | null;
   isAuthenticated: boolean;
-  isLoadingProfile: boolean; // Add this state to track profile loading
+  isLoadingProfile: boolean;
   setIsLoggedIn: (isLoggedIn: boolean) => void;
   setUsername: (username: string) => void;
+  setDefaultProfileId: (profileId: string) => void;
   handleLogout: () => Promise<void>;
 }
 
