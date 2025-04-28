@@ -30,28 +30,40 @@ const AlertDialogContent = React.forwardRef<
   React.ElementRef<typeof AlertDialogPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Content>
 >(({ className, ...props }, ref) => {
-  // Add same cleanup logic as in DialogContent
+  // Enhanced cleanup logic for AlertDialog component
   React.useEffect(() => {
+    // Store original body styles to restore later
     const originalStyles = {
       pointerEvents: document.body.style.pointerEvents,
       overflow: document.body.style.overflow,
       position: document.body.style.position
     };
     
+    // Remove any modal-related classes that might interfere
     document.body.classList.remove('ReactModal__Body--open');
     document.body.style.pointerEvents = '';
     
     return () => {
+      // Complete cleanup on unmount
       document.body.classList.remove('ReactModal__Body--open');
-      document.body.style.pointerEvents = originalStyles.pointerEvents;
-      document.body.style.overflow = originalStyles.overflow;
-      document.body.style.position = originalStyles.position;
+      document.body.style.pointerEvents = originalStyles.pointerEvents || '';
+      document.body.style.overflow = originalStyles.overflow || '';
+      document.body.style.position = originalStyles.position || '';
       
+      // Extra check for any stray backdrops that might be left
+      const strayBackdrops = document.querySelectorAll('[data-radix-alert-dialog-overlay]');
+      strayBackdrops.forEach(el => {
+        if (!el.parentElement?.querySelector('[data-state="open"]')) {
+          el.remove();
+        }
+      });
+      
+      // Force enable pointer events after a short delay to ensure cleanup completes
       setTimeout(() => {
         if (document.body.style.pointerEvents === 'none') {
           document.body.style.pointerEvents = '';
         }
-      }, 100);
+      }, 150); // A slightly longer delay for alert dialogs
     };
   }, []);
   

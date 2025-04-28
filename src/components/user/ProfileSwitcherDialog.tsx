@@ -35,6 +35,29 @@ export function ProfileSwitcherDialog({ open, onOpenChange }: ProfileSwitcherDia
   const [showCreateForm, setShowCreateForm] = useState(false);
   const { userId, defaultProfileId, setDefaultProfileId, setUsername } = useAuth();
 
+  // Extra cleanup effect to ensure no modal backdrop issues
+  useEffect(() => {
+    if (!open) {
+      // Force cleanup of any potential leftover modal state when dialog closes
+      setTimeout(() => {
+        document.body.style.pointerEvents = '';
+        document.body.style.overflow = '';
+        document.body.style.position = '';
+        document.body.classList.remove('ReactModal__Body--open');
+        
+        // Remove any stray backdrops just in case
+        const strayOverlays = document.querySelectorAll('[role="dialog"]');
+        strayOverlays.forEach(el => {
+          // Only remove if it's not an active dialog
+          if (el.getAttribute('data-state') !== 'open') {
+            const backdrop = el.parentElement?.querySelector('[data-radix-dialog-overlay]');
+            if (backdrop) backdrop.remove();
+          }
+        });
+      }, 200);
+    }
+  }, [open]);
+
   // Fetch all profiles for this account
   const fetchProfiles = async () => {
     if (!userId) return;
@@ -98,8 +121,15 @@ export function ProfileSwitcherDialog({ open, onOpenChange }: ProfileSwitcherDia
         console.error('Error resetting other profiles:', resetError);
       }
       
-      // Close the dialog
+      // Close the dialog and ensure cleanup
       onOpenChange(false);
+      
+      // Extra cleanup to ensure no modal backdrop issues
+      setTimeout(() => {
+        document.body.style.pointerEvents = '';
+        document.body.style.overflow = '';
+        document.body.classList.remove('ReactModal__Body--open');
+      }, 100);
     } catch (err) {
       console.error('Error switching profile:', err);
       toast.error('Failed to switch profile');
@@ -114,7 +144,19 @@ export function ProfileSwitcherDialog({ open, onOpenChange }: ProfileSwitcherDia
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog 
+      open={open} 
+      onOpenChange={(newOpen) => {
+        // Extra cleanup when dialog is closing
+        if (!newOpen) {
+          setTimeout(() => {
+            document.body.style.pointerEvents = '';
+            document.body.style.overflow = '';
+          }, 50);
+        }
+        onOpenChange(newOpen);
+      }}
+    >
       <DialogContent className="sm:max-w-[600px] p-0 overflow-hidden">
         <DialogHeader className="p-6 pb-0">
           <DialogTitle className="text-2xl">Choose a Profile</DialogTitle>
@@ -191,7 +233,17 @@ export function ProfileSwitcherDialog({ open, onOpenChange }: ProfileSwitcherDia
             </div>
             
             <div className="flex justify-end">
-              <Button variant="outline" onClick={() => onOpenChange(false)}>
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  // Enhanced cleanup before closing
+                  onOpenChange(false);
+                  setTimeout(() => {
+                    document.body.style.pointerEvents = '';
+                    document.body.style.overflow = '';
+                  }, 50);
+                }}
+              >
                 Close
               </Button>
             </div>

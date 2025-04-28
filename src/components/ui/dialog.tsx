@@ -32,7 +32,7 @@ const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
 >(({ className, children, ...props }, ref) => {
-  // More comprehensive cleanup for all possible modal-related styles
+  // Enhanced comprehensive cleanup for all possible modal-related styles
   React.useEffect(() => {
     // Store original body styles to restore later
     const originalStyles = {
@@ -50,9 +50,17 @@ const DialogContent = React.forwardRef<
     return () => {
       // Complete cleanup on unmount
       document.body.classList.remove('ReactModal__Body--open');
-      document.body.style.pointerEvents = originalStyles.pointerEvents;
-      document.body.style.overflow = originalStyles.overflow;
-      document.body.style.position = originalStyles.position;
+      document.body.style.pointerEvents = originalStyles.pointerEvents || '';
+      document.body.style.overflow = originalStyles.overflow || '';
+      document.body.style.position = originalStyles.position || '';
+      
+      // Extra check for any stray backdrops that might be left
+      const strayBackdrops = document.querySelectorAll('[data-radix-dialog-overlay]');
+      strayBackdrops.forEach(el => {
+        if (!el.parentElement?.querySelector('[data-state="open"]')) {
+          el.remove();
+        }
+      });
       
       // Force enable pointer events after a short delay to ensure cleanup completes
       setTimeout(() => {
@@ -79,7 +87,7 @@ const DialogContent = React.forwardRef<
         <DialogPrimitive.Close 
           className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground"
           onClick={() => {
-            // More comprehensive reset of body styles
+            // More comprehensive reset of body styles on explicit close
             document.body.style.pointerEvents = '';
             document.body.style.overflow = '';
             document.body.style.position = '';
