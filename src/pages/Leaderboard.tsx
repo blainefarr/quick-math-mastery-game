@@ -58,11 +58,11 @@ const Leaderboard = () => {
       </div>
 
       <Card className="overflow-hidden">
-        <div className="p-4 sticky top-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 z-10">
+        <div className="p-4 sticky top-0 backdrop-blur z-10 bg-white">
           <LeaderboardFilters filters={filters} onFilterChange={updateFilters} />
         </div>
 
-        {userRank && <div className="px-4 pb-4">
+        {userRank && <div className="px-4">
             <Card className="p-4 text-center bg-accent/10">
               <p className="text-accent font-semibold">
                 Your Current Rank: #{userRank}
