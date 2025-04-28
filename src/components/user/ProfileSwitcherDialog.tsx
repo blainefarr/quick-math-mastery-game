@@ -22,7 +22,7 @@ interface Profile {
   grade?: string;
   is_default: boolean;
   created_at: string;
-  account_owner?: boolean;  // New property to track the account owner profile
+  account_owner?: boolean;  // Property to track the account owner profile
 }
 
 interface ProfileSwitcherDialogProps {
@@ -59,27 +59,14 @@ export function ProfileSwitcherDialog({ open, onOpenChange }: ProfileSwitcherDia
     }
   }, [open]);
 
-  // Fetch all profiles for this account and identify account owner
+  // Fetch all profiles for this account and identify the account owner (first created profile)
   const fetchProfiles = async () => {
     if (!userId) return;
     
     try {
       setLoading(true);
       
-      // First, get the account's email to identify the owner profile
-      const { data: accountData, error: accountError } = await supabase
-        .from('accounts')
-        .select('email')
-        .eq('id', userId)
-        .single();
-      
-      if (accountError) {
-        console.error('Error fetching account info:', accountError);
-      }
-      
-      const accountEmail = accountData?.email;
-      
-      // Then get all profiles for this account
+      // Get all profiles for this account sorted by creation time
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -92,17 +79,11 @@ export function ProfileSwitcherDialog({ open, onOpenChange }: ProfileSwitcherDia
         return;
       }
       
-      // Mark the profile that corresponds to the account owner
-      const processedProfiles = data?.map((profile, index) => {
-        // Find the oldest profile if email data not available,
-        // or match first profile with account email if available
-        const isAccountOwner = index === 0 || profile.email === accountEmail;
-        
-        return {
-          ...profile,
-          account_owner: isAccountOwner
-        };
-      }) || [];
+      // Mark the first created profile (oldest) as the account owner
+      const processedProfiles = data?.map((profile, index) => ({
+        ...profile,
+        account_owner: index === 0  // First profile is the account owner
+      })) || [];
       
       setProfiles(processedProfiles);
     } catch (err) {
