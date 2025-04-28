@@ -10,7 +10,9 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
   const [username, setUsername] = useState('');
   const [userId, setUserId] = useState<string | null>(null);
   const [defaultProfileId, setDefaultProfileId] = useState<string | null>(null);
-  const [isLoadingProfile, setIsLoadingProfile] = useState(true); // Add loading state
+  const [isLoadingProfile, setIsLoadingProfile] = useState(true);
+  const [profileFetchAttempts, setProfileFetchAttempts] = useState(0);
+  const MAX_PROFILE_FETCH_ATTEMPTS = 3;
 
   // Comprehensive logout function that ensures all session data is cleared
   const handleLogout = async () => {
@@ -54,11 +56,12 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   };
 
-  // Fetch the default profile for a user
+  // Fetch the default profile for a user with retry logic
   const fetchDefaultProfile = async (accountId: string) => {
     try {
-      setIsLoadingProfile(true); // Set loading state to true when fetching
+      setIsLoadingProfile(true);
       console.log('Fetching default profile for account ID:', accountId);
+      
       const { data: profile, error } = await supabase
         .from('profiles')
         .select('id, name')
@@ -80,7 +83,20 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
           
         if (anyProfileError) {
           console.error('Error fetching any profile:', anyProfileError);
-          setIsLoadingProfile(false); // Make sure we set loading to false even on error
+          
+          // Only retry if we haven't exceeded max attempts
+          if (profileFetchAttempts < MAX_PROFILE_FETCH_ATTEMPTS) {
+            console.log(`Retry attempt ${profileFetchAttempts + 1}/${MAX_PROFILE_FETCH_ATTEMPTS} in 500ms...`);
+            setProfileFetchAttempts(prev => prev + 1);
+            
+            // Retry after a short delay
+            setTimeout(() => {
+              fetchDefaultProfile(accountId);
+            }, 500);
+            return null;
+          }
+          
+          setIsLoadingProfile(false);
           return null;
         }
         
@@ -88,6 +104,7 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
           console.log('Found profile (non-default):', anyProfile);
           setDefaultProfileId(anyProfile.id);
           setUsername(anyProfile.name || 'User');
+          setProfileFetchAttempts(0); // Reset attempts count on success
           setIsLoadingProfile(false);
           return anyProfile;
         }
@@ -101,6 +118,7 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
         console.log('Found default profile:', profile);
         setDefaultProfileId(profile.id);
         setUsername(profile.name || 'User');
+        setProfileFetchAttempts(0); // Reset attempts count on success
         setIsLoadingProfile(false);
         return profile;
       }
@@ -128,7 +146,7 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
           setUserId(null);
           setUsername('');
           setDefaultProfileId(null);
-          setIsLoadingProfile(false); // No need to load profile when logged out
+          setIsLoadingProfile(false);
           return;
         }
         
@@ -136,8 +154,22 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
           setIsLoggedIn(true);
           setUserId(session.user.id);
           
-          // Fetch the default profile to get the username
-          await fetchDefaultProfile(session.user.id);
+          // We need to ensure the session is fully initialized before fetching the profile
+          // So we'll fetch the session again explicitly
+          setTimeout(async () => {
+            try {
+              const { data: { session: refreshedSession } } = await supabase.auth.getSession();
+              if (refreshedSession?.user) {
+                // Now fetch the profile with the confirmed session
+                await fetchDefaultProfile(refreshedSession.user.id);
+              } else {
+                setIsLoadingProfile(false);
+              }
+            } catch (err) {
+              console.error('Error refreshing session:', err);
+              setIsLoadingProfile(false);
+            }
+          }, 300);
         } else {
           // If no session, mark profile as not loading
           setIsLoadingProfile(false);
@@ -155,8 +187,10 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
           setIsLoggedIn(true);
           setUserId(session.user.id);
           
-          // Fetch the default profile
-          await fetchDefaultProfile(session.user.id);
+          // Add a slight delay to ensure auth is fully ready on Supabase
+          setTimeout(async () => {
+            await fetchDefaultProfile(session.user.id);
+          }, 300);
         } else {
           console.log('No existing session found');
           // Ensure we're truly logged out and not loading profile
@@ -197,11 +231,11 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
     username,
     userId,
     defaultProfileId,
-    isLoadingProfile, // Expose the loading state to consumers
+    isLoadingProfile,
     setIsLoggedIn,
     setUsername,
     handleLogout,
-    isAuthenticated: isLoggedIn // Map isAuthenticated to isLoggedIn
+    isAuthenticated: isLoggedIn
   };
 
   return (

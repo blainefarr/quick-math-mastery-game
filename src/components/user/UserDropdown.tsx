@@ -33,14 +33,17 @@ const UserDropdown = ({
     try {
       setIsLoggingOut(true);
       toast.loading('Logging out...');
-      await handleLogout();
-      toast.dismiss();
-      toast.success('Logged out successfully');
-      navigate('/');
+      
+      // Close the dropdown first to prevent UI issues
+      setTimeout(async () => {
+        await handleLogout();
+        toast.dismiss();
+        toast.success('Logged out successfully');
+        // No need to navigate here as handleLogout already does window.location.href = '/'
+      }, 100);
     } catch (error) {
       console.error("Error during logout:", error);
       toast.error("Error during logout. Please try again.");
-    } finally {
       setIsLoggingOut(false);
     }
   };

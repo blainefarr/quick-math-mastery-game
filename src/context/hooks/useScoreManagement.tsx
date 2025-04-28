@@ -105,44 +105,8 @@ export const useScoreManagement = (userId: string | null) => {
 
     if (!defaultProfileId) {
       console.error('No profile ID available, cannot save score');
-      
-      // If we're authenticated but don't have a profile ID, try to fetch it
-      if (userId) {
-        console.log('No default profile ID in state, fetching it now');
-        try {
-          const { data, error } = await supabase
-            .from('profiles')
-            .select('id, name')
-            .eq('account_id', userId)
-            .eq('is_default', true)
-            .single();
-          
-          if (error || !data) {
-            console.error('Error fetching default profile on save:', error);
-            toast.error('Unable to save score - no profile found');
-            return false;
-          }
-          
-          console.log('Found profile ID for score save:', data.id);
-          // Now try to save with this profile ID
-          return await saveScoreWithProfileId(
-            data.id,
-            score,
-            operation,
-            range,
-            timerSeconds,
-            focusNumber,
-            allowNegatives
-          );
-        } catch (err) {
-          console.error('Failed to fetch profile for score save:', err);
-          toast.error('Unable to save score - no profile found');
-          return false;
-        }
-      } else {
-        toast.error('Unable to save score - no profile found');
-        return false;
-      }
+      toast.error('Unable to save score - no profile found');
+      return false;
     }
 
     return saveScoreWithProfileId(
@@ -204,6 +168,7 @@ export const useScoreManagement = (userId: string | null) => {
       }
 
       console.log('Score saved successfully:', score);
+      toast.success('Score saved!');
       
       const updatedScores = await fetchUserScores();
       setScoreHistory(updatedScores);

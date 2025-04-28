@@ -2,6 +2,7 @@
 import React from 'react';
 import UserDropdown from './UserDropdown';
 import { useAuth } from '@/context/auth/useAuth';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const UserProfile = () => {
   const { username, isAuthenticated, isLoadingProfile } = useAuth();
@@ -13,7 +14,7 @@ const UserProfile = () => {
   if (isLoadingProfile) {
     return (
       <div className="flex items-center gap-2">
-        <div className="h-8 w-20 bg-gray-100 animate-pulse rounded-full"></div>
+        <Skeleton className="h-8 w-28 rounded-full" />
       </div>
     );
   }
