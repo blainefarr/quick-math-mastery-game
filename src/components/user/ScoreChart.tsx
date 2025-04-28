@@ -12,19 +12,17 @@ const ScoreChart = ({ scores = [] }: ScoreChartProps) => {
   
   useEffect(() => {
     console.log('ScoreChart received scores:', scores);
-    const filtered = Array.isArray(scores) ? scores
-      .filter(score => 
-        score && 
-        typeof score === 'object' && 
-        score.operation && 
-        score.date && 
-        score.range &&
-        score.duration === 60 // Only show 1-minute games
-      ) : [];
+    const filtered = Array.isArray(scores) ? scores.filter(score => 
+      score && 
+      typeof score === 'object' && 
+      score.operation && 
+      score.date && 
+      score.range
+    ) : [];
     setValidScores(filtered);
     console.log('Filtered valid scores for chart:', filtered);
   }, [scores]);
-
+  
   const formatDate = (dateString: string) => {
     try {
       const date = new Date(dateString);
@@ -49,7 +47,7 @@ const ScoreChart = ({ scores = [] }: ScoreChartProps) => {
       return 0;
     }
   });
-
+  
   const chartData = sortedScores.map(score => ({
     date: formatDate(score.date),
     score: score.score,
@@ -57,7 +55,15 @@ const ScoreChart = ({ scores = [] }: ScoreChartProps) => {
     duration: score.duration || 60,
     settings: `${score.focusNumber ? 'Focus: ' + score.focusNumber : ''}${score.allowNegatives ? ' Negatives' : ''}`
   }));
-
+  
+  const averageScore = sortedScores.length 
+    ? Math.round(sortedScores.reduce((sum, score) => sum + score.score, 0) / sortedScores.length)
+    : 0;
+  
+  const personalBest = sortedScores.length 
+    ? Math.max(...sortedScores.map(score => score.score))
+    : 0;
+  
   if (validScores.length === 0) {
     return (
       <div className="text-center py-8">
@@ -71,13 +77,13 @@ const ScoreChart = ({ scores = [] }: ScoreChartProps) => {
     <div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
         <Card className="p-4">
-          <div className="text-sm text-muted-foreground">Games Played</div>
-          <div className="text-3xl font-bold text-primary">{validScores.length}</div>
+          <div className="text-sm text-muted-foreground">Average Score</div>
+          <div className="text-3xl font-bold text-primary">{averageScore}</div>
         </Card>
         
         <Card className="p-4">
           <div className="text-sm text-muted-foreground">Personal Best</div>
-          <div className="text-3xl font-bold text-accent">{Math.max(...validScores.map(score => score.score))}</div>
+          <div className="text-3xl font-bold text-accent">{personalBest}</div>
         </Card>
       </div>
       
@@ -88,7 +94,7 @@ const ScoreChart = ({ scores = [] }: ScoreChartProps) => {
       ) : (
         <div className="h-72 w-full mt-4">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={chartData} margin={{ top: 5, right: 20, left: 20, bottom: 5 }}>
+            <BarChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="date" />
               <YAxis />
