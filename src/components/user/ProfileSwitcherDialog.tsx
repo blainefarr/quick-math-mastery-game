@@ -22,6 +22,7 @@ interface Profile {
   grade?: string;
   is_default: boolean;
   created_at: string;
+  account_owner?: boolean;  // New property to track the account owner profile
 }
 
 interface ProfileSwitcherDialogProps {
@@ -58,12 +59,27 @@ export function ProfileSwitcherDialog({ open, onOpenChange }: ProfileSwitcherDia
     }
   }, [open]);
 
-  // Fetch all profiles for this account
+  // Fetch all profiles for this account and identify account owner
   const fetchProfiles = async () => {
     if (!userId) return;
     
     try {
       setLoading(true);
+      
+      // First, get the account's email to identify the owner profile
+      const { data: accountData, error: accountError } = await supabase
+        .from('accounts')
+        .select('email')
+        .eq('id', userId)
+        .single();
+      
+      if (accountError) {
+        console.error('Error fetching account info:', accountError);
+      }
+      
+      const accountEmail = accountData?.email;
+      
+      // Then get all profiles for this account
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -76,7 +92,19 @@ export function ProfileSwitcherDialog({ open, onOpenChange }: ProfileSwitcherDia
         return;
       }
       
-      setProfiles(data || []);
+      // Mark the profile that corresponds to the account owner
+      const processedProfiles = data?.map((profile, index) => {
+        // Find the oldest profile if email data not available,
+        // or match first profile with account email if available
+        const isAccountOwner = index === 0 || profile.email === accountEmail;
+        
+        return {
+          ...profile,
+          account_owner: isAccountOwner
+        };
+      }) || [];
+      
+      setProfiles(processedProfiles);
     } catch (err) {
       console.error('Error in profile fetch:', err);
     } finally {
@@ -204,7 +232,7 @@ export function ProfileSwitcherDialog({ open, onOpenChange }: ProfileSwitcherDia
                               <span>Active</span>
                             </Badge>
                           )}
-                          {profiles.indexOf(profile) === 0 && (
+                          {profile.account_owner && (
                             <Badge variant="secondary" className="flex items-center gap-1">
                               <User className="h-3 w-3" />
                               <span>Primary</span>
