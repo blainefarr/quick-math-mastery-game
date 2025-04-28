@@ -9,7 +9,7 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      profiles: {
+      accounts: {
         Row: {
           avatar_url: string | null
           created_at: string
@@ -39,6 +39,47 @@ export type Database = {
         }
         Relationships: []
       }
+      profiles: {
+        Row: {
+          account_id: string
+          avatar_url: string | null
+          created_at: string
+          grade: string | null
+          id: string
+          is_default: boolean | null
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          account_id: string
+          avatar_url?: string | null
+          created_at?: string
+          grade?: string | null
+          id?: string
+          is_default?: boolean | null
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          account_id?: string
+          avatar_url?: string | null
+          created_at?: string
+          grade?: string | null
+          id?: string
+          is_default?: boolean | null
+          name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       scores: {
         Row: {
           allow_negatives: boolean | null
@@ -51,6 +92,7 @@ export type Database = {
           min1: number
           min2: number
           operation: string
+          profile_id: string | null
           score: number
           user_id: string
         }
@@ -65,6 +107,7 @@ export type Database = {
           min1: number
           min2: number
           operation: string
+          profile_id?: string | null
           score: number
           user_id: string
         }
@@ -79,10 +122,19 @@ export type Database = {
           min1?: number
           min2?: number
           operation?: string
+          profile_id?: string | null
           score?: number
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "scores_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
@@ -103,6 +155,7 @@ export type Database = {
         Returns: {
           rank: number
           user_id: string
+          profile_id: string
           name: string
           grade: string
           best_score: number
@@ -126,7 +179,7 @@ export type Database = {
       }
       get_user_rank: {
         Args: {
-          p_user_id: string
+          p_profile_id: string
           p_operation?: string
           p_min1?: number
           p_max1?: number

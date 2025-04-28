@@ -1,7 +1,7 @@
 
 import { useCallback, useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Operation, ProblemRange } from '@/types';
+import { Operation } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -18,6 +18,7 @@ export type LeaderboardFilters = {
 export type LeaderboardEntry = {
   rank: number;
   user_id: string;
+  profile_id: string;
   name: string;
   grade: string | null;
   best_score: number;
@@ -142,22 +143,34 @@ export const useLeaderboard = () => {
       } = await supabase.auth.getUser();
 
       if (user) {
-        const { data: rankData, error: rankError } = await supabase
-          .rpc('get_user_rank', {
-            p_user_id: user.id,
-            p_operation: currentFilters.operation,
-            p_min1: currentFilters.min1,
-            p_max1: currentFilters.max1,
-            p_min2: currentFilters.min2,
-            p_max2: currentFilters.max2,
-            p_grade: currentFilters.grade === "all" ? null : currentFilters.grade,
-          });
+        // Fetch the default profile for the user
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('account_id', user.id)
+          .eq('is_default', true)
+          .single();
 
-        if (rankError) {
-          console.error('Rank error:', rankError);
-          // Don't throw here, just log the error
-        } else {
-          setUserRank(rankData);
+        if (profileError) {
+          console.error('Error fetching user profile:', profileError);
+        } else if (profileData) {
+          // Get the user rank using the profile ID
+          const { data: rankData, error: rankError } = await supabase
+            .rpc('get_user_rank', {
+              p_profile_id: profileData.id,
+              p_operation: currentFilters.operation,
+              p_min1: currentFilters.min1,
+              p_max1: currentFilters.max1,
+              p_min2: currentFilters.min2,
+              p_max2: currentFilters.max2,
+              p_grade: currentFilters.grade === "all" ? null : currentFilters.grade,
+            });
+
+          if (rankError) {
+            console.error('Rank error:', rankError);
+          } else {
+            setUserRank(rankData);
+          }
         }
       }
     } catch (err) {

@@ -64,12 +64,37 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
         if (session?.user) {
           setIsLoggedIn(true);
           setUserId(session.user.id);
-          setUsername(
-            session.user.user_metadata?.name ??
-            session.user.email?.split('@')[0] ??
-            session.user.email ??
-            ""
-          );
+          
+          // Fetch the default profile to get the username
+          try {
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('name')
+              .eq('account_id', session.user.id)
+              .eq('is_default', true)
+              .single();
+              
+            if (profile?.name) {
+              setUsername(profile.name);
+            } else {
+              // Fallback to user email or metadata if profile not found
+              setUsername(
+                session.user.user_metadata?.name ??
+                session.user.email?.split('@')[0] ??
+                session.user.email ??
+                ""
+              );
+            }
+          } catch (error) {
+            console.error('Error fetching profile:', error);
+            // Fallback to user email or metadata
+            setUsername(
+              session.user.user_metadata?.name ??
+              session.user.email?.split('@')[0] ??
+              session.user.email ??
+              ""
+            );
+          }
         }
       }
     );
@@ -83,12 +108,37 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
           console.log('Existing session found, user:', session.user.email);
           setIsLoggedIn(true);
           setUserId(session.user.id);
-          setUsername(
-            session.user.user_metadata?.name ??
-            session.user.email?.split('@')[0] ??
-            session.user.email ??
-            ""
-          );
+          
+          // Fetch the default profile to get the username
+          try {
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('name')
+              .eq('account_id', session.user.id)
+              .eq('is_default', true)
+              .single();
+              
+            if (profile?.name) {
+              setUsername(profile.name);
+            } else {
+              // Fallback to user email or metadata if profile not found
+              setUsername(
+                session.user.user_metadata?.name ??
+                session.user.email?.split('@')[0] ??
+                session.user.email ??
+                ""
+              );
+            }
+          } catch (error) {
+            console.error('Error fetching profile:', error);
+            // Fallback to user email or metadata
+            setUsername(
+              session.user.user_metadata?.name ??
+              session.user.email?.split('@')[0] ??
+              session.user.email ??
+              ""
+            );
+          }
         } else {
           console.log('No existing session found');
           // Ensure we're truly logged out

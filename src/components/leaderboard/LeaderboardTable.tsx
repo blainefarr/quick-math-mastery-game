@@ -43,7 +43,7 @@ export const LeaderboardTable = ({ entries, currentUserId, className = '' }: Pro
         <TableBody>
           {entries.map((entry) => (
             <TableRow
-              key={entry.user_id}
+              key={entry.profile_id || entry.user_id}
               className={entry.user_id === currentUserId ? "bg-muted" : undefined}
             >
               <TableCell className="font-medium">

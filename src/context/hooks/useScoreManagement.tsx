@@ -7,15 +7,54 @@ import { toast } from 'sonner';
 export const useScoreManagement = (userId: string | null) => {
   const [scoreHistory, setScoreHistory] = useState<UserScore[]>([]);
   const [savingScore, setSavingScore] = useState(false);
+  const [defaultProfileId, setDefaultProfileId] = useState<string | null>(null);
+
+  // Fetch the default profile ID for the user
+  const fetchDefaultProfileId = useCallback(async () => {
+    if (!userId) return null;
+    
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('account_id', userId)
+        .eq('is_default', true)
+        .single();
+
+      if (error) {
+        console.error('Error fetching default profile:', error);
+        return null;
+      }
+
+      if (data) {
+        setDefaultProfileId(data.id);
+        return data.id;
+      }
+      
+      return null;
+    } catch (error) {
+      console.error('Error fetching default profile:', error);
+      return null;
+    }
+  }, [userId]);
 
   const fetchUserScores = useCallback(async () => {
     if (!userId) return [];
 
     try {
+      // Make sure we have the default profile ID
+      const profileId = defaultProfileId || await fetchDefaultProfileId();
+      
+      if (!profileId) {
+        console.error('No default profile found for user');
+        return [];
+      }
+
       const { data, error } = await supabase
         .from('scores')
         .select('*')
         .eq('user_id', userId)
+        .eq('profile_id', profileId)
         .order('date', { ascending: false });
 
       if (error) {
@@ -45,7 +84,7 @@ export const useScoreManagement = (userId: string | null) => {
       toast.error('Failed to load your scores');
       return [];
     }
-  }, [userId]);
+  }, [userId, defaultProfileId, fetchDefaultProfileId]);
 
   const saveScore = useCallback(async (
     score: number, 
@@ -80,22 +119,34 @@ export const useScoreManagement = (userId: string | null) => {
       return false;
     }
 
-    const scoreData = {
-      score,
-      operation,
-      min1: range.min1 ?? 0,
-      max1: range.max1 ?? 0,
-      min2: range.min2 ?? 0, 
-      max2: range.max2 ?? 0,
-      user_id: userId,
-      duration: timerSeconds ?? 0,
-      focus_number: focusNumber ?? null,
-      allow_negatives: allowNegatives ?? false,
-      date: new Date().toISOString()
-    };
-
     try {
       setSavingScore(true);
+      
+      // Make sure we have the default profile ID
+      const profileId = defaultProfileId || await fetchDefaultProfileId();
+      
+      if (!profileId) {
+        console.error('No default profile found for user');
+        toast.error('Unable to save score - no profile found');
+        setSavingScore(false);
+        return false;
+      }
+
+      const scoreData = {
+        score,
+        operation,
+        min1: range.min1 ?? 0,
+        max1: range.max1 ?? 0,
+        min2: range.min2 ?? 0, 
+        max2: range.max2 ?? 0,
+        user_id: userId,
+        profile_id: profileId,
+        duration: timerSeconds ?? 0,
+        focus_number: focusNumber ?? null,
+        allow_negatives: allowNegatives ?? false,
+        date: new Date().toISOString()
+      };
+
       console.log('About to save score data:', scoreData);
       
       const { error } = await supabase
@@ -119,7 +170,7 @@ export const useScoreManagement = (userId: string | null) => {
       setSavingScore(false);
       return false;
     }
-  }, [userId, fetchUserScores, savingScore]);
+  }, [userId, fetchUserScores, savingScore, defaultProfileId, fetchDefaultProfileId]);
 
   const getIsHighScore = useCallback((
     newScore: number, 
@@ -138,6 +189,13 @@ export const useScoreManagement = (userId: string | null) => {
     const highestScore = Math.max(...matchingScores.map(s => s.score));
     return newScore > highestScore;
   }, [scoreHistory]);
+
+  // Initialize the default profile ID when the component mounts
+  useCallback(() => {
+    if (userId && !defaultProfileId) {
+      fetchDefaultProfileId();
+    }
+  }, [userId, defaultProfileId, fetchDefaultProfileId]);
 
   return { 
     scoreHistory, 

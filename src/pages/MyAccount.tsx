@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm, FormProvider } from "react-hook-form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -50,6 +50,7 @@ const MyAccount = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { isLoggedIn, userId } = useAuth();
+  const [defaultProfileId, setDefaultProfileId] = useState<string | null>(null);
   const form = useForm<FormData>({
     defaultValues: {
       name: '',
@@ -66,14 +67,33 @@ const MyAccount = () => {
       }
 
       try {
-        const { data: profile, error } = await supabase
-          .from('profiles')
+        // First, get the account information
+        const { data: account, error: accountError } = await supabase
+          .from('accounts')
           .select('*')
           .eq('id', userId)
           .single();
 
-        if (error) {
-          console.error('Error fetching profile:', error);
+        if (accountError) {
+          console.error('Error fetching account:', accountError);
+          toast({
+            title: "Error",
+            description: "Could not load account data. Please try again.",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        // Then, get the default profile for this user
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('account_id', userId)
+          .eq('is_default', true)
+          .single();
+
+        if (profileError) {
+          console.error('Error fetching profile:', profileError);
           toast({
             title: "Error",
             description: "Could not load profile data. Please try again.",
@@ -84,10 +104,11 @@ const MyAccount = () => {
 
         if (profile) {
           console.log('Loaded profile:', profile);
+          setDefaultProfileId(profile.id);
           form.reset({
             name: profile.name || '',
             grade: profile.grade || '',
-            email: profile.email || '',
+            email: account?.email || '',
           });
         }
       } catch (err) {
@@ -100,18 +121,28 @@ const MyAccount = () => {
 
   const onSubmit = async (data: FormData) => {
     try {
-      if (!userId) return;
+      if (!userId || !defaultProfileId) return;
 
+      // Update profile information
       const { error: profileError } = await supabase
         .from('profiles')
         .update({
           name: data.name,
           grade: data.grade,
+        })
+        .eq('id', defaultProfileId);
+
+      if (profileError) throw profileError;
+
+      // Update account email
+      const { error: accountError } = await supabase
+        .from('accounts')
+        .update({
           email: data.email,
         })
         .eq('id', userId);
 
-      if (profileError) throw profileError;
+      if (accountError) throw accountError;
 
       toast({
         title: "Success",
