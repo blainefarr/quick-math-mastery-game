@@ -64,7 +64,7 @@ export const LeaderboardTable = ({ entries, className = '' }: Props) => {
                     <span>{entry.name ? entry.name.split(' ')[0] : 'Anonymous'}</span>
                     {entry.grade && (
                       <span className="text-xs text-muted-foreground">
-                        Grade: {entry.grade}
+                        {entry.grade}
                       </span>
                     )}
                   </div>
