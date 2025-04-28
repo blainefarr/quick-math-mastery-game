@@ -47,7 +47,7 @@ const UserDropdown = ({
             {username}
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-[450px]">
+        <DropdownMenuContent align="end" className="w-[200px]">
           <DropdownMenuLabel>
             <div className="flex flex-col">
               <span>Hi, {username}!</span>
@@ -56,7 +56,7 @@ const UserDropdown = ({
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
           <DropdownMenuItem 
-            onClick={() => onOpenProfile ? onOpenProfile() : navigate('/progress')}
+            onClick={() => navigate('/progress')}
             className="cursor-pointer hover:bg-accent"
           >
             <TrendingUp className="mr-2 h-4 w-4" />
