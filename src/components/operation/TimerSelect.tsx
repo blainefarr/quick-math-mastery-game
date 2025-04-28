@@ -12,22 +12,19 @@ const TimerSelect = ({
   value,
   onChange
 }: TimerSelectProps) => {
-  const timerOptions = [{
-    value: 15,
-    label: '15 seconds'
-  }, {
-    value: 30,
-    label: '30 seconds'
-  }, {
-    value: 60,
-    label: '1 minute'
-  }, {
-    value: 120,
-    label: '2 minutes'
-  }];
+  const timerOptions = [
+    { value: 15, label: '15 seconds' },
+    { value: 30, label: '30 seconds' },
+    { value: 60, label: '1 minute' },
+    { value: 120, label: '2 minutes' }
+  ];
+
+  const handleClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+  };
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-2" onClick={handleClick}>
       <h3 className="text-base font-medium">Game Timer</h3>
       <div className="flex items-center">
         <Select value={value.toString()} onValueChange={val => onChange(parseInt(val))}>

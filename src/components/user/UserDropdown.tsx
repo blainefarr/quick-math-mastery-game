@@ -11,7 +11,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { LogOut, Trophy } from 'lucide-react';
+import { LogOut, Trophy, TrendingUp, Settings } from 'lucide-react';
 
 interface UserDropdownProps {
   username: string;
@@ -47,7 +47,7 @@ const UserDropdown = ({
             {username}
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="top-full max-w-[90vw]">
+        <DropdownMenuContent align="end" className="w-[200px]">
           <DropdownMenuLabel>
             <div className="flex flex-col">
               <span>Hi, {username}!</span>
@@ -60,6 +60,7 @@ const UserDropdown = ({
               onClick={onOpenProfile}
               className="cursor-pointer hover:bg-accent"
             >
+              <TrendingUp className="mr-2 h-4 w-4" />
               {dropdownLabel}
             </DropdownMenuItem>
           )}
@@ -74,6 +75,7 @@ const UserDropdown = ({
             onClick={() => navigate('/account')}
             className="cursor-pointer hover:bg-accent"
           >
+            <Settings className="mr-2 h-4 w-4" />
             My Account
           </DropdownMenuItem>
           <DropdownMenuSeparator />
