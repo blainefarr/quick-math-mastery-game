@@ -59,7 +59,7 @@ const MyAccount = () => {
     }
   });
 
-  React.useEffect(() => {
+  useEffect(() => {
     const fetchUserProfile = async () => {
       if (!userId) {
         navigate('/');

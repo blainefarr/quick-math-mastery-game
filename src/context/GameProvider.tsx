@@ -6,6 +6,7 @@ import { useGameSettings } from './hooks/useGameSettings';
 import { useProblemGenerator } from './hooks/useProblemGenerator';
 import { useScoreManagement } from './hooks/useScoreManagement';
 import useAuth from './auth/useAuth';
+import { toast } from 'sonner';
 
 const GameProvider = ({ children }: GameProviderProps) => {
   const { settings, updateSettings, resetSettings } = useGameSettings();
@@ -63,7 +64,7 @@ const GameProvider = ({ children }: GameProviderProps) => {
         timerRef.current = null;
       }
     };
-  }, [gameState, userId, fetchUserScores]);
+  }, [gameState, userId, fetchUserScores, setScoreHistory]);
 
   const incrementScore = () => {
     // Don't increment score if the game is ending
@@ -132,7 +133,7 @@ const GameProvider = ({ children }: GameProviderProps) => {
     if (reason === 'timeout' && isLoggedIn) {
       console.log(`Attempting to save score: ${finalScore}`);
       try {
-        await saveScore(
+        const success = await saveScore(
           finalScore,
           settings.operation,
           settings.range,
@@ -140,9 +141,16 @@ const GameProvider = ({ children }: GameProviderProps) => {
           settings.focusNumber || null,
           settings.allowNegatives || false
         );
-        console.log("Score saved successfully");
+        
+        if (success) {
+          console.log("Score saved successfully");
+        } else {
+          console.error("Failed to save score");
+          toast.error("Failed to save your score");
+        }
       } catch (error) {
         console.error("Failed to save score:", error);
+        toast.error("Failed to save your score");
       }
     }
     

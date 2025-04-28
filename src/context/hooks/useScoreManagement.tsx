@@ -1,5 +1,5 @@
 
-import { useState, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { UserScore, Operation, ProblemRange } from '@/types';
 import { toast } from 'sonner';
@@ -37,6 +37,13 @@ export const useScoreManagement = (userId: string | null) => {
       return null;
     }
   }, [userId]);
+
+  // Fetch default profile ID when component mounts or userId changes
+  useEffect(() => {
+    if (userId && !defaultProfileId) {
+      fetchDefaultProfileId();
+    }
+  }, [userId, defaultProfileId, fetchDefaultProfileId]);
 
   const fetchUserScores = useCallback(async () => {
     if (!userId) return [];
@@ -110,6 +117,7 @@ export const useScoreManagement = (userId: string | null) => {
     }
 
     if (!userId) {
+      console.log('No user ID, cannot save score');
       return false;
     }
 
@@ -151,11 +159,12 @@ export const useScoreManagement = (userId: string | null) => {
       
       const { error } = await supabase
         .from('scores')
-        .insert(scoreData)
-        .throwOnError();
+        .insert(scoreData);
 
       if (error) {
         console.error('Error saving score:', error);
+        toast.error('Failed to save your score');
+        setSavingScore(false);
         return false;
       }
 
@@ -167,6 +176,7 @@ export const useScoreManagement = (userId: string | null) => {
       return true;
     } catch (error) {
       console.error('Error saving score:', error);
+      toast.error('Failed to save your score');
       setSavingScore(false);
       return false;
     }
@@ -190,19 +200,13 @@ export const useScoreManagement = (userId: string | null) => {
     return newScore > highestScore;
   }, [scoreHistory]);
 
-  // Initialize the default profile ID when the component mounts
-  useCallback(() => {
-    if (userId && !defaultProfileId) {
-      fetchDefaultProfileId();
-    }
-  }, [userId, defaultProfileId, fetchDefaultProfileId]);
-
   return { 
     scoreHistory, 
     setScoreHistory, 
     fetchUserScores, 
     saveScore, 
     getIsHighScore,
-    savingScore
+    savingScore,
+    defaultProfileId
   };
 };

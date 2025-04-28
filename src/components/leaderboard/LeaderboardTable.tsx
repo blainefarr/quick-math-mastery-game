@@ -41,34 +41,40 @@ export const LeaderboardTable = ({ entries, currentUserId, className = '' }: Pro
           </TableRow>
         </TableHeader>
         <TableBody>
-          {entries.map((entry) => (
-            <TableRow
-              key={entry.profile_id || entry.user_id}
-              className={entry.user_id === currentUserId ? "bg-muted" : undefined}
-            >
-              <TableCell className="font-medium">
-                <div className="flex items-center gap-2">
-                  {getRankIcon(entry.rank)}
-                  <span>{entry.rank}</span>
-                </div>
-              </TableCell>
-              <TableCell>
-                <div className="flex flex-col">
-                  <span>{entry.name.split(' ')[0]}</span>
-                  {entry.grade && (
-                    <span className="text-xs text-muted-foreground">
-                      Grade: {entry.grade}
-                    </span>
-                  )}
-                </div>
-              </TableCell>
-              <TableCell>
-                {entry.operation.charAt(0).toUpperCase() + entry.operation.slice(1)}
-              </TableCell>
-              <TableCell>{`${entry.min1}-${entry.max1}`}</TableCell>
-              <TableCell className="text-right font-bold">{entry.best_score}</TableCell>
-            </TableRow>
-          ))}
+          {entries.map((entry) => {
+            // Check if the current user matches either user_id (for backward compatibility) 
+            // or profile_id if we're looking at a profile view
+            const isCurrentUser = entry.user_id === currentUserId;
+            
+            return (
+              <TableRow
+                key={entry.profile_id}
+                className={isCurrentUser ? "bg-muted" : undefined}
+              >
+                <TableCell className="font-medium">
+                  <div className="flex items-center gap-2">
+                    {getRankIcon(entry.rank)}
+                    <span>{entry.rank}</span>
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <div className="flex flex-col">
+                    <span>{entry.name ? entry.name.split(' ')[0] : 'Anonymous'}</span>
+                    {entry.grade && (
+                      <span className="text-xs text-muted-foreground">
+                        Grade: {entry.grade}
+                      </span>
+                    )}
+                  </div>
+                </TableCell>
+                <TableCell>
+                  {entry.operation.charAt(0).toUpperCase() + entry.operation.slice(1)}
+                </TableCell>
+                <TableCell>{`${entry.min1}-${entry.max1}`}</TableCell>
+                <TableCell className="text-right font-bold">{entry.best_score}</TableCell>
+              </TableRow>
+            );
+          })}
         </TableBody>
       </Table>
     </div>
