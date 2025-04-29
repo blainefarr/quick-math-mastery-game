@@ -1,19 +1,14 @@
-
 import React, { useState, useEffect } from 'react';
 import useGame from '@/context/useGame';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowRight, LogIn } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { Operation } from '@/types';
 import OperationButton from './operation/OperationButton';
 import NumberRangeSection from './operation/NumberRangeSection';
 import TimerSelect from './operation/TimerSelect';
 import AdvancedSettings from './operation/AdvancedSettings';
-import { useAuth } from '@/context/auth/useAuth';
-import AuthModal from './auth/AuthModal';
-
 const OperationSelection = () => {
-  const { isAuthenticated, defaultProfileId, isLoadingProfile } = useAuth();
   const {
     settings,
     updateSettings,
@@ -23,7 +18,6 @@ const OperationSelection = () => {
     setFocusNumber,
     resetScore
   } = useGame();
-
   const [selectedOperation, setSelectedOperation] = useState<Operation>(settings.operation);
   const [negativeNumbersEnabled, setNegativeNumbersEnabled] = useState(false);
   const [range1Min, setRange1Min] = useState(settings.range.min1);
@@ -32,7 +26,6 @@ const OperationSelection = () => {
   const [range2Max, setRange2Max] = useState(settings.range.max2);
   const [useFocusNumber, setUseFocusNumber] = useState(focusNumber !== null);
   const [focusNumberValue, setFocusNumberValue] = useState(focusNumber || 1);
-
   useEffect(() => {
     setSelectedOperation(settings.operation);
     setRange1Min(settings.range.min1);
@@ -40,21 +33,17 @@ const OperationSelection = () => {
     setRange2Min(settings.range.min2);
     setRange2Max(settings.range.max2);
   }, [settings]);
-
   useEffect(() => {
     if (useFocusNumber && focusNumberValue !== null) {
       setRange1Min(focusNumberValue);
       setRange1Max(focusNumberValue);
     }
   }, [useFocusNumber, focusNumberValue]);
-
   const parseOrDefault = (str: string, def: number) => {
     const val = parseInt(str);
     return !isNaN(val) ? val : def;
   };
-
   const handleOperationSelect = (operation: Operation) => setSelectedOperation(operation);
-
   const handleFocusNumberToggle = (checked: boolean) => {
     setUseFocusNumber(checked);
     if (!checked) {
@@ -67,7 +56,6 @@ const OperationSelection = () => {
       setRange1Max(focusNumberValue);
     }
   };
-
   const handleFocusNumberChange = (value: string) => {
     const numValue = parseOrDefault(value, focusNumberValue);
     setFocusNumberValue(numValue);
@@ -77,20 +65,12 @@ const OperationSelection = () => {
       setRange1Max(numValue);
     }
   };
-
   const handleNegativeToggle = (checked: boolean) => setNegativeNumbersEnabled(checked);
-
   const handleStartGame = () => {
-    // Check if user is authenticated before starting game
-    if (!isAuthenticated || !defaultProfileId) {
-      return;
-    }
-    
     if (range1Max < range1Min || range2Max < range2Min) {
       alert('Maximum value must be greater than or equal to minimum value');
       return;
     }
-    
     resetScore();
     updateSettings({
       operation: selectedOperation,
@@ -104,62 +84,11 @@ const OperationSelection = () => {
       allowNegatives: negativeNumbersEnabled,
       focusNumber: useFocusNumber ? focusNumberValue : null
     });
-    
-    if (useFocusNumber) 
-      setFocusNumber(focusNumberValue);
-    else 
-      setFocusNumber(null);
-    
+    if (useFocusNumber) setFocusNumber(focusNumberValue);else setFocusNumber(null);
     setTimeLeft(settings.timerSeconds);
     setGameState('playing');
   };
-
-  // Show login prompt if not authenticated
-  if (!isAuthenticated && !isLoadingProfile) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <Card className="shadow-lg animate-fade-in mx-auto max-w-[535px] min-w-[300px]">
-          <CardHeader>
-            <CardTitle className="text-2xl font-bold text-center">Welcome to Minute Math!</CardTitle>
-          </CardHeader>
-          <CardContent className="text-center pb-8">
-            <p className="mb-6">Please log in or create an account to start playing</p>
-            <div className="flex justify-center gap-4">
-              <AuthModal defaultView="login">
-                <Button variant="outline" size="lg" className="shadow-sm hover:shadow">
-                  <LogIn className="mr-2 h-4 w-4" />
-                  Log In
-                </Button>
-              </AuthModal>
-              <AuthModal defaultView="register">
-                <Button variant="default" size="lg" className="shadow-sm hover:shadow">
-                  Create Account
-                </Button>
-              </AuthModal>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  // If loading profile, show a loading state
-  if (isLoadingProfile) {
-    return (
-      <div className="container mx-auto px-4 py-8 flex justify-center items-center min-h-[50vh]">
-        <Card className="shadow-lg animate-pulse mx-auto max-w-[535px] min-w-[300px] p-8">
-          <div className="flex flex-col items-center">
-            <div className="h-6 w-48 bg-muted rounded mb-8"></div>
-            <div className="h-24 w-full bg-muted/50 rounded mb-6"></div>
-            <div className="h-12 w-full bg-muted/70 rounded"></div>
-          </div>
-        </Card>
-      </div>
-    );
-  }
-
-  return (
-    <div className="container mx-auto px-4 py-8">
+  return <div className="container mx-auto px-4 py-8">
       <Card className="shadow-lg animate-fade-in mx-auto max-w-[535px] min-w-[300px]">
         <CardHeader>
           <CardTitle className="text-2xl font-bold text-center">Minute Math Settings</CardTitle>
@@ -169,63 +98,32 @@ const OperationSelection = () => {
             <div>
               <h3 className="text-lg font-medium mb-3">Operation</h3>
               <div className="flex flex-nowrap gap-2 justify-center items-center rounded-lg p-2 bg-muted/50 overflow-x-auto">
-                {(['addition', 'subtraction', 'multiplication', 'division'] as Operation[]).map(operation => (
-                  <OperationButton 
-                    key={operation} 
-                    active={selectedOperation === operation} 
-                    operation={operation} 
-                    onClick={handleOperationSelect} 
-                  />
-                ))}
+                {(['addition', 'subtraction', 'multiplication', 'division'] as Operation[]).map(operation => <OperationButton key={operation} active={selectedOperation === operation} operation={operation} onClick={handleOperationSelect} />)}
               </div>
             </div>
 
-            <NumberRangeSection
-              focusNumberEnabled={useFocusNumber}
-              focusNumber={focusNumberValue}
-              negativeNumbersEnabled={negativeNumbersEnabled}
-              range1={{
-                min: range1Min,
-                max: range1Max
-              }}
-              range2={{
-                min: range2Min,
-                max: range2Max
-              }}
-              setRange1Min={v => setRange1Min(parseOrDefault(v, range1Min))}
-              setRange1Max={v => setRange1Max(parseOrDefault(v, range1Max))}
-              setRange2Min={v => setRange2Min(parseOrDefault(v, range2Min))}
-              setRange2Max={v => setRange2Max(parseOrDefault(v, range2Max))}
-            />
+            <NumberRangeSection focusNumberEnabled={useFocusNumber} focusNumber={focusNumberValue} negativeNumbersEnabled={negativeNumbersEnabled} range1={{
+            min: range1Min,
+            max: range1Max
+          }} range2={{
+            min: range2Min,
+            max: range2Max
+          }} setRange1Min={v => setRange1Min(parseOrDefault(v, range1Min))} setRange1Max={v => setRange1Max(parseOrDefault(v, range1Max))} setRange2Min={v => setRange2Min(parseOrDefault(v, range2Min))} setRange2Max={v => setRange2Max(parseOrDefault(v, range2Max))} />
 
-            <TimerSelect 
-              value={settings.timerSeconds} 
-              onChange={seconds => updateSettings({ timerSeconds: seconds })}
-            />
+            <TimerSelect value={settings.timerSeconds} onChange={seconds => updateSettings({
+            timerSeconds: seconds
+          })} />
 
-            <AdvancedSettings
-              useFocusNumber={useFocusNumber}
-              focusNumberValue={focusNumberValue}
-              negativeNumbersEnabled={negativeNumbersEnabled}
-              onFocusNumberToggle={handleFocusNumberToggle}
-              onFocusNumberChange={handleFocusNumberChange}
-              onNegativeToggle={handleNegativeToggle}
-            />
+            <AdvancedSettings useFocusNumber={useFocusNumber} focusNumberValue={focusNumberValue} negativeNumbersEnabled={negativeNumbersEnabled} onFocusNumberToggle={handleFocusNumberToggle} onFocusNumberChange={handleFocusNumberChange} onNegativeToggle={handleNegativeToggle} />
           </div>
         </CardContent>
         <CardFooter className="px-4">
-          <Button 
-            onClick={handleStartGame} 
-            className="w-full py-6 text-lg font-bold bg-primary hover:bg-primary/90 transition-all"
-            disabled={!isAuthenticated || !defaultProfileId}
-          >
+          <Button onClick={handleStartGame} className="w-full py-6 text-lg font-bold bg-primary hover:bg-primary/90 transition-all">
             Start Game
             <ArrowRight className="ml-2" />
           </Button>
         </CardFooter>
       </Card>
-    </div>
-  );
+    </div>;
 };
-
 export default OperationSelection;

@@ -11,7 +11,7 @@ import { toast } from 'sonner';
 const GameProvider = ({ children }: GameProviderProps) => {
   const { settings, updateSettings, resetSettings } = useGameSettings();
   const { currentProblem, generateNewProblem } = useProblemGenerator();
-  const { userId, defaultProfileId, isAuthenticated, username } = useAuth();
+  const { userId, defaultProfileId } = useAuth();
   
   const [gameState, setGameState] = useState<GameState>('selection');
   const [score, setScore] = useState(0);
@@ -19,12 +19,12 @@ const GameProvider = ({ children }: GameProviderProps) => {
   const [userAnswer, setUserAnswer] = useState('');
   const [focusNumber, setFocusNumber] = useState<number | null>(null);
   
+  // Use refs to reliably track the current score and game state
   const scoreRef = useRef(0);
   const gameStateRef = useRef<GameState>('selection');
   const timerRef = useRef<number | null>(null);
+  // Add a new ref to track if the game is ending
   const isEndingRef = useRef(false);
-  const timerInitializedRef = useRef(false);
-  const authInitializedRef = useRef(false);
 
   const { 
     scoreHistory, 
@@ -34,60 +34,40 @@ const GameProvider = ({ children }: GameProviderProps) => {
     setScoreHistory 
   } = useScoreManagement(userId);
 
+  // Sync state with refs for reliable access in async contexts
   useEffect(() => {
     scoreRef.current = score;
   }, [score]);
 
   useEffect(() => {
     gameStateRef.current = gameState;
-    
-    if (gameState === 'playing' && !timerInitializedRef.current) {
-      console.log('Starting game timer due to gameState change to playing');
-      startGameTimer();
-      timerInitializedRef.current = true;
-    }
-    
-    if (gameState === 'selection') {
-      console.log('Resetting timer as game state changed to selection');
-      timerInitializedRef.current = false;
-      isEndingRef.current = false;
-      
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-        timerRef.current = null;
-      }
-      
-      setTimeLeft(settings.timerSeconds);
-    }
-  }, [gameState, settings.timerSeconds]);
+  }, [gameState]);
 
+  // Reset timer and fetch scores when game state changes
   useEffect(() => {
-    if (gameState === 'ended' && isAuthenticated && defaultProfileId) {
-      console.log('Game ended, fetching scores');
+    if (gameState === 'playing') {
+      startGameTimer();
+      // Reset the isEnding flag when starting a new game
+      isEndingRef.current = false;
+    } else if (gameState === 'ended' && userId && defaultProfileId) {
       fetchUserScores().then(scores => {
         if (scores) {
           setScoreHistory(scores);
         }
       });
     }
-  }, [gameState, isAuthenticated, defaultProfileId, fetchUserScores, setScoreHistory]);
-  
-  useEffect(() => {
-    authInitializedRef.current = true;
-  }, []);
-
-  useEffect(() => {
+    
+    // Clean up timer when component unmounts or game state changes
     return () => {
       if (timerRef.current) {
-        console.log('Cleaning up timer on unmount', timerRef.current);
         clearInterval(timerRef.current);
         timerRef.current = null;
       }
-      timerInitializedRef.current = false;
     };
-  }, []);
+  }, [gameState, userId, fetchUserScores, setScoreHistory, defaultProfileId]);
 
   const incrementScore = () => {
+    // Don't increment score if the game is ending
     if (isEndingRef.current) {
       console.log('Game is ending, not incrementing score');
       return;
@@ -105,13 +85,14 @@ const GameProvider = ({ children }: GameProviderProps) => {
     setScore(0);
     scoreRef.current = 0;
   };
+
+  // Get auth state from useAuth
+  const { isLoggedIn, username } = useAuth();
   
   const startGameTimer = () => {
-    // Remove authentication check to allow anonymous users to play
+    // Clear any existing timer
     if (timerRef.current) {
-      console.log('Clearing existing timer before starting new one');
       clearInterval(timerRef.current);
-      timerRef.current = null;
     }
     
     console.log('Starting game timer with', settings.timerSeconds, 'seconds');
@@ -119,21 +100,13 @@ const GameProvider = ({ children }: GameProviderProps) => {
     
     timerRef.current = window.setInterval(() => {
       setTimeLeft(prevTime => {
-        if (gameStateRef.current !== 'playing') {
-          console.log('Game no longer in playing state, stopping timer');
-          if (timerRef.current) {
-            clearInterval(timerRef.current);
-            timerRef.current = null;
-          }
-          return prevTime;
-        }
-        
         if (prevTime <= 1) {
           if (timerRef.current) {
             clearInterval(timerRef.current);
             timerRef.current = null;
           }
           
+          // Use setTimeout to ensure state updates have completed
           setTimeout(() => endGame('timeout'), 0);
           return 0;
         }
@@ -143,19 +116,21 @@ const GameProvider = ({ children }: GameProviderProps) => {
   };
   
   const endGame = async (reason: GameEndReason) => {
+    // Set the ending flag to prevent further score increments
     isEndingRef.current = true;
     
+    // Use the ref to get the accurate score regardless of state updates
     const finalScore = scoreRef.current;
     console.log(`Ending game with reason: ${reason}, final score: ${finalScore}`);
     
+    // Clear timer if it's running
     if (timerRef.current) {
       clearInterval(timerRef.current);
       timerRef.current = null;
     }
     
-    timerInitializedRef.current = false;
-    
-    if (reason === 'timeout' && isAuthenticated && defaultProfileId) {
+    // Only save score on timeout (normal game end) and when user is logged in
+    if (reason === 'timeout' && isLoggedIn && defaultProfileId) {
       console.log(`Attempting to save score: ${finalScore}`);
       try {
         const success = await saveScore(
@@ -169,18 +144,22 @@ const GameProvider = ({ children }: GameProviderProps) => {
         
         if (success) {
           console.log("Score saved successfully");
+          // Set game state to ended only after successful save
           setGameState('ended');
         } else {
           console.error("Failed to save score");
           toast.error("Failed to save your score");
+          // Still move to ended state
           setGameState('ended');
         }
       } catch (error) {
         console.error("Failed to save score:", error);
         toast.error("Failed to save your score");
+        // Still move to ended state
         setGameState('ended');
       }
     } else {
+      // If not saving score, just set game state to ended
       setGameState('ended');
     }
   };
@@ -194,21 +173,14 @@ const GameProvider = ({ children }: GameProviderProps) => {
     incrementScore,
     resetScore,
     currentProblem,
-    generateNewProblem: () => {
-      return generateNewProblem(
-        settings.operation, 
-        settings.range,
-        settings.allowNegatives || false,
-        settings.focusNumber || null
-      );
-    },
+    generateNewProblem,
     timeLeft,
     setTimeLeft,
     userAnswer,
     setUserAnswer,
     scoreHistory,
     saveScore,
-    isLoggedIn: isAuthenticated,
+    isLoggedIn,
     username,
     focusNumber,
     setFocusNumber,

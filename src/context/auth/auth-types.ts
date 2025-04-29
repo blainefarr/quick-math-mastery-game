@@ -4,12 +4,11 @@ export interface AuthContextType {
   username: string;
   userId: string | null;
   defaultProfileId: string | null;
-  isLoadingProfile: boolean;
   isAuthenticated: boolean;
-  authError: string | null;
+  isLoadingProfile: boolean;
   setIsLoggedIn: (isLoggedIn: boolean) => void;
   setUsername: (username: string) => void;
-  setDefaultProfileId: (profileId: string | null) => void;
+  setDefaultProfileId: (profileId: string) => void;
   handleLogout: () => Promise<void>;
 }
 

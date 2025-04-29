@@ -104,9 +104,13 @@ export const useScoreManagement = (userId: string | null) => {
       return false;
     }
 
-    // Get the profile ID from localStorage first (for better performance)
-    // then fallback to defaultProfileId from context
-    const profileId = localStorage.getItem(ACTIVE_PROFILE_KEY) || defaultProfileId;
+    if (isLoadingProfile) {
+      console.log('Profile still loading, cannot save score yet');
+      return false;
+    }
+
+    // Get the profile ID from context or localStorage
+    const profileId = defaultProfileId || localStorage.getItem(ACTIVE_PROFILE_KEY);
     
     if (!profileId) {
       console.error('No profile ID available, cannot save score');
@@ -123,7 +127,7 @@ export const useScoreManagement = (userId: string | null) => {
       focusNumber,
       allowNegatives
     );
-  }, [userId, savingScore, defaultProfileId]);
+  }, [userId, savingScore, defaultProfileId, isLoadingProfile]);
 
   // Helper function to save score with a known profile ID
   const saveScoreWithProfileId = async (

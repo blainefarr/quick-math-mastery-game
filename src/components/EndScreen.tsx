@@ -1,131 +1,180 @@
-
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Trophy, Home, BarChart2, RepeatIcon, Share2 } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import useGame from '@/context/useGame';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { ArrowLeft, RefreshCw, TrendingUp } from 'lucide-react';
+import MathIcon from './common/MathIcon';
 import ConfettiEffect from './common/ConfettiEffect';
-import { useAuth } from '@/context/auth/useAuth';
+import AuthModal from './auth/AuthModal';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
+import ScoreChart from './user/ScoreChart';
 
 const EndScreen = () => {
-  const { score, settings, resetScore, setGameState, getIsHighScore } = useGame();
-  const { isAuthenticated } = useAuth();
-  const [showConfetti, setShowConfetti] = useState(false);
-  const [isHighScore, setIsHighScore] = useState(false);
+  const { 
+    score, 
+    resetScore, 
+    settings, 
+    setGameState, 
+    setTimeLeft,
+    getIsHighScore,
+    isLoggedIn,
+    setUserAnswer,
+    scoreHistory
+  } = useGame();
+
+  const [showScores, setShowScores] = useState(false);
+  
+  const isHighScore = getIsHighScore(score, settings.operation, settings.range);
   
   useEffect(() => {
-    // Only check for high score if authenticated
-    if (isAuthenticated) {
-      const highScore = getIsHighScore(score, settings.operation, settings.range);
-      setIsHighScore(highScore);
-      
-      if (highScore) {
-        setShowConfetti(true);
-        const timer = setTimeout(() => setShowConfetti(false), 5000);
-        return () => clearTimeout(timer);
-      }
-    }
-  }, [score, settings, getIsHighScore, isAuthenticated]);
+    const audio = new Audio();
+    audio.src = 'data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA/+M4wAAAAAAAAAAAAEluZm8AAAAPAAAAAwAAACsAWlpaWlpaWlpaWlp6enp6enp6enp6enp6enp6enp6epqampqampqampqaurq6urq6urq6urra2tra2tra2tra2vr6+vr6+vr6+vr6GhoaGhoaGhoaGho6Ojo6Ojo6Ojo6OlpaWlpaWlpaWlp6enp6enp6enp6epqampqampqampqa//NCxAAAAANIAAAAAurq6urq6urq6ura2tra2tra2tra2vr6+vr6+vr6+vr6GhoaGhoaGhoaGho6Ojo6Ojo6Ojo6OlpaWlpaWlpaWlpaqqqqqqqqqqqqqqqqqqqqqqqqv/zgMSAAACQABzxQAhAgBgeM4yqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//+ZVZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZ';
+    audio.volume = 0.2;
+    audio.play().catch(err => console.error("Failed to play sound:", err));
+  }, []);
   
-  const handlePlayAgain = () => {
+  const handleRestart = () => {
     resetScore();
+    setTimeLeft(settings.timerSeconds);
+    setUserAnswer(''); // Clear any previous answer
     setGameState('playing');
   };
   
-  const handleBackToMenu = () => {
+  const handleBackToSelection = () => {
     resetScore();
+    setUserAnswer(''); // Clear any previous answer
     setGameState('selection');
   };
   
-  const shareScore = () => {
-    try {
-      const text = `I scored ${score} points in ${settings.timerSeconds} seconds on ${settings.operation} problems in Minute Math!`;
-      
-      if (navigator.share) {
-        navigator.share({
-          title: 'My Minute Math Score',
-          text: text,
-          url: window.location.href
-        });
-      } else {
-        navigator.clipboard.writeText(text);
-        alert('Score copied to clipboard!');
-      }
-    } catch (error) {
-      console.error('Error sharing:', error);
+  const getOperationName = () => {
+    switch (settings.operation) {
+      case 'addition': return 'Addition';
+      case 'subtraction': return 'Subtraction';
+      case 'multiplication': return 'Multiplication';
+      case 'division': return 'Division';
+      default: return '';
     }
   };
   
+  const getRangeDescription = () => {
+    const { min1, max1, min2, max2 } = settings.range;
+    return `${min1}-${max1} and ${min2}-${max2}`;
+  };
+
   return (
-    <div className="container max-w-md mx-auto px-4 py-8">
-      {showConfetti && <ConfettiEffect score={score} />}
-      
-      <Card className="shadow-lg border-2 border-primary/20">
-        <CardHeader className="text-center pb-2">
-          <CardTitle className="text-3xl font-bold">
-            Game Over!
-          </CardTitle>
+    <main className="flex flex-col items-center w-full min-h-screen px-4 pt-10 sm:pt-16">
+      <ConfettiEffect score={score} />
+      <Card className="w-full max-w-md shadow-xl">
+        <CardHeader className="text-center">
+          <CardTitle className="text-3xl font-bold text-primary">Game Over!</CardTitle>
+          <CardDescription>
+            {!isLoggedIn ? "Sign up to save and track your results!" : "Your performance summary"}
+          </CardDescription>
         </CardHeader>
         
         <CardContent className="space-y-6">
-          <div className="flex flex-col items-center mt-2 mb-6">
-            <div className="text-5xl font-bold text-primary mb-2">{score}</div>
-            <div className="text-lg text-muted-foreground">Your Score</div>
-            {isAuthenticated && isHighScore && (
-              <div className="flex items-center gap-1 text-amber-500 font-semibold mt-2">
-                <Trophy size={18} className="animate-pulse" />
-                <span>New High Score!</span>
+          <div className="flex justify-center">
+            <div className="text-center bg-gradient-to-r from-primary/20 to-secondary/20 rounded-full w-36 h-36 flex flex-col justify-center items-center shadow-inner animate-pop">
+              <span className="text-sm text-muted-foreground">Final Score</span>
+              <span className="text-5xl font-bold text-primary">{score}</span>
+              {isHighScore && score > 0 ? (
+                <span className="text-xs text-accent mt-1 font-bold bg-accent/20 px-2 py-1 rounded-full">
+                  New High Score!
+                </span>
+              ) : score > 10 ? (
+                <span className="text-xs text-accent mt-1">Amazing work!</span>
+              ) : null}
+            </div>
+          </div>
+          
+          {isHighScore && score > 0 && (
+            <div className="bg-accent/10 p-3 rounded-lg text-center text-sm">
+              <p className="font-medium text-accent">
+                New high score for {getOperationName()} with range {getRangeDescription()}!
+              </p>
+            </div>
+          )}
+          
+          <div className="space-y-2">
+            <h3 className="text-lg font-semibold flex items-center">
+              <span>Game Settings</span>
+              <MathIcon operation={settings.operation} className="ml-2 text-accent" />
+            </h3>
+            <div className="bg-muted p-4 rounded-lg">
+              <div className="mb-2 flex items-center">
+                <span className="font-medium mr-2">Operation:</span> 
+                <div className="flex items-center bg-primary/10 px-2 py-1 rounded-md">
+                  <MathIcon operation={settings.operation} size={16} className="mr-1" />
+                  {getOperationName()}
+                </div>
               </div>
-            )}
-          </div>
-          
-          <div className="grid grid-cols-2 gap-4">
-            <Button 
-              onClick={handlePlayAgain} 
-              className="flex items-center gap-2"
-              size="lg"
-            >
-              <RepeatIcon size={18} />
-              Play Again
-            </Button>
-            
-            <Button 
-              onClick={handleBackToMenu} 
-              variant="outline"
-              className="flex items-center gap-2"
-              size="lg"
-            >
-              <Home size={18} />
-              Main Menu
-            </Button>
-          </div>
-          
-          <div className="grid grid-cols-2 gap-4">
-            {isAuthenticated ? (
-              <Button 
-                onClick={() => window.location.href = '/progress'} 
-                variant="secondary"
-                className="flex items-center gap-2"
-              >
-                <BarChart2 size={18} />
-                My Progress
-              </Button>
-            ) : (
-              <div></div>
-            )}
-            
-            <Button 
-              onClick={shareScore} 
-              variant="secondary"
-              className="flex items-center gap-2"
-            >
-              <Share2 size={18} />
-              Share Score
-            </Button>
+              <div className="mb-2">
+                <span className="font-medium">Number Range 1:</span> 
+                <span className="ml-2 bg-secondary/10 px-2 py-1 rounded-md">{settings.range.min1} to {settings.range.max1}</span>
+              </div>
+              <div className="mb-2">
+                <span className="font-medium">Number Range 2:</span> 
+                <span className="ml-2 bg-secondary/10 px-2 py-1 rounded-md">{settings.range.min2} to {settings.range.max2}</span>
+              </div>
+              <div>
+                <span className="font-medium">Time Limit:</span> 
+                <span className="ml-2 bg-secondary/10 px-2 py-1 rounded-md">{settings.timerSeconds} seconds</span>
+              </div>
+            </div>
           </div>
         </CardContent>
+        
+        <CardFooter className="flex flex-col gap-2">
+          <Button 
+            onClick={handleRestart}
+            className="w-full bg-primary hover:bg-primary/90 flex items-center"
+            type="button"
+          >
+            <RefreshCw className="mr-2" size={16} />
+            Restart with Same Settings
+          </Button>
+          
+          {isLoggedIn ? (
+            <Button 
+              variant="outline"
+              className="w-full border-primary text-primary hover:bg-primary/10 flex items-center"
+              onClick={() => setShowScores(true)}
+              type="button"
+            >
+              <TrendingUp className="mr-2" size={16} />
+              See Your Progress
+            </Button>
+          ) : (
+            <AuthModal>
+              <Button 
+                variant="outline"
+                className="w-full border-primary text-primary hover:bg-primary/10 flex items-center"
+                type="button"
+              >
+                <TrendingUp className="mr-2" size={16} />
+                Sign Up to Track Progress
+              </Button>
+            </AuthModal>
+          )}
+          
+          <Button 
+            onClick={handleBackToSelection}
+            variant="outline"
+            className="w-full border-primary text-primary hover:bg-primary/10 flex items-center"
+            type="button"
+          >
+            <ArrowLeft className="mr-2" size={16} />
+            Back to Selection
+          </Button>
+        </CardFooter>
       </Card>
-    </div>
+
+      <Dialog open={showScores} onOpenChange={setShowScores}>
+        <DialogContent className="sm:max-w-xl">
+          <ScoreChart scores={scoreHistory} />
+        </DialogContent>
+      </Dialog>
+    </main>
   );
 };
 

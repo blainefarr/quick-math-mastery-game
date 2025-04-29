@@ -65,7 +65,7 @@ const Header = () => {
         )}
 
         <div className="mr-2 text-xs bg-accent/10 rounded-full px-3 py-1 text-accent-foreground hidden sm:block">
-          {isLoggedIn ? 'Track your progress!' : 'Login to save your scores!'}
+          Math practice for kids!
         </div>
         
         {isLoggedIn ? (
