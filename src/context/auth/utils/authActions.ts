@@ -65,6 +65,7 @@ export const completeSignUp = async (email: string, password: string, displayNam
   console.log('Starting complete signup process...');
   
   // Step 1: Auth Sign Up
+  console.log('Step 1: Performing Supabase Auth SignUp for:', email);
   const { data: authData, error: authError } = await supabase.auth.signUp({ 
     email, 
     password,
@@ -87,6 +88,7 @@ export const completeSignUp = async (email: string, password: string, displayNam
   const maxAccountRetries = 5;
   let accountId = null;
   
+  console.log('Step 2: Verifying account creation in database...');
   // Try multiple times to get the account - it should be created by DB trigger
   for (let i = 0; i < maxAccountRetries; i++) {
     // Wait a bit before checking (increasing delay with each retry)
@@ -95,6 +97,7 @@ export const completeSignUp = async (email: string, password: string, displayNam
     console.log(`Checking for account creation, attempt ${i + 1}/${maxAccountRetries}`);
     
     // Check if the account was created
+    console.log(`Querying accounts table for userId=${userId}`);
     const { data: accountData, error: accountError } = await supabase
       .from('accounts')
       .select('id')
@@ -107,6 +110,8 @@ export const completeSignUp = async (email: string, password: string, displayNam
       accountId = accountData.id;
       console.log('Account found:', accountId);
       break;
+    } else {
+      console.log(`Account not found on attempt ${i + 1}, waiting for creation...`);
     }
   }
   
@@ -116,6 +121,7 @@ export const completeSignUp = async (email: string, password: string, displayNam
   }
   
   // Step 3: Check if profile exists
+  console.log('Step 3: Verifying profile creation in database...');
   let retryCount = 0;
   const maxRetries = 5;
   let profileCreated = false;
@@ -125,11 +131,12 @@ export const completeSignUp = async (email: string, password: string, displayNam
     try {
       // Allow some time for the database triggers to complete
       if (retryCount > 0) {
-        console.log(`Retry attempt ${retryCount}/${maxRetries} for profile creation...`);
+        console.log(`Retry attempt ${retryCount + 1}/${maxRetries} for profile creation...`);
         await new Promise(resolve => setTimeout(resolve, 500 * (retryCount + 1)));
       }
       
       // Check if profile exists
+      console.log(`Querying profiles table for account_id=${userId}`);
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('id, name')
@@ -144,8 +151,11 @@ export const completeSignUp = async (email: string, password: string, displayNam
         profileId = profileData.id;
         
         // Store the profile ID in localStorage
+        console.log(`Saving profile ID ${profileId} to localStorage (key: ${ACTIVE_PROFILE_KEY})`);
         localStorage.setItem(ACTIVE_PROFILE_KEY, profileData.id);
         break;
+      } else {
+        console.log(`Profile not found on attempt ${retryCount + 1}, waiting for creation...`);
       }
       
       retryCount++;
@@ -167,4 +177,106 @@ export const completeSignUp = async (email: string, password: string, displayNam
   });
   
   return { userId, accountId, profileId };
+};
+
+/**
+ * Function to fetch and save account and profile info after auth events
+ * This is used during both sign-in and post-signup verification
+ */
+export const fetchAndSaveAccountProfile = async (userId: string, authState: AuthStateType): Promise<boolean> => {
+  console.log('fetchAndSaveAccountProfile: Starting for userId:', userId);
+  
+  if (!userId) {
+    console.error('fetchAndSaveAccountProfile: No userId provided');
+    return false;
+  }
+  
+  try {
+    // Step 1: Check if account exists
+    console.log('fetchAndSaveAccountProfile Step 1: Checking account existence');
+    const { data: accountData, error: accountError } = await supabase
+      .from('accounts')
+      .select('id')
+      .eq('id', userId)
+      .maybeSingle();
+      
+    if (accountError) {
+      console.error('fetchAndSaveAccountProfile: Error fetching account:', accountError);
+      return false;
+    }
+    
+    if (!accountData) {
+      console.error('fetchAndSaveAccountProfile: No account found for user:', userId);
+      return false;
+    }
+    
+    const accountId = accountData.id;
+    console.log('fetchAndSaveAccountProfile: Account found:', accountId);
+    
+    // Step 2: Get profiles for this account
+    console.log('fetchAndSaveAccountProfile Step 2: Fetching profiles for account');
+    const { data: profiles, error: profilesError } = await supabase
+      .from('profiles')
+      .select('id, name, is_active, is_owner, grade')
+      .eq('account_id', accountId)
+      .order('created_at', { ascending: false });
+    
+    if (profilesError) {
+      console.error('fetchAndSaveAccountProfile: Error fetching profiles:', profilesError);
+      return false;
+    }
+    
+    if (!profiles || profiles.length === 0) {
+      console.error('fetchAndSaveAccountProfile: No profiles found for account:', accountId);
+      return false;
+    }
+    
+    console.log('fetchAndSaveAccountProfile: Found', profiles.length, 'profiles:', profiles);
+    authState.setHasMultipleProfiles(profiles.length > 1);
+    
+    // Get stored profile ID or select one
+    const storedProfileId = localStorage.getItem(ACTIVE_PROFILE_KEY);
+    let selectedProfile = null;
+    
+    if (storedProfileId) {
+      console.log('fetchAndSaveAccountProfile: Checking for stored profile:', storedProfileId);
+      selectedProfile = profiles.find(p => p.id === storedProfileId);
+    }
+    
+    if (!selectedProfile) {
+      // Auto-select profile
+      if (profiles.length === 1) {
+        selectedProfile = profiles[0];
+        console.log('fetchAndSaveAccountProfile: Auto-selecting only profile:', selectedProfile.id);
+      } else {
+        // Try to get owner profile
+        selectedProfile = profiles.find(p => p.is_owner === true);
+        if (selectedProfile) {
+          console.log('fetchAndSaveAccountProfile: Selected owner profile:', selectedProfile.id);
+        } else {
+          selectedProfile = profiles[0];
+          console.log('fetchAndSaveAccountProfile: Falling back to first profile:', selectedProfile.id);
+        }
+      }
+      
+      // Store selected profile
+      if (selectedProfile) {
+        console.log('fetchAndSaveAccountProfile: Saving profile ID to localStorage:', selectedProfile.id);
+        localStorage.setItem(ACTIVE_PROFILE_KEY, selectedProfile.id);
+      }
+    }
+    
+    if (selectedProfile) {
+      console.log('fetchAndSaveAccountProfile: Setting profile in auth state:', selectedProfile.id);
+      authState.setDefaultProfileId(selectedProfile.id);
+      authState.setUsername(selectedProfile.name);
+      return true;
+    } else {
+      console.error('fetchAndSaveAccountProfile: Failed to select a profile');
+      return false;
+    }
+  } catch (error) {
+    console.error('fetchAndSaveAccountProfile: Unexpected error:', error);
+    return false;
+  }
 };
