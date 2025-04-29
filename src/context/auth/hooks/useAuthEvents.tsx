@@ -99,8 +99,8 @@ export const useAuthEvents = (authState: AuthStateType) => {
             setIsLoadingProfile(false);
           }
         }
-        // Fix: Correcting the type issue with SIGNED_UP event
-        else if (event === 'SIGNED_UP') {
+        // Fix: Using type-safe array inclusion check for SIGNED_UP event
+        else if (['SIGNED_UP'].includes(event as string)) {
           if (session?.user) {
             console.log('New user signup detected! Setting up retry mechanism...');
             setIsLoggedIn(true);
