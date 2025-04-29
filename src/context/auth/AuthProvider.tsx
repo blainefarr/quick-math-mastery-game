@@ -8,6 +8,17 @@ import { useSessionManagement } from '@/hooks/useSessionManagement';
 import { toast } from 'sonner';
 import { waitForSession } from '@/hooks/useAuthUtils';
 
+// Define the AuthChangeEvent type to include "SIGNED_UP"
+type AuthChangeEvent = 
+  | 'INITIAL_SESSION'
+  | 'PASSWORD_RECOVERY'
+  | 'SIGNED_IN'
+  | 'SIGNED_OUT'
+  | 'TOKEN_REFRESHED'
+  | 'USER_UPDATED'
+  | 'MFA_CHALLENGE_VERIFIED'
+  | 'SIGNED_UP'; // Add SIGNED_UP to fix TypeScript error
+
 const AuthProvider = ({ children }: AuthProviderProps) => {
   // Use our custom hooks
   const {
@@ -46,7 +57,7 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
     
     // Handle auth state changes from Supabase
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      async (event: AuthChangeEvent, session) => {
         console.log('Auth state changed:', event);
         
         if (event === 'SIGNED_OUT') {

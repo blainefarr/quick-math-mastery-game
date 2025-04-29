@@ -4,6 +4,7 @@ import UserDropdown from './UserDropdown';
 import { useAuth } from '@/context/auth/useAuth';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ProfileSwitcherDialog } from './ProfileSwitcherDialog';
+import { toast } from 'sonner';
 
 const UserProfile = () => {
   const { 
@@ -22,6 +23,26 @@ const UserProfile = () => {
       // The dialog is now controlled by the open prop, no need for additional code
     }
   }, [shouldShowProfileSelector, isAuthenticated, isLoadingProfile]);
+  
+  // Handle severe loading delay - after 10 seconds, show a helpful message
+  useEffect(() => {
+    let timeoutId: number | null = null;
+    
+    if (isLoadingProfile && isAuthenticated) {
+      timeoutId = window.setTimeout(() => {
+        if (isLoadingProfile) {
+          console.log("Profile loading is taking longer than expected");
+          toast.info("Still loading your profile...");
+        }
+      }, 5000); // 5 second warning
+    }
+    
+    return () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    };
+  }, [isLoadingProfile, isAuthenticated]);
   
   // Show loading state when profile is loading or auth is not ready
   if (isLoadingProfile || !isReady) {

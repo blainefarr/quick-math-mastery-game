@@ -33,26 +33,49 @@ export const useProfileManagement = () => {
         return null;
       }
       
+      // For new users who just signed up, profiles might be empty initially due to timing
+      // Let's simplify our handling for new users
       if (profiles.length === 0) {
         console.log('No profiles found for this account, attempting to create one');
         
-        // As a last resort, manually create a profile
-        const newProfile = await createProfileForAccount(accountId, undefined, true);
-        
-        if (!newProfile) {
-          console.error('Failed to create default profile');
-          setIsLoadingProfile(false);
-          forceLogout('Unable to create your profile. Please try again later.');
-          return null;
+        // Use a straightforward approach to create a new profile
+        try {
+          // Try to create a default profile for this account
+          const newProfile = await createProfileForAccount(accountId, undefined, true);
+          
+          if (!newProfile) {
+            console.error('Failed to create default profile');
+            setIsLoadingProfile(false);
+            forceLogout('Unable to create your profile. Please try again later.');
+            return null;
+          }
+          
+          console.log('Successfully created new profile:', newProfile);
+          selectedProfile = newProfile;
+          
+          // Store the new profile ID in localStorage
+          localStorage.setItem(ACTIVE_PROFILE_KEY, selectedProfile.id);
+          
+        } catch (createError) {
+          console.error('Error creating default profile:', createError);
+          
+          // One more attempt to fetch profiles after a short delay
+          // This helps if profile was created by DB trigger but not yet visible
+          await new Promise(resolve => setTimeout(resolve, 800));
+          const retryProfiles = await getProfilesForAccount(accountId, 1, 0);
+          
+          if (retryProfiles && retryProfiles.length > 0) {
+            console.log('Found profile on retry after creation failure');
+            selectedProfile = retryProfiles[0];
+            localStorage.setItem(ACTIVE_PROFILE_KEY, selectedProfile.id);
+          } else {
+            setIsLoadingProfile(false);
+            forceLogout('Unable to set up your profile. Please try logging in again.');
+            return null;
+          }
         }
-        
-        console.log('Successfully created new profile:', newProfile);
-        selectedProfile = newProfile;
-        
-        // Store the new profile ID in localStorage
-        localStorage.setItem(ACTIVE_PROFILE_KEY, selectedProfile.id);
       } else if (profiles.length === 1) {
-        // If there's only one profile, use it
+        // If there's only one profile, use it automatically - common case for new users
         console.log('Single profile found, using it automatically');
         selectedProfile = profiles[0];
         localStorage.setItem(ACTIVE_PROFILE_KEY, selectedProfile.id);
