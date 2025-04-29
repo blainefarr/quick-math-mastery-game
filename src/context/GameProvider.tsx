@@ -11,7 +11,7 @@ import { toast } from 'sonner';
 const GameProvider = ({ children }: GameProviderProps) => {
   const { settings, updateSettings, resetSettings } = useGameSettings();
   const { currentProblem, generateNewProblem } = useProblemGenerator();
-  const { userId, defaultProfileId } = useAuth();
+  const { userId, defaultProfileId, isAuthenticated } = useAuth();
   
   const [gameState, setGameState] = useState<GameState>('selection');
   const [score, setScore] = useState(0);
@@ -27,6 +27,8 @@ const GameProvider = ({ children }: GameProviderProps) => {
   const isEndingRef = useRef(false);
   // Add a new ref to track if the timer was already initialized for the current game
   const timerInitializedRef = useRef(false);
+  // Add a new ref to track we tried authentication
+  const authInitializedRef = useRef(false);
 
   const { 
     scoreHistory, 
@@ -44,40 +46,69 @@ const GameProvider = ({ children }: GameProviderProps) => {
   useEffect(() => {
     gameStateRef.current = gameState;
     
-    // Reset timerInitialized when game state changes to selection
-    if (gameState === 'selection') {
-      timerInitializedRef.current = false;
-    }
-  }, [gameState]);
-
-  // Reset timer and fetch scores when game state changes
-  useEffect(() => {
+    // When game state changes to 'playing', start the timer
     if (gameState === 'playing' && !timerInitializedRef.current) {
-      console.log('Starting game timer - initial setup');
+      console.log('Starting game timer due to gameState change to playing');
       startGameTimer();
-      
-      // Set the flag to prevent re-initializing the timer
       timerInitializedRef.current = true;
-      
-      // Reset the isEnding flag when starting a new game
+    }
+    
+    // Reset timer when game state changes to 'selection'
+    if (gameState === 'selection') {
+      console.log('Resetting timer as game state changed to selection');
+      timerInitializedRef.current = false;
+      // Reset the isEnding flag
       isEndingRef.current = false;
-    } else if (gameState === 'ended' && userId && defaultProfileId) {
+      
+      // Clear any existing timer
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+      
+      // Reset the time left to the initial value
+      setTimeLeft(settings.timerSeconds);
+    }
+  }, [gameState, settings.timerSeconds]);
+
+  // Fetch scores when game ends
+  useEffect(() => {
+    if (gameState === 'ended' && isAuthenticated && defaultProfileId) {
+      console.log('Game ended, fetching scores');
       fetchUserScores().then(scores => {
         if (scores) {
           setScoreHistory(scores);
         }
       });
     }
-    
-    // Clean up timer when component unmounts or game state changes
+  }, [gameState, isAuthenticated, defaultProfileId, fetchUserScores, setScoreHistory]);
+  
+  // Check authentication status before starting game
+  useEffect(() => {
+    // Only do this once
+    if (!authInitializedRef.current) {
+      authInitializedRef.current = true;
+      
+      // If not authenticated but trying to play, redirect to selection
+      if (gameState === 'playing' && (!isAuthenticated || !defaultProfileId)) {
+        console.log('User not authenticated or no profile, redirecting to selection');
+        setGameState('selection');
+        toast.error("Please log in to play the game");
+      }
+    }
+  }, [gameState, isAuthenticated, defaultProfileId]);
+
+  // Clean up the timer when component unmounts
+  useEffect(() => {
     return () => {
       if (timerRef.current) {
-        console.log('Cleaning up timer', timerRef.current);
+        console.log('Cleaning up timer on unmount', timerRef.current);
         clearInterval(timerRef.current);
         timerRef.current = null;
       }
+      timerInitializedRef.current = false;
     };
-  }, [gameState, userId, fetchUserScores, setScoreHistory, defaultProfileId]);
+  }, []);
 
   const incrementScore = () => {
     // Don't increment score if the game is ending
@@ -98,11 +129,16 @@ const GameProvider = ({ children }: GameProviderProps) => {
     setScore(0);
     scoreRef.current = 0;
   };
-
-  // Get auth state from useAuth
-  const { isLoggedIn, username } = useAuth();
   
   const startGameTimer = () => {
+    // Check if user is authenticated
+    if (!isAuthenticated || !defaultProfileId) {
+      console.log('Cannot start game - user not authenticated or no profile');
+      setGameState('selection');
+      toast.error("Please log in to play the game");
+      return;
+    }
+    
     // Clear any existing timer
     if (timerRef.current) {
       console.log('Clearing existing timer before starting new one');
@@ -158,8 +194,8 @@ const GameProvider = ({ children }: GameProviderProps) => {
     // Reset timer initialization flag
     timerInitializedRef.current = false;
     
-    // Only save score on timeout (normal game end) and when user is logged in
-    if (reason === 'timeout' && isLoggedIn && defaultProfileId) {
+    // Only save score on timeout (normal game end) and when user is logged in with profile
+    if (reason === 'timeout' && isAuthenticated && defaultProfileId) {
       console.log(`Attempting to save score: ${finalScore}`);
       try {
         const success = await saveScore(
@@ -209,7 +245,7 @@ const GameProvider = ({ children }: GameProviderProps) => {
     setUserAnswer,
     scoreHistory,
     saveScore,
-    isLoggedIn,
+    isLoggedIn: isAuthenticated,
     username,
     focusNumber,
     setFocusNumber,

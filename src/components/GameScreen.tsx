@@ -7,8 +7,11 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Clock, RefreshCw } from 'lucide-react';
 import MathIcon from './common/MathIcon';
 import { useCompactHeight } from '@/hooks/use-compact-height';
+import { useAuth } from '@/context/auth/useAuth';
+import { Navigate } from 'react-router-dom';
 
 const GameScreen = () => {
+  const { isAuthenticated, defaultProfileId } = useAuth();
   const {
     score,
     incrementScore,
@@ -26,7 +29,13 @@ const GameScreen = () => {
   const inputRef = useRef<HTMLInputElement>(null);
   const initialProblemGeneratedRef = useRef(false);
   const hasEndedRef = useRef(false);
+  const timerInitializedRef = useRef(false);
   const isCompactHeight = useCompactHeight();
+
+  // Ensure authentication before proceeding
+  if (!isAuthenticated || !defaultProfileId) {
+    return <Navigate to="/" replace />;
+  }
 
   // Sync the hasEnded ref with the timeLeft state
   useEffect(() => {
@@ -53,10 +62,26 @@ const GameScreen = () => {
       initialProblemGeneratedRef.current = true;
     }
     
+    // Important - move timer initialization here to ensure
+    // it happens after the first render is complete
+    if (!timerInitializedRef.current) {
+      console.log('Initializing game timer from useEffect');
+      const timer = setTimeout(() => {
+        // This ensures the timer starts after all initial renders are complete
+        if (!timerInitializedRef.current) {
+          console.log('Starting game timer after initial render');
+          timerInitializedRef.current = true;
+        }
+      }, 0);
+      
+      return () => clearTimeout(timer);
+    }
+    
     inputRef.current?.focus();
     
     return () => {
       initialProblemGeneratedRef.current = false;
+      timerInitializedRef.current = false;
     };
   }, []);
 

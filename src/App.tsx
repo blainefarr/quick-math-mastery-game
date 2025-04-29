@@ -10,6 +10,7 @@ import MyAccount from "./pages/MyAccount";
 import NotFound from "./pages/NotFound";
 import Leaderboard from "./pages/Leaderboard";
 import Progress from "./pages/Progress";
+import AuthGate from "./components/auth/AuthGate";
 
 const queryClient = new QueryClient();
 
@@ -23,14 +24,34 @@ const App = () => (
             <Route path="/" element={<Index />} />
           </Route>
 
-          {/* Non-game routes with Header but no GameProvider */}
+          {/* Protected routes requiring authentication */}
           <Route element={<AppLayout />}>
             <Route element={<FormLayout />}>
-              <Route path="/account" element={<MyAccount />} />
+              <Route 
+                path="/account" 
+                element={
+                  <AuthGate requireAuth={true}>
+                    <MyAccount />
+                  </AuthGate>
+                } 
+              />
             </Route>
-            <Route path="/leaderboard" element={<Leaderboard />} />
-            <Route path="/progress" element={<Progress />} />
-            {/* Add future non-game pages here */}
+            <Route 
+              path="/leaderboard" 
+              element={
+                <AuthGate requireAuth={true}>
+                  <Leaderboard />
+                </AuthGate>
+              } 
+            />
+            <Route 
+              path="/progress" 
+              element={
+                <AuthGate requireAuth={true}>
+                  <Progress />
+                </AuthGate>
+              } 
+            />
           </Route>
 
           {/* Catch-all route */}
