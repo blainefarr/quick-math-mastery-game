@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { AuthStateType } from '../auth-types';
@@ -103,8 +104,9 @@ export const fetchUserProfiles = async (
     }
     
     if (selectedProfile) {
-      // Use account name instead of profile name when available
+      // Use account name instead of profile name
       setDefaultProfileId(selectedProfile.id);
+      // IMPORTANT: Always use the account name which should be correctly saved
       setUsername(accountData.name || selectedProfile.name);
       
       // If this was a retry after signup, show success message

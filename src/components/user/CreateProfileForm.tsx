@@ -93,7 +93,7 @@ export function CreateProfileForm({
         toast.success("Profile updated successfully");
         onSuccess(data?.[0]);
       } else {
-        // Create new profile
+        // Create new profile - removed is_default field which doesn't exist
         const { data, error } = await supabase
           .from('profiles')
           .insert([

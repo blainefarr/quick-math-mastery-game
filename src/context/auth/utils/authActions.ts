@@ -251,7 +251,7 @@ export const fetchAndSaveAccountProfile = async (userId: string, authState: Auth
     }
     
     if (selectedProfile) {
-      // Here's the fix: Use account name instead of profile name
+      // Always use account name which should be correctly saved from sign up
       authState.setDefaultProfileId(selectedProfile.id);
       authState.setUsername(accountName || selectedProfile.name);
       return true;

@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import useGame from '@/context/useGame';
 import { Button } from '@/components/ui/button';
@@ -7,7 +7,6 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { ArrowLeft, RefreshCw, TrendingUp } from 'lucide-react';
 import MathIcon from './common/MathIcon';
 import ConfettiEffect from './common/ConfettiEffect';
-import AuthModal from './auth/AuthModal';
 
 const EndScreen = () => {
   const navigate = useNavigate();
@@ -143,16 +142,15 @@ const EndScreen = () => {
               See Your Progress
             </Button>
           ) : (
-            <AuthModal>
-              <Button 
-                variant="outline"
-                className="w-full border-primary text-primary hover:bg-primary/10 flex items-center"
-                type="button"
-              >
-                <TrendingUp className="mr-2" size={16} />
-                Sign Up to Track Progress
-              </Button>
-            </AuthModal>
+            <Button 
+              variant="outline"
+              className="w-full border-primary text-primary hover:bg-primary/10 flex items-center"
+              onClick={() => navigate('/progress')} 
+              type="button"
+            >
+              <TrendingUp className="mr-2" size={16} />
+              See Your Progress
+            </Button>
           )}
           
           <Button 
