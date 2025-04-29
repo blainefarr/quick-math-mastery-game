@@ -18,7 +18,7 @@ const UserProfile = () => {
   } = useAuth();
   const [showProfileSwitcher, setShowProfileSwitcher] = useState(false);
   
-  // Auto-show profile switcher when user has multiple profiles or no active profile selected
+  // Auto-show profile switcher only when user has multiple profiles and no active profile selected
   useEffect(() => {
     // Don't show anything during initial load or for new signups that are being processed
     if (isLoadingProfile || isNewSignup) {
@@ -26,9 +26,9 @@ const UserProfile = () => {
       return;
     }
     
-    // Only show automatically if we have multiple profiles and no recent showings
-    if (hasMultipleProfiles && defaultProfileId) {
-      console.log('UserProfile: Auto-showing profile switcher: multiple profiles detected');
+    // Only auto-show if we have multiple profiles and no recent showings
+    if (hasMultipleProfiles && !defaultProfileId) {
+      console.log('UserProfile: Auto-showing profile switcher: multiple profiles detected and no default');
       setShowProfileSwitcher(true);
     } 
     // Only show if we've completed loading and there's no profile

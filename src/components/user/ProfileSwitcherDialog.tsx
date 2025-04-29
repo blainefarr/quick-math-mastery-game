@@ -61,14 +61,7 @@ export function ProfileSwitcherDialog({ open, onOpenChange }: ProfileSwitcherDia
       onOpenChange(false);
       return;
     }
-    
-    // Automatically close dialog if there's only one profile and we're not in create form
-    if (profiles.length === 1 && !showCreateForm && !loading) {
-      console.log('Auto-closing profile switcher: only one profile exists');
-      handleSwitchProfile(profiles[0]);
-      return;
-    }
-  }, [profiles, loading, open, showCreateForm, isNewSignup]);
+  }, [open, isNewSignup, onOpenChange]);
 
   // Extra cleanup effect to ensure no modal backdrop issues
   useEffect(() => {
@@ -176,13 +169,6 @@ export function ProfileSwitcherDialog({ open, onOpenChange }: ProfileSwitcherDia
       
       setProfiles(processedProfiles);
       
-      // If only one profile exists and we're not showing the create form,
-      // auto-select it and close the dialog
-      if (processedProfiles.length === 1 && !showCreateForm) {
-        console.log('Only one profile exists - auto-selecting:', processedProfiles[0].id);
-        handleSwitchProfile(processedProfiles[0]);
-      }
-      
       return true;
     } catch (err) {
       console.error('Error in profile fetch:', err);
@@ -219,7 +205,7 @@ export function ProfileSwitcherDialog({ open, onOpenChange }: ProfileSwitcherDia
       // Refresh user profile in the auth context
       await refreshUserProfile();
       
-      // Close the dialog and ensure cleanup
+      // Close the dialog and ensure cleanup - fix for issue #1
       onOpenChange(false);
       
       // Extra cleanup to ensure no modal backdrop issues
