@@ -47,7 +47,11 @@ const UserProfile = () => {
         defaultProfileId,
         isLoadingProfile,
         hasMultipleProfiles,
-        isNewSignup
+        isNewSignup,
+        renderDecision: isNewSignup ? "showing setup message" :
+                       isLoadingProfile ? "showing skeleton" :
+                       !defaultProfileId ? "showing loading message" :
+                       "showing dropdown"
       });
     }
   }, [isAuthenticated, userId, username, defaultProfileId, isLoadingProfile, hasMultipleProfiles, isNewSignup]);

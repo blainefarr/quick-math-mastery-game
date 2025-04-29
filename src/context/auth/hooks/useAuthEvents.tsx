@@ -35,6 +35,14 @@ export const useAuthEvents = (authState: AuthStateType) => {
       const timer = setTimeout(async () => {
         console.log(`Profile retry attempt ${retryAttempts + 1}/${MAX_PROFILE_RETRY_ATTEMPTS} for new signup...`);
         
+        // Check auth session before retry
+        const { data: sessionData } = await supabase.auth.getSession();
+        console.log(`Auth session before profile retry attempt ${retryAttempts + 1}:`, {
+          hasSession: !!sessionData.session,
+          sessionUserId: sessionData.session?.user?.id,
+          accessToken: sessionData.session?.access_token ? '✓ Present' : '❌ Missing'
+        });
+        
         // Use the enhanced function to fetch account and profile
         const success = await fetchAndSaveAccountProfile(userId, authState);
         
@@ -100,6 +108,14 @@ export const useAuthEvents = (authState: AuthStateType) => {
             setTimeout(async () => {
               console.log(`useAuthEvents: Waiting ${INITIAL_FETCH_DELAY_MS}ms before fetching account/profile data`);
               
+              // Check auth session before fetching
+              const { data: sessionData } = await supabase.auth.getSession();
+              console.log('Auth session before account/profile fetch:', {
+                hasSession: !!sessionData.session,
+                sessionUserId: sessionData.session?.user?.id,
+                accessToken: sessionData.session?.access_token ? '✓ Present' : '❌ Missing'
+              });
+              
               // Add initial delay before fetching account and profile
               await new Promise(resolve => setTimeout(resolve, INITIAL_FETCH_DELAY_MS));
               
@@ -131,6 +147,12 @@ export const useAuthEvents = (authState: AuthStateType) => {
       try {
         console.log('useAuthEvents: Checking for existing session');
         const { data: { session } } = await supabase.auth.getSession();
+        
+        console.log('useAuthEvents: Initial session check result:', {
+          hasSession: !!session,
+          sessionUserId: session?.user?.id || 'none',
+          accessToken: session?.access_token ? '✓ Present' : '❌ Missing'
+        });
         
         if (session?.user) {
           console.log('useAuthEvents: Existing session found, user:', session.user.id);

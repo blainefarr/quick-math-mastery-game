@@ -104,6 +104,15 @@ export const completeSignUp = async (email: string, password: string, displayNam
     
     console.log(`Checking for account creation, attempt ${i + 1}/${maxAccountRetries}`);
     
+    // Check current auth session before query
+    const { data: sessionData } = await supabase.auth.getSession();
+    console.log(`Auth session before account fetch (attempt ${i + 1}):`, {
+      hasSession: !!sessionData.session,
+      sessionUserId: sessionData.session?.user?.id,
+      accessToken: sessionData.session?.access_token ? '✓ Present' : '❌ Missing',
+      targetUserId: userId
+    });
+    
     // Check if the account was created
     console.log(`Querying accounts table for userId=${userId}`);
     const { data: accountData, error: accountError } = await supabase
@@ -144,6 +153,14 @@ export const completeSignUp = async (email: string, password: string, displayNam
       }
       
       console.log(`Checking for profile, attempt ${retryCount + 1}/${maxProfileRetries}`);
+      
+      // Check current auth session before query
+      const { data: sessionData } = await supabase.auth.getSession();
+      console.log(`Auth session before profile fetch (attempt ${retryCount + 1}):`, {
+        hasSession: !!sessionData.session,
+        sessionUserId: sessionData.session?.user?.id,
+        accessToken: sessionData.session?.access_token ? '✓ Present' : '❌ Missing'
+      });
       
       // Check if profile exists
       console.log(`Querying profiles table for account_id=${userId}`);
@@ -202,6 +219,15 @@ export const fetchAndSaveAccountProfile = async (userId: string, authState: Auth
   }
   
   try {
+    // Check current auth session before query
+    const { data: sessionData } = await supabase.auth.getSession();
+    console.log('Auth session before account fetch:', {
+      hasSession: !!sessionData.session,
+      sessionUserId: sessionData.session?.user?.id,
+      accessToken: sessionData.session?.access_token ? '✓ Present' : '❌ Missing',
+      targetUserId: userId
+    });
+    
     // Step 1: Check if account exists
     console.log('fetchAndSaveAccountProfile Step 1: Checking account existence');
     const { data: accountData, error: accountError } = await supabase
