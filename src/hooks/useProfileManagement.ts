@@ -18,12 +18,16 @@ export const useProfileManagement = () => {
     try {
       console.log('Checking if profile exists for account ID:', accountId);
       
+      // Add a slight delay to ensure the account is fully created in the database
+      // This helps prevent foreign key constraint violations
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
       // Check if a profile exists for this user
       const { data: existingProfile, error: profileCheckError } = await supabase
         .from('profiles')
         .select('id, name')
         .eq('account_id', accountId)
-        .maybeSingle(); // Use maybeSingle instead of single to avoid errors
+        .maybeSingle();
       
       if (profileCheckError) {
         console.error('Error checking for existing profile:', profileCheckError);
@@ -38,7 +42,40 @@ export const useProfileManagement = () => {
       
       console.log('No profile found, attempting to create one');
       
-      // Get user information to create a profile
+      // First, verify the account exists in the accounts table
+      const { data: accountExists, error: accountCheckError } = await supabase
+        .from('accounts')
+        .select('id')
+        .eq('id', accountId)
+        .maybeSingle();
+      
+      if (accountCheckError || !accountExists) {
+        console.error('Account does not exist or error checking account:', accountCheckError);
+        // We need to create the account first
+        const { data: userData } = await supabase.auth.getUser();
+        if (!userData?.user) {
+          console.error('No user data available for account creation');
+          return null;
+        }
+        
+        // Create the account first
+        const { error: createAccountError } = await supabase
+          .from('accounts')
+          .insert([{
+            id: accountId,
+            email: userData.user.email,
+            name: userData.user.user_metadata?.name || userData.user.user_metadata?.full_name,
+          }]);
+          
+        if (createAccountError) {
+          console.error('Error creating account:', createAccountError);
+          return null;
+        }
+        
+        console.log('Created account for:', accountId);
+      }
+      
+      // Now get user information to create a profile
       const { data: { user } } = await supabase.auth.getUser();
       
       if (!user) {
@@ -114,7 +151,7 @@ export const useProfileManagement = () => {
           .select('id, name')
           .eq('id', storedProfileId)
           .eq('account_id', accountId)
-          .maybeSingle(); // Use maybeSingle instead of single
+          .maybeSingle();
           
         if (!storedProfileError && storedProfile) {
           console.log('Successfully retrieved stored profile:', storedProfile);
@@ -133,7 +170,7 @@ export const useProfileManagement = () => {
           .eq('account_id', accountId)
           .order('created_at', { ascending: false })
           .limit(1)
-          .maybeSingle(); // Use maybeSingle to prevent errors
+          .maybeSingle();
           
         if (anyProfileError) {
           console.error('Error fetching any profile:', anyProfileError);
@@ -142,6 +179,9 @@ export const useProfileManagement = () => {
           if (profileFetchAttempts < MAX_PROFILE_FETCH_ATTEMPTS) {
             console.log(`Retry attempt ${profileFetchAttempts + 1}/${MAX_PROFILE_FETCH_ATTEMPTS} in 500ms...`);
             setProfileFetchAttempts(prev => prev + 1);
+            
+            // Clear the profile fetch attempts after this retry completes or fails
+            setTimeout(() => setProfileFetchAttempts(0), 5000); 
             
             // Retry after a short delay
             return new Promise((resolve) => {

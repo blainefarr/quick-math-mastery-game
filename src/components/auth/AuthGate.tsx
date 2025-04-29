@@ -7,6 +7,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
 
 interface AuthGateProps {
   children: React.ReactNode;
@@ -33,6 +34,9 @@ export const AuthGate = ({
           <Skeleton className="h-6 w-2/3 mx-auto" />
           <Skeleton className="h-32 w-full" />
           <Skeleton className="h-6 w-3/4 mx-auto" />
+          <div className="text-center mt-4 text-sm text-muted-foreground">
+            Initializing app...
+          </div>
         </div>
       </Card>
     );
@@ -47,21 +51,27 @@ export const AuthGate = ({
           <AlertTriangle className="h-4 w-4" />
           <AlertTitle>Authentication Error</AlertTitle>
           <AlertDescription className="space-y-4">
-            <p>We couldn't load your profile. This can happen due to a network issue or account setup problem.</p>
+            <p>Your profile couldn't be loaded. This can happen due to a network issue or account setup problem.</p>
             <div className="flex justify-end gap-2">
               <Button 
                 variant="outline" 
                 size="sm" 
-                onClick={() => navigate('/')}
+                onClick={() => {
+                  navigate('/');
+                  window.location.reload(); // Force a refresh to retry
+                }}
               >
-                Go Home
+                Retry
               </Button>
               <Button 
                 variant="destructive" 
                 size="sm" 
-                onClick={() => {
-                  handleLogout();
-                  navigate('/');
+                onClick={async () => {
+                  const success = await handleLogout();
+                  if (success) {
+                    toast.success("You've been logged out. Please try logging in again.");
+                    navigate('/');
+                  }
                 }}
               >
                 Log Out and Try Again
@@ -89,7 +99,7 @@ export const AuthGate = ({
     // Use a timeout to avoid immediate redirects which can cause UI flicker
     setTimeout(() => {
       navigate('/');
-    }, 0);
+    }, 100);
     
     return null;
   }
