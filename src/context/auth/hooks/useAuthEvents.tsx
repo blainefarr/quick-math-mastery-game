@@ -2,15 +2,18 @@
 import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { AuthStateType } from '../auth-types';
-import { fetchUserProfiles } from '../utils/profileUtils';
 import { fetchAndSaveAccountProfile } from '../utils/authActions';
 import { AuthChangeEvent, Session } from '@supabase/supabase-js';
 import { toast } from 'sonner';
 
-const AUTH_TIMEOUT_MS = 10000; // 10 seconds timeout for auth operations
-const MAX_PROFILE_RETRY_ATTEMPTS = 5;
-const PROFILE_RETRY_DELAY_MS = 1500; // 1.5s delay between retries
-const INITIAL_FETCH_DELAY_MS = 1000; // Initial delay before fetching
+// Optimized timing constants
+const AUTH_TIMEOUT_MS = 5000; // Reduced from 10s to 5s
+const MAX_PROFILE_RETRY_ATTEMPTS = 3; // Reduced from 5 to 3
+const PROFILE_RETRY_DELAY_MS = 1000; // Reduced from 1.5s to 1s
+const INITIAL_FETCH_DELAY_MS = 300; // Reduced from 1s to 300ms
+
+// Add debounce control
+let isCurrentlyFetching = false;
 
 export const useAuthEvents = (authState: AuthStateType) => {
   const { 
@@ -27,30 +30,35 @@ export const useAuthEvents = (authState: AuthStateType) => {
     setRetryAttempts
   } = authState;
 
-  // Retry profile fetch for new signups
+  // Retry profile fetch for new signups - optimized
   useEffect(() => {
     if (isNewSignup && userId && retryAttempts < MAX_PROFILE_RETRY_ATTEMPTS) {
       const timer = setTimeout(async () => {
         console.log(`Profile retry attempt ${retryAttempts + 1}/${MAX_PROFILE_RETRY_ATTEMPTS} for new signup...`);
         
-        // Check auth session before retry
-        const { data: sessionData } = await supabase.auth.getSession();
+        // Prevent duplicate fetches
+        if (isCurrentlyFetching) return;
+        isCurrentlyFetching = true;
         
-        // Use the enhanced function to fetch account and profile
-        const success = await fetchAndSaveAccountProfile(userId, authState);
-        
-        if (success) {
-          console.log('Successfully retrieved profile after retry!');
-          setRetryAttempts(0);
-          setIsNewSignup(false);
-        } else {
-          setRetryAttempts(prev => prev + 1);
-          if (retryAttempts + 1 >= MAX_PROFILE_RETRY_ATTEMPTS) {
-            console.error('Failed to retrieve profile after maximum retries');
-            toast.error('Failed to load profile. Please try refreshing the page.');
-            setIsNewSignup(false);
+        try {
+          // Use the enhanced function to fetch account and profile
+          const success = await fetchAndSaveAccountProfile(userId, authState);
+          
+          if (success) {
+            console.log('Successfully retrieved profile after retry!');
             setRetryAttempts(0);
+            setIsNewSignup(false);
+          } else {
+            setRetryAttempts(prev => prev + 1);
+            if (retryAttempts + 1 >= MAX_PROFILE_RETRY_ATTEMPTS) {
+              console.error('Failed to retrieve profile after maximum retries');
+              toast.error('Failed to load profile. Please try refreshing the page.');
+              setIsNewSignup(false);
+              setRetryAttempts(0);
+            }
           }
+        } finally {
+          isCurrentlyFetching = false;
         }
       }, PROFILE_RETRY_DELAY_MS * (retryAttempts + 1)); // Increase delay with each retry
       
@@ -58,24 +66,39 @@ export const useAuthEvents = (authState: AuthStateType) => {
     }
   }, [isNewSignup, userId, retryAttempts]);
 
-  // Auth initialization and event handling
+  // Auth initialization and event handling - optimized
   useEffect(() => {
     console.log('Initializing auth event listener');
+    let authTimeoutId: NodeJS.Timeout | null = null;
+    let initialSessionChecked = false;
+    
     // Mark as loading profile when initializing
     setIsLoadingProfile(true);
     
     // Set up auth timeout to prevent infinite loading state
-    const authTimeout = setTimeout(() => {
-      if (authState.isLoadingProfile) {
-        console.warn('Auth operation timed out - resetting loading state');
-        setIsLoadingProfile(false);
-      }
-    }, AUTH_TIMEOUT_MS);
+    const startAuthTimeout = () => {
+      // Clear any existing timeout
+      if (authTimeoutId) clearTimeout(authTimeoutId);
+      
+      // Set a new timeout
+      authTimeoutId = setTimeout(() => {
+        if (authState.isLoadingProfile) {
+          console.warn('Auth operation timed out - resetting loading state');
+          setIsLoadingProfile(false);
+        }
+      }, AUTH_TIMEOUT_MS);
+    };
+    
+    // Start initial timeout
+    startAuthTimeout();
     
     // Handle auth state changes from Supabase
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event: AuthChangeEvent, session: Session | null) => {
         console.log('Auth state changed:', event, session?.user?.id || 'no-user');
+        
+        // Reset timeout whenever auth state changes
+        startAuthTimeout();
         
         if (event === 'SIGNED_OUT') {
           console.log('User signed out');
@@ -86,30 +109,41 @@ export const useAuthEvents = (authState: AuthStateType) => {
           setHasMultipleProfiles(false);
           localStorage.removeItem('math_game_active_profile');
           setIsLoadingProfile(false);
+          
+          // Clear timeout as we're done loading
+          if (authTimeoutId) clearTimeout(authTimeoutId);
           return;
         }
         
         // Handle all sign-in related events
-        if (['SIGNED_IN', 'TOKEN_REFRESHED', 'USER_UPDATED', 'INITIAL_SESSION'].includes(event)) {
+        if (['SIGNED_IN', 'TOKEN_REFRESHED', 'USER_UPDATED'].includes(event)) {
           if (session?.user) {
             console.log('User authenticated with event:', event, 'user:', session.user.id);
             setIsLoggedIn(true);
             setUserId(session.user.id);
             
-            // For regular sign-ins, fetch account and profile with appropriate delay
-            setTimeout(async () => {
-              // Add initial delay before fetching account and profile
-              await new Promise(resolve => setTimeout(resolve, INITIAL_FETCH_DELAY_MS));
-              
-              console.log('Now fetching account and profile data after auth event');
-              await fetchAndSaveAccountProfile(session.user.id, authState);
-            }, 100); // Start the delay process quickly
+            // Prevent duplicate fetches
+            if (isCurrentlyFetching) return;
+            isCurrentlyFetching = true;
+            
+            try {
+              // For regular sign-ins, fetch account and profile with minimal delay
+              setTimeout(async () => {
+                console.log('Now fetching account and profile data after auth event');
+                await fetchAndSaveAccountProfile(session.user.id, authState);
+              }, INITIAL_FETCH_DELAY_MS);
+            } finally {
+              setTimeout(() => { isCurrentlyFetching = false; }, 1000);
+            }
           } else {
             console.log('No user in session after auth event:', event);
             setIsLoadingProfile(false);
+            
+            // Clear timeout as we're done loading
+            if (authTimeoutId) clearTimeout(authTimeoutId);
           }
         }
-        // Handle signup events
+        // Skip INITIAL_SESSION handling in the auth event listener as we handle it separately
         else if (['SIGNED_UP'].includes(event)) {
           if (session?.user) {
             console.log('New user signup detected! Setting up retry mechanism...');
@@ -124,25 +158,38 @@ export const useAuthEvents = (authState: AuthStateType) => {
       }
     );
 
-    // Check for existing session on initial load
+    // Check for existing session on initial load - optimized
     const checkExistingSession = async () => {
       try {
         console.log('Checking for existing session');
         const { data: { session } } = await supabase.auth.getSession();
+        
+        initialSessionChecked = true;
         
         if (session?.user) {
           console.log('Existing session found, user:', session.user.id);
           setIsLoggedIn(true);
           setUserId(session.user.id);
           
-          // Fetch account and profile with appropriate delay
-          setTimeout(async () => {
-            // Add initial delay before fetching
-            await new Promise(resolve => setTimeout(resolve, INITIAL_FETCH_DELAY_MS));
-            
-            console.log('Now fetching account and profile data for existing session');
-            await fetchAndSaveAccountProfile(session.user.id, authState);
-          }, 100); // Start the delay process quickly
+          // Prevent duplicate fetches
+          if (isCurrentlyFetching) return;
+          isCurrentlyFetching = true;
+          
+          try {
+            // Fetch account and profile with minimal delay
+            setTimeout(async () => {
+              console.log('Now fetching account and profile data for existing session');
+              const success = await fetchAndSaveAccountProfile(session.user.id, authState);
+              
+              // Clear loading state after fetch completes
+              if (!success) {
+                setIsLoadingProfile(false);
+                if (authTimeoutId) clearTimeout(authTimeoutId);
+              }
+            }, INITIAL_FETCH_DELAY_MS);
+          } finally {
+            setTimeout(() => { isCurrentlyFetching = false; }, 1000);
+          }
         } else {
           console.log('No existing session found');
           setIsLoggedIn(false);
@@ -150,10 +197,16 @@ export const useAuthEvents = (authState: AuthStateType) => {
           setUsername('');
           setDefaultProfileId(null);
           setIsLoadingProfile(false);
+          
+          // Clear timeout as we're done loading
+          if (authTimeoutId) clearTimeout(authTimeoutId);
         }
       } catch (error) {
         console.error('Error checking session:', error);
         setIsLoadingProfile(false);
+        
+        // Clear timeout as we're done loading
+        if (authTimeoutId) clearTimeout(authTimeoutId);
       }
     };
     
@@ -161,7 +214,7 @@ export const useAuthEvents = (authState: AuthStateType) => {
 
     return () => {
       subscription.unsubscribe();
-      clearTimeout(authTimeout);
+      if (authTimeoutId) clearTimeout(authTimeoutId);
       console.log('Auth event listener cleaned up');
     };
   }, []);

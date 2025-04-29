@@ -73,16 +73,17 @@ export const completeSignUp = async (email: string, password: string, displayNam
   const userId = authData.user.id;
   
   // IMPORTANT: Wait for Supabase to fully commit the account/profile creation
-  await new Promise(resolve => setTimeout(resolve, 2500));
+  // Reduced from 2500ms to 1500ms
+  await new Promise(resolve => setTimeout(resolve, 1500));
   
   // Step 2: Explicitly verify account creation
-  const maxAccountRetries = 10;
-  const retryDelay = 1000; // 1 second between retries
+  const maxAccountRetries = 5; // Reduced from 10 to 5
+  const retryDelay = 800; // Reduced from 1000ms to 800ms
   let accountId = null;
   
   // Try multiple times to get the account - it should be created by DB trigger
   for (let i = 0; i < maxAccountRetries; i++) {
-    // Wait a consistent 1 second between retries
+    // Wait a consistent delay between retries
     if (i > 0) {
       await new Promise(resolve => setTimeout(resolve, retryDelay));
     }
@@ -93,10 +94,7 @@ export const completeSignUp = async (email: string, password: string, displayNam
     // Verify the session has our target user ID before proceeding
     if (!sessionData.session || sessionData.session.user.id !== userId) {
       // Try to refresh the session
-      const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
-      if (refreshError) {
-        // Handle error silently
-      }
+      await supabase.auth.refreshSession();
     }
     
     // Check if the account was created
@@ -106,9 +104,7 @@ export const completeSignUp = async (email: string, password: string, displayNam
       .eq('id', userId)  // In your schema, account.id = user.id
       .maybeSingle();
     
-    if (accountError) {
-      // Continue to next attempt on error
-    } else if (accountData) {
+    if (!accountError && accountData) {
       accountId = accountData.id;
       break;
     }
@@ -120,7 +116,7 @@ export const completeSignUp = async (email: string, password: string, displayNam
   
   // Step 3: Check if profile exists
   let retryCount = 0;
-  const maxProfileRetries = 10;
+  const maxProfileRetries = 5; // Reduced from 10 to 5
   let profileCreated = false;
   let profileId = null;
   
@@ -131,9 +127,6 @@ export const completeSignUp = async (email: string, password: string, displayNam
         await new Promise(resolve => setTimeout(resolve, retryDelay));
       }
       
-      // Check current auth session before query
-      const { data: sessionData } = await supabase.auth.getSession();
-      
       // Check if profile exists
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
@@ -141,9 +134,7 @@ export const completeSignUp = async (email: string, password: string, displayNam
         .eq('account_id', userId)
         .maybeSingle();
       
-      if (profileError) {
-        // Continue to next attempt
-      } else if (profileData) {
+      if (!profileError && profileData) {
         profileCreated = true;
         profileId = profileData.id;
         
@@ -182,6 +173,7 @@ export const completeSignUp = async (email: string, password: string, displayNam
 /**
  * Function to fetch and save account and profile info after auth events
  * This is used during both sign-in and post-signup verification
+ * Optimized for speed
  */
 export const fetchAndSaveAccountProfile = async (userId: string, authState: AuthStateType): Promise<boolean> => {
   if (!userId) {
@@ -189,15 +181,24 @@ export const fetchAndSaveAccountProfile = async (userId: string, authState: Auth
   }
   
   try {
+    console.log('Fetching account and profile data for user:', userId);
+    
     // Check current auth session before query
     const { data: sessionData } = await supabase.auth.getSession();
     
     // Verify the session has our target user ID before proceeding
     if (!sessionData.session || sessionData.session.user.id !== userId) {
-      // Try to refresh the session
+      // Try to refresh the session - optimized to avoid multiple refreshes
       const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
       if (refreshError) {
-        // Handle error silently
+        console.warn('Session refresh failed:', refreshError.message);
+        return false;
+      }
+      
+      // If still no valid session, return false
+      if (!refreshData.session || refreshData.session.user.id !== userId) {
+        console.warn('Unable to get valid session for user:', userId);
+        return false;
       }
     }
     
@@ -209,10 +210,12 @@ export const fetchAndSaveAccountProfile = async (userId: string, authState: Auth
       .maybeSingle();
       
     if (accountError) {
+      console.error('Error fetching account:', accountError);
       return false;
     }
     
     if (!accountData) {
+      console.warn('No account found for user ID:', userId);
       return false;
     }
     
@@ -227,10 +230,12 @@ export const fetchAndSaveAccountProfile = async (userId: string, authState: Auth
       .order('created_at', { ascending: false });
     
     if (profilesError) {
+      console.error('Error fetching profiles:', profilesError);
       return false;
     }
     
     if (!profiles || profiles.length === 0) {
+      console.warn('No profiles found for account:', accountId);
       return false;
     }
     
@@ -251,9 +256,8 @@ export const fetchAndSaveAccountProfile = async (userId: string, authState: Auth
       } else {
         // Try to get owner profile
         selectedProfile = profiles.find(p => p.is_owner === true);
-        if (selectedProfile) {
-          // Use owner profile
-        } else {
+        if (!selectedProfile) {
+          // Use first profile
           selectedProfile = profiles[0];
         }
       }
@@ -268,11 +272,17 @@ export const fetchAndSaveAccountProfile = async (userId: string, authState: Auth
       // Use profile name as requested by the user
       authState.setDefaultProfileId(selectedProfile.id);
       authState.setUsername(selectedProfile.name);
+      authState.setIsLoadingProfile(false);
       return true;
     } else {
+      console.warn('Could not find a valid profile');
       return false;
     }
   } catch (error) {
+    console.error('Error in fetchAndSaveAccountProfile:', error);
     return false;
+  } finally {
+    // Ensure loading state gets reset
+    authState.setIsLoadingProfile(false);
   }
 };

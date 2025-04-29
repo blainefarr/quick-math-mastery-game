@@ -6,6 +6,9 @@ import { AuthStateType } from '../auth-types';
 // Local storage key for active profile
 export const ACTIVE_PROFILE_KEY = 'math_game_active_profile';
 
+// Track ongoing fetch operations to prevent duplicates
+let isFetchingProfiles = false;
+
 export const fetchUserProfiles = async (
   accountId: string, 
   authState: AuthStateType,
@@ -20,10 +23,20 @@ export const fetchUserProfiles = async (
     isNewSignup
   } = authState;
   
+  // Prevent duplicate concurrent fetches
+  if (isFetchingProfiles) {
+    console.log('Already fetching profiles, skipping this request');
+    return false;
+  }
+  
   try {
+    isFetchingProfiles = true;
+    
     if (!isRetry) {
       setIsLoadingProfile(true);
     }
+    
+    console.log('Fetching profiles for account ID:', accountId);
     
     // Check if account exists first (this is critical)
     const { data: accountData, error: accountError } = await supabase
@@ -132,5 +145,9 @@ export const fetchUserProfiles = async (
     if (!isRetry) {
       setIsLoadingProfile(false);
     }
+    // Release the fetch lock after a short delay to prevent race conditions
+    setTimeout(() => {
+      isFetchingProfiles = false;
+    }, 300);
   }
 };
