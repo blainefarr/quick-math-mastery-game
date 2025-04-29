@@ -46,167 +46,94 @@ export const waitForSession = async (
 };
 
 /**
- * Creates or retrieves a profile for a user with robust error handling
- * @param accountId The account/user ID to create or retrieve a profile for
- * @returns The profile object or null if profile creation/retrieval failed
+ * Retrieves a profile with robust error handling
+ * @param accountId The account/user ID to retrieve a profile for
+ * @returns The profile object or null if profile retrieval failed
  */
-export const ensureUserProfile = async (accountId: string): Promise<any | null> => {
-  console.log("Ensuring user profile exists for:", accountId);
+export const getProfileForAccount = async (accountId: string): Promise<any | null> => {
+  console.log("Getting profile for account:", accountId);
   
   try {
-    // First check if profile exists
+    // Check if profile exists
     console.log("Checking if profile exists");
     const { data: existingProfile, error: profileError } = await supabase
       .from("profiles")
-      .select("id, name, is_active, is_owner")
+      .select("id, name, is_active, is_owner, grade")
       .eq("account_id", accountId)
+      .order("created_at", { ascending: false })
       .maybeSingle();
+    
+    if (profileError) {
+      console.error("Error fetching profile:", profileError);
+      return null;
+    }
     
     // Profile exists, return it
     if (existingProfile) {
       console.log("Existing profile found:", existingProfile);
       return existingProfile;
+    } else {
+      console.log("No profile found for account:", accountId);
+      return null;
     }
+  } catch (error) {
+    console.error("Error in getProfileForAccount:", error);
+    return null;
+  }
+};
+
+/**
+ * Creates a new profile for an account
+ * @param accountId The account ID to create a profile for
+ * @param name The name for the profile
+ * @param isOwner Whether this is the owner profile
+ * @returns The created profile or null if creation failed
+ */
+export const createProfileForAccount = async (
+  accountId: string, 
+  name?: string, 
+  isOwner: boolean = false
+): Promise<any | null> => {
+  try {
+    console.log("Creating new profile for account:", accountId);
     
-    // First verify the account exists to prevent foreign key constraint errors
-    const { data: accountData, error: accountError } = await supabase
-      .from("accounts")
-      .select("id")
-      .eq("id", accountId)
-      .single();
+    // Get user data to extract name if not provided
+    const { data: userData } = await supabase.auth.getUser();
+    let profileName = name || 'New User';
     
-    // Account doesn't exist, create it first
-    if (!accountData || accountError) {
-      console.log("Account not found, creating account first");
-      const { data: userData } = await supabase.auth.getUser();
-      
-      if (!userData?.user) {
-        console.error("No user data available for account creation");
-        return null;
-      }
-      
-      // Extract name from various possible sources
-      let userName = "";
+    if (!name && userData?.user) {
       const userMeta = userData.user.user_metadata;
       
-      if (userMeta) {
-        if (userMeta.name) {
-          userName = userMeta.name;
-        } else if (userMeta.full_name) {
-          userName = userMeta.full_name;
-        } else if (userMeta.user_name) {
-          userName = userMeta.user_name;
-        }
-      }
-      
-      // If no name found in metadata, try to extract from email
-      if (!userName && userData.user.email) {
-        userName = userData.user.email.split('@')[0];
-      }
-      
-      // Create account with retry logic
-      let accountCreated = false;
-      let attempts = 0;
-      
-      while (!accountCreated && attempts < 3) {
-        const { error: createAccountError } = await supabase
-          .from("accounts")
-          .insert([{
-            id: accountId,
-            email: userData.user.email,
-            name: userName || "New User",
-          }]);
-          
-        if (!createAccountError) {
-          accountCreated = true;
-          console.log("Account created successfully");
-        } else {
-          console.error(`Failed to create account, attempt ${attempts + 1}/3:`, createAccountError);
-          
-          // If the error is not a foreign key constraint error and we've hit the limit, fail
-          if (attempts === 2) {
-            toast.error("Failed to create your account. Please try again.");
-            return null;
-          }
-          
-          // Exponential backoff
-          const delay = 500 * Math.pow(2, attempts);
-          await new Promise(resolve => setTimeout(resolve, delay));
-          attempts++;
-        }
-      }
-      
-      if (!accountCreated) {
-        console.error("Failed to create account after multiple attempts");
-        return null;
+      if (userMeta?.name) {
+        profileName = userMeta.name;
+      } else if (userMeta?.full_name) {
+        profileName = userMeta.full_name;
+      } else if (userData.user.email) {
+        profileName = userData.user.email.split('@')[0];
       }
     }
     
-    // Now create profile since we know account exists
-    console.log("No profile found, creating a new one");
-    const { data: authUser } = await supabase.auth.getUser();
+    const { data: newProfile, error: createError } = await supabase
+      .from("profiles")
+      .insert([{ 
+        account_id: accountId,
+        name: profileName,
+        is_active: true,
+        is_owner: isOwner
+      }])
+      .select()
+      .single();
     
-    if (!authUser?.user) {
-      console.error("No authenticated user found for profile creation");
+    if (createError) {
+      console.error("Error creating profile:", createError);
+      toast.error("Failed to create your profile. Please try again later.");
       return null;
     }
     
-    // Get name from user metadata
-    let profileName = "New User";
-    const metadata = authUser.user.user_metadata;
-    
-    if (metadata) {
-      if (metadata.name) {
-        profileName = metadata.name;
-      } else if (metadata.full_name) {
-        profileName = metadata.full_name;
-      } else if (metadata.user_name) {
-        profileName = metadata.user_name;
-      } else if (authUser.user.email) {
-        profileName = authUser.user.email.split('@')[0];
-      }
-    }
-    
-    // Create profile with retry logic
-    let profileCreated = false;
-    let attempts = 0;
-    let profile = null;
-    
-    while (!profileCreated && attempts < 3) {
-      const { data: newProfile, error: createError } = await supabase
-        .from("profiles")
-        .insert([{ 
-          account_id: accountId,
-          name: profileName,
-          is_active: true,
-          is_owner: true
-        }])
-        .select()
-        .single();
-      
-      if (newProfile && !createError) {
-        profileCreated = true;
-        profile = newProfile;
-        console.log("Profile created successfully:", newProfile);
-      } else {
-        console.error(`Failed to create profile, attempt ${attempts + 1}/3:`, createError);
-        
-        // If hitting the limit, fail
-        if (attempts === 2) {
-          toast.error("Failed to create your profile. Please try again later.");
-          return null;
-        }
-        
-        // Exponential backoff
-        const delay = 800 * Math.pow(2, attempts);
-        await new Promise(resolve => setTimeout(resolve, delay));
-        attempts++;
-      }
-    }
-    
-    return profile;
+    console.log("Profile created successfully:", newProfile);
+    return newProfile;
   } catch (error) {
-    console.error("Error in ensureUserProfile:", error);
+    console.error("Error in createProfileForAccount:", error);
     return null;
   }
 };

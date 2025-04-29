@@ -7,6 +7,12 @@ export const useSessionManagement = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const [isReady, setIsReady] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
+
+  // Reset auth error state
+  const resetAuthError = useCallback(() => {
+    setAuthError(null);
+  }, []);
 
   // Comprehensive logout function that ensures all session data is cleared
   const handleLogout = useCallback(async () => {
@@ -24,6 +30,7 @@ export const useSessionManagement = () => {
       // Reset all authentication states
       setIsLoggedIn(false);
       setUserId(null);
+      setAuthError(null);
       
       // Clear active profile from localStorage
       localStorage.removeItem('math_game_active_profile');
@@ -32,8 +39,6 @@ export const useSessionManagement = () => {
       localStorage.removeItem('supabase.auth.token');
       sessionStorage.removeItem('supabase.auth.token');
       
-      // Don't use a full clear as it might affect other app functionality
-      // Instead, remove specific auth-related items
       const authItems = ['supabase.auth.token', 'supabase-auth-token'];
       authItems.forEach(item => {
         localStorage.removeItem(item);
@@ -53,6 +58,7 @@ export const useSessionManagement = () => {
 
   const handleForceLogout = useCallback((errorMessage: string = 'Authentication error. Please log in again.') => {
     console.error('Forced logout due to:', errorMessage);
+    setAuthError(errorMessage);
     toast.error(errorMessage);
     handleLogout();
   }, [handleLogout]);
@@ -61,9 +67,12 @@ export const useSessionManagement = () => {
     isLoggedIn,
     userId,
     isReady,
+    authError,
     setIsLoggedIn,
     setUserId,
     setIsReady,
+    setAuthError,
+    resetAuthError,
     handleLogout,
     handleForceLogout
   };

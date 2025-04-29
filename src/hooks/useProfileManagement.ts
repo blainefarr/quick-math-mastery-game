@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { ensureUserProfile } from './useAuthUtils';
+import { getProfileForAccount, createProfileForAccount } from './useAuthUtils';
 
 // Local storage key for active profile
 export const ACTIVE_PROFILE_KEY = 'math_game_active_profile';
@@ -11,51 +11,24 @@ export const useProfileManagement = () => {
   const [defaultProfileId, setDefaultProfileId] = useState<string | null>(null);
   const [username, setUsername] = useState('');
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
-  const [profileFetchAttempts, setProfileFetchAttempts] = useState(0);
-  const MAX_PROFILE_FETCH_ATTEMPTS = 3;
 
-  // Check if a profile exists and create one if it doesn't
-  const ensureProfileExists = async (accountId: string) => {
-    try {
-      console.log('Ensuring profile exists for account ID:', accountId);
-      
-      // Add a delay to ensure the account is fully created in the database
-      await new Promise(resolve => setTimeout(resolve, 1200));
-      
-      return await ensureUserProfile(accountId);
-    } catch (error) {
-      console.error('Error in ensureProfileExists:', error);
-      return null;
-    }
-  };
-
-  // Fetch the profile for a user with retry logic and profile creation
+  // Fetch the default profile for a user with proper error handling
   const fetchDefaultProfile = async (accountId: string, forceLogout: (message: string) => void) => {
     try {
       setIsLoadingProfile(true);
       console.log('Fetching profile for account ID:', accountId);
       
-      // Wait for a fully established session before proceeding
-      const { data: { session: refreshedSession } } = await supabase.auth.getSession();
-      
-      if (!refreshedSession?.user) {
-        console.log('No valid session found after refreshing');
-        setIsLoadingProfile(false);
-        forceLogout('Your session has expired. Please log in again.');
-        return null;
-      }
-
-      // First check if we have a stored profile ID in localStorage
+      // Get stored profile ID from localStorage
       const storedProfileId = localStorage.getItem(ACTIVE_PROFILE_KEY);
       let profile = null;
       
       if (storedProfileId) {
-        console.log('Found stored profile ID in localStorage:', storedProfileId);
+        console.log('Found stored profile ID:', storedProfileId);
         
         // Try to get the stored profile
         const { data: storedProfile, error: storedProfileError } = await supabase
           .from('profiles')
-          .select('id, name')
+          .select('id, name, grade')
           .eq('id', storedProfileId)
           .eq('account_id', accountId)
           .maybeSingle();
@@ -64,62 +37,26 @@ export const useProfileManagement = () => {
           console.log('Successfully retrieved stored profile:', storedProfile);
           profile = storedProfile;
         } else {
-          console.log('Stored profile not found or error, will try to find another profile');
+          console.log('Stored profile not found or error:', storedProfileError);
           localStorage.removeItem(ACTIVE_PROFILE_KEY);
         }
       }
       
+      // If no stored profile was found, get any profile for this account
       if (!profile) {
-        // Try to get any profile for this account
-        const { data: anyProfile, error: anyProfileError } = await supabase
-          .from('profiles')
-          .select('id, name')
-          .eq('account_id', accountId)
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .maybeSingle();
+        profile = await getProfileForAccount(accountId);
+        
+        // If still no profile, use database trigger to create one
+        if (!profile) {
+          console.log('No profile found, this should not happen with our DB trigger.');
+          console.log('Attempting manual profile creation as a fallback...');
           
-        if (anyProfileError) {
-          console.error('Error fetching any profile:', anyProfileError);
-          
-          // Only retry if we haven't exceeded max attempts
-          if (profileFetchAttempts < MAX_PROFILE_FETCH_ATTEMPTS) {
-            console.log(`Retry attempt ${profileFetchAttempts + 1}/${MAX_PROFILE_FETCH_ATTEMPTS} in 800ms...`);
-            setProfileFetchAttempts(prev => prev + 1);
-            
-            // Clear the profile fetch attempts after this retry completes or fails
-            setTimeout(() => setProfileFetchAttempts(0), 10000); 
-            
-            // Retry with exponential backoff
-            return new Promise((resolve) => {
-              setTimeout(async () => {
-                const result = await fetchDefaultProfile(accountId, forceLogout);
-                resolve(result);
-              }, 800 * Math.pow(1.5, profileFetchAttempts));
-            });
-          }
-          
-          // After max attempts, try to create a profile as a fallback
-          console.log('Max fetch attempts reached, trying to create a profile');
-          profile = await ensureProfileExists(accountId);
+          // As a last resort, manually create a profile
+          profile = await createProfileForAccount(accountId, undefined, true);
           
           if (!profile) {
-            // If profile creation also fails, trigger a logout
             setIsLoadingProfile(false);
             forceLogout('Unable to load or create your profile. Please try again later.');
-            return null;
-          }
-        } else if (anyProfile) {
-          console.log('Found profile:', anyProfile);
-          profile = anyProfile;
-        } else {
-          // No profile found, try to create one
-          console.log('No profiles found, trying to create one');
-          profile = await ensureProfileExists(accountId);
-          
-          if (!profile) {
-            setIsLoadingProfile(false);
-            forceLogout('Unable to create a profile for your account. Please try again.');
             return null;
           }
         }
@@ -130,11 +67,10 @@ export const useProfileManagement = () => {
         }
       }
 
-      // Only set profile info if we actually have a valid profile
+      // Set profile info
       if (profile && profile.id) {
         setDefaultProfileId(profile.id);
         setUsername(profile.name || '');
-        setProfileFetchAttempts(0); // Reset attempts count on success
         console.log('Profile successfully loaded:', profile);
       } else {
         console.error('Invalid profile object:', profile);
@@ -166,7 +102,6 @@ export const useProfileManagement = () => {
     setUsername,
     setIsLoadingProfile,
     fetchDefaultProfile,
-    clearProfileData,
-    ensureProfileExists
+    clearProfileData
   };
 };

@@ -24,7 +24,16 @@ export const AuthGate = ({
   children, 
   requireAuth = false 
 }: AuthGateProps) => {
-  const { isAuthenticated, isReady, isLoggedIn, defaultProfileId, isLoadingProfile, handleLogout } = useAuth();
+  const { 
+    isAuthenticated, 
+    isReady, 
+    isLoggedIn, 
+    defaultProfileId, 
+    isLoadingProfile, 
+    handleLogout, 
+    authError,
+    resetAuthError
+  } = useAuth();
   const navigate = useNavigate();
 
   // If authentication is still initializing, show loading state
@@ -43,6 +52,53 @@ export const AuthGate = ({
           </div>
         </div>
       </Card>
+    );
+  }
+
+  // Display auth error if present
+  if (authError) {
+    return (
+      <Alert variant="destructive" className="mb-4 max-w-md mx-auto mt-8">
+        <AlertTriangle className="h-4 w-4" />
+        <AlertTitle>Authentication Error</AlertTitle>
+        <AlertDescription className="space-y-4">
+          <p>{authError}</p>
+          <div className="flex justify-end gap-2">
+            <Button 
+              variant="outline" 
+              size="sm"
+              className="flex items-center gap-2"
+              onClick={async () => {
+                resetAuthError();
+                toast.info("Trying to reconnect your session...");
+                // Try to refresh the session and re-check authentication
+                const session = await waitForSession(5, 400);
+                if (session) {
+                  window.location.reload(); // Force a refresh to retry the whole auth flow
+                } else {
+                  toast.error("Couldn't reconnect your session. Please log in again.");
+                  navigate('/');
+                }
+              }}
+            >
+              <RefreshCw size={16} />
+              Reconnect
+            </Button>
+            <Button 
+              variant="destructive" 
+              size="sm" 
+              onClick={async () => {
+                resetAuthError();
+                await handleLogout();
+                toast.success("You've been logged out. Please try logging in again.");
+                navigate('/');
+              }}
+            >
+              Log Out and Try Again
+            </Button>
+          </div>
+        </AlertDescription>
+      </Alert>
     );
   }
 
