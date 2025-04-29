@@ -56,3 +56,80 @@ export const refreshUserProfile = async (authState: AuthStateType): Promise<void
   console.log('Manually refreshing user profile for:', userId);
   await fetchUserProfiles(userId, authState);
 };
+
+/**
+ * Complete signup process that ensures account and profile creation
+ * before allowing the user to proceed
+ */
+export const completeSignUp = async (email: string, password: string, displayName: string) => {
+  console.log('Starting complete signup process...');
+  
+  // Step 1: Auth Sign Up
+  const { data: authData, error: authError } = await supabase.auth.signUp({ 
+    email, 
+    password,
+    options: {
+      data: {
+        name: displayName
+      }
+    }
+  });
+  
+  if (authError || !authData.user) {
+    console.error('Authentication signup failed:', authError);
+    throw new Error('Authentication signup failed: ' + authError?.message);
+  }
+  
+  const userId = authData.user.id;
+  console.log('Auth signup successful, userId:', userId);
+  
+  // Step 2: Check/Create Account (handled by database triggers in Supabase)
+  // The database will automatically create an account linked to the user
+  // through the handle_new_account_profile function
+  
+  // Step 3: Check if account and profile were created successfully
+  let retryCount = 0;
+  const maxRetries = 4;
+  let profileCreated = false;
+  
+  while (retryCount < maxRetries && !profileCreated) {
+    try {
+      // Allow some time for the database triggers to complete
+      if (retryCount > 0) {
+        console.log(`Retry attempt ${retryCount}/${maxRetries} for profile creation...`);
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+      
+      // Check if profile exists
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('account_id', userId)
+        .maybeSingle();
+      
+      if (profileError) {
+        console.warn('Error checking profile:', profileError);
+      } else if (profileData) {
+        console.log('Profile found:', profileData.id);
+        profileCreated = true;
+        
+        // Store the profile ID in localStorage
+        localStorage.setItem(ACTIVE_PROFILE_KEY, profileData.id);
+        break;
+      }
+      
+      retryCount++;
+    } catch (error) {
+      console.error('Error in profile creation check:', error);
+      retryCount++;
+    }
+  }
+  
+  if (!profileCreated) {
+    console.error('Failed to confirm profile creation after maximum retries');
+    throw new Error('Profile creation failed after multiple attempts. Please try again or contact support.');
+  }
+  
+  console.log('Complete signup process successful');
+  return { userId };
+};

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -18,6 +17,7 @@ import { Separator } from '@/components/ui/separator';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '@/context/auth/useAuth';
+import { completeSignUp } from '@/context/auth/utils/authActions';
 
 interface AuthModalProps {
   children: React.ReactNode;
@@ -101,35 +101,20 @@ const AuthModal = ({ children, defaultView = 'register' }: AuthModalProps) => {
       return;
     }
     
-    const { data, error: supaError } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          name
-        }
-      }
-    });
-    
-    setIsLoading(false);
-
-    if (supaError) {
-      setError(supaError.message.includes("already registered") ? 
-        "Email already registered." : supaError.message);
-      return;
+    try {
+      await completeSignUp(email, password, name);
+      toast.success("Account created successfully!");
+      handleOpenChange(false);
+      // The auth state will be handled by the auth listener
+    } catch (error) {
+      console.error("Registration error:", error);
+      setError(error instanceof Error ? error.message : "Failed to create account");
+    } finally {
+      setIsLoading(false);
+      setName('');
+      setEmail('');
+      setPassword('');
     }
-
-    if (!data.user) {
-      setSuccessMsg("Please check your email to confirm your registration!");
-      return;
-    }
-
-    setIsLoggedIn(true);
-    setUsername(name);
-    setName('');
-    setEmail('');
-    setPassword('');
-    handleOpenChange(false);
   };
 
   const handleGoogleSignIn = async () => {

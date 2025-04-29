@@ -7,6 +7,8 @@ import { AuthChangeEvent, Session } from '@supabase/supabase-js';
 import { toast } from 'sonner';
 
 const AUTH_TIMEOUT_MS = 5000; // 5 seconds timeout for auth operations
+const MAX_PROFILE_RETRY_ATTEMPTS = 4;
+const PROFILE_RETRY_DELAY_MS = 500;
 
 export const useAuthEvents = (authState: AuthStateType) => {
   const { 
@@ -25,12 +27,9 @@ export const useAuthEvents = (authState: AuthStateType) => {
 
   // Retry profile fetch for new signups
   useEffect(() => {
-    const MAX_RETRIES = 4;
-    const RETRY_DELAY = 500;
-    
-    if (isNewSignup && userId && retryAttempts < MAX_RETRIES) {
+    if (isNewSignup && userId && retryAttempts < MAX_PROFILE_RETRY_ATTEMPTS) {
       const timer = setTimeout(async () => {
-        console.log(`Profile retry attempt ${retryAttempts + 1}/${MAX_RETRIES} for new signup...`);
+        console.log(`Profile retry attempt ${retryAttempts + 1}/${MAX_PROFILE_RETRY_ATTEMPTS} for new signup...`);
         const success = await fetchUserProfiles(userId, authState, true);
         
         if (success) {
@@ -39,14 +38,14 @@ export const useAuthEvents = (authState: AuthStateType) => {
           setIsNewSignup(false);
         } else {
           setRetryAttempts(prev => prev + 1);
-          if (retryAttempts + 1 >= MAX_RETRIES) {
+          if (retryAttempts + 1 >= MAX_PROFILE_RETRY_ATTEMPTS) {
             console.error('Failed to retrieve profile after maximum retries');
             toast.error('Failed to load profile. Please try refreshing the page.');
             setIsNewSignup(false);
             setRetryAttempts(0);
           }
         }
-      }, RETRY_DELAY);
+      }, PROFILE_RETRY_DELAY_MS);
       
       return () => clearTimeout(timer);
     }
@@ -99,7 +98,7 @@ export const useAuthEvents = (authState: AuthStateType) => {
             setIsLoadingProfile(false);
           }
         }
-        // Fix: Using type-safe array inclusion check for SIGNED_UP event
+        // Handle signup events (uses a type-safe array inclusion check)
         else if (['SIGNED_UP'].includes(event as string)) {
           if (session?.user) {
             console.log('New user signup detected! Setting up retry mechanism...');
@@ -108,6 +107,7 @@ export const useAuthEvents = (authState: AuthStateType) => {
             setIsNewSignup(true);
             setRetryAttempts(0);
             // For new signups, we'll let the retry effect handle profile fetching
+            toast.success('Account created! Setting up your profile...');
           }
         }
       }
