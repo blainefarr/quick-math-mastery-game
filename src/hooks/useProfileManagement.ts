@@ -23,10 +23,17 @@ export const useProfileManagement = () => {
       const storedProfileId = localStorage.getItem(ACTIVE_PROFILE_KEY);
       let selectedProfile = null;
       
-      // Get all profiles for this account
-      const profiles = await getProfilesForAccount(accountId);
+      // Get all profiles for this account - using retry mechanism
+      const profiles = await getProfilesForAccount(accountId, 5, 500);
       
-      if (!profiles || profiles.length === 0) {
+      if (!profiles) {
+        console.error('Error fetching profiles, possible network issue');
+        setIsLoadingProfile(false);
+        forceLogout('Unable to load your profile. Please check your connection and try again.');
+        return null;
+      }
+      
+      if (profiles.length === 0) {
         console.log('No profiles found for this account, attempting to create one');
         
         // As a last resort, manually create a profile

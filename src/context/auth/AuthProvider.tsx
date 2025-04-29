@@ -77,8 +77,17 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
                 return;
               }
               
-              // Get or create profile
+              // New users need special handling - give DB triggers time to complete
+              if (event === 'SIGNED_UP') {
+                console.log('New user signup detected, giving extra time for profile creation');
+                // Extra wait for database triggers to complete for new signups
+                await new Promise(resolve => setTimeout(resolve, 1000));
+              }
+              
+              // Get or create profile with retry mechanism
               const profile = await fetchDefaultProfile(confirmedSession.user.id, handleForceLogout);
+              
+              // Only set isReady to true if we have a valid profile
               setIsReady(profile !== null);
               
               if (profile) {
@@ -92,6 +101,9 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
                     toast.success('Welcome! Your profile is ready.');
                   }
                 }
+              } else {
+                console.error('Failed to load or create user profile');
+                // The fetchDefaultProfile function already handles force logout if needed
               }
             } catch (err) {
               console.error('Error in auth state change handling:', err);
@@ -122,6 +134,7 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
           
           // Add a slight delay to ensure auth is fully ready on Supabase
           setTimeout(async () => {
+            // Use the retry mechanism built into fetchDefaultProfile
             const profile = await fetchDefaultProfile(session.user.id, handleForceLogout);
             setIsReady(profile !== null);
             setIsLoadingProfile(false);

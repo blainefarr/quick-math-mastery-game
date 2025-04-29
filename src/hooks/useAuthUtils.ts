@@ -46,32 +46,72 @@ export const waitForSession = async (
 };
 
 /**
- * Retrieves all profiles for an account
+ * Retrieves all profiles for an account with retry mechanism for new users
  * @param accountId The account/user ID to retrieve profiles for
- * @returns Array of profile objects or null if retrieval failed
+ * @param maxAttempts Maximum number of retry attempts
+ * @param initialDelay Initial delay in ms between attempts
+ * @returns Array of profile objects or null if retrieval failed after all retries
  */
-export const getProfilesForAccount = async (accountId: string): Promise<any[] | null> => {
+export const getProfilesForAccount = async (
+  accountId: string, 
+  maxAttempts = 5, 
+  initialDelay = 500
+): Promise<any[] | null> => {
   console.log("Getting profiles for account:", accountId);
   
-  try {
-    // Get all profiles for this account
-    const { data: profiles, error: profilesError } = await supabase
-      .from("profiles")
-      .select("id, name, is_active, is_owner, grade, account_id")
-      .eq("account_id", accountId)
-      .order("created_at", { ascending: false });
-    
-    if (profilesError) {
-      console.error("Error fetching profiles:", profilesError);
-      return null;
+  let attempts = 0;
+  
+  while (attempts < maxAttempts) {
+    try {
+      // Get all profiles for this account
+      const { data: profiles, error: profilesError } = await supabase
+        .from("profiles")
+        .select("id, name, is_active, is_owner, grade, account_id")
+        .eq("account_id", accountId)
+        .order("created_at", { ascending: false });
+      
+      if (profilesError) {
+        console.error("Error fetching profiles:", profilesError);
+        attempts++;
+        
+        if (attempts < maxAttempts) {
+          const delay = initialDelay * Math.pow(1.5, attempts);
+          console.log(`Profile fetch failed, retrying in ${delay}ms (attempt ${attempts + 1}/${maxAttempts})`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+          continue;
+        }
+        
+        return null;
+      }
+      
+      // If profiles exist, return them
+      if (profiles && profiles.length > 0) {
+        console.log(`Found ${profiles.length} profiles for account:`, accountId);
+        return profiles;
+      }
+      
+      // If no profiles found but we have attempts left, retry
+      if (attempts < maxAttempts - 1) {
+        const delay = initialDelay * Math.pow(1.5, attempts);
+        console.log(`No profiles found yet, retrying in ${delay}ms (attempt ${attempts + 1}/${maxAttempts})`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+        attempts++;
+      } else {
+        console.log(`No profiles found after ${maxAttempts} attempts`);
+        return [];
+      }
+    } catch (error) {
+      console.error("Error in getProfilesForAccount:", error);
+      attempts++;
+      
+      if (attempts < maxAttempts) {
+        const delay = initialDelay * Math.pow(1.5, attempts);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
     }
-    
-    console.log(`Found ${profiles?.length || 0} profiles for account:`, accountId);
-    return profiles || [];
-  } catch (error) {
-    console.error("Error in getProfilesForAccount:", error);
-    return null;
   }
+  
+  return null;
 };
 
 /**

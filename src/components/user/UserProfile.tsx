@@ -23,7 +23,8 @@ const UserProfile = () => {
     }
   }, [shouldShowProfileSelector, isAuthenticated, isLoadingProfile]);
   
-  if (!isReady) {
+  // Show loading state when profile is loading or auth is not ready
+  if (isLoadingProfile || !isReady) {
     return (
       <div className="flex items-center gap-2">
         <Skeleton className="h-8 w-28 rounded-full" />
@@ -31,16 +32,9 @@ const UserProfile = () => {
     );
   }
   
+  // Don't show anything for unauthenticated users
   if (!isAuthenticated) {
     return null;
-  }
-  
-  if (isLoadingProfile) {
-    return (
-      <div className="flex items-center gap-2">
-        <Skeleton className="h-8 w-28 rounded-full" />
-      </div>
-    );
   }
   
   return (
