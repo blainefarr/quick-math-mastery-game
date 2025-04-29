@@ -89,7 +89,7 @@ export const completeSignUp = async (email: string, password: string, displayNam
   await new Promise(resolve => setTimeout(resolve, 2500));
   
   // Step 2: Explicitly verify account creation
-  const maxAccountRetries = 10; // Increased from 5
+  const maxAccountRetries = 10;
   const retryDelay = 1000; // 1 second between retries
   let accountId = null;
   
@@ -106,14 +106,6 @@ export const completeSignUp = async (email: string, password: string, displayNam
     
     // Check current auth session before query
     const { data: sessionData } = await supabase.auth.getSession();
-    console.log(`Auth session before account fetch (attempt ${i + 1}):`, {
-      hasSession: !!sessionData.session,
-      sessionUserId: sessionData.session?.user?.id,
-      accessToken: sessionData.session?.access_token ? '✓ Present' : '❌ Missing',
-      targetUserId: userId,
-      matchesTarget: sessionData.session?.user?.id === userId,
-      fullSession: sessionData.session
-    });
     
     // Verify the session has our target user ID before proceeding
     if (!sessionData.session || sessionData.session.user.id !== userId) {
@@ -123,12 +115,6 @@ export const completeSignUp = async (email: string, password: string, displayNam
       const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
       if (refreshError) {
         console.error('Error refreshing session:', refreshError);
-      } else {
-        console.log('Session refreshed, new session:', {
-          hasSession: !!refreshData.session,
-          sessionUserId: refreshData.session?.user?.id,
-          matchesTarget: refreshData.session?.user?.id === userId
-        });
       }
     }
     
@@ -159,7 +145,7 @@ export const completeSignUp = async (email: string, password: string, displayNam
   // Step 3: Check if profile exists
   console.log('Step 3: Verifying profile creation in database...');
   let retryCount = 0;
-  const maxProfileRetries = 10; // Increased from 5
+  const maxProfileRetries = 10;
   let profileCreated = false;
   let profileId = null;
   
@@ -175,13 +161,6 @@ export const completeSignUp = async (email: string, password: string, displayNam
       
       // Check current auth session before query
       const { data: sessionData } = await supabase.auth.getSession();
-      console.log(`Auth session before profile fetch (attempt ${retryCount + 1}):`, {
-        hasSession: !!sessionData.session,
-        sessionUserId: sessionData.session?.user?.id,
-        accessToken: sessionData.session?.access_token ? '✓ Present' : '❌ Missing',
-        matchesTarget: sessionData.session?.user?.id === userId,
-        fullSession: sessionData.session
-      });
       
       // Check if profile exists
       console.log(`Querying profiles table for account_id=${userId}`);
@@ -242,14 +221,6 @@ export const fetchAndSaveAccountProfile = async (userId: string, authState: Auth
   try {
     // Check current auth session before query
     const { data: sessionData } = await supabase.auth.getSession();
-    console.log('Auth session before account fetch:', {
-      hasSession: !!sessionData.session,
-      sessionUserId: sessionData.session?.user?.id,
-      accessToken: sessionData.session?.access_token ? '✓ Present' : '❌ Missing',
-      targetUserId: userId,
-      matchesTarget: sessionData.session?.user?.id === userId,
-      fullSession: sessionData.session
-    });
     
     // Verify the session has our target user ID before proceeding
     if (!sessionData.session || sessionData.session.user.id !== userId) {
@@ -259,12 +230,6 @@ export const fetchAndSaveAccountProfile = async (userId: string, authState: Auth
       const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
       if (refreshError) {
         console.error('Error refreshing session:', refreshError);
-      } else {
-        console.log('Session refreshed, new session:', {
-          hasSession: !!refreshData.session,
-          sessionUserId: refreshData.session?.user?.id,
-          matchesTarget: refreshData.session?.user?.id === userId
-        });
       }
     }
     

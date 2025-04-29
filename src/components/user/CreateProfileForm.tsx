@@ -101,7 +101,8 @@ export function CreateProfileForm({
               account_id: userId,
               name: values.name,
               grade: values.grade || null,
-              is_default: false, // New profiles are not default by default
+              is_active: false, // New profiles are not active by default
+              is_owner: false   // New profiles are not owner by default
             },
           ])
           .select();

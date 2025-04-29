@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm, FormProvider } from "react-hook-form";
@@ -25,7 +26,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import useAuth from "@/context/auth/useAuth";
 import { ProfileSwitcherDialog } from "@/components/user/ProfileSwitcherDialog";
-import { CreateProfileForm } from '@/components/user/CreateProfileForm';
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 
@@ -57,7 +57,6 @@ const MyAccount = () => {
   const { isLoggedIn, userId, defaultProfileId } = useAuth();
   const [isProfileOwner, setIsProfileOwner] = useState(true);
   const [accountEmail, setAccountEmail] = useState('');
-  const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [showProfileSwitcher, setShowProfileSwitcher] = useState(false);
   
   const form = useForm<FormData>({
@@ -121,7 +120,6 @@ const MyAccount = () => {
         }
 
         if (profile) {
-          console.log('Loaded profile:', profile);
           // Check if this is the primary profile (owner)
           setIsProfileOwner(profile.is_owner);
           
@@ -182,8 +180,6 @@ const MyAccount = () => {
         title: "Success",
         description: "Your profile has been updated.",
       });
-      
-      setIsEditingProfile(false);
     } catch (error) {
       console.error('Error updating profile:', error);
       toast({
@@ -191,50 +187,6 @@ const MyAccount = () => {
         description: "Could not update profile. Please try again.",
         variant: "destructive",
       });
-    }
-  };
-
-  const handleProfileUpdated = async () => {
-    try {
-      if (!userId) return;
-      
-      // Get the profile ID from defaultProfileId context or localStorage
-      const profileId = defaultProfileId || localStorage.getItem(ACTIVE_PROFILE_KEY);
-      
-      if (!profileId) {
-        toast({
-          title: "Error",
-          description: "No active profile found",
-          variant: "destructive",
-        });
-        return;
-      }
-      
-      // Refresh the profile data
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', profileId)
-        .single();
-
-      if (profileError) throw profileError;
-
-      if (profile) {
-        form.reset({
-          name: profile.name || '',
-          grade: profile.grade || '',
-          email: form.getValues().email,
-        });
-      }
-      
-      setIsEditingProfile(false);
-      
-      toast({
-        title: "Success",
-        description: "Profile updated successfully.",
-      });
-    } catch (error) {
-      console.error('Error refreshing profile:', error);
     }
   };
 
@@ -259,112 +211,96 @@ const MyAccount = () => {
       
       <Card className="max-w-xl mx-auto">
         <CardContent className="pt-6">
-          {isEditingProfile ? (
-            <CreateProfileForm 
-              onSuccess={handleProfileUpdated}
-              onCancel={() => setIsEditingProfile(false)}
-              initialValues={{
-                name: form.getValues().name,
-                grade: form.getValues().grade,
-              }}
-              isEditing={true}
-              profileId={defaultProfileId || undefined}
-            />
-          ) : (
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Name</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="grade"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Grade</FormLabel>
+                    <Select 
+                      onValueChange={field.onChange}
+                      value={field.value}
+                      defaultValue={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select grade" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {gradeOptions.map((grade) => (
+                          <SelectItem key={grade} value={grade}>
+                            {grade}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* New Profile Role field (non-editable) */}
+              <div className="space-y-2">
+                <Label htmlFor="profile-role">Profile Role</Label>
+                <Input 
+                  id="profile-role" 
+                  value={isProfileOwner ? "Primary Owner" : "User"} 
+                  readOnly 
+                  disabled 
+                  className="bg-muted"
+                />
+              </div>
+
+              {isProfileOwner && (
                 <FormField
                   control={form.control}
-                  name="name"
+                  name="email"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Name</FormLabel>
+                      <FormLabel>Email</FormLabel>
                       <FormControl>
-                        <Input {...field} />
+                        <Input {...field} type="email" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-
-                <FormField
-                  control={form.control}
-                  name="grade"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Grade</FormLabel>
-                      <Select 
-                        onValueChange={field.onChange}
-                        value={field.value}
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select grade" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {gradeOptions.map((grade) => (
-                            <SelectItem key={grade} value={grade}>
-                              {grade}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                {/* New Profile Role field (non-editable) */}
+              )}
+              
+              {!isProfileOwner && accountEmail && (
                 <div className="space-y-2">
-                  <Label htmlFor="profile-role">Profile Role</Label>
-                  <Input 
-                    id="profile-role" 
-                    value={isProfileOwner ? "Primary Owner" : "User"} 
-                    readOnly 
-                    disabled 
-                    className="bg-muted"
-                  />
+                  <Label>Account Email</Label>
+                  <p className="text-sm text-muted-foreground">{accountEmail}</p>
+                  <p className="text-xs text-muted-foreground">
+                    This profile is using the account created with this email.
+                  </p>
                 </div>
+              )}
 
-                {isProfileOwner && (
-                  <FormField
-                    control={form.control}
-                    name="email"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Email</FormLabel>
-                        <FormControl>
-                          <Input {...field} type="email" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                )}
-                
-                {!isProfileOwner && accountEmail && (
-                  <div className="space-y-2">
-                    <Label>Account Email</Label>
-                    <p className="text-sm text-muted-foreground">{accountEmail}</p>
-                    <p className="text-xs text-muted-foreground">
-                      This profile is using the account created with this email.
-                    </p>
-                  </div>
-                )}
-
-                <div className="flex justify-end">
-                  <Button 
-                    type="button" 
-                    onClick={() => setIsEditingProfile(true)}
-                  >
-                    Edit Profile
-                  </Button>
-                </div>
-              </form>
-            </Form>
-          )}
+              <div className="flex justify-end">
+                <Button type="submit">
+                  Save Profile
+                </Button>
+              </div>
+            </form>
+          </Form>
 
           {/* Manage Profiles Section */}
           <div className="mt-8 pt-6 border-t">
