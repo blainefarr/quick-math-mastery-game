@@ -73,16 +73,8 @@ const GameProvider = ({ children }: GameProviderProps) => {
   }, [gameState, isAuthenticated, defaultProfileId, fetchUserScores, setScoreHistory]);
   
   useEffect(() => {
-    if (!authInitializedRef.current) {
-      authInitializedRef.current = true;
-      
-      if (gameState === 'playing' && (!isAuthenticated || !defaultProfileId)) {
-        console.log('User not authenticated or no profile, redirecting to selection');
-        setGameState('selection');
-        toast.error("Please log in to play the game");
-      }
-    }
-  }, [gameState, isAuthenticated, defaultProfileId]);
+    authInitializedRef.current = true;
+  }, []);
 
   useEffect(() => {
     return () => {
@@ -115,13 +107,7 @@ const GameProvider = ({ children }: GameProviderProps) => {
   };
   
   const startGameTimer = () => {
-    if (!isAuthenticated || !defaultProfileId) {
-      console.log('Cannot start game - user not authenticated or no profile');
-      setGameState('selection');
-      toast.error("Please log in to play the game");
-      return;
-    }
-    
+    // Remove authentication check to allow anonymous users to play
     if (timerRef.current) {
       console.log('Clearing existing timer before starting new one');
       clearInterval(timerRef.current);
