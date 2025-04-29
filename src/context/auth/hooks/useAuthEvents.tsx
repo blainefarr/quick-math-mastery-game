@@ -1,8 +1,7 @@
-
 import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { AuthStateType } from '../auth-types';
-import { fetchAndSaveAccountProfile } from '../utils/authActions';
+import { fetchAndSaveAccountProfile } from '../utils/accountProfile';
 import { AuthChangeEvent, Session } from '@supabase/supabase-js';
 import { toast } from 'sonner';
 

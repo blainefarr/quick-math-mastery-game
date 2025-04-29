@@ -4,7 +4,8 @@ import AuthContext from './AuthContext';
 import { AuthContextType, AuthProviderProps } from './auth-types';
 import { useAuthState } from './hooks/useAuthState';
 import { useAuthEvents } from './hooks/useAuthEvents';
-import { handleLogout, refreshUserProfile } from './utils/authActions';
+import { handleLogout } from './utils/logout';
+import { refreshUserProfile } from './utils/accountProfile';
 import { toast } from 'sonner';
 
 const AuthProvider = ({ children }: AuthProviderProps) => {
