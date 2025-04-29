@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import GameContext from './GameContext';
 import { GameContextType, GameState, GameProviderProps, GameEndReason } from './game-context-types';
@@ -207,13 +208,13 @@ const GameProvider = ({ children }: GameProviderProps) => {
     incrementScore,
     resetScore,
     currentProblem,
-    generateNewProblem: (
-      operation = settings.operation, 
-      range = settings.range,
-      allowNegatives = settings.allowNegatives || false,
-      focusNumber = settings.focusNumber || null
-    ) => {
-      return generateNewProblem(operation, range, allowNegatives, focusNumber);
+    generateNewProblem: () => {
+      return generateNewProblem(
+        settings.operation, 
+        settings.range,
+        settings.allowNegatives || false,
+        settings.focusNumber || null
+      );
     },
     timeLeft,
     setTimeLeft,

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import AuthContext from './AuthContext';
@@ -91,6 +90,48 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
     );
   };
 
+  // Create a new profile for a user if one doesn't exist
+  const createDefaultProfile = async (accountId: string) => {
+    try {
+      console.log('Creating default profile for account ID:', accountId);
+      
+      // Generate a profile name (could extract from email or use default)
+      const profileName = 'New User';
+      
+      // Create a new profile
+      const { data: newProfile, error: createError } = await supabase
+        .from('profiles')
+        .insert({
+          account_id: accountId,
+          name: profileName,
+          is_active: true,
+          is_owner: true,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .select('id, name, is_owner, is_active')
+        .single();
+        
+      if (createError) {
+        console.error('Error creating profile:', createError);
+        return null;
+      }
+      
+      console.log('Successfully created new profile:', newProfile);
+      
+      // Store the created profile ID in localStorage
+      if (newProfile?.id) {
+        localStorage.setItem(ACTIVE_PROFILE_KEY, newProfile.id);
+        localStorage.setItem(`${PROFILE_NAME_PREFIX}${newProfile.id}`, newProfile.name || 'User');
+      }
+      
+      return newProfile;
+    } catch (error) {
+      console.error('Error in createDefaultProfile:', error);
+      return null;
+    }
+  };
+
   // Fetch the profile for a user with retry logic
   const fetchDefaultProfile = async (accountId: string) => {
     try {
@@ -143,8 +184,25 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
         if (anyProfileError) {
           console.error('Error fetching any profile:', anyProfileError);
           
-          // Only retry if we haven't exceeded max attempts
-          if (profileFetchAttempts < MAX_PROFILE_FETCH_ATTEMPTS) {
+          // Check if we got a "no rows returned" error, which likely means no profile exists yet
+          if (anyProfileError.message.includes('no rows') || 
+              anyProfileError.message.includes('0 rows') ||
+              anyProfileError.code === 'PGRST116') {
+            
+            console.log('No profiles found, attempting to create a default profile');
+            
+            // Try to create a default profile
+            const createdProfile = await createDefaultProfile(accountId);
+            if (createdProfile) {
+              profile = createdProfile;
+              setDefaultProfileId(createdProfile.id);
+              setUsername(createdProfile.name || 'User');
+            } else {
+              // If profile creation failed after retries, show error
+              setAuthError('Unable to create a profile. Please try again later.');
+            }
+          } else if (profileFetchAttempts < MAX_PROFILE_FETCH_ATTEMPTS) {
+            // Only retry for other errors if we haven't exceeded max attempts
             console.log(`Retry attempt ${profileFetchAttempts + 1}/${MAX_PROFILE_FETCH_ATTEMPTS} in 500ms...`);
             setProfileFetchAttempts(prev => prev + 1);
             
@@ -153,11 +211,13 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
               fetchDefaultProfile(accountId);
             }, 500);
             return null;
+          } else {
+            // If we've exceeded max retries
+            setAuthError('Unable to load your profile. Please try logging in again.');
           }
           
-          setAuthError('Unable to load your profile. Please try logging in again.');
           setIsLoadingProfile(false);
-          return null;
+          return profile;
         }
         
         if (anyProfile) {
@@ -171,11 +231,21 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
           
           setDefaultProfileId(anyProfile.id);
           setUsername(anyProfile.name || 'User');
+        } else {
+          // This case should not happen after our single() call above,
+          // but keeping as a fallback
+          console.log('No profiles found, attempting to create a default profile');
+          const createdProfile = await createDefaultProfile(accountId);
+          if (createdProfile) {
+            profile = createdProfile;
+            setDefaultProfileId(createdProfile.id);
+            setUsername(createdProfile.name || 'User');
+          }
         }
       }
 
       if (!profile) {
-        console.log('No profiles found for user');
+        console.log('No profiles found for user and unable to create one');
         setAuthError('No profiles found for your account. Please contact support.');
       }
       

@@ -29,12 +29,7 @@ export interface GameContextType {
   incrementScore: () => void;
   resetScore: () => void;
   currentProblem: Problem;
-  generateNewProblem: (
-    operation?: Operation,
-    range?: ProblemRange,
-    allowNegatives?: boolean,
-    focusNumber?: number | null
-  ) => void;
+  generateNewProblem: () => void;
   timeLeft: number;
   setTimeLeft: React.Dispatch<React.SetStateAction<number>>;
   userAnswer: string;
