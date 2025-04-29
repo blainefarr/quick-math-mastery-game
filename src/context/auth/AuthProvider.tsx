@@ -19,8 +19,12 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
     return handleLogout(authState);
   };
   
+  // Modified refreshProfileHandler to match the AuthContextType
   const refreshProfileHandler = async () => {
-    return refreshUserProfile(authState);
+    // Call refreshUserProfile and ignore the return value
+    await refreshUserProfile(authState);
+    // Return void as expected by the type definition
+    return;
   };
 
   const value: AuthContextType = {
