@@ -14,6 +14,7 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
   const [userId, setUserId] = useState<string | null>(null);
   const [defaultProfileId, setDefaultProfileId] = useState<string | null>(null);
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
+  const [isReady, setIsReady] = useState(false); // New state for fully initialized auth
   const [profileFetchAttempts, setProfileFetchAttempts] = useState(0);
   const MAX_PROFILE_FETCH_ATTEMPTS = 3;
 
@@ -68,14 +69,12 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
       setIsLoadingProfile(true);
       console.log('Fetching profile for account ID:', accountId);
       
-      // Give the session a moment to fully establish
-      await new Promise(resolve => setTimeout(resolve, 300));
-      
       // Get a fresh session to ensure RLS policies are properly applied
       const { data: { session: refreshedSession } } = await supabase.auth.getSession();
       if (!refreshedSession?.user) {
         console.log('No valid session found after refreshing');
         setIsLoadingProfile(false);
+        setIsReady(true); // Mark as ready even if not authenticated
         return null;
       }
 
@@ -130,6 +129,7 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
           }
           
           setIsLoadingProfile(false);
+          setIsReady(true); // Mark as ready even if profile fetch failed
           return null;
         }
         
@@ -151,10 +151,12 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
       }
       
       setIsLoadingProfile(false);
+      setIsReady(true); // Mark auth as ready
       return profile;
     } catch (error) {
       console.error('Error in fetchDefaultProfile:', error);
       setIsLoadingProfile(false);
+      setIsReady(true); // Mark as ready even if there was an error
       return null;
     }
   };
@@ -162,6 +164,7 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
   useEffect(() => {
     // Mark as loading profile when initializing
     setIsLoadingProfile(true);
+    setIsReady(false);
     
     // Handle auth state changes from Supabase
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -178,6 +181,7 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
           localStorage.removeItem(ACTIVE_PROFILE_KEY);
           
           setIsLoadingProfile(false);
+          setIsReady(true); // Mark as ready on sign out
           return;
         }
         
@@ -186,7 +190,6 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
           setUserId(session.user.id);
           
           // We need to ensure the session is fully initialized before fetching the profile
-          // So we'll fetch the session again explicitly
           setTimeout(async () => {
             try {
               const { data: { session: refreshedSession } } = await supabase.auth.getSession();
@@ -195,15 +198,18 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
                 await fetchDefaultProfile(refreshedSession.user.id);
               } else {
                 setIsLoadingProfile(false);
+                setIsReady(true);
               }
             } catch (err) {
               console.error('Error refreshing session:', err);
               setIsLoadingProfile(false);
+              setIsReady(true);
             }
           }, 300);
         } else {
-          // If no session, mark profile as not loading
+          // If no session, mark profile as not loading and auth as ready
           setIsLoadingProfile(false);
+          setIsReady(true);
         }
       }
     );
@@ -230,10 +236,12 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
           setUsername('');
           setDefaultProfileId(null);
           setIsLoadingProfile(false);
+          setIsReady(true); // Mark as ready for non-authenticated state
         }
       } catch (error) {
         console.error('Error checking session:', error);
         setIsLoadingProfile(false);
+        setIsReady(true); // Mark as ready even if there was an error
       }
     };
     
@@ -251,6 +259,7 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
       if (isLoadingProfile) {
         console.warn('Profile loading timed out - resetting loading state');
         setIsLoadingProfile(false);
+        setIsReady(true); // Also mark as ready to prevent UI from being stuck
       }
     }, 5000);
     
@@ -263,6 +272,7 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
     userId,
     defaultProfileId,
     isLoadingProfile,
+    isReady,
     setIsLoggedIn,
     setUsername,
     setDefaultProfileId,

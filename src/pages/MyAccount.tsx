@@ -1,7 +1,8 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm, FormProvider } from "react-hook-form";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { ArrowLeft, Users } from 'lucide-react';
@@ -23,11 +24,9 @@ import {
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import useAuth from "@/context/auth/useAuth";
+import { useAuth } from "@/context/auth/useAuth";
 import { ProfileSwitcherDialog } from "@/components/user/ProfileSwitcherDialog";
 import { CreateProfileForm } from '@/components/user/CreateProfileForm';
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 
 type FormData = {
   name: string;
@@ -54,11 +53,12 @@ const ACTIVE_PROFILE_KEY = 'math_game_active_profile';
 const MyAccount = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { isLoggedIn, userId, defaultProfileId } = useAuth();
+  const { userId, defaultProfileId, isReady } = useAuth();
   const [isProfileOwner, setIsProfileOwner] = useState(true);
   const [accountEmail, setAccountEmail] = useState('');
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [showProfileSwitcher, setShowProfileSwitcher] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   
   const form = useForm<FormData>({
     defaultValues: {
@@ -69,12 +69,13 @@ const MyAccount = () => {
   });
 
   useEffect(() => {
-    const fetchUserProfile = async () => {
-      if (!userId) {
-        navigate('/');
-        return;
-      }
+    // Wait for the auth state to be ready before fetching profile data
+    if (!isReady || !userId || !defaultProfileId) {
+      return;
+    }
 
+    const fetchUserProfile = async () => {
+      setIsLoading(true);
       try {
         // First, get the account information
         const { data: account, error: accountError } = await supabase
@@ -95,19 +96,11 @@ const MyAccount = () => {
 
         setAccountEmail(account?.email || '');
 
-        // Get the profile ID from defaultProfileId context or localStorage
-        const profileId = defaultProfileId || localStorage.getItem(ACTIVE_PROFILE_KEY);
-
-        // Then, get the active profile for this user
-        if (!profileId) {
-          console.log('No profile ID set');
-          return;
-        }
-
+        // Then, get the active profile
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
           .select('*')
-          .eq('id', profileId)
+          .eq('id', defaultProfileId)
           .single();
 
         if (profileError) {
@@ -133,28 +126,30 @@ const MyAccount = () => {
         }
       } catch (err) {
         console.error('Error in profile fetch:', err);
+        toast({
+          title: "Error",
+          description: "Failed to load account information.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
       }
     };
 
     fetchUserProfile();
-  }, [navigate, form, userId, defaultProfileId, toast]);
+  }, [userId, defaultProfileId, form, toast, isReady]);
 
   const onSubmit = async (data: FormData) => {
+    if (!userId || !defaultProfileId) {
+      toast({
+        title: "Error",
+        description: "No active profile found",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     try {
-      if (!userId) return;
-
-      // Get the profile ID from defaultProfileId context or localStorage
-      const profileId = defaultProfileId || localStorage.getItem(ACTIVE_PROFILE_KEY);
-      
-      if (!profileId) {
-        toast({
-          title: "Error",
-          description: "No active profile found",
-          variant: "destructive",
-        });
-        return;
-      }
-
       // Update profile information
       const { error: profileError } = await supabase
         .from('profiles')
@@ -162,7 +157,7 @@ const MyAccount = () => {
           name: data.name,
           grade: data.grade,
         })
-        .eq('id', profileId);
+        .eq('id', defaultProfileId);
 
       if (profileError) throw profileError;
 
@@ -195,26 +190,21 @@ const MyAccount = () => {
   };
 
   const handleProfileUpdated = async () => {
+    if (!userId || !defaultProfileId) {
+      toast({
+        title: "Error",
+        description: "No active profile found",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     try {
-      if (!userId) return;
-      
-      // Get the profile ID from defaultProfileId context or localStorage
-      const profileId = defaultProfileId || localStorage.getItem(ACTIVE_PROFILE_KEY);
-      
-      if (!profileId) {
-        toast({
-          title: "Error",
-          description: "No active profile found",
-          variant: "destructive",
-        });
-        return;
-      }
-      
       // Refresh the profile data
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('*')
-        .eq('id', profileId)
+        .eq('id', defaultProfileId)
         .single();
 
       if (profileError) throw profileError;
@@ -235,6 +225,11 @@ const MyAccount = () => {
       });
     } catch (error) {
       console.error('Error refreshing profile:', error);
+      toast({
+        title: "Error",
+        description: "Failed to refresh profile data.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -259,7 +254,11 @@ const MyAccount = () => {
       
       <Card className="max-w-xl mx-auto">
         <CardContent className="pt-6">
-          {isEditingProfile ? (
+          {isLoading ? (
+            <div className="p-6 text-center">
+              <p className="text-muted-foreground">Loading your account information...</p>
+            </div>
+          ) : isEditingProfile ? (
             <CreateProfileForm 
               onSuccess={handleProfileUpdated}
               onCancel={() => setIsEditingProfile(false)}

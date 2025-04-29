@@ -9,9 +9,9 @@ import { useAuth } from './auth/useAuth';
 import { toast } from 'sonner';
 
 const GameProvider = ({ children }: GameProviderProps) => {
-  const { settings, updateSettings, resetSettings } = useGameSettings();
+  const { settings, updateSettings } = useGameSettings();
   const { currentProblem, generateNewProblem } = useProblemGenerator();
-  const { userId, defaultProfileId } = useAuth();
+  const { isAuthenticated, userId, defaultProfileId } = useAuth();
   
   const [gameState, setGameState] = useState<GameState>('selection');
   const [score, setScore] = useState(0);
@@ -49,7 +49,7 @@ const GameProvider = ({ children }: GameProviderProps) => {
       startGameTimer();
       // Reset the isEnding flag when starting a new game
       isEndingRef.current = false;
-    } else if (gameState === 'ended' && userId && defaultProfileId) {
+    } else if (gameState === 'ended' && isAuthenticated && defaultProfileId) {
       fetchUserScores().then(scores => {
         if (scores) {
           setScoreHistory(scores);
@@ -64,7 +64,7 @@ const GameProvider = ({ children }: GameProviderProps) => {
         timerRef.current = null;
       }
     };
-  }, [gameState, userId, fetchUserScores, setScoreHistory, defaultProfileId]);
+  }, [gameState, isAuthenticated, fetchUserScores, setScoreHistory, defaultProfileId]);
 
   const incrementScore = () => {
     // Don't increment score if the game is ending
@@ -87,7 +87,7 @@ const GameProvider = ({ children }: GameProviderProps) => {
   };
 
   // Get auth state from useAuth
-  const { isLoggedIn, username } = useAuth();
+  const { username } = useAuth();
   
   const startGameTimer = () => {
     // Clear any existing timer
@@ -130,7 +130,7 @@ const GameProvider = ({ children }: GameProviderProps) => {
     }
     
     // Only save score on timeout (normal game end) and when user is logged in
-    if (reason === 'timeout' && isLoggedIn && defaultProfileId) {
+    if (reason === 'timeout' && isAuthenticated && defaultProfileId) {
       console.log(`Attempting to save score: ${finalScore}`);
       try {
         const success = await saveScore(
@@ -180,7 +180,7 @@ const GameProvider = ({ children }: GameProviderProps) => {
     setUserAnswer,
     scoreHistory,
     saveScore,
-    isLoggedIn,
+    isLoggedIn: isAuthenticated,
     username,
     focusNumber,
     setFocusNumber,

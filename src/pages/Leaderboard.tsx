@@ -17,7 +17,7 @@ const Leaderboard = () => {
   const {
     userId,
     isAuthenticated,
-    isLoadingProfile,
+    isReady,
     defaultProfileId
   } = useAuth();
   const {
@@ -49,15 +49,16 @@ const Leaderboard = () => {
     }
   }, []);
   
-  // Trigger a leaderboard refresh when the profile is loaded
+  // Trigger a leaderboard refresh when auth is ready and we have a profile ID
   useEffect(() => {
-    if (defaultProfileId && !isLoadingProfile) {
-      console.log('Profile loaded, refreshing leaderboard data');
+    if (isReady && defaultProfileId) {
+      console.log('Auth ready and profile loaded, refreshing leaderboard data');
       fetchLeaderboard();
     }
-  }, [isLoadingProfile, defaultProfileId, fetchLeaderboard]);
+  }, [isReady, defaultProfileId, fetchLeaderboard]);
 
   const hasNoEntries = !isLoading && entries.length === 0;
+  const isLoadingContent = isLoading || !isReady;
   
   return <div className="container mx-auto py-8 px-4 max-w-4xl space-y-6">
       <div className="flex items-center gap-4 mb-2">
@@ -72,9 +73,9 @@ const Leaderboard = () => {
         <p className="text-muted-foreground">See how you stack up!</p>
       </div>
 
-      {isLoadingProfile ? (
+      {isLoadingContent ? (
         <Card className="p-8 flex items-center justify-center">
-          <p className="text-muted-foreground">Loading your profile...</p>
+          <p className="text-muted-foreground">Loading leaderboard...</p>
         </Card>
       ) : (
         <Card className="overflow-hidden">

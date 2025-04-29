@@ -5,7 +5,15 @@ import { useAuth } from '@/context/auth/useAuth';
 import { Skeleton } from '@/components/ui/skeleton';
 
 const UserProfile = () => {
-  const { username, isAuthenticated, isLoadingProfile } = useAuth();
+  const { username, isAuthenticated, isLoadingProfile, isReady } = useAuth();
+  
+  if (!isReady) {
+    return (
+      <div className="flex items-center gap-2">
+        <Skeleton className="h-8 w-28 rounded-full" />
+      </div>
+    );
+  }
   
   if (!isAuthenticated) {
     return null;

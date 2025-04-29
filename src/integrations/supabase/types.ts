@@ -144,6 +144,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_missing_profiles: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       get_leaderboard: {
         Args: {
           p_operation?: string

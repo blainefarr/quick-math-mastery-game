@@ -16,10 +16,8 @@ import { toast } from 'sonner';
 const Progress = () => {
   const navigate = useNavigate();
   const {
-    isAuthenticated,
-    userId,
     defaultProfileId,
-    isLoadingProfile
+    isReady
   } = useAuth();
   const [selectedRange, setSelectedRange] = useState<string>("all");
   const [selectedOperation, setSelectedOperation] = useState<string>("all");
@@ -28,23 +26,12 @@ const Progress = () => {
   const [profileScores, setProfileScores] = useState<UserScore[]>([]);
 
   useEffect(() => {
-    if (!isAuthenticated) {
-      navigate('/');
-      toast.error("You need to be logged in to view your progress");
+    // Wait until auth is fully ready and we have a profile ID
+    if (!isReady || !defaultProfileId) {
       return;
     }
     
     const fetchScores = async () => {
-      if (isLoadingProfile) {
-        console.log('Still loading profile, deferring score fetch');
-        return;
-      }
-      
-      if (!defaultProfileId) {
-        console.log('No defaultProfileId available, cannot fetch scores');
-        return;
-      }
-      
       setLoading(true);
       try {
         console.log('Fetching scores for profile:', defaultProfileId);
@@ -86,10 +73,8 @@ const Progress = () => {
       }
     };
     
-    if (defaultProfileId && !isLoadingProfile) {
-      fetchScores();
-    }
-  }, [userId, isAuthenticated, navigate, defaultProfileId, isLoadingProfile]);
+    fetchScores();
+  }, [defaultProfileId, isReady]);
 
   const getUniqueRanges = () => {
     if (!profileScores || profileScores.length === 0) {
@@ -142,6 +127,9 @@ const Progress = () => {
 
   const filteredScores = getFilteredScores();
   const uniqueRanges = getUniqueRanges();
+  
+  // Simple loading state while scores are being fetched
+  const isLoadingContent = loading || !isReady;
 
   return <div className="container mx-auto py-8 px-4 max-w-4xl space-y-6">
       <div className="flex items-center gap-4 mb-2">
@@ -156,13 +144,9 @@ const Progress = () => {
         <p className="text-muted-foreground">Track your math skills over time</p>
       </div>
 
-      {isLoadingProfile ? (
+      {isLoadingContent ? (
         <Card className="p-8 flex items-center justify-center">
-          <p className="text-muted-foreground">Loading your profile...</p>
-        </Card>
-      ) : loading ? (
-        <Card className="p-8 text-center">
-          <p className="text-muted-foreground">Loading scores...</p>
+          <p className="text-muted-foreground">Loading your scores...</p>
         </Card>
       ) : (
         <Card className="overflow-hidden">
