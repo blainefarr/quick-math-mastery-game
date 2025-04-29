@@ -9,6 +9,7 @@ export interface AuthContextType {
   isAuthenticated: boolean;
   isLoadingProfile: boolean;
   hasMultipleProfiles: boolean;
+  isNewSignup: boolean;
   setIsLoggedIn: (isLoggedIn: boolean) => void;
   setUsername: (username: string) => void;
   setDefaultProfileId: (profileId: string) => void;

@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/context/auth/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Badge } from '@/components/ui/badge';
-import { Plus, User, UserCircle, Check, AlertCircle } from 'lucide-react';
+import { Plus, User, UserCircle, Check, AlertCircle, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { CreateProfileForm } from './CreateProfileForm';
 
@@ -38,6 +38,8 @@ export function ProfileSwitcherDialog({ open, onOpenChange }: ProfileSwitcherDia
   const [loading, setLoading] = useState(true);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
+  const [isRetrying, setIsRetrying] = useState(false);
   
   const { 
     userId, 
@@ -45,16 +47,28 @@ export function ProfileSwitcherDialog({ open, onOpenChange }: ProfileSwitcherDia
     setDefaultProfileId, 
     setUsername, 
     refreshUserProfile,
-    hasMultipleProfiles 
+    hasMultipleProfiles,
+    isNewSignup
   } = useAuth();
 
-  // Automatically close dialog if there's only one profile and we're not in the create form
+  // Handle auto-close when a profile is selected or for new signups
   useEffect(() => {
-    if (open && profiles.length === 1 && !showCreateForm && !loading) {
+    if (!open) return;
+    
+    // Don't show dialog for new signups
+    if (isNewSignup) {
+      console.log('Not showing profile switcher: new signup in progress');
+      onOpenChange(false);
+      return;
+    }
+    
+    // Automatically close dialog if there's only one profile and we're not in create form
+    if (profiles.length === 1 && !showCreateForm && !loading) {
       console.log('Auto-closing profile switcher: only one profile exists');
       handleSwitchProfile(profiles[0]);
+      return;
     }
-  }, [profiles, loading, open, showCreateForm]);
+  }, [profiles, loading, open, showCreateForm, isNewSignup]);
 
   // Extra cleanup effect to ensure no modal backdrop issues
   useEffect(() => {
@@ -79,17 +93,42 @@ export function ProfileSwitcherDialog({ open, onOpenChange }: ProfileSwitcherDia
     }
   }, [open]);
 
+  // Retry fetching profiles for new users
+  const retryFetchProfiles = async () => {
+    if (!userId || retryCount >= 4) return;
+    
+    setIsRetrying(true);
+    setError(null);
+    
+    console.log(`Retry attempt ${retryCount + 1}/4 for profiles...`);
+    
+    // Wait before retrying
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    const success = await fetchProfiles(true);
+    
+    if (!success) {
+      setRetryCount(prev => prev + 1);
+    } else {
+      setRetryCount(0);
+    }
+    
+    setIsRetrying(false);
+  };
+
   // Fetch all profiles for this account
-  const fetchProfiles = async () => {
+  const fetchProfiles = async (isRetry = false): Promise<boolean> => {
     if (!userId) {
       console.error('Cannot fetch profiles: No user ID available');
       setError('No user ID available');
       setLoading(false);
-      return;
+      return false;
     }
     
     try {
-      setLoading(true);
+      if (!isRetry) {
+        setLoading(true);
+      }
       setError(null);
       console.log('Fetching profiles for user ID:', userId);
       
@@ -103,8 +142,11 @@ export function ProfileSwitcherDialog({ open, onOpenChange }: ProfileSwitcherDia
       if (error) {
         console.error('Error fetching profiles:', error);
         setError('Failed to load profiles');
-        toast.error('Failed to load profiles');
-        return;
+        
+        if (!isRetry) {
+          toast.error('Failed to load profiles');
+        }
+        return false;
       }
       
       // Get the active profile ID from localStorage
@@ -114,8 +156,14 @@ export function ProfileSwitcherDialog({ open, onOpenChange }: ProfileSwitcherDia
         console.error('No profiles found for account:', userId);
         setError('No profiles found');
         setProfiles([]);
-        setLoading(false);
-        return;
+        
+        if (!isRetry && retryCount === 0) {
+          console.log('No profiles found, will retry shortly...');
+          // Schedule first retry
+          setTimeout(() => retryFetchProfiles(), 500);
+        }
+        
+        return false;
       }
       
       console.log(`Found ${data.length} profiles, activeProfileId:`, activeProfileId);
@@ -134,11 +182,16 @@ export function ProfileSwitcherDialog({ open, onOpenChange }: ProfileSwitcherDia
         console.log('Only one profile exists - auto-selecting:', processedProfiles[0].id);
         handleSwitchProfile(processedProfiles[0]);
       }
+      
+      return true;
     } catch (err) {
       console.error('Error in profile fetch:', err);
       setError('An unexpected error occurred');
+      return false;
     } finally {
-      setLoading(false);
+      if (!isRetry) {
+        setLoading(false);
+      }
     }
   };
   
@@ -190,7 +243,7 @@ export function ProfileSwitcherDialog({ open, onOpenChange }: ProfileSwitcherDia
 
   return (
     <Dialog 
-      open={open} 
+      open={open && !isNewSignup} 
       onOpenChange={(newOpen) => {
         // Extra cleanup when dialog is closing
         if (!newOpen) {
@@ -228,13 +281,33 @@ export function ProfileSwitcherDialog({ open, onOpenChange }: ProfileSwitcherDia
                 <div className="col-span-full text-center py-8 text-red-500 flex flex-col items-center gap-2">
                   <AlertCircle className="h-8 w-8" />
                   <p>{error}</p>
-                  <Button 
-                    variant="outline" 
-                    onClick={() => fetchProfiles()}
-                    className="mt-2"
-                  >
-                    Try Again
-                  </Button>
+                  {retryCount < 4 ? (
+                    <Button 
+                      variant="outline" 
+                      onClick={() => retryFetchProfiles()}
+                      className="mt-2 flex items-center gap-2"
+                      disabled={isRetrying}
+                    >
+                      {isRetrying ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          Retrying...
+                        </>
+                      ) : (
+                        <>Try Again ({retryCount}/4)</>
+                      )}
+                    </Button>
+                  ) : (
+                    <div className="text-center mt-2">
+                      <p className="text-sm mb-2">Maximum retries reached.</p>
+                      <Button 
+                        onClick={() => setShowCreateForm(true)}
+                        className="mx-auto"
+                      >
+                        Create New Profile
+                      </Button>
+                    </div>
+                  )}
                 </div>
               ) : profiles.length === 0 ? (
                 <div className="col-span-full text-center py-8">

@@ -4,6 +4,7 @@ import UserDropdown from './UserDropdown';
 import { useAuth } from '@/context/auth/useAuth';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ProfileSwitcherDialog } from './ProfileSwitcherDialog';
+import { Loader2 } from 'lucide-react';
 
 const UserProfile = () => {
   const { 
@@ -11,26 +12,43 @@ const UserProfile = () => {
     isAuthenticated, 
     isLoadingProfile, 
     hasMultipleProfiles,
-    defaultProfileId
+    defaultProfileId,
+    isNewSignup
   } = useAuth();
   const [showProfileSwitcher, setShowProfileSwitcher] = useState(false);
   
   // Auto-show profile switcher when user has multiple profiles or no active profile selected
   useEffect(() => {
-    // Only show automatically if we're not loading and either have multiple profiles or no profile
-    if (!isLoadingProfile) {
-      if (hasMultipleProfiles) {
-        console.log('Auto-showing profile switcher: multiple profiles detected');
-        setShowProfileSwitcher(true);
-      } else if (!defaultProfileId) {
-        console.log('Auto-showing profile switcher: no active profile');
-        setShowProfileSwitcher(true);
-      }
+    // Don't show anything during initial load or for new signups that are being processed
+    if (isLoadingProfile || isNewSignup) {
+      return;
     }
-  }, [isLoadingProfile, hasMultipleProfiles, defaultProfileId]);
+    
+    // Only show automatically if we have multiple profiles and no recent showings
+    if (hasMultipleProfiles && defaultProfileId) {
+      console.log('Auto-showing profile switcher: multiple profiles detected');
+      setShowProfileSwitcher(true);
+    } 
+    // Only show if we've completed loading and there's no profile
+    else if (!defaultProfileId && !isNewSignup) {
+      console.log('Auto-showing profile switcher: no active profile');
+      setShowProfileSwitcher(true);
+    }
+  }, [isLoadingProfile, hasMultipleProfiles, defaultProfileId, isNewSignup]);
   
   if (!isAuthenticated) {
     return null;
+  }
+  
+  if (isNewSignup) {
+    return (
+      <div className="flex items-center gap-2">
+        <div className="text-sm text-muted-foreground flex items-center gap-2 border px-3 py-1 rounded-full">
+          <Loader2 className="h-3 w-3 animate-spin" />
+          <span>Setting up account...</span>
+        </div>
+      </div>
+    );
   }
   
   if (isLoadingProfile) {
