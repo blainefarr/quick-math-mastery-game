@@ -1,4 +1,6 @@
 
+import { ReactNode } from 'react';
+
 export interface AuthContextType {
   isLoggedIn: boolean;
   username: string;
@@ -15,5 +17,5 @@ export interface AuthContextType {
 }
 
 export interface AuthProviderProps {
-  children: React.ReactNode;
+  children: ReactNode;
 }

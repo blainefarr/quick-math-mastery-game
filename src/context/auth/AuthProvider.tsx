@@ -1,9 +1,9 @@
-
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import AuthContext from './AuthContext';
 import { AuthContextType, AuthProviderProps } from './auth-types';
 import { toast } from 'sonner';
+import { AuthChangeEvent, Session } from '@supabase/supabase-js';
 
 // Local storage key for active profile
 const ACTIVE_PROFILE_KEY = 'math_game_active_profile';
@@ -61,12 +61,13 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
       // Get all profiles for this account
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
-        .select('id, name, is_active, is_owner')
+        .select('id, name, is_active, is_owner, grade')
         .eq('account_id', accountId)
         .order('created_at', { ascending: false });
       
       if (profilesError) {
         console.error('Error fetching profiles:', profilesError);
+        toast.error('Failed to load user profiles');
         setIsLoadingProfile(false);
         return;
       }
@@ -75,6 +76,7 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
       
       if (!profiles || profiles.length === 0) {
         console.warn('No profiles found for account:', accountId);
+        toast.error('No profiles found for your account');
         setIsLoadingProfile(false);
         return;
       }
@@ -89,16 +91,25 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
       // If there's a stored profile ID, check if it's in the fetched profiles
       if (storedProfileId) {
         selectedProfile = profiles.find(p => p.id === storedProfileId);
+        console.log('Found stored profile:', selectedProfile);
       }
       
-      // If no stored profile or stored profile not found, use the first profile
+      // If no stored profile or stored profile not found, auto-select profile
       if (!selectedProfile) {
-        // First try to get the owner profile
-        selectedProfile = profiles.find(p => p.is_owner === true);
-        
-        // If no owner profile, use the first one
-        if (!selectedProfile) {
+        // If only one profile exists, use it automatically
+        if (profiles.length === 1) {
           selectedProfile = profiles[0];
+          console.log('Auto-selecting only profile:', selectedProfile);
+        } else {
+          // Otherwise try to get the owner profile
+          selectedProfile = profiles.find(p => p.is_owner === true);
+          console.log('Selecting owner profile:', selectedProfile);
+          
+          // If no owner profile, use the first one
+          if (!selectedProfile) {
+            selectedProfile = profiles[0];
+            console.log('Falling back to first profile:', selectedProfile);
+          }
         }
         
         // Store the selected profile ID in localStorage
@@ -110,18 +121,27 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
       if (selectedProfile) {
         setDefaultProfileId(selectedProfile.id);
         setUsername(selectedProfile.name);
+        console.log('Profile selected:', selectedProfile.id, selectedProfile.name);
+      } else {
+        console.error('Failed to select a valid profile');
+        toast.error('Could not find a valid profile');
       }
       
       setIsLoadingProfile(false);
     } catch (error) {
       console.error('Error fetching user profiles:', error);
+      toast.error('Error loading user data');
       setIsLoadingProfile(false);
     }
   };
 
   // Function to manually refresh the user profile
   const refreshUserProfile = async (): Promise<void> => {
-    if (!userId) return;
+    if (!userId) {
+      console.warn('Cannot refresh profile: No user ID available');
+      return;
+    }
+    console.log('Manually refreshing user profile for:', userId);
     await fetchUserProfiles(userId);
   };
 
@@ -139,7 +159,7 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
     
     // Handle auth state changes from Supabase
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      async (event: AuthChangeEvent, session: Session | null) => {
         console.log('Auth state changed:', event, session?.user?.id || 'no-user');
         
         if (event === 'SIGNED_OUT') {
@@ -154,7 +174,8 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
           return;
         }
         
-        if (event === 'SIGNED_IN' || event === 'SIGNED_UP' || event === 'TOKEN_REFRESHED') {
+        // Fix for TypeScript error - handle all sign-in related events
+        if (['SIGNED_IN', 'TOKEN_REFRESHED', 'USER_UPDATED', 'INITIAL_SESSION'].includes(event)) {
           if (session?.user) {
             console.log('User authenticated:', session.user.id);
             setIsLoggedIn(true);

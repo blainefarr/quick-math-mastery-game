@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/context/auth/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Badge } from '@/components/ui/badge';
-import { Plus, User, UserCircle, Check } from 'lucide-react';
+import { Plus, User, UserCircle, Check, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { CreateProfileForm } from './CreateProfileForm';
 
@@ -37,7 +37,24 @@ export function ProfileSwitcherDialog({ open, onOpenChange }: ProfileSwitcherDia
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateForm, setShowCreateForm] = useState(false);
-  const { userId, defaultProfileId, setDefaultProfileId, setUsername, refreshUserProfile } = useAuth();
+  const [error, setError] = useState<string | null>(null);
+  
+  const { 
+    userId, 
+    defaultProfileId, 
+    setDefaultProfileId, 
+    setUsername, 
+    refreshUserProfile,
+    hasMultipleProfiles 
+  } = useAuth();
+
+  // Automatically close dialog if there's only one profile and we're not in the create form
+  useEffect(() => {
+    if (open && profiles.length === 1 && !showCreateForm && !loading) {
+      console.log('Auto-closing profile switcher: only one profile exists');
+      handleSwitchProfile(profiles[0]);
+    }
+  }, [profiles, loading, open, showCreateForm]);
 
   // Extra cleanup effect to ensure no modal backdrop issues
   useEffect(() => {
@@ -64,10 +81,17 @@ export function ProfileSwitcherDialog({ open, onOpenChange }: ProfileSwitcherDia
 
   // Fetch all profiles for this account
   const fetchProfiles = async () => {
-    if (!userId) return;
+    if (!userId) {
+      console.error('Cannot fetch profiles: No user ID available');
+      setError('No user ID available');
+      setLoading(false);
+      return;
+    }
     
     try {
       setLoading(true);
+      setError(null);
+      console.log('Fetching profiles for user ID:', userId);
       
       // Get all profiles for this account sorted by creation time
       const { data, error } = await supabase
@@ -78,6 +102,7 @@ export function ProfileSwitcherDialog({ open, onOpenChange }: ProfileSwitcherDia
       
       if (error) {
         console.error('Error fetching profiles:', error);
+        setError('Failed to load profiles');
         toast.error('Failed to load profiles');
         return;
       }
@@ -85,15 +110,33 @@ export function ProfileSwitcherDialog({ open, onOpenChange }: ProfileSwitcherDia
       // Get the active profile ID from localStorage
       const activeProfileId = localStorage.getItem(ACTIVE_PROFILE_KEY) || defaultProfileId;
       
-      const processedProfiles = data?.map(profile => ({
+      if (!data || data.length === 0) {
+        console.error('No profiles found for account:', userId);
+        setError('No profiles found');
+        setProfiles([]);
+        setLoading(false);
+        return;
+      }
+      
+      console.log(`Found ${data.length} profiles, activeProfileId:`, activeProfileId);
+      
+      const processedProfiles = data.map(profile => ({
         ...profile,
         // Mark as active if it matches the active profile ID
         active: profile.id === activeProfileId
-      })) || [];
+      }));
       
       setProfiles(processedProfiles);
+      
+      // If only one profile exists and we're not showing the create form,
+      // auto-select it and close the dialog
+      if (processedProfiles.length === 1 && !showCreateForm) {
+        console.log('Only one profile exists - auto-selecting:', processedProfiles[0].id);
+        handleSwitchProfile(processedProfiles[0]);
+      }
     } catch (err) {
       console.error('Error in profile fetch:', err);
+      setError('An unexpected error occurred');
     } finally {
       setLoading(false);
     }
@@ -108,6 +151,8 @@ export function ProfileSwitcherDialog({ open, onOpenChange }: ProfileSwitcherDia
   // Switch to a different profile
   const handleSwitchProfile = async (profile: Profile) => {
     try {
+      console.log('Switching to profile:', profile.id, profile.name);
+      
       // Update the local state
       setDefaultProfileId(profile.id);
       setUsername(profile.name || 'User');
@@ -178,6 +223,28 @@ export function ProfileSwitcherDialog({ open, onOpenChange }: ProfileSwitcherDia
               {loading ? (
                 <div className="col-span-full text-center py-8">
                   Loading profiles...
+                </div>
+              ) : error ? (
+                <div className="col-span-full text-center py-8 text-red-500 flex flex-col items-center gap-2">
+                  <AlertCircle className="h-8 w-8" />
+                  <p>{error}</p>
+                  <Button 
+                    variant="outline" 
+                    onClick={() => fetchProfiles()}
+                    className="mt-2"
+                  >
+                    Try Again
+                  </Button>
+                </div>
+              ) : profiles.length === 0 ? (
+                <div className="col-span-full text-center py-8">
+                  <p className="mb-4">No profiles found for your account.</p>
+                  <Button 
+                    onClick={() => setShowCreateForm(true)}
+                    className="mx-auto"
+                  >
+                    Create Your First Profile
+                  </Button>
                 </div>
               ) : (
                 <>
