@@ -95,7 +95,6 @@ export function ProfileSwitcherDialog({ open, onOpenChange }: ProfileSwitcherDia
       setProfiles(processedProfiles);
 
       // If there's only one profile, automatically close the dialog
-      // This helps in case the dialog was opened automatically but user only has one profile
       if (processedProfiles.length === 1 && open) {
         console.log('Only one profile found, auto-selecting it and closing dialog');
         handleSwitchProfile(processedProfiles[0]);

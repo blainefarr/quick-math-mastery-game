@@ -17,9 +17,9 @@ const UserProfile = () => {
   
   // Open profile switcher when shouldShowProfileSelector is true
   useEffect(() => {
-    // Small delay to ensure UI is ready
     if (shouldShowProfileSelector && isAuthenticated && !isLoadingProfile) {
       console.log("Auto-opening profile switcher");
+      // The dialog is now controlled by the open prop, no need for additional code
     }
   }, [shouldShowProfileSelector, isAuthenticated, isLoadingProfile]);
   

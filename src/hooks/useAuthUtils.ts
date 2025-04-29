@@ -57,7 +57,7 @@ export const getProfilesForAccount = async (accountId: string): Promise<any[] | 
     // Get all profiles for this account
     const { data: profiles, error: profilesError } = await supabase
       .from("profiles")
-      .select("id, name, is_active, is_owner, grade")
+      .select("id, name, is_active, is_owner, grade, account_id")
       .eq("account_id", accountId)
       .order("created_at", { ascending: false });
     
@@ -105,6 +105,17 @@ export const createProfileForAccount = async (
 ): Promise<any | null> => {
   try {
     console.log("Creating new profile for account:", accountId);
+    
+    // Check if owner profile already exists if we're creating an owner profile
+    if (isOwner) {
+      const existingProfiles = await getProfilesForAccount(accountId);
+      const hasOwnerProfile = existingProfiles?.some(p => p.is_owner === true);
+      
+      if (hasOwnerProfile) {
+        console.log("Owner profile already exists, creating a regular profile instead");
+        isOwner = false;
+      }
+    }
     
     // Get user data to extract name if not provided
     const { data: userData } = await supabase.auth.getUser();

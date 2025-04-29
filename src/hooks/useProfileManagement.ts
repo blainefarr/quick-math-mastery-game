@@ -27,15 +27,20 @@ export const useProfileManagement = () => {
       const profiles = await getProfilesForAccount(accountId);
       
       if (!profiles || profiles.length === 0) {
-        console.error('No profiles found for this account, attempting to create one');
-        // As a last resort, manually create a profile
-        selectedProfile = await createProfileForAccount(accountId, undefined, true);
+        console.log('No profiles found for this account, attempting to create one');
         
-        if (!selectedProfile) {
+        // As a last resort, manually create a profile
+        const newProfile = await createProfileForAccount(accountId, undefined, true);
+        
+        if (!newProfile) {
+          console.error('Failed to create default profile');
           setIsLoadingProfile(false);
-          forceLogout('Unable to load or create your profile. Please try again later.');
+          forceLogout('Unable to create your profile. Please try again later.');
           return null;
         }
+        
+        console.log('Successfully created new profile:', newProfile);
+        selectedProfile = newProfile;
         
         // Store the new profile ID in localStorage
         localStorage.setItem(ACTIVE_PROFILE_KEY, selectedProfile.id);
@@ -54,6 +59,7 @@ export const useProfileManagement = () => {
         
         if (!selectedProfile) {
           // If no stored profile or stored profile not found, show profile selector
+          console.log('No matching stored profile found, showing profile selector');
           setShouldShowProfileSelector(true);
           // Use the first profile as default until user selects one
           selectedProfile = profiles[0];
