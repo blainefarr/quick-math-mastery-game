@@ -13,7 +13,8 @@ const UserProfile = () => {
     isLoadingProfile, 
     hasMultipleProfiles,
     defaultProfileId,
-    isNewSignup
+    isNewSignup,
+    userId
   } = useAuth();
   const [showProfileSwitcher, setShowProfileSwitcher] = useState(false);
   
@@ -21,6 +22,7 @@ const UserProfile = () => {
   useEffect(() => {
     // Don't show anything during initial load or for new signups that are being processed
     if (isLoadingProfile || isNewSignup) {
+      console.log('Not showing profile switcher yet: still loading or new signup');
       return;
     }
     
@@ -35,6 +37,20 @@ const UserProfile = () => {
       setShowProfileSwitcher(true);
     }
   }, [isLoadingProfile, hasMultipleProfiles, defaultProfileId, isNewSignup]);
+  
+  // Debug user state
+  useEffect(() => {
+    if (isAuthenticated) {
+      console.log('User profile state:', {
+        userId,
+        username,
+        defaultProfileId,
+        isLoadingProfile,
+        hasMultipleProfiles,
+        isNewSignup
+      });
+    }
+  }, [isAuthenticated, userId, username, defaultProfileId, isLoadingProfile, hasMultipleProfiles, isNewSignup]);
   
   if (!isAuthenticated) {
     return null;
@@ -55,6 +71,18 @@ const UserProfile = () => {
     return (
       <div className="flex items-center gap-2">
         <Skeleton className="h-8 w-28 rounded-full" />
+      </div>
+    );
+  }
+  
+  // Extra validation - only render dropdown if we have a valid profile
+  if (!defaultProfileId) {
+    return (
+      <div className="flex items-center gap-2">
+        <div className="text-sm text-muted-foreground flex items-center gap-2 border px-3 py-1 rounded-full">
+          <Loader2 className="h-3 w-3 animate-spin" />
+          <span>Loading profile...</span>
+        </div>
       </div>
     );
   }

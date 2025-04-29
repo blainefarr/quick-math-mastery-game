@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { AuthStateType } from '../auth-types';
@@ -26,6 +27,25 @@ export const fetchUserProfiles = async (
       console.log('Fetching profiles for account ID:', accountId);
       setIsLoadingProfile(true);
     }
+    
+    // Check if account exists first (this is critical)
+    const { data: accountData, error: accountError } = await supabase
+      .from('accounts')
+      .select('id')
+      .eq('id', accountId)
+      .maybeSingle();
+      
+    if (accountError || !accountData) {
+      console.error('Error fetching account or account not found:', accountError || 'No account data');
+      
+      if (!isRetry) {
+        toast.error('Account not found');
+      }
+      
+      return false;
+    }
+    
+    console.log('Account found:', accountData.id);
     
     // Get all profiles for this account
     const { data: profiles, error: profilesError } = await supabase
