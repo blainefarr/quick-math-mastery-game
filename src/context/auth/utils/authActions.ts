@@ -149,6 +149,20 @@ export const completeSignUp = async (email: string, password: string, displayNam
         
         // Store the profile ID in localStorage
         localStorage.setItem(ACTIVE_PROFILE_KEY, profileData.id);
+        
+        // IMPORTANT: Update the profile name if it doesn't match the display name
+        // This ensures the profile name matches what the user entered during signup
+        if (profileData.name !== displayName) {
+          const { error: updateError } = await supabase
+            .from('profiles')
+            .update({ name: displayName })
+            .eq('id', profileData.id);
+            
+          if (updateError) {
+            console.error('Failed to update profile name:', updateError);
+          }
+        }
+        
         break;
       }
       
@@ -251,9 +265,9 @@ export const fetchAndSaveAccountProfile = async (userId: string, authState: Auth
     }
     
     if (selectedProfile) {
-      // Always use account name which should be correctly saved from sign up
+      // Use profile name as requested by the user
       authState.setDefaultProfileId(selectedProfile.id);
-      authState.setUsername(accountName || selectedProfile.name);
+      authState.setUsername(selectedProfile.name);
       return true;
     } else {
       return false;
