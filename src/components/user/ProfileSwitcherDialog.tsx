@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   Dialog, 
@@ -15,6 +14,7 @@ import { Badge } from '@/components/ui/badge';
 import { Plus, User, UserCircle, Check, AlertCircle, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { CreateProfileForm } from './CreateProfileForm';
+import { ACTIVE_PROFILE_KEY } from '@/context/auth/utils/profileUtils';
 
 interface Profile {
   id: string;
@@ -29,9 +29,6 @@ interface ProfileSwitcherDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
-
-// Local storage key for active profile
-const ACTIVE_PROFILE_KEY = 'math_game_active_profile';
 
 export function ProfileSwitcherDialog({ open, onOpenChange }: ProfileSwitcherDialogProps) {
   const [profiles, setProfiles] = useState<Profile[]>([]);
