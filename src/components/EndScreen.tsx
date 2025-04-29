@@ -58,7 +58,7 @@ const EndScreen = () => {
   
   return (
     <div className="container max-w-md mx-auto px-4 py-8">
-      {showConfetti && <ConfettiEffect />}
+      {showConfetti && <ConfettiEffect score={score} />}
       
       <Card className="shadow-lg border-2 border-primary/20">
         <CardHeader className="text-center pb-2">
