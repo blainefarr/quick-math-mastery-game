@@ -110,8 +110,27 @@ export const completeSignUp = async (email: string, password: string, displayNam
       hasSession: !!sessionData.session,
       sessionUserId: sessionData.session?.user?.id,
       accessToken: sessionData.session?.access_token ? '✓ Present' : '❌ Missing',
-      targetUserId: userId
+      targetUserId: userId,
+      matchesTarget: sessionData.session?.user?.id === userId,
+      fullSession: sessionData.session
     });
+    
+    // Verify the session has our target user ID before proceeding
+    if (!sessionData.session || sessionData.session.user.id !== userId) {
+      console.warn(`Session mismatch or missing - refreshing session before account check attempt ${i + 1}`);
+      
+      // Try to refresh the session
+      const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+      if (refreshError) {
+        console.error('Error refreshing session:', refreshError);
+      } else {
+        console.log('Session refreshed, new session:', {
+          hasSession: !!refreshData.session,
+          sessionUserId: refreshData.session?.user?.id,
+          matchesTarget: refreshData.session?.user?.id === userId
+        });
+      }
+    }
     
     // Check if the account was created
     console.log(`Querying accounts table for userId=${userId}`);
@@ -159,7 +178,9 @@ export const completeSignUp = async (email: string, password: string, displayNam
       console.log(`Auth session before profile fetch (attempt ${retryCount + 1}):`, {
         hasSession: !!sessionData.session,
         sessionUserId: sessionData.session?.user?.id,
-        accessToken: sessionData.session?.access_token ? '✓ Present' : '❌ Missing'
+        accessToken: sessionData.session?.access_token ? '✓ Present' : '❌ Missing',
+        matchesTarget: sessionData.session?.user?.id === userId,
+        fullSession: sessionData.session
       });
       
       // Check if profile exists
@@ -225,10 +246,29 @@ export const fetchAndSaveAccountProfile = async (userId: string, authState: Auth
       hasSession: !!sessionData.session,
       sessionUserId: sessionData.session?.user?.id,
       accessToken: sessionData.session?.access_token ? '✓ Present' : '❌ Missing',
-      targetUserId: userId
+      targetUserId: userId,
+      matchesTarget: sessionData.session?.user?.id === userId,
+      fullSession: sessionData.session
     });
     
-    // Step 1: Check if account exists
+    // Verify the session has our target user ID before proceeding
+    if (!sessionData.session || sessionData.session.user.id !== userId) {
+      console.warn('Session mismatch or missing - refreshing session before fetch');
+      
+      // Try to refresh the session
+      const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+      if (refreshError) {
+        console.error('Error refreshing session:', refreshError);
+      } else {
+        console.log('Session refreshed, new session:', {
+          hasSession: !!refreshData.session,
+          sessionUserId: refreshData.session?.user?.id,
+          matchesTarget: refreshData.session?.user?.id === userId
+        });
+      }
+    }
+    
+    // Step 1: Check if account exists first (this is critical)
     console.log('fetchAndSaveAccountProfile Step 1: Checking account existence');
     const { data: accountData, error: accountError } = await supabase
       .from('accounts')

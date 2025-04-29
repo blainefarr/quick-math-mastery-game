@@ -40,7 +40,10 @@ export const useAuthEvents = (authState: AuthStateType) => {
         console.log(`Auth session before profile retry attempt ${retryAttempts + 1}:`, {
           hasSession: !!sessionData.session,
           sessionUserId: sessionData.session?.user?.id,
-          accessToken: sessionData.session?.access_token ? '✓ Present' : '❌ Missing'
+          accessToken: sessionData.session?.access_token ? '✓ Present' : '❌ Missing',
+          requestedUserId: userId,
+          matchesRequested: sessionData.session?.user?.id === userId,
+          fullSession: sessionData.session
         });
         
         // Use the enhanced function to fetch account and profile
@@ -113,7 +116,8 @@ export const useAuthEvents = (authState: AuthStateType) => {
               console.log('Auth session before account/profile fetch:', {
                 hasSession: !!sessionData.session,
                 sessionUserId: sessionData.session?.user?.id,
-                accessToken: sessionData.session?.access_token ? '✓ Present' : '❌ Missing'
+                accessToken: sessionData.session?.access_token ? '✓ Present' : '❌ Missing',
+                fullSession: sessionData.session
               });
               
               // Add initial delay before fetching account and profile
@@ -151,7 +155,8 @@ export const useAuthEvents = (authState: AuthStateType) => {
         console.log('useAuthEvents: Initial session check result:', {
           hasSession: !!session,
           sessionUserId: session?.user?.id || 'none',
-          accessToken: session?.access_token ? '✓ Present' : '❌ Missing'
+          accessToken: session?.access_token ? '✓ Present' : '❌ Missing',
+          fullSession: session
         });
         
         if (session?.user) {
