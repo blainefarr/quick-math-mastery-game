@@ -27,7 +27,7 @@ const UserDropdown = ({
   onOpenProfile
 }: UserDropdownProps) => {
   const navigate = useNavigate();
-  const { handleLogout } = useAuth();
+  const { handleLogout, hasMultipleProfiles } = useAuth();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [showProfileSwitcher, setShowProfileSwitcher] = useState(false);
 
@@ -71,7 +71,7 @@ const UserDropdown = ({
             className="cursor-pointer hover:bg-accent"
           >
             <Users className="mr-2 h-4 w-4" />
-            Switch Profile
+            {hasMultipleProfiles ? "Switch Profile" : "Manage Profiles"}
           </DropdownMenuItem>
           <DropdownMenuItem 
             onClick={() => navigate('/progress')}

@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 
 // Local storage key for active profile
 const ACTIVE_PROFILE_KEY = 'math_game_active_profile';
+const AUTH_TIMEOUT_MS = 5000; // 5 seconds timeout for auth operations
 
 const AuthProvider = ({ children }: AuthProviderProps) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -14,8 +15,7 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
   const [userId, setUserId] = useState<string | null>(null);
   const [defaultProfileId, setDefaultProfileId] = useState<string | null>(null);
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
-  const [profileFetchAttempts, setProfileFetchAttempts] = useState(0);
-  const MAX_PROFILE_FETCH_ATTEMPTS = 3;
+  const [hasMultipleProfiles, setHasMultipleProfiles] = useState(false);
 
   // Comprehensive logout function that ensures all session data is cleared
   const handleLogout = async () => {
@@ -34,22 +34,11 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
       setUserId(null);
       setUsername('');
       setDefaultProfileId(null);
+      setHasMultipleProfiles(false);
       
       // Clear active profile from localStorage
       localStorage.removeItem(ACTIVE_PROFILE_KEY);
       
-      // Clear all local storage and session storage related to auth
-      localStorage.removeItem('supabase.auth.token');
-      sessionStorage.removeItem('supabase.auth.token');
-      
-      // Don't use a full clear as it might affect other app functionality
-      // Instead, remove specific auth-related items
-      const authItems = ['supabase.auth.token', 'supabase-auth-token'];
-      authItems.forEach(item => {
-        localStorage.removeItem(item);
-        sessionStorage.removeItem(item);
-      });
-
       console.log('Logout completed successfully');
       window.location.href = '/'; // Redirect to home page after logout
     } catch (error) {
@@ -59,151 +48,126 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
       setUserId(null);
       setUsername('');
       setDefaultProfileId(null);
+      setHasMultipleProfiles(false);
     }
   };
 
-  // Fetch the profile for a user with retry logic
-  const fetchDefaultProfile = async (accountId: string) => {
+  // Function to fetch profile(s) for the current user
+  const fetchUserProfiles = async (accountId: string): Promise<void> => {
     try {
       setIsLoadingProfile(true);
-      console.log('Fetching profile for account ID:', accountId);
+      console.log('Fetching profiles for account ID:', accountId);
       
-      // Give the session a moment to fully establish
-      await new Promise(resolve => setTimeout(resolve, 300));
+      // Get all profiles for this account
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, name, is_active, is_owner')
+        .eq('account_id', accountId)
+        .order('created_at', { ascending: false });
       
-      // Get a fresh session to ensure RLS policies are properly applied
-      const { data: { session: refreshedSession } } = await supabase.auth.getSession();
-      if (!refreshedSession?.user) {
-        console.log('No valid session found after refreshing');
+      if (profilesError) {
+        console.error('Error fetching profiles:', profilesError);
         setIsLoadingProfile(false);
-        return null;
+        return;
       }
-
-      // First check if we have a stored profile ID in localStorage
+      
+      console.log('Fetched profiles:', profiles);
+      
+      if (!profiles || profiles.length === 0) {
+        console.warn('No profiles found for account:', accountId);
+        setIsLoadingProfile(false);
+        return;
+      }
+      
+      // Check if there are multiple profiles
+      setHasMultipleProfiles(profiles.length > 1);
+      
+      // Get the stored profile ID from localStorage
       const storedProfileId = localStorage.getItem(ACTIVE_PROFILE_KEY);
-      let profile = null;
+      let selectedProfile = null;
       
+      // If there's a stored profile ID, check if it's in the fetched profiles
       if (storedProfileId) {
-        console.log('Found stored profile ID in localStorage:', storedProfileId);
+        selectedProfile = profiles.find(p => p.id === storedProfileId);
+      }
+      
+      // If no stored profile or stored profile not found, use the first profile
+      if (!selectedProfile) {
+        // First try to get the owner profile
+        selectedProfile = profiles.find(p => p.is_owner === true);
         
-        // Try to get the stored profile
-        const { data: storedProfile, error: storedProfileError } = await supabase
-          .from('profiles')
-          .select('id, name')
-          .eq('id', storedProfileId)
-          .eq('account_id', accountId)
-          .single();
-          
-        if (!storedProfileError && storedProfile) {
-          console.log('Successfully retrieved stored profile:', storedProfile);
-          profile = storedProfile;
-        } else {
-          console.log('Stored profile not found or error, will try to find another profile');
-          // If there's an error or no profile found, we'll fall back to getting any profile
-          localStorage.removeItem(ACTIVE_PROFILE_KEY);
+        // If no owner profile, use the first one
+        if (!selectedProfile) {
+          selectedProfile = profiles[0];
+        }
+        
+        // Store the selected profile ID in localStorage
+        if (selectedProfile) {
+          localStorage.setItem(ACTIVE_PROFILE_KEY, selectedProfile.id);
         }
       }
       
-      if (!profile) {
-        // Try to get any profile for this account
-        const { data: anyProfile, error: anyProfileError } = await supabase
-          .from('profiles')
-          .select('id, name')
-          .eq('account_id', accountId)
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .single();
-          
-        if (anyProfileError) {
-          console.error('Error fetching any profile:', anyProfileError);
-          
-          // Only retry if we haven't exceeded max attempts
-          if (profileFetchAttempts < MAX_PROFILE_FETCH_ATTEMPTS) {
-            console.log(`Retry attempt ${profileFetchAttempts + 1}/${MAX_PROFILE_FETCH_ATTEMPTS} in 500ms...`);
-            setProfileFetchAttempts(prev => prev + 1);
-            
-            // Retry after a short delay
-            setTimeout(() => {
-              fetchDefaultProfile(accountId);
-            }, 500);
-            return null;
-          }
-          
-          setIsLoadingProfile(false);
-          return null;
-        }
-        
-        if (anyProfile) {
-          console.log('Found profile:', anyProfile);
-          profile = anyProfile;
-          
-          // Store the found profile ID in localStorage
-          localStorage.setItem(ACTIVE_PROFILE_KEY, anyProfile.id);
-        }
-      }
-
-      if (profile) {
-        setDefaultProfileId(profile.id);
-        setUsername(profile.name || 'User');
-        setProfileFetchAttempts(0); // Reset attempts count on success
-      } else {
-        console.log('No profiles found for user');
+      if (selectedProfile) {
+        setDefaultProfileId(selectedProfile.id);
+        setUsername(selectedProfile.name);
       }
       
       setIsLoadingProfile(false);
-      return profile;
     } catch (error) {
-      console.error('Error in fetchDefaultProfile:', error);
+      console.error('Error fetching user profiles:', error);
       setIsLoadingProfile(false);
-      return null;
     }
+  };
+
+  // Function to manually refresh the user profile
+  const refreshUserProfile = async (): Promise<void> => {
+    if (!userId) return;
+    await fetchUserProfiles(userId);
   };
 
   useEffect(() => {
     // Mark as loading profile when initializing
     setIsLoadingProfile(true);
     
+    // Set up auth timeout to prevent infinite loading state
+    const authTimeout = setTimeout(() => {
+      if (isLoadingProfile) {
+        console.warn('Auth operation timed out - resetting loading state');
+        setIsLoadingProfile(false);
+      }
+    }, AUTH_TIMEOUT_MS);
+    
     // Handle auth state changes from Supabase
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('Auth state changed in AuthProvider:', event);
+        console.log('Auth state changed:', event, session?.user?.id || 'no-user');
         
         if (event === 'SIGNED_OUT') {
+          console.log('User signed out');
           setIsLoggedIn(false);
           setUserId(null);
           setUsername('');
           setDefaultProfileId(null);
-          
-          // Clear active profile from localStorage on signout
+          setHasMultipleProfiles(false);
           localStorage.removeItem(ACTIVE_PROFILE_KEY);
-          
           setIsLoadingProfile(false);
           return;
         }
         
-        if (session?.user) {
-          setIsLoggedIn(true);
-          setUserId(session.user.id);
-          
-          // We need to ensure the session is fully initialized before fetching the profile
-          // So we'll fetch the session again explicitly
-          setTimeout(async () => {
-            try {
-              const { data: { session: refreshedSession } } = await supabase.auth.getSession();
-              if (refreshedSession?.user) {
-                // Now fetch the profile with the confirmed session
-                await fetchDefaultProfile(refreshedSession.user.id);
-              } else {
-                setIsLoadingProfile(false);
-              }
-            } catch (err) {
-              console.error('Error refreshing session:', err);
-              setIsLoadingProfile(false);
-            }
-          }, 300);
-        } else {
-          // If no session, mark profile as not loading
-          setIsLoadingProfile(false);
+        if (event === 'SIGNED_IN' || event === 'SIGNED_UP' || event === 'TOKEN_REFRESHED') {
+          if (session?.user) {
+            console.log('User authenticated:', session.user.id);
+            setIsLoggedIn(true);
+            setUserId(session.user.id);
+            
+            // Fetch user profiles with a slight delay to allow triggers to complete
+            setTimeout(() => {
+              fetchUserProfiles(session.user.id);
+            }, 300);
+          } else {
+            console.log('No user in session after auth event:', event);
+            setIsLoadingProfile(false);
+          }
         }
       }
     );
@@ -214,17 +178,16 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
         const { data: { session } } = await supabase.auth.getSession();
         
         if (session?.user) {
-          console.log('Existing session found, user:', session.user.email);
+          console.log('Existing session found, user:', session.user.id);
           setIsLoggedIn(true);
           setUserId(session.user.id);
           
-          // Add a slight delay to ensure auth is fully ready on Supabase
-          setTimeout(async () => {
-            await fetchDefaultProfile(session.user.id);
+          // Fetch user profiles with a slight delay
+          setTimeout(() => {
+            fetchUserProfiles(session.user.id);
           }, 300);
         } else {
           console.log('No existing session found');
-          // Ensure we're truly logged out and not loading profile
           setIsLoggedIn(false);
           setUserId(null);
           setUsername('');
@@ -241,21 +204,9 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
 
     return () => {
       subscription.unsubscribe();
+      clearTimeout(authTimeout);
     };
   }, []);
-
-  // Extra safeguard - if profile loading state gets stuck somehow
-  useEffect(() => {
-    // After 5 seconds, if we're still loading profile, set to false
-    const timeout = setTimeout(() => {
-      if (isLoadingProfile) {
-        console.warn('Profile loading timed out - resetting loading state');
-        setIsLoadingProfile(false);
-      }
-    }, 5000);
-    
-    return () => clearTimeout(timeout);
-  }, [isLoadingProfile]);
 
   const value: AuthContextType = {
     isLoggedIn,
@@ -263,10 +214,12 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
     userId,
     defaultProfileId,
     isLoadingProfile,
+    hasMultipleProfiles,
     setIsLoggedIn,
     setUsername,
     setDefaultProfileId,
     handleLogout,
+    refreshUserProfile,
     isAuthenticated: isLoggedIn
   };
 

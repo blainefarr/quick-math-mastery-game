@@ -22,7 +22,7 @@ interface Profile {
   grade?: string;
   is_active: boolean;
   created_at: string;
-  is_owner: boolean;  // Updated to use the new is_owner field
+  is_owner: boolean;
 }
 
 interface ProfileSwitcherDialogProps {
@@ -37,7 +37,7 @@ export function ProfileSwitcherDialog({ open, onOpenChange }: ProfileSwitcherDia
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateForm, setShowCreateForm] = useState(false);
-  const { userId, defaultProfileId, setDefaultProfileId, setUsername } = useAuth();
+  const { userId, defaultProfileId, setDefaultProfileId, setUsername, refreshUserProfile } = useAuth();
 
   // Extra cleanup effect to ensure no modal backdrop issues
   useEffect(() => {
@@ -83,12 +83,11 @@ export function ProfileSwitcherDialog({ open, onOpenChange }: ProfileSwitcherDia
       }
       
       // Get the active profile ID from localStorage
-      const activeProfileId = localStorage.getItem(ACTIVE_PROFILE_KEY);
+      const activeProfileId = localStorage.getItem(ACTIVE_PROFILE_KEY) || defaultProfileId;
       
       const processedProfiles = data?.map(profile => ({
         ...profile,
-        // Mark as active if it matches the localStorage active profile ID
-        // This is purely for UI display purposes
+        // Mark as active if it matches the active profile ID
         active: profile.id === activeProfileId
       })) || [];
       
@@ -101,7 +100,7 @@ export function ProfileSwitcherDialog({ open, onOpenChange }: ProfileSwitcherDia
   };
   
   useEffect(() => {
-    if (open) {
+    if (open && userId) {
       fetchProfiles();
     }
   }, [open, userId]);
@@ -118,6 +117,9 @@ export function ProfileSwitcherDialog({ open, onOpenChange }: ProfileSwitcherDia
       
       // Show success message
       toast.success(`Switched to ${profile.name}`);
+      
+      // Refresh user profile in the auth context
+      await refreshUserProfile();
       
       // Close the dialog and ensure cleanup
       onOpenChange(false);
