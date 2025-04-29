@@ -6,7 +6,7 @@ export interface AuthContextType {
   defaultProfileId: string | null;
   isLoadingProfile: boolean;
   isAuthenticated: boolean;
-  authError: string | null; // Add authentication error tracking
+  authError: string | null;
   setIsLoggedIn: (isLoggedIn: boolean) => void;
   setUsername: (username: string) => void;
   setDefaultProfileId: (profileId: string | null) => void;

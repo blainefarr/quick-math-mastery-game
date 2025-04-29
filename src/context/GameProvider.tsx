@@ -246,7 +246,8 @@ const GameProvider = ({ children }: GameProviderProps) => {
     scoreHistory,
     saveScore,
     isLoggedIn: isAuthenticated,
-    username,
+    // Remove the username shorthand which was causing the error
+    // username,  
     focusNumber,
     setFocusNumber,
     getIsHighScore,
