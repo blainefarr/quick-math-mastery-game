@@ -21,7 +21,7 @@ export const AuthGate = ({
   children, 
   requireAuth = false 
 }: AuthGateProps) => {
-  const { isAuthenticated, isReady, isLoggedIn, defaultProfileId } = useAuth();
+  const { isAuthenticated, isReady, isLoggedIn, defaultProfileId, isLoadingProfile } = useAuth();
   const navigate = useNavigate();
 
   // If authentication is still initializing, show loading state
@@ -49,6 +49,20 @@ export const AuthGate = ({
             We couldn't load your profile. Please try logging out and back in again.
           </AlertDescription>
         </Alert>
+      );
+    }
+    
+    if (isLoadingProfile) {
+      return (
+        <Card className="p-8 flex flex-col items-center justify-center">
+          <div className="space-y-2 w-full max-w-md">
+            <Skeleton className="h-6 w-2/3 mx-auto" />
+            <Skeleton className="h-32 w-full" />
+            <div className="text-center mt-4 text-sm text-muted-foreground">
+              Loading your profile...
+            </div>
+          </div>
+        </Card>
       );
     }
     

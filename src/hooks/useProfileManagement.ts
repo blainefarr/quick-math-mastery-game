@@ -13,7 +13,80 @@ export const useProfileManagement = () => {
   const [profileFetchAttempts, setProfileFetchAttempts] = useState(0);
   const MAX_PROFILE_FETCH_ATTEMPTS = 3;
 
-  // Fetch the profile for a user with retry logic
+  // Check if a profile exists and create one if it doesn't
+  const ensureProfileExists = async (accountId: string) => {
+    try {
+      console.log('Checking if profile exists for account ID:', accountId);
+      
+      // Check if a profile exists for this user
+      const { data: existingProfile, error: profileCheckError } = await supabase
+        .from('profiles')
+        .select('id, name')
+        .eq('account_id', accountId)
+        .maybeSingle(); // Use maybeSingle instead of single to avoid errors
+      
+      if (profileCheckError) {
+        console.error('Error checking for existing profile:', profileCheckError);
+        return null;
+      }
+      
+      // If profile exists, return it
+      if (existingProfile) {
+        console.log('Existing profile found:', existingProfile);
+        return existingProfile;
+      }
+      
+      console.log('No profile found, attempting to create one');
+      
+      // Get user information to create a profile
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        console.error('No user found for profile creation');
+        return null;
+      }
+      
+      // Extract name from user metadata or email
+      let profileName = '';
+      if (user.user_metadata && user.user_metadata.full_name) {
+        profileName = user.user_metadata.full_name;
+      } else if (user.user_metadata && user.user_metadata.name) {
+        profileName = user.user_metadata.name;
+      } else if (user.email) {
+        // Extract username from email (before @)
+        profileName = user.email.split('@')[0];
+      } else {
+        profileName = 'New User';
+      }
+      
+      // Create a new profile
+      const { data: newProfile, error: createError } = await supabase
+        .from('profiles')
+        .insert([
+          { 
+            account_id: accountId,
+            name: profileName,
+            is_active: true,
+            is_owner: true
+          }
+        ])
+        .select('id, name')
+        .single();
+      
+      if (createError) {
+        console.error('Error creating profile:', createError);
+        return null;
+      }
+      
+      console.log('Successfully created new profile:', newProfile);
+      return newProfile;
+    } catch (error) {
+      console.error('Error in ensureProfileExists:', error);
+      return null;
+    }
+  };
+
+  // Fetch the profile for a user with retry logic and profile creation
   const fetchDefaultProfile = async (accountId: string, forceLogout: (message: string) => void) => {
     try {
       setIsLoadingProfile(true);
@@ -41,14 +114,13 @@ export const useProfileManagement = () => {
           .select('id, name')
           .eq('id', storedProfileId)
           .eq('account_id', accountId)
-          .single();
+          .maybeSingle(); // Use maybeSingle instead of single
           
         if (!storedProfileError && storedProfile) {
           console.log('Successfully retrieved stored profile:', storedProfile);
           profile = storedProfile;
         } else {
           console.log('Stored profile not found or error, will try to find another profile');
-          // If there's an error or no profile found, we'll fall back to getting any profile
           localStorage.removeItem(ACTIVE_PROFILE_KEY);
         }
       }
@@ -61,7 +133,7 @@ export const useProfileManagement = () => {
           .eq('account_id', accountId)
           .order('created_at', { ascending: false })
           .limit(1)
-          .single();
+          .maybeSingle(); // Use maybeSingle instead of single
           
         if (anyProfileError) {
           console.error('Error fetching any profile:', anyProfileError);
@@ -78,24 +150,34 @@ export const useProfileManagement = () => {
             return null;
           }
           
-          // After MAX_PROFILE_FETCH_ATTEMPTS failures, trigger a logout with error message
-          setIsLoadingProfile(false);
-          forceLogout('Unable to load your profile after multiple attempts. Please try again later.');
-          return null;
-        }
-        
-        if (anyProfile) {
+          // After max attempts, try to create a profile as a fallback
+          console.log('Max fetch attempts reached, trying to create a profile');
+          profile = await ensureProfileExists(accountId);
+          
+          if (!profile) {
+            // If profile creation also fails, trigger a logout
+            setIsLoadingProfile(false);
+            forceLogout('Unable to load or create your profile. Please try again later.');
+            return null;
+          }
+        } else if (anyProfile) {
           console.log('Found profile:', anyProfile);
           profile = anyProfile;
-          
-          // Store the found profile ID in localStorage
-          localStorage.setItem(ACTIVE_PROFILE_KEY, anyProfile.id);
         } else {
-          // No profile found even after successful query
-          console.error('No profiles found for this account after successful query');
-          setIsLoadingProfile(false);
-          forceLogout('No profile found for your account. Please contact support.');
-          return null;
+          // No profile found, try to create one
+          console.log('No profiles found, trying to create one');
+          profile = await ensureProfileExists(accountId);
+          
+          if (!profile) {
+            setIsLoadingProfile(false);
+            forceLogout('Unable to create a profile for your account. Please try again.');
+            return null;
+          }
+        }
+        
+        // Store the found/created profile ID in localStorage
+        if (profile && profile.id) {
+          localStorage.setItem(ACTIVE_PROFILE_KEY, profile.id);
         }
       }
 
@@ -136,5 +218,6 @@ export const useProfileManagement = () => {
     setIsLoadingProfile,
     fetchDefaultProfile,
     clearProfileData,
+    ensureProfileExists
   };
 };

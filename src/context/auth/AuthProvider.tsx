@@ -17,7 +17,8 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
     setUsername,
     setIsLoadingProfile,
     fetchDefaultProfile,
-    clearProfileData
+    clearProfileData,
+    ensureProfileExists
   } = useProfileManagement();
 
   const {
@@ -66,9 +67,30 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
               
               if (refreshedSession?.user) {
                 console.log('Session verified, proceeding with profile fetch');
-                // Now fetch the profile with the confirmed session
-                await fetchDefaultProfile(refreshedSession.user.id, handleForceLogout);
-                setIsReady(true);
+                // Check for SIGNED_UP event to ensure profile creation for OAuth users
+                if (event === 'SIGNED_IN') {
+                  // For OAuth logins, we need to check and create a profile if needed
+                  const profile = await ensureProfileExists(refreshedSession.user.id);
+                  if (profile) {
+                    console.log('Profile was ensured for OAuth login:', profile);
+                    // Update state with the found/created profile
+                    setDefaultProfileId(profile.id);
+                    setUsername(profile.name || '');
+                    localStorage.setItem('math_game_active_profile', profile.id);
+                    setIsReady(true);
+                    setIsLoadingProfile(false);
+                    return;
+                  }
+                }
+                
+                // Standard flow for non-first-time OAuth logins
+                const profile = await fetchDefaultProfile(refreshedSession.user.id, handleForceLogout);
+                if (!profile) {
+                  console.error('Failed to fetch profile after multiple attempts');
+                  handleForceLogout('Unable to load your profile. Please log in again.');
+                } else {
+                  setIsReady(true);
+                }
               } else {
                 console.error('Session verification failed after timeout');
                 handleForceLogout('Session verification failed. Please log in again.');
@@ -77,7 +99,7 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
               console.error('Error refreshing session:', err);
               handleForceLogout('Error initializing your session. Please try again.');
             }
-          }, 300);
+          }, 500);
         } else {
           console.log('No valid session in auth state change event');
           // If no session, mark profile as not loading and auth as ready
@@ -104,8 +126,13 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
           // Add a slight delay to ensure auth is fully ready on Supabase
           setTimeout(async () => {
             console.log('Fetching profile for existing session');
-            await fetchDefaultProfile(session.user.id, handleForceLogout);
-            setIsReady(true);
+            const profile = await fetchDefaultProfile(session.user.id, handleForceLogout);
+            if (!profile) {
+              console.error('Failed to fetch profile for existing session');
+              // Do not set isReady = true here, as we're logging out the user
+            } else {
+              setIsReady(true);
+            }
           }, 300);
         } else {
           console.log('No existing session found');
@@ -145,6 +172,8 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
         // If we're supposed to be logged in but profile loading timed out, show error
         if (isLoggedIn && userId) {
           toast.error('Unable to load your profile. You may need to log in again.');
+          // Force logout when profile cannot be loaded after timeout
+          handleForceLogout('Profile loading timed out. Please log in again.');
         }
       }
     }, 5000);
@@ -160,7 +189,7 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
     isLoadingProfile,
     isReady,
     setIsLoggedIn,
-    setUsername,
+    setUsername, 
     setDefaultProfileId,
     handleLogout,
     isAuthenticated: isLoggedIn && !!defaultProfileId // Only truly authenticated with both login and profile

@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -9,7 +9,7 @@ export const useSessionManagement = () => {
   const [isReady, setIsReady] = useState(false);
 
   // Comprehensive logout function that ensures all session data is cleared
-  const handleLogout = async () => {
+  const handleLogout = useCallback(async () => {
     try {
       console.log('Logout initiated');
       
@@ -44,20 +44,23 @@ export const useSessionManagement = () => {
       // Don't use window.location.href redirect as it causes a full page reload
       // Let the router handle redirects instead
       toast.success('You have been logged out successfully');
+      
+      return true;
     } catch (error) {
       console.error('Error during logout process:', error);
       toast.error('Error during logout. Some data may not have been cleared.');
       // Even if error occurs, still reset client-side state
       setIsLoggedIn(false);
       setUserId(null);
+      return false;
     }
-  };
+  }, []);
 
-  const handleForceLogout = (errorMessage: string = 'Authentication error. Please log in again.') => {
+  const handleForceLogout = useCallback((errorMessage: string = 'Authentication error. Please log in again.') => {
     console.error('Forced logout due to:', errorMessage);
     toast.error(errorMessage);
     handleLogout();
-  };
+  }, [handleLogout]);
 
   return {
     isLoggedIn,
