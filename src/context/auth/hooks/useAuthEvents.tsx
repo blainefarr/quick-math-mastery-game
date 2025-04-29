@@ -7,9 +7,10 @@ import { fetchAndSaveAccountProfile } from '../utils/authActions';
 import { AuthChangeEvent, Session } from '@supabase/supabase-js';
 import { toast } from 'sonner';
 
-const AUTH_TIMEOUT_MS = 5000; // 5 seconds timeout for auth operations
+const AUTH_TIMEOUT_MS = 10000; // Increased from 5000 to 10000 - 10 seconds timeout for auth operations
 const MAX_PROFILE_RETRY_ATTEMPTS = 5;
-const PROFILE_RETRY_DELAY_MS = 750; // Increased delay between retries
+const PROFILE_RETRY_DELAY_MS = 1500; // Increased delay between retries to 1.5s
+const INITIAL_FETCH_DELAY_MS = 1000; // Initial delay before fetching
 
 export const useAuthEvents = (authState: AuthStateType) => {
   const { 
@@ -95,11 +96,16 @@ export const useAuthEvents = (authState: AuthStateType) => {
             setIsLoggedIn(true);
             setUserId(session.user.id);
             
-            // For regular sign-ins, fetch account and profile with slight delay
+            // For regular sign-ins, fetch account and profile with appropriate delay
             setTimeout(async () => {
-              console.log('useAuthEvents: Fetching account and profile data after auth event');
+              console.log(`useAuthEvents: Waiting ${INITIAL_FETCH_DELAY_MS}ms before fetching account/profile data`);
+              
+              // Add initial delay before fetching account and profile
+              await new Promise(resolve => setTimeout(resolve, INITIAL_FETCH_DELAY_MS));
+              
+              console.log('useAuthEvents: Now fetching account and profile data after auth event');
               await fetchAndSaveAccountProfile(session.user.id, authState);
-            }, 500);
+            }, 100); // Start the delay process quickly
           } else {
             console.log('useAuthEvents: No user in session after auth event:', event);
             setIsLoadingProfile(false);
@@ -131,11 +137,16 @@ export const useAuthEvents = (authState: AuthStateType) => {
           setIsLoggedIn(true);
           setUserId(session.user.id);
           
-          // Fetch account and profile with a slight delay
+          // Fetch account and profile with appropriate delay
           setTimeout(async () => {
-            console.log('useAuthEvents: Fetching account and profile data for existing session');
+            console.log(`useAuthEvents: Waiting ${INITIAL_FETCH_DELAY_MS}ms before fetching account/profile data for existing session`);
+            
+            // Add initial delay before fetching
+            await new Promise(resolve => setTimeout(resolve, INITIAL_FETCH_DELAY_MS));
+            
+            console.log('useAuthEvents: Now fetching account and profile data for existing session');
             await fetchAndSaveAccountProfile(session.user.id, authState);
-          }, 500);
+          }, 100); // Start the delay process quickly
         } else {
           console.log('useAuthEvents: No existing session found');
           setIsLoggedIn(false);

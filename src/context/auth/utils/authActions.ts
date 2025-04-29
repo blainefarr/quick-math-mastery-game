@@ -84,15 +84,23 @@ export const completeSignUp = async (email: string, password: string, displayNam
   const userId = authData.user.id;
   console.log('Auth signup successful, userId:', userId);
   
+  // IMPORTANT: Wait for Supabase to fully commit the account/profile creation
+  console.log('Waiting for Supabase to fully commit account/profile (2.5s delay)...');
+  await new Promise(resolve => setTimeout(resolve, 2500));
+  
   // Step 2: Explicitly verify account creation
-  const maxAccountRetries = 5;
+  const maxAccountRetries = 10; // Increased from 5
+  const retryDelay = 1000; // 1 second between retries
   let accountId = null;
   
   console.log('Step 2: Verifying account creation in database...');
   // Try multiple times to get the account - it should be created by DB trigger
   for (let i = 0; i < maxAccountRetries; i++) {
-    // Wait a bit before checking (increasing delay with each retry)
-    await new Promise(resolve => setTimeout(resolve, 500 * (i + 1)));
+    // Wait a consistent 1 second between retries
+    if (i > 0) {
+      console.log(`Waiting ${retryDelay}ms before retry attempt ${i + 1}/${maxAccountRetries}...`);
+      await new Promise(resolve => setTimeout(resolve, retryDelay));
+    }
     
     console.log(`Checking for account creation, attempt ${i + 1}/${maxAccountRetries}`);
     
@@ -111,7 +119,7 @@ export const completeSignUp = async (email: string, password: string, displayNam
       console.log('Account found:', accountId);
       break;
     } else {
-      console.log(`Account not found on attempt ${i + 1}, waiting for creation...`);
+      console.log(`Account not found on attempt ${i + 1}, will ${i < maxAccountRetries - 1 ? 'retry' : 'stop trying'}`);
     }
   }
   
@@ -123,17 +131,19 @@ export const completeSignUp = async (email: string, password: string, displayNam
   // Step 3: Check if profile exists
   console.log('Step 3: Verifying profile creation in database...');
   let retryCount = 0;
-  const maxRetries = 5;
+  const maxProfileRetries = 10; // Increased from 5
   let profileCreated = false;
   let profileId = null;
   
-  while (retryCount < maxRetries && !profileCreated) {
+  while (retryCount < maxProfileRetries && !profileCreated) {
     try {
-      // Allow some time for the database triggers to complete
+      // First attempt doesn't need additional delay since we just found the account
       if (retryCount > 0) {
-        console.log(`Retry attempt ${retryCount + 1}/${maxRetries} for profile creation...`);
-        await new Promise(resolve => setTimeout(resolve, 500 * (retryCount + 1)));
+        console.log(`Waiting ${retryDelay}ms before profile check attempt ${retryCount + 1}/${maxProfileRetries}...`);
+        await new Promise(resolve => setTimeout(resolve, retryDelay));
       }
+      
+      console.log(`Checking for profile, attempt ${retryCount + 1}/${maxProfileRetries}`);
       
       // Check if profile exists
       console.log(`Querying profiles table for account_id=${userId}`);
@@ -144,7 +154,7 @@ export const completeSignUp = async (email: string, password: string, displayNam
         .maybeSingle();
       
       if (profileError) {
-        console.warn('Error checking profile:', profileError);
+        console.warn(`Profile check error (attempt ${retryCount + 1}):`, profileError);
       } else if (profileData) {
         console.log('Profile found:', profileData.id, profileData.name);
         profileCreated = true;
@@ -155,12 +165,12 @@ export const completeSignUp = async (email: string, password: string, displayNam
         localStorage.setItem(ACTIVE_PROFILE_KEY, profileData.id);
         break;
       } else {
-        console.log(`Profile not found on attempt ${retryCount + 1}, waiting for creation...`);
+        console.log(`Profile not found on attempt ${retryCount + 1}, will ${retryCount < maxProfileRetries - 1 ? 'retry' : 'stop trying'}`);
       }
       
       retryCount++;
     } catch (error) {
-      console.error('Error in profile creation check:', error);
+      console.error(`Error in profile creation check attempt ${retryCount + 1}:`, error);
       retryCount++;
     }
   }
