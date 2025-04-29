@@ -1,70 +1,50 @@
 
-import { ReactNode } from "react";
-import { GameSettings, Operation, Problem, ProblemRange, UserScore } from "@/types";
+import { Operation, ProblemRange, UserScore } from '@/types';
+
+export type GameSettings = {
+  operation: Operation;
+  range: ProblemRange;
+  timerSeconds: number;
+  focusNumber?: number | null;
+  allowNegatives?: boolean;
+};
 
 export type GameState = 'selection' | 'playing' | 'ended';
-export type GameEndReason = 'timeout' | 'manual';
+
+export type Problem = {
+  num1: number;
+  num2: number;
+  operation: Operation;
+  answer: number | string;
+};
+
+export type GameEndReason = 'timeout' | 'quit' | 'error';
 
 export interface GameContextType {
-  // Game state
   gameState: GameState;
-  setGameState: (state: GameState) => void;
-  
-  // Game settings
+  setGameState: React.Dispatch<React.SetStateAction<GameState>>;
   settings: GameSettings;
-  updateSettings: (settings: Partial<GameSettings>) => void;
-  
-  // Game data
+  updateSettings: (newSettings: Partial<GameSettings>) => void;
   score: number;
   incrementScore: () => void;
   resetScore: () => void;
-  
-  // Problem management
-  currentProblem: Problem | null;
-  generateNewProblem: (
-    operation: Operation, 
-    range: ProblemRange, 
-    allowNegatives?: boolean, 
-    focusNumber?: number | null
-  ) => Problem;
-  
-  // Timer
+  currentProblem: Problem;
+  generateNewProblem: () => void;
   timeLeft: number;
-  setTimeLeft: (time: number | ((prev: number) => number)) => void;
-  
-  // User answer
+  setTimeLeft: React.Dispatch<React.SetStateAction<number>>;
   userAnswer: string;
-  setUserAnswer: (answer: string) => void;
-  
-  // Score history
+  setUserAnswer: React.Dispatch<React.SetStateAction<string>>;
   scoreHistory: UserScore[];
-  saveScore: (
-    score: number, 
-    operation: Operation, 
-    range: ProblemRange, 
-    timerSeconds: number,
-    focusNumber?: number | null,
-    allowNegatives?: boolean
-  ) => Promise<boolean>;
-  
-  // Auth state (now pulled from AuthContext)
+  saveScore: (score: number, operation: Operation, range: ProblemRange, timerSeconds: number, focusNumber: number | null, allowNegatives: boolean) => Promise<boolean>;
   isLoggedIn: boolean;
-  username: string;
-  
-  // Focus number
+  username: string; // Ensure username is defined as a required property
   focusNumber: number | null;
-  setFocusNumber: (num: number | null) => void;
-  
-  // Check for high score
-  getIsHighScore: (newScore: number, operation: Operation, range: ProblemRange) => boolean;
-  
-  // User ID (from AuthContext)
+  setFocusNumber: React.Dispatch<React.SetStateAction<number | null>>;
+  getIsHighScore: (score: number, operation: Operation, range: ProblemRange) => boolean;
   userId: string | null;
-  
-  // Game end handler
   endGame: (reason: GameEndReason) => Promise<void>;
 }
 
 export interface GameProviderProps {
-  children: ReactNode;
+  children: React.ReactNode;
 }

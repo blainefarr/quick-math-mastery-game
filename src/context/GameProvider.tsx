@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import GameContext from './GameContext';
 import { GameContextType, GameState, GameProviderProps, GameEndReason } from './game-context-types';
@@ -11,7 +10,7 @@ import { toast } from 'sonner';
 const GameProvider = ({ children }: GameProviderProps) => {
   const { settings, updateSettings, resetSettings } = useGameSettings();
   const { currentProblem, generateNewProblem } = useProblemGenerator();
-  const { userId, defaultProfileId, isAuthenticated } = useAuth();
+  const { userId, defaultProfileId, isAuthenticated, username } = useAuth();
   
   const [gameState, setGameState] = useState<GameState>('selection');
   const [score, setScore] = useState(0);
@@ -246,8 +245,7 @@ const GameProvider = ({ children }: GameProviderProps) => {
     scoreHistory,
     saveScore,
     isLoggedIn: isAuthenticated,
-    // Remove the username shorthand which was causing the error
-    // username,  
+    username,
     focusNumber,
     setFocusNumber,
     getIsHighScore,
