@@ -23,7 +23,6 @@ export const waitForSession = async (
       
       if (error) {
         console.error("Error polling for session:", error);
-        // Don't throw, just continue polling
       }
       
       if (data?.session?.user) {
@@ -55,6 +54,20 @@ export const ensureUserProfile = async (accountId: string): Promise<any | null> 
   console.log("Ensuring user profile exists for:", accountId);
   
   try {
+    // First check if profile exists
+    console.log("Checking if profile exists");
+    const { data: existingProfile, error: profileError } = await supabase
+      .from("profiles")
+      .select("id, name, is_active, is_owner")
+      .eq("account_id", accountId)
+      .maybeSingle();
+    
+    // Profile exists, return it
+    if (existingProfile) {
+      console.log("Existing profile found:", existingProfile);
+      return existingProfile;
+    }
+    
     // First verify the account exists to prevent foreign key constraint errors
     const { data: accountData, error: accountError } = await supabase
       .from("accounts")
@@ -129,21 +142,7 @@ export const ensureUserProfile = async (accountId: string): Promise<any | null> 
       }
     }
     
-    // Now check if profile exists
-    console.log("Checking if profile exists");
-    const { data: existingProfile, error: profileError } = await supabase
-      .from("profiles")
-      .select("id, name, is_active, is_owner")
-      .eq("account_id", accountId)
-      .maybeSingle();
-    
-    // Profile exists, return it
-    if (existingProfile) {
-      console.log("Existing profile found:", existingProfile);
-      return existingProfile;
-    }
-    
-    // No profile found, create one
+    // Now create profile since we know account exists
     console.log("No profile found, creating a new one");
     const { data: authUser } = await supabase.auth.getUser();
     

@@ -18,6 +18,7 @@ import { Separator } from '@/components/ui/separator';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '@/context/auth/useAuth';
+import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 
 interface AuthModalProps {
   children: React.ReactNode;
@@ -70,24 +71,36 @@ const AuthModal = ({ children, defaultView = 'register' }: AuthModalProps) => {
     setError('');
     setIsLoading(true);
     setSuccessMsg('');
-    const { data, error: supaError } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    setIsLoading(false);
-    if (supaError) {
-      setError(supaError.message === "Invalid login credentials" ?
-        "Email or password incorrect" : supaError.message);
-      return;
+    
+    try {
+      const { data, error: supaError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      
+      if (supaError) {
+        setError(supaError.message === "Invalid login credentials" ?
+          "Email or password incorrect" : supaError.message);
+        setIsLoading(false);
+        return;
+      }
+      
+      if (data && data.user) {
+        setIsLoggedIn(true);
+        setUsername(data.user.user_metadata?.name || data.user.email?.split('@')[0] || data.user.email || "");
+        toast.success("Successfully logged in!");
+        handleOpenChange(false);
+        setEmail('');
+        setPassword('');
+      } else {
+        setError("Something went wrong. Please try again.");
+      }
+    } catch (err) {
+      console.error("Login error:", err);
+      setError("An unexpected error occurred. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
-    if (data && data.user) {
-      setIsLoggedIn(true);
-      setUsername(data.user.user_metadata?.name || data.user.email?.split('@')[0] || data.user.email || "");
-      toast.success("Successfully logged in!");
-      handleOpenChange(false);
-    }
-    setEmail('');
-    setPassword('');
   };
 
   const handleRegister = async (e: React.FormEvent) => {
@@ -95,61 +108,81 @@ const AuthModal = ({ children, defaultView = 'register' }: AuthModalProps) => {
     setError('');
     setSuccessMsg('');
     setIsLoading(true);
-    if (!name || !email || !password) {
-      setError('Please fill in all fields');
-      setIsLoading(false);
-      return;
-    }
     
-    const { data, error: supaError } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          name
-        }
+    try {
+      if (!name || !email || !password) {
+        setError('Please fill in all fields');
+        setIsLoading(false);
+        return;
       }
-    });
-    
-    setIsLoading(false);
+      
+      const { data, error: supaError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            name
+          }
+        }
+      });
+      
+      if (supaError) {
+        setError(supaError.message.includes("already registered") ? 
+          "Email already registered." : supaError.message);
+        setIsLoading(false);
+        return;
+      }
 
-    if (supaError) {
-      setError(supaError.message.includes("already registered") ? 
-        "Email already registered." : supaError.message);
-      return;
+      // Account creation was successful
+      if (data.user) {
+        console.log("User created successfully:", data.user.id);
+        toast.success("Account created successfully! Please wait while we set up your profile.");
+        
+        // User was created, now let's wait for the session to be established
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        
+        setIsLoggedIn(true);
+        setUsername(name);
+        handleOpenChange(false);
+        setName('');
+        setEmail('');
+        setPassword('');
+      } else {
+        // This can happen if email confirmation is required
+        setSuccessMsg("Please check your email to confirm your registration!");
+        setIsLoading(false);
+      }
+    } catch (err) {
+      console.error("Registration error:", err);
+      setError("An unexpected error occurred during registration. Please try again.");
+      setIsLoading(false);
     }
-
-    if (!data.user) {
-      setSuccessMsg("Please check your email to confirm your registration!");
-      return;
-    }
-
-    setIsLoggedIn(true);
-    setUsername(name);
-    setName('');
-    setEmail('');
-    setPassword('');
-    handleOpenChange(false);
   };
 
   const handleGoogleSignIn = async () => {
     setError('');
     setIsLoading(true);
     
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: window.location.origin
-      }
-    });
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: window.location.origin
+        }
+      });
 
-    if (error) {
-      setError(error.message);
+      if (error) {
+        setError(error.message);
+        setIsLoading(false);
+        return;
+      }
+      
+      handleOpenChange(false);
+    } catch (err) {
+      console.error("Google login error:", err);
+      setError("An unexpected error occurred. Please try again.");
       setIsLoading(false);
-      return;
     }
-    
-    handleOpenChange(false);
   };
 
   const handleForgotPassword = async (e: React.FormEvent) => {
@@ -158,22 +191,30 @@ const AuthModal = ({ children, defaultView = 'register' }: AuthModalProps) => {
     setSuccessMsg('');
     setIsLoading(true);
 
-    if (!email) {
-      setError("Please enter your email");
+    try {
+      if (!email) {
+        setError("Please enter your email");
+        setIsLoading(false);
+        return;
+      }
+
+      const { error: supaError } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: window.location.origin + '/'
+      });
+      
+      if (supaError) {
+        setError(supaError.message);
+        setIsLoading(false);
+        return;
+      }
+      
+      setSuccessMsg("Password reset email sent! Check your inbox.");
       setIsLoading(false);
-      return;
+    } catch (err) {
+      console.error("Password reset error:", err);
+      setError("An unexpected error occurred. Please try again.");
+      setIsLoading(false);
     }
-
-    const { error: supaError } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: window.location.origin + '/'
-    });
-    setIsLoading(false);
-
-    if (supaError) {
-      setError(supaError.message);
-      return;
-    }
-    setSuccessMsg("Password reset email sent! Check your inbox.");
   };
 
   const renderLoginContent = () => (
@@ -410,6 +451,9 @@ const AuthModal = ({ children, defaultView = 'register' }: AuthModalProps) => {
         className="sm:max-w-md" 
         onKeyDown={handleKeyDown}
       >
+        <VisuallyHidden>
+          <DialogTitle>Authentication</DialogTitle>
+        </VisuallyHidden>
         <Tabs 
           value={activeTab} 
           onValueChange={(value) => setActiveTab(value as 'login' | 'register')}

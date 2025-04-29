@@ -55,31 +55,38 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
           return;
         }
         
-        if (event === 'SIGNED_IN' || event === 'SIGNED_UP' || event === 'TOKEN_REFRESHED') {
-          if (session?.user) {
-            console.log(`Auth event ${event} detected, user ID:`, session.user.id);
-            setIsLoggedIn(true);
-            setUserId(session.user.id);
-            
-            // We need to handle the profile initialization separately 
-            // to avoid blocking the auth state listener
-            setTimeout(async () => {
-              try {
-                // Wait for the session to be fully established before attempting profile operations
-                const confirmedSession = await waitForSession(5, 600);
-                
-                if (!confirmedSession) {
-                  console.error('Failed to get confirmed session after sign in/up');
-                  handleForceLogout('Unable to establish your session. Please try again.');
-                  return;
-                }
-                
-                // For new sign-ups, ensure a profile exists
-                if (event === 'SIGNED_UP') {
-                  console.log('New sign-up detected, ensuring profile exists');
+        if (session?.user) {
+          console.log(`Auth event ${event} detected, user ID:`, session.user.id);
+          setIsLoggedIn(true);
+          setUserId(session.user.id);
+          
+          // We need to handle the profile initialization separately 
+          // to avoid blocking the auth state listener
+          setTimeout(async () => {
+            try {
+              // Wait for the session to be fully established before attempting profile operations
+              const confirmedSession = await waitForSession(5, 600);
+              
+              if (!confirmedSession) {
+                console.error('Failed to get confirmed session after sign in/up');
+                handleForceLogout('Unable to establish your session. Please try again.');
+                return;
+              }
+              
+              // For new sign-ups, ensure a profile exists
+              if (event === 'SIGNED_IN') {
+                // Check if this is a new user that just signed up
+                const { data: existingProfile } = await supabase
+                  .from('profiles')
+                  .select('id')
+                  .eq('account_id', confirmedSession.user.id)
+                  .maybeSingle();
+
+                if (!existingProfile) {
+                  console.log('No profile found, attempting to create one');
                   const profile = await ensureProfileExists(confirmedSession.user.id);
                   if (profile) {
-                    console.log('Profile was created/found for new user:', profile);
+                    console.log('Profile was created/found for user:', profile);
                     setDefaultProfileId(profile.id);
                     setUsername(profile.name || '');
                     localStorage.setItem('math_game_active_profile', profile.id);
@@ -88,21 +95,24 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
                     toast.success('Welcome! Your profile has been created.');
                     return;
                   } else {
-                    console.error('Failed to create profile for new user');
+                    console.error('Failed to create profile for user');
                     handleForceLogout('Unable to create your profile. Please try again.');
                     return;
                   }
                 }
-                
-                // Standard flow for existing users
-                const profile = await fetchDefaultProfile(confirmedSession.user.id, handleForceLogout);
-                setIsReady(profile !== null);
-              } catch (err) {
-                console.error('Error in auth state change handling:', err);
-                handleForceLogout('Error establishing your session. Please try again.');
               }
-            }, 500); // Short delay to ensure auth state is settled
-          }
+              
+              // Standard flow for existing users
+              const profile = await fetchDefaultProfile(confirmedSession.user.id, handleForceLogout);
+              setIsReady(profile !== null);
+            } catch (err) {
+              console.error('Error in auth state change handling:', err);
+              handleForceLogout('Error establishing your session. Please try again.');
+            }
+          }, 500); // Short delay to ensure auth state is settled
+        } else {
+          // No valid session in this auth event
+          console.log('No valid session in auth state change event');
         }
       }
     );
