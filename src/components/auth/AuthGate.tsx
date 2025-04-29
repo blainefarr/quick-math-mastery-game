@@ -5,9 +5,10 @@ import { useNavigate } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, Loader2, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import { waitForSession } from '@/hooks/useAuthUtils';
 
 interface AuthGateProps {
   children: React.ReactNode;
@@ -31,11 +32,14 @@ export const AuthGate = ({
     return (
       <Card className="p-8 flex flex-col items-center justify-center">
         <div className="space-y-2 w-full max-w-md">
+          <div className="flex items-center justify-center mb-4">
+            <Loader2 className="h-12 w-12 text-primary animate-spin" />
+          </div>
           <Skeleton className="h-6 w-2/3 mx-auto" />
           <Skeleton className="h-32 w-full" />
           <Skeleton className="h-6 w-3/4 mx-auto" />
           <div className="text-center mt-4 text-sm text-muted-foreground">
-            Initializing app...
+            Initializing app and checking login status...
           </div>
         </div>
       </Card>
@@ -55,23 +59,30 @@ export const AuthGate = ({
             <div className="flex justify-end gap-2">
               <Button 
                 variant="outline" 
-                size="sm" 
-                onClick={() => {
-                  navigate('/');
-                  window.location.reload(); // Force a refresh to retry
+                size="sm"
+                className="flex items-center gap-2"
+                onClick={async () => {
+                  toast.info("Trying to reconnect your session...");
+                  // Try to refresh the session and re-check authentication
+                  const session = await waitForSession(5, 400);
+                  if (session) {
+                    window.location.reload(); // Force a refresh to retry the whole auth flow
+                  } else {
+                    toast.error("Couldn't reconnect your session. Please log in again.");
+                    navigate('/');
+                  }
                 }}
               >
-                Retry
+                <RefreshCw size={16} />
+                Reconnect
               </Button>
               <Button 
                 variant="destructive" 
                 size="sm" 
                 onClick={async () => {
-                  const success = await handleLogout();
-                  if (success) {
-                    toast.success("You've been logged out. Please try logging in again.");
-                    navigate('/');
-                  }
+                  await handleLogout();
+                  toast.success("You've been logged out. Please try logging in again.");
+                  navigate('/');
                 }}
               >
                 Log Out and Try Again
@@ -86,8 +97,11 @@ export const AuthGate = ({
       return (
         <Card className="p-8 flex flex-col items-center justify-center">
           <div className="space-y-2 w-full max-w-md">
+            <div className="flex items-center justify-center mb-4">
+              <Loader2 className="h-10 w-10 text-primary animate-spin" />
+            </div>
             <Skeleton className="h-6 w-2/3 mx-auto" />
-            <Skeleton className="h-32 w-full" />
+            <Skeleton className="h-16 w-full" />
             <div className="text-center mt-4 text-sm text-muted-foreground">
               Loading your profile...
             </div>

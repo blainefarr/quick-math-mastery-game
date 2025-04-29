@@ -6,6 +6,7 @@ import { AuthProviderProps } from './auth-types';
 import { useProfileManagement } from '@/hooks/useProfileManagement';
 import { useSessionManagement } from '@/hooks/useSessionManagement';
 import { toast } from 'sonner';
+import { waitForSession } from '@/hooks/useAuthUtils';
 
 const AuthProvider = ({ children }: AuthProviderProps) => {
   // Use our custom hooks
@@ -54,62 +55,54 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
           return;
         }
         
-        if (session?.user) {
-          console.log('Valid session detected, user ID:', session.user.id);
-          setIsLoggedIn(true);
-          setUserId(session.user.id);
-          
-          // We need to ensure the session is fully initialized before fetching the profile
-          setTimeout(async () => {
-            try {
-              console.log('Verifying session before profile fetch');
-              const { data: { session: refreshedSession } } = await supabase.auth.getSession();
-              
-              if (refreshedSession?.user) {
-                console.log('Session verified, proceeding with profile fetch');
-                // Check for sign up or sign in events to ensure profile creation
-                if (event === 'SIGNED_IN' && !defaultProfileId) {
-                  // For OAuth logins or returning users, we may need to ensure a profile exists
-                  console.log('Sign-in detected, ensuring profile exists');
-                  const profile = await ensureProfileExists(refreshedSession.user.id);
+        if (event === 'SIGNED_IN' || event === 'SIGNED_UP' || event === 'TOKEN_REFRESHED') {
+          if (session?.user) {
+            console.log(`Auth event ${event} detected, user ID:`, session.user.id);
+            setIsLoggedIn(true);
+            setUserId(session.user.id);
+            
+            // We need to handle the profile initialization separately 
+            // to avoid blocking the auth state listener
+            setTimeout(async () => {
+              try {
+                // Wait for the session to be fully established before attempting profile operations
+                const confirmedSession = await waitForSession(5, 600);
+                
+                if (!confirmedSession) {
+                  console.error('Failed to get confirmed session after sign in/up');
+                  handleForceLogout('Unable to establish your session. Please try again.');
+                  return;
+                }
+                
+                // For new sign-ups, ensure a profile exists
+                if (event === 'SIGNED_UP') {
+                  console.log('New sign-up detected, ensuring profile exists');
+                  const profile = await ensureProfileExists(confirmedSession.user.id);
                   if (profile) {
-                    console.log('Profile was created/found for user:', profile);
-                    // Update state with the found/created profile
+                    console.log('Profile was created/found for new user:', profile);
                     setDefaultProfileId(profile.id);
                     setUsername(profile.name || '');
                     localStorage.setItem('math_game_active_profile', profile.id);
                     setIsReady(true);
                     setIsLoadingProfile(false);
-                    toast.success('Welcome! Your profile is ready.');
+                    toast.success('Welcome! Your profile has been created.');
+                    return;
+                  } else {
+                    console.error('Failed to create profile for new user');
+                    handleForceLogout('Unable to create your profile. Please try again.');
                     return;
                   }
                 }
                 
                 // Standard flow for existing users
-                const profile = await fetchDefaultProfile(refreshedSession.user.id, handleForceLogout);
-                if (!profile) {
-                  console.error('Failed to fetch profile after multiple attempts');
-                  handleForceLogout('Unable to load your profile. Please log in again.');
-                } else {
-                  setIsReady(true);
-                }
-              } else {
-                console.error('Session verification failed after timeout');
-                handleForceLogout('Session verification failed. Please log in again.');
+                const profile = await fetchDefaultProfile(confirmedSession.user.id, handleForceLogout);
+                setIsReady(profile !== null);
+              } catch (err) {
+                console.error('Error in auth state change handling:', err);
+                handleForceLogout('Error establishing your session. Please try again.');
               }
-            } catch (err) {
-              console.error('Error refreshing session:', err);
-              handleForceLogout('Error initializing your session. Please try again.');
-            }
-          }, 1000);  // Increased delay to ensure account is created
-        } else {
-          console.log('No valid session in auth state change event');
-          // If no session, mark profile as not loading and auth as ready
-          setIsLoggedIn(false);
-          setUserId(null);
-          clearProfileData();
-          setIsLoadingProfile(false);
-          setIsReady(true);
+            }, 500); // Short delay to ensure auth state is settled
+          }
         }
       }
     );
@@ -118,7 +111,9 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
     const checkExistingSession = async () => {
       try {
         console.log('Checking for existing session on initial load');
-        const { data: { session } } = await supabase.auth.getSession();
+        
+        // Use our waitForSession utility instead of a simple getSession call
+        const session = await waitForSession(3, 500);
         
         if (session?.user) {
           console.log('Existing session found, user:', session.user.email);
@@ -135,7 +130,7 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
             } else {
               setIsReady(true);
             }
-          }, 1000);
+          }, 1200);
         } else {
           console.log('No existing session found');
           // Ensure we're truly logged out and not loading profile
@@ -164,10 +159,10 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
 
   // Extra safeguard - if profile loading state gets stuck somehow
   useEffect(() => {
-    // After 8 seconds, if we're still loading profile, set to false
+    // After 10 seconds, if we're still loading profile, set to false
     const timeout = setTimeout(() => {
       if (isLoadingProfile) {
-        console.warn('Profile loading timed out after 8 seconds - resetting loading state');
+        console.warn('Profile loading timed out after 10 seconds - resetting loading state');
         setIsLoadingProfile(false);
         setIsReady(true); // Also mark as ready to prevent UI from being stuck
         
@@ -178,7 +173,7 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
           handleForceLogout('Profile loading timed out. Please log in again.');
         }
       }
-    }, 8000);  // Increased timeout to give more time for profile creation
+    }, 10000);  // Increased timeout to give more time for profile creation
     
     return () => clearTimeout(timeout);
   }, [isLoadingProfile, isLoggedIn, userId]);

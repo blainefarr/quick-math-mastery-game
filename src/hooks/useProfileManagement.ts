@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { ensureUserProfile } from './useAuthUtils';
 
 // Local storage key for active profile
 export const ACTIVE_PROFILE_KEY = 'math_game_active_profile';
@@ -16,107 +17,12 @@ export const useProfileManagement = () => {
   // Check if a profile exists and create one if it doesn't
   const ensureProfileExists = async (accountId: string) => {
     try {
-      console.log('Checking if profile exists for account ID:', accountId);
+      console.log('Ensuring profile exists for account ID:', accountId);
       
-      // Add a slight delay to ensure the account is fully created in the database
-      // This helps prevent foreign key constraint violations
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Add a delay to ensure the account is fully created in the database
+      await new Promise(resolve => setTimeout(resolve, 1200));
       
-      // Check if a profile exists for this user
-      const { data: existingProfile, error: profileCheckError } = await supabase
-        .from('profiles')
-        .select('id, name')
-        .eq('account_id', accountId)
-        .maybeSingle();
-      
-      if (profileCheckError) {
-        console.error('Error checking for existing profile:', profileCheckError);
-        return null;
-      }
-      
-      // If profile exists, return it
-      if (existingProfile) {
-        console.log('Existing profile found:', existingProfile);
-        return existingProfile;
-      }
-      
-      console.log('No profile found, attempting to create one');
-      
-      // First, verify the account exists in the accounts table
-      const { data: accountExists, error: accountCheckError } = await supabase
-        .from('accounts')
-        .select('id')
-        .eq('id', accountId)
-        .maybeSingle();
-      
-      if (accountCheckError || !accountExists) {
-        console.error('Account does not exist or error checking account:', accountCheckError);
-        // We need to create the account first
-        const { data: userData } = await supabase.auth.getUser();
-        if (!userData?.user) {
-          console.error('No user data available for account creation');
-          return null;
-        }
-        
-        // Create the account first
-        const { error: createAccountError } = await supabase
-          .from('accounts')
-          .insert([{
-            id: accountId,
-            email: userData.user.email,
-            name: userData.user.user_metadata?.name || userData.user.user_metadata?.full_name,
-          }]);
-          
-        if (createAccountError) {
-          console.error('Error creating account:', createAccountError);
-          return null;
-        }
-        
-        console.log('Created account for:', accountId);
-      }
-      
-      // Now get user information to create a profile
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        console.error('No user found for profile creation');
-        return null;
-      }
-      
-      // Extract name from user metadata or email
-      let profileName = '';
-      if (user.user_metadata && user.user_metadata.full_name) {
-        profileName = user.user_metadata.full_name;
-      } else if (user.user_metadata && user.user_metadata.name) {
-        profileName = user.user_metadata.name;
-      } else if (user.email) {
-        // Extract username from email (before @)
-        profileName = user.email.split('@')[0];
-      } else {
-        profileName = 'New User';
-      }
-      
-      // Create a new profile
-      const { data: newProfile, error: createError } = await supabase
-        .from('profiles')
-        .insert([
-          { 
-            account_id: accountId,
-            name: profileName,
-            is_active: true,
-            is_owner: true
-          }
-        ])
-        .select()
-        .single();
-      
-      if (createError) {
-        console.error('Error creating profile:', createError);
-        return null;
-      }
-      
-      console.log('Successfully created new profile:', newProfile);
-      return newProfile;
+      return await ensureUserProfile(accountId);
     } catch (error) {
       console.error('Error in ensureProfileExists:', error);
       return null;
@@ -129,8 +35,9 @@ export const useProfileManagement = () => {
       setIsLoadingProfile(true);
       console.log('Fetching profile for account ID:', accountId);
       
-      // Get a fresh session to ensure RLS policies are properly applied
+      // Wait for a fully established session before proceeding
       const { data: { session: refreshedSession } } = await supabase.auth.getSession();
+      
       if (!refreshedSession?.user) {
         console.log('No valid session found after refreshing');
         setIsLoadingProfile(false);
@@ -177,18 +84,18 @@ export const useProfileManagement = () => {
           
           // Only retry if we haven't exceeded max attempts
           if (profileFetchAttempts < MAX_PROFILE_FETCH_ATTEMPTS) {
-            console.log(`Retry attempt ${profileFetchAttempts + 1}/${MAX_PROFILE_FETCH_ATTEMPTS} in 500ms...`);
+            console.log(`Retry attempt ${profileFetchAttempts + 1}/${MAX_PROFILE_FETCH_ATTEMPTS} in 800ms...`);
             setProfileFetchAttempts(prev => prev + 1);
             
             // Clear the profile fetch attempts after this retry completes or fails
-            setTimeout(() => setProfileFetchAttempts(0), 5000); 
+            setTimeout(() => setProfileFetchAttempts(0), 10000); 
             
-            // Retry after a short delay
+            // Retry with exponential backoff
             return new Promise((resolve) => {
               setTimeout(async () => {
                 const result = await fetchDefaultProfile(accountId, forceLogout);
                 resolve(result);
-              }, 500);
+              }, 800 * Math.pow(1.5, profileFetchAttempts));
             });
           }
           

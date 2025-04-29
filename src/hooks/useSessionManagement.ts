@@ -41,18 +41,13 @@ export const useSessionManagement = () => {
       });
 
       console.log('Logout completed successfully');
-      // Don't use window.location.href redirect as it causes a full page reload
-      // Let the router handle redirects instead
       toast.success('You have been logged out successfully');
-      
-      return true;
     } catch (error) {
       console.error('Error during logout process:', error);
       toast.error('Error during logout. Some data may not have been cleared.');
       // Even if error occurs, still reset client-side state
       setIsLoggedIn(false);
       setUserId(null);
-      return false;
     }
   }, []);
 
