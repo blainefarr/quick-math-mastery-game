@@ -83,35 +83,65 @@ export const completeSignUp = async (email: string, password: string, displayNam
   const userId = authData.user.id;
   console.log('Auth signup successful, userId:', userId);
   
-  // Step 2: Check/Create Account (handled by database triggers in Supabase)
-  // The database will automatically create an account linked to the user
-  // through the handle_new_account_profile function
+  // Step 2: Explicitly verify account creation
+  const maxAccountRetries = 5;
+  let accountId = null;
   
-  // Step 3: Check if account and profile were created successfully
+  // Try multiple times to get the account - it should be created by DB trigger
+  for (let i = 0; i < maxAccountRetries; i++) {
+    // Wait a bit before checking (increasing delay with each retry)
+    await new Promise(resolve => setTimeout(resolve, 500 * (i + 1)));
+    
+    console.log(`Checking for account creation, attempt ${i + 1}/${maxAccountRetries}`);
+    
+    // Check if the account was created
+    const { data: accountData, error: accountError } = await supabase
+      .from('accounts')
+      .select('id')
+      .eq('id', userId)  // In your schema, account.id = user.id
+      .maybeSingle();
+    
+    if (accountError) {
+      console.warn(`Account check error (attempt ${i + 1}):`, accountError);
+    } else if (accountData) {
+      accountId = accountData.id;
+      console.log('Account found:', accountId);
+      break;
+    }
+  }
+  
+  if (!accountId) {
+    console.error('Failed to confirm account creation after multiple retries');
+    throw new Error('Account creation failed. Please try again or contact support.');
+  }
+  
+  // Step 3: Check if profile exists
   let retryCount = 0;
-  const maxRetries = 4;
+  const maxRetries = 5;
   let profileCreated = false;
+  let profileId = null;
   
   while (retryCount < maxRetries && !profileCreated) {
     try {
       // Allow some time for the database triggers to complete
       if (retryCount > 0) {
         console.log(`Retry attempt ${retryCount}/${maxRetries} for profile creation...`);
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise(resolve => setTimeout(resolve, 500 * (retryCount + 1)));
       }
       
       // Check if profile exists
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
-        .select('*')
+        .select('id, name')
         .eq('account_id', userId)
         .maybeSingle();
       
       if (profileError) {
         console.warn('Error checking profile:', profileError);
       } else if (profileData) {
-        console.log('Profile found:', profileData.id);
+        console.log('Profile found:', profileData.id, profileData.name);
         profileCreated = true;
+        profileId = profileData.id;
         
         // Store the profile ID in localStorage
         localStorage.setItem(ACTIVE_PROFILE_KEY, profileData.id);
@@ -130,6 +160,11 @@ export const completeSignUp = async (email: string, password: string, displayNam
     throw new Error('Profile creation failed after multiple attempts. Please try again or contact support.');
   }
   
-  console.log('Complete signup process successful');
-  return { userId };
+  console.log('Complete signup process successful with:', {
+    userId,
+    accountId, 
+    profileId
+  });
+  
+  return { userId, accountId, profileId };
 };

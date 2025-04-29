@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -70,24 +71,33 @@ const AuthModal = ({ children, defaultView = 'register' }: AuthModalProps) => {
     setError('');
     setIsLoading(true);
     setSuccessMsg('');
-    const { data, error: supaError } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    setIsLoading(false);
-    if (supaError) {
-      setError(supaError.message === "Invalid login credentials" ?
-        "Email or password incorrect" : supaError.message);
-      return;
+    
+    try {
+      const { data, error: supaError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      
+      if (supaError) {
+        setError(supaError.message === "Invalid login credentials" ?
+          "Email or password incorrect" : supaError.message);
+        return;
+      }
+      
+      if (data && data.user) {
+        setIsLoggedIn(true);
+        setUsername(data.user.user_metadata?.name || data.user.email?.split('@')[0] || data.user.email || "");
+        toast.success("Successfully logged in!");
+        handleOpenChange(false);
+      }
+    } catch (error) {
+      console.error("Login error:", error);
+      setError(error instanceof Error ? error.message : "Failed to sign in");
+    } finally {
+      setIsLoading(false);
+      setEmail('');
+      setPassword('');
     }
-    if (data && data.user) {
-      setIsLoggedIn(true);
-      setUsername(data.user.user_metadata?.name || data.user.email?.split('@')[0] || data.user.email || "");
-      toast.success("Successfully logged in!");
-      handleOpenChange(false);
-    }
-    setEmail('');
-    setPassword('');
   };
 
   const handleRegister = async (e: React.FormEvent) => {
@@ -95,6 +105,7 @@ const AuthModal = ({ children, defaultView = 'register' }: AuthModalProps) => {
     setError('');
     setSuccessMsg('');
     setIsLoading(true);
+    
     if (!name || !email || !password) {
       setError('Please fill in all fields');
       setIsLoading(false);
@@ -102,7 +113,12 @@ const AuthModal = ({ children, defaultView = 'register' }: AuthModalProps) => {
     }
     
     try {
-      await completeSignUp(email, password, name);
+      console.log('Starting complete signup process with email:', email);
+      
+      // This is the enhanced signup that waits for account and profile to be created
+      const result = await completeSignUp(email, password, name);
+      
+      console.log('Sign up completed successfully with:', result);
       toast.success("Account created successfully!");
       handleOpenChange(false);
       // The auth state will be handled by the auth listener

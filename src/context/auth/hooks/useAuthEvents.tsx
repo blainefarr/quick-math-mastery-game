@@ -7,8 +7,8 @@ import { AuthChangeEvent, Session } from '@supabase/supabase-js';
 import { toast } from 'sonner';
 
 const AUTH_TIMEOUT_MS = 5000; // 5 seconds timeout for auth operations
-const MAX_PROFILE_RETRY_ATTEMPTS = 4;
-const PROFILE_RETRY_DELAY_MS = 500;
+const MAX_PROFILE_RETRY_ATTEMPTS = 5;
+const PROFILE_RETRY_DELAY_MS = 750; // Increased delay between retries
 
 export const useAuthEvents = (authState: AuthStateType) => {
   const { 
@@ -45,7 +45,7 @@ export const useAuthEvents = (authState: AuthStateType) => {
             setRetryAttempts(0);
           }
         }
-      }, PROFILE_RETRY_DELAY_MS);
+      }, PROFILE_RETRY_DELAY_MS * (retryAttempts + 1)); // Increase delay with each retry
       
       return () => clearTimeout(timer);
     }
@@ -82,8 +82,7 @@ export const useAuthEvents = (authState: AuthStateType) => {
         }
         
         // Handle all sign-in related events
-        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || 
-            event === 'USER_UPDATED' || event === 'INITIAL_SESSION') {
+        if (['SIGNED_IN', 'TOKEN_REFRESHED', 'USER_UPDATED', 'INITIAL_SESSION'].includes(event)) {
           if (session?.user) {
             console.log('User authenticated:', session.user.id);
             setIsLoggedIn(true);
@@ -92,14 +91,14 @@ export const useAuthEvents = (authState: AuthStateType) => {
             // For regular sign-ins, fetch user profiles with a slight delay to allow triggers to complete
             setTimeout(() => {
               fetchUserProfiles(session.user.id, authState);
-            }, 300);
+            }, 500);
           } else {
             console.log('No user in session after auth event:', event);
             setIsLoadingProfile(false);
           }
         }
-        // Handle signup events (uses a type-safe array inclusion check)
-        else if (['SIGNED_UP'].includes(event as string)) {
+        // Handle signup events
+        else if (['SIGNED_UP'].includes(event)) {
           if (session?.user) {
             console.log('New user signup detected! Setting up retry mechanism...');
             setIsLoggedIn(true);
@@ -126,7 +125,7 @@ export const useAuthEvents = (authState: AuthStateType) => {
           // Fetch user profiles with a slight delay
           setTimeout(() => {
             fetchUserProfiles(session.user.id, authState);
-          }, 300);
+          }, 500);
         } else {
           console.log('No existing session found');
           setIsLoggedIn(false);
