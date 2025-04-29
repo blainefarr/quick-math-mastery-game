@@ -1,51 +1,17 @@
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import UserDropdown from './UserDropdown';
 import { useAuth } from '@/context/auth/useAuth';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ProfileSwitcherDialog } from './ProfileSwitcherDialog';
-import { toast } from 'sonner';
 
 const UserProfile = () => {
-  const { 
-    username, 
-    isAuthenticated, 
-    isLoadingProfile, 
-    isReady, 
-    shouldShowProfileSelector,
-    setShouldShowProfileSelector 
-  } = useAuth();
+  const { username, isAuthenticated, isLoadingProfile } = useAuth();
   
-  // Open profile switcher when shouldShowProfileSelector is true
-  useEffect(() => {
-    if (shouldShowProfileSelector && isAuthenticated && !isLoadingProfile) {
-      console.log("Auto-opening profile switcher");
-      // The dialog is now controlled by the open prop, no need for additional code
-    }
-  }, [shouldShowProfileSelector, isAuthenticated, isLoadingProfile]);
+  if (!isAuthenticated) {
+    return null;
+  }
   
-  // Handle severe loading delay - after 10 seconds, show a helpful message
-  useEffect(() => {
-    let timeoutId: number | null = null;
-    
-    if (isLoadingProfile && isAuthenticated) {
-      timeoutId = window.setTimeout(() => {
-        if (isLoadingProfile) {
-          console.log("Profile loading is taking longer than expected");
-          toast.info("Still loading your profile...");
-        }
-      }, 5000); // 5 second warning
-    }
-    
-    return () => {
-      if (timeoutId) {
-        clearTimeout(timeoutId);
-      }
-    };
-  }, [isLoadingProfile, isAuthenticated]);
-  
-  // Show loading state when profile is loading or auth is not ready
-  if (isLoadingProfile || !isReady) {
+  if (isLoadingProfile) {
     return (
       <div className="flex items-center gap-2">
         <Skeleton className="h-8 w-28 rounded-full" />
@@ -53,20 +19,9 @@ const UserProfile = () => {
     );
   }
   
-  // Don't show anything for unauthenticated users
-  if (!isAuthenticated) {
-    return null;
-  }
-  
   return (
     <div className="flex items-center gap-2">
       <UserDropdown username={username || 'User'} />
-      
-      {/* Always render the dialog but control visibility with the open prop */}
-      <ProfileSwitcherDialog 
-        open={shouldShowProfileSelector} 
-        onOpenChange={setShouldShowProfileSelector}
-      />
     </div>
   );
 };

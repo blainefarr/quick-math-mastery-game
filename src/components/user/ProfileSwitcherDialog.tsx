@@ -22,7 +22,7 @@ interface Profile {
   grade?: string;
   is_active: boolean;
   created_at: string;
-  is_owner: boolean;
+  is_owner: boolean;  // Updated to use the new is_owner field
 }
 
 interface ProfileSwitcherDialogProps {
@@ -37,7 +37,7 @@ export function ProfileSwitcherDialog({ open, onOpenChange }: ProfileSwitcherDia
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateForm, setShowCreateForm] = useState(false);
-  const { userId, defaultProfileId, setDefaultProfileId, setUsername, setShouldShowProfileSelector } = useAuth();
+  const { userId, defaultProfileId, setDefaultProfileId, setUsername } = useAuth();
 
   // Extra cleanup effect to ensure no modal backdrop issues
   useEffect(() => {
@@ -83,7 +83,7 @@ export function ProfileSwitcherDialog({ open, onOpenChange }: ProfileSwitcherDia
       }
       
       // Get the active profile ID from localStorage
-      const activeProfileId = localStorage.getItem(ACTIVE_PROFILE_KEY) || defaultProfileId;
+      const activeProfileId = localStorage.getItem(ACTIVE_PROFILE_KEY);
       
       const processedProfiles = data?.map(profile => ({
         ...profile,
@@ -93,12 +93,6 @@ export function ProfileSwitcherDialog({ open, onOpenChange }: ProfileSwitcherDia
       })) || [];
       
       setProfiles(processedProfiles);
-
-      // If there's only one profile, automatically close the dialog
-      if (processedProfiles.length === 1 && open) {
-        console.log('Only one profile found, auto-selecting it and closing dialog');
-        handleSwitchProfile(processedProfiles[0]);
-      }
     } catch (err) {
       console.error('Error in profile fetch:', err);
     } finally {
@@ -125,8 +119,7 @@ export function ProfileSwitcherDialog({ open, onOpenChange }: ProfileSwitcherDia
       // Show success message
       toast.success(`Switched to ${profile.name}`);
       
-      // Close the dialog and turn off the auto-show flag
-      setShouldShowProfileSelector(false);
+      // Close the dialog and ensure cleanup
       onOpenChange(false);
       
       // Extra cleanup to ensure no modal backdrop issues
@@ -152,12 +145,6 @@ export function ProfileSwitcherDialog({ open, onOpenChange }: ProfileSwitcherDia
     <Dialog 
       open={open} 
       onOpenChange={(newOpen) => {
-        // Don't allow closing if this is the initial profile selection and there are multiple profiles
-        if (!newOpen && profiles.length > 1 && !defaultProfileId) {
-          toast.info('Please select a profile to continue');
-          return;
-        }
-        
         // Extra cleanup when dialog is closing
         if (!newOpen) {
           setTimeout(() => {
@@ -244,23 +231,19 @@ export function ProfileSwitcherDialog({ open, onOpenChange }: ProfileSwitcherDia
             </div>
             
             <div className="flex justify-end">
-              {/* Only show close button if there's already an active profile */}
-              {defaultProfileId && (
-                <Button 
-                  variant="outline" 
-                  onClick={() => {
-                    // Enhanced cleanup before closing
-                    onOpenChange(false);
-                    setShouldShowProfileSelector(false);
-                    setTimeout(() => {
-                      document.body.style.pointerEvents = '';
-                      document.body.style.overflow = '';
-                    }, 50);
-                  }}
-                >
-                  Close
-                </Button>
-              )}
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  // Enhanced cleanup before closing
+                  onOpenChange(false);
+                  setTimeout(() => {
+                    document.body.style.pointerEvents = '';
+                    document.body.style.overflow = '';
+                  }, 50);
+                }}
+              >
+                Close
+              </Button>
             </div>
           </div>
         )}

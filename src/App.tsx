@@ -10,7 +10,6 @@ import MyAccount from "./pages/MyAccount";
 import NotFound from "./pages/NotFound";
 import Leaderboard from "./pages/Leaderboard";
 import Progress from "./pages/Progress";
-import AuthGate from "./components/auth/AuthGate";
 
 const queryClient = new QueryClient();
 
@@ -27,22 +26,10 @@ const App = () => (
           {/* Non-game routes with Header but no GameProvider */}
           <Route element={<AppLayout />}>
             <Route element={<FormLayout />}>
-              <Route path="/account" element={
-                <AuthGate requireAuth={true}>
-                  <MyAccount />
-                </AuthGate>
-              } />
+              <Route path="/account" element={<MyAccount />} />
             </Route>
-            <Route path="/leaderboard" element={
-              <AuthGate>
-                <Leaderboard />
-              </AuthGate>
-            } />
-            <Route path="/progress" element={
-              <AuthGate requireAuth={true}>
-                <Progress />
-              </AuthGate>
-            } />
+            <Route path="/leaderboard" element={<Leaderboard />} />
+            <Route path="/progress" element={<Progress />} />
             {/* Add future non-game pages here */}
           </Route>
 
