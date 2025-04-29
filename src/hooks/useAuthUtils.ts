@@ -46,36 +46,45 @@ export const waitForSession = async (
 };
 
 /**
- * Retrieves a profile with robust error handling
+ * Retrieves all profiles for an account
+ * @param accountId The account/user ID to retrieve profiles for
+ * @returns Array of profile objects or null if retrieval failed
+ */
+export const getProfilesForAccount = async (accountId: string): Promise<any[] | null> => {
+  console.log("Getting profiles for account:", accountId);
+  
+  try {
+    // Get all profiles for this account
+    const { data: profiles, error: profilesError } = await supabase
+      .from("profiles")
+      .select("id, name, is_active, is_owner, grade")
+      .eq("account_id", accountId)
+      .order("created_at", { ascending: false });
+    
+    if (profilesError) {
+      console.error("Error fetching profiles:", profilesError);
+      return null;
+    }
+    
+    console.log(`Found ${profiles?.length || 0} profiles for account:`, accountId);
+    return profiles || [];
+  } catch (error) {
+    console.error("Error in getProfilesForAccount:", error);
+    return null;
+  }
+};
+
+/**
+ * Retrieves a profile with robust error handling (legacy method that gets a single profile)
  * @param accountId The account/user ID to retrieve a profile for
  * @returns The profile object or null if profile retrieval failed
  */
 export const getProfileForAccount = async (accountId: string): Promise<any | null> => {
-  console.log("Getting profile for account:", accountId);
+  console.log("Getting profile for account (legacy method):", accountId);
   
   try {
-    // Check if profile exists
-    console.log("Checking if profile exists");
-    const { data: existingProfile, error: profileError } = await supabase
-      .from("profiles")
-      .select("id, name, is_active, is_owner, grade")
-      .eq("account_id", accountId)
-      .order("created_at", { ascending: false })
-      .maybeSingle();
-    
-    if (profileError) {
-      console.error("Error fetching profile:", profileError);
-      return null;
-    }
-    
-    // Profile exists, return it
-    if (existingProfile) {
-      console.log("Existing profile found:", existingProfile);
-      return existingProfile;
-    } else {
-      console.log("No profile found for account:", accountId);
-      return null;
-    }
+    const profiles = await getProfilesForAccount(accountId);
+    return profiles && profiles.length > 0 ? profiles[0] : null;
   } catch (error) {
     console.error("Error in getProfileForAccount:", error);
     return null;

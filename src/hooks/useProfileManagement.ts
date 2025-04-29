@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { getProfileForAccount, createProfileForAccount } from './useAuthUtils';
+import { getProfilesForAccount, createProfileForAccount } from './useAuthUtils';
 
 // Local storage key for active profile
 export const ACTIVE_PROFILE_KEY = 'math_game_active_profile';
@@ -11,8 +11,9 @@ export const useProfileManagement = () => {
   const [defaultProfileId, setDefaultProfileId] = useState<string | null>(null);
   const [username, setUsername] = useState('');
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
+  const [shouldShowProfileSelector, setShouldShowProfileSelector] = useState(false);
 
-  // Fetch the default profile for a user with proper error handling
+  // Fetch profiles for a user with proper error handling
   const fetchDefaultProfile = async (accountId: string, forceLogout: (message: string) => void) => {
     try {
       setIsLoadingProfile(true);
@@ -20,66 +21,61 @@ export const useProfileManagement = () => {
       
       // Get stored profile ID from localStorage
       const storedProfileId = localStorage.getItem(ACTIVE_PROFILE_KEY);
-      let profile = null;
+      let selectedProfile = null;
       
-      if (storedProfileId) {
-        console.log('Found stored profile ID:', storedProfileId);
-        
-        // Try to get the stored profile
-        const { data: storedProfile, error: storedProfileError } = await supabase
-          .from('profiles')
-          .select('id, name, grade')
-          .eq('id', storedProfileId)
-          .eq('account_id', accountId)
-          .maybeSingle();
-          
-        if (!storedProfileError && storedProfile) {
-          console.log('Successfully retrieved stored profile:', storedProfile);
-          profile = storedProfile;
-        } else {
-          console.log('Stored profile not found or error:', storedProfileError);
-          localStorage.removeItem(ACTIVE_PROFILE_KEY);
-        }
-      }
+      // Get all profiles for this account
+      const profiles = await getProfilesForAccount(accountId);
       
-      // If no stored profile was found, get any profile for this account
-      if (!profile) {
-        profile = await getProfileForAccount(accountId);
+      if (!profiles || profiles.length === 0) {
+        console.error('No profiles found for this account, attempting to create one');
+        // As a last resort, manually create a profile
+        selectedProfile = await createProfileForAccount(accountId, undefined, true);
         
-        // If still no profile, use database trigger to create one
-        if (!profile) {
-          console.log('No profile found, this should not happen with our DB trigger.');
-          console.log('Attempting manual profile creation as a fallback...');
-          
-          // As a last resort, manually create a profile
-          profile = await createProfileForAccount(accountId, undefined, true);
-          
-          if (!profile) {
-            setIsLoadingProfile(false);
-            forceLogout('Unable to load or create your profile. Please try again later.');
-            return null;
-          }
+        if (!selectedProfile) {
+          setIsLoadingProfile(false);
+          forceLogout('Unable to load or create your profile. Please try again later.');
+          return null;
         }
         
-        // Store the found/created profile ID in localStorage
-        if (profile && profile.id) {
-          localStorage.setItem(ACTIVE_PROFILE_KEY, profile.id);
+        // Store the new profile ID in localStorage
+        localStorage.setItem(ACTIVE_PROFILE_KEY, selectedProfile.id);
+      } else if (profiles.length === 1) {
+        // If there's only one profile, use it
+        console.log('Single profile found, using it automatically');
+        selectedProfile = profiles[0];
+        localStorage.setItem(ACTIVE_PROFILE_KEY, selectedProfile.id);
+      } else {
+        console.log('Multiple profiles found:', profiles.length);
+        
+        if (storedProfileId) {
+          // Try to find the stored profile in the available profiles
+          selectedProfile = profiles.find(p => p.id === storedProfileId);
         }
+        
+        if (!selectedProfile) {
+          // If no stored profile or stored profile not found, show profile selector
+          setShouldShowProfileSelector(true);
+          // Use the first profile as default until user selects one
+          selectedProfile = profiles[0];
+        }
+        
+        // Always update localStorage with whatever profile we're using
+        localStorage.setItem(ACTIVE_PROFILE_KEY, selectedProfile.id);
       }
 
       // Set profile info
-      if (profile && profile.id) {
-        setDefaultProfileId(profile.id);
-        setUsername(profile.name || '');
-        console.log('Profile successfully loaded:', profile);
+      if (selectedProfile && selectedProfile.id) {
+        setDefaultProfileId(selectedProfile.id);
+        setUsername(selectedProfile.name || '');
+        console.log('Profile successfully loaded:', selectedProfile);
       } else {
-        console.error('Invalid profile object:', profile);
+        console.error('Invalid profile object:', selectedProfile);
         forceLogout('Invalid profile data. Please try logging in again.');
         return null;
       }
       
       setIsLoadingProfile(false);
-      return profile;
+      return selectedProfile;
     } catch (error) {
       console.error('Error in fetchDefaultProfile:', error);
       setIsLoadingProfile(false);
@@ -91,6 +87,7 @@ export const useProfileManagement = () => {
   const clearProfileData = () => {
     setDefaultProfileId(null);
     setUsername('');
+    setShouldShowProfileSelector(false);
     localStorage.removeItem(ACTIVE_PROFILE_KEY);
   };
 
@@ -98,9 +95,11 @@ export const useProfileManagement = () => {
     defaultProfileId,
     username,
     isLoadingProfile,
+    shouldShowProfileSelector,
     setDefaultProfileId,
     setUsername,
     setIsLoadingProfile,
+    setShouldShowProfileSelector,
     fetchDefaultProfile,
     clearProfileData
   };

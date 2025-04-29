@@ -14,9 +14,11 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
     defaultProfileId,
     username,
     isLoadingProfile,
+    shouldShowProfileSelector,
     setDefaultProfileId,
     setUsername,
     setIsLoadingProfile,
+    setShouldShowProfileSelector,
     fetchDefaultProfile,
     clearProfileData,
   } = useProfileManagement();
@@ -83,7 +85,7 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
                 console.log('Authentication flow completed successfully');
                 
                 // Show welcome message for new sign-ups
-                if (event === 'SIGNED_IN') {
+                if (event === 'SIGNED_IN' || event === 'SIGNED_UP') {
                   const isReturningUser = localStorage.getItem('returning_user');
                   if (!isReturningUser) {
                     localStorage.setItem('returning_user', 'true');
@@ -176,9 +178,11 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
     isLoadingProfile,
     isReady,
     authError,
+    shouldShowProfileSelector,
     setIsLoggedIn,
     setUsername, 
     setDefaultProfileId,
+    setShouldShowProfileSelector,
     handleLogout,
     resetAuthError,
     isAuthenticated: isLoggedIn && !!defaultProfileId
