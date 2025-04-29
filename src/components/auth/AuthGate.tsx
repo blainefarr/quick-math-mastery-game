@@ -6,6 +6,7 @@ import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { AlertTriangle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface AuthGateProps {
   children: React.ReactNode;
@@ -21,7 +22,7 @@ export const AuthGate = ({
   children, 
   requireAuth = false 
 }: AuthGateProps) => {
-  const { isAuthenticated, isReady, isLoggedIn, defaultProfileId, isLoadingProfile } = useAuth();
+  const { isAuthenticated, isReady, isLoggedIn, defaultProfileId, isLoadingProfile, handleLogout } = useAuth();
   const navigate = useNavigate();
 
   // If authentication is still initializing, show loading state
@@ -37,16 +38,35 @@ export const AuthGate = ({
     );
   }
 
-  // If authentication is required but user is not authenticated, redirect to home
+  // If authentication is required but user is not authenticated, handle accordingly
   if (requireAuth && !isAuthenticated) {
     // Check for partial authentication state (logged in but no profile)
     if (isLoggedIn && !defaultProfileId) {
       return (
-        <Alert variant="destructive" className="mb-4">
+        <Alert variant="destructive" className="mb-4 max-w-md mx-auto mt-8">
           <AlertTriangle className="h-4 w-4" />
           <AlertTitle>Authentication Error</AlertTitle>
-          <AlertDescription>
-            We couldn't load your profile. Please try logging out and back in again.
+          <AlertDescription className="space-y-4">
+            <p>We couldn't load your profile. This can happen due to a network issue or account setup problem.</p>
+            <div className="flex justify-end gap-2">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => navigate('/')}
+              >
+                Go Home
+              </Button>
+              <Button 
+                variant="destructive" 
+                size="sm" 
+                onClick={() => {
+                  handleLogout();
+                  navigate('/');
+                }}
+              >
+                Log Out and Try Again
+              </Button>
+            </div>
           </AlertDescription>
         </Alert>
       );

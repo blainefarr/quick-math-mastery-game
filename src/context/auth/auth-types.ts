@@ -10,7 +10,7 @@ export interface AuthContextType {
   setIsLoggedIn: (isLoggedIn: boolean) => void;
   setUsername: (username: string) => void;
   setDefaultProfileId: (profileId: string) => void;
-  handleLogout: () => Promise<void>;
+  handleLogout: () => Promise<boolean>; // Changed from Promise<void> to Promise<boolean>
 }
 
 export interface AuthProviderProps {

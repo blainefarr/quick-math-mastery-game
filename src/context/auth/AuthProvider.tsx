@@ -67,23 +67,25 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
               
               if (refreshedSession?.user) {
                 console.log('Session verified, proceeding with profile fetch');
-                // Check for SIGNED_UP event to ensure profile creation for OAuth users
-                if (event === 'SIGNED_IN') {
-                  // For OAuth logins, we need to check and create a profile if needed
+                // Check for SIGNED_UP event or SIGNED_IN for new users to ensure profile creation
+                if (event === 'SIGNED_UP' || event === 'SIGNED_IN') {
+                  // For new sign-ups or OAuth logins, we need to ensure a profile exists
+                  console.log('New sign-up or sign-in detected, ensuring profile exists');
                   const profile = await ensureProfileExists(refreshedSession.user.id);
                   if (profile) {
-                    console.log('Profile was ensured for OAuth login:', profile);
+                    console.log('Profile was created/found for new user:', profile);
                     // Update state with the found/created profile
                     setDefaultProfileId(profile.id);
                     setUsername(profile.name || '');
                     localStorage.setItem('math_game_active_profile', profile.id);
                     setIsReady(true);
                     setIsLoadingProfile(false);
+                    toast.success('Welcome! Your profile is ready.');
                     return;
                   }
                 }
                 
-                // Standard flow for non-first-time OAuth logins
+                // Standard flow for existing users
                 const profile = await fetchDefaultProfile(refreshedSession.user.id, handleForceLogout);
                 if (!profile) {
                   console.error('Failed to fetch profile after multiple attempts');

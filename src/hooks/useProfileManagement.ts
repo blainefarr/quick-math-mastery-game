@@ -70,7 +70,7 @@ export const useProfileManagement = () => {
             is_owner: true
           }
         ])
-        .select('id, name')
+        .select()
         .single();
       
       if (createError) {
@@ -133,7 +133,7 @@ export const useProfileManagement = () => {
           .eq('account_id', accountId)
           .order('created_at', { ascending: false })
           .limit(1)
-          .maybeSingle(); // Use maybeSingle instead of single
+          .maybeSingle(); // Use maybeSingle to prevent errors
           
         if (anyProfileError) {
           console.error('Error fetching any profile:', anyProfileError);
@@ -144,10 +144,12 @@ export const useProfileManagement = () => {
             setProfileFetchAttempts(prev => prev + 1);
             
             // Retry after a short delay
-            setTimeout(() => {
-              fetchDefaultProfile(accountId, forceLogout);
-            }, 500);
-            return null;
+            return new Promise((resolve) => {
+              setTimeout(async () => {
+                const result = await fetchDefaultProfile(accountId, forceLogout);
+                resolve(result);
+              }, 500);
+            });
           }
           
           // After max attempts, try to create a profile as a fallback
