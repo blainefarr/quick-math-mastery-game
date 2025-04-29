@@ -104,10 +104,10 @@ export const fetchUserProfiles = async (
     }
     
     if (selectedProfile) {
-      // Use account name instead of profile name
+      // Use profile name instead of account name
       setDefaultProfileId(selectedProfile.id);
-      // IMPORTANT: Always use the account name which should be correctly saved
-      setUsername(accountData.name || selectedProfile.name);
+      // IMPORTANT: Use profile.name as requested
+      setUsername(selectedProfile.name);
       
       // If this was a retry after signup, show success message
       if (isNewSignup && isRetry) {
