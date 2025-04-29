@@ -1,6 +1,7 @@
 
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 export const useSessionManagement = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -16,6 +17,7 @@ export const useSessionManagement = () => {
       const { error } = await supabase.auth.signOut();
       if (error) {
         console.error('Supabase signOut error:', error);
+        toast.error('Error during logout. Please try again.');
         throw error;
       }
       
@@ -39,13 +41,22 @@ export const useSessionManagement = () => {
       });
 
       console.log('Logout completed successfully');
-      window.location.href = '/'; // Redirect to home page after logout
+      // Don't use window.location.href redirect as it causes a full page reload
+      // Let the router handle redirects instead
+      toast.success('You have been logged out successfully');
     } catch (error) {
       console.error('Error during logout process:', error);
+      toast.error('Error during logout. Some data may not have been cleared.');
       // Even if error occurs, still reset client-side state
       setIsLoggedIn(false);
       setUserId(null);
     }
+  };
+
+  const handleForceLogout = (errorMessage: string = 'Authentication error. Please log in again.') => {
+    console.error('Forced logout due to:', errorMessage);
+    toast.error(errorMessage);
+    handleLogout();
   };
 
   return {
@@ -56,5 +67,6 @@ export const useSessionManagement = () => {
     setUserId,
     setIsReady,
     handleLogout,
+    handleForceLogout
   };
 };

@@ -14,7 +14,7 @@ export const useProfileManagement = () => {
   const MAX_PROFILE_FETCH_ATTEMPTS = 3;
 
   // Fetch the profile for a user with retry logic
-  const fetchDefaultProfile = async (accountId: string) => {
+  const fetchDefaultProfile = async (accountId: string, forceLogout: (message: string) => void) => {
     try {
       setIsLoadingProfile(true);
       console.log('Fetching profile for account ID:', accountId);
@@ -24,6 +24,7 @@ export const useProfileManagement = () => {
       if (!refreshedSession?.user) {
         console.log('No valid session found after refreshing');
         setIsLoadingProfile(false);
+        forceLogout('Your session has expired. Please log in again.');
         return null;
       }
 
@@ -72,12 +73,14 @@ export const useProfileManagement = () => {
             
             // Retry after a short delay
             setTimeout(() => {
-              fetchDefaultProfile(accountId);
+              fetchDefaultProfile(accountId, forceLogout);
             }, 500);
             return null;
           }
           
+          // After MAX_PROFILE_FETCH_ATTEMPTS failures, trigger a logout with error message
           setIsLoadingProfile(false);
+          forceLogout('Unable to load your profile after multiple attempts. Please try again later.');
           return null;
         }
         
@@ -87,15 +90,25 @@ export const useProfileManagement = () => {
           
           // Store the found profile ID in localStorage
           localStorage.setItem(ACTIVE_PROFILE_KEY, anyProfile.id);
+        } else {
+          // No profile found even after successful query
+          console.error('No profiles found for this account after successful query');
+          setIsLoadingProfile(false);
+          forceLogout('No profile found for your account. Please contact support.');
+          return null;
         }
       }
 
-      if (profile) {
+      // Only set profile info if we actually have a valid profile
+      if (profile && profile.id) {
         setDefaultProfileId(profile.id);
-        setUsername(profile.name || 'User');
+        setUsername(profile.name || '');
         setProfileFetchAttempts(0); // Reset attempts count on success
+        console.log('Profile successfully loaded:', profile);
       } else {
-        console.log('No profiles found for user');
+        console.error('Invalid profile object:', profile);
+        forceLogout('Invalid profile data. Please try logging in again.');
+        return null;
       }
       
       setIsLoadingProfile(false);
@@ -103,8 +116,15 @@ export const useProfileManagement = () => {
     } catch (error) {
       console.error('Error in fetchDefaultProfile:', error);
       setIsLoadingProfile(false);
+      forceLogout('Error loading profile. Please try logging in again.');
       return null;
     }
+  };
+
+  const clearProfileData = () => {
+    setDefaultProfileId(null);
+    setUsername('');
+    localStorage.removeItem(ACTIVE_PROFILE_KEY);
   };
 
   return {
@@ -115,5 +135,6 @@ export const useProfileManagement = () => {
     setUsername,
     setIsLoadingProfile,
     fetchDefaultProfile,
+    clearProfileData,
   };
 };

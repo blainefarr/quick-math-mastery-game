@@ -4,6 +4,8 @@ import { useAuth } from '@/context/auth/useAuth';
 import { useNavigate } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import { AlertTriangle } from 'lucide-react';
 
 interface AuthGateProps {
   children: React.ReactNode;
@@ -19,7 +21,7 @@ export const AuthGate = ({
   children, 
   requireAuth = false 
 }: AuthGateProps) => {
-  const { isAuthenticated, isReady } = useAuth();
+  const { isAuthenticated, isReady, isLoggedIn, defaultProfileId } = useAuth();
   const navigate = useNavigate();
 
   // If authentication is still initializing, show loading state
@@ -37,6 +39,19 @@ export const AuthGate = ({
 
   // If authentication is required but user is not authenticated, redirect to home
   if (requireAuth && !isAuthenticated) {
+    // Check for partial authentication state (logged in but no profile)
+    if (isLoggedIn && !defaultProfileId) {
+      return (
+        <Alert variant="destructive" className="mb-4">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>Authentication Error</AlertTitle>
+          <AlertDescription>
+            We couldn't load your profile. Please try logging out and back in again.
+          </AlertDescription>
+        </Alert>
+      );
+    }
+    
     // Use a timeout to avoid immediate redirects which can cause UI flicker
     setTimeout(() => {
       navigate('/');
