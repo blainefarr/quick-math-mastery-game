@@ -25,6 +25,8 @@ const GameProvider = ({ children }: GameProviderProps) => {
   const timerRef = useRef<number | null>(null);
   // Add a new ref to track if the game is ending
   const isEndingRef = useRef(false);
+  // Add a new ref to track if the timer was already initialized for the current game
+  const timerInitializedRef = useRef(false);
 
   const { 
     scoreHistory, 
@@ -41,12 +43,22 @@ const GameProvider = ({ children }: GameProviderProps) => {
 
   useEffect(() => {
     gameStateRef.current = gameState;
+    
+    // Reset timerInitialized when game state changes to selection
+    if (gameState === 'selection') {
+      timerInitializedRef.current = false;
+    }
   }, [gameState]);
 
   // Reset timer and fetch scores when game state changes
   useEffect(() => {
-    if (gameState === 'playing') {
+    if (gameState === 'playing' && !timerInitializedRef.current) {
+      console.log('Starting game timer - initial setup');
       startGameTimer();
+      
+      // Set the flag to prevent re-initializing the timer
+      timerInitializedRef.current = true;
+      
       // Reset the isEnding flag when starting a new game
       isEndingRef.current = false;
     } else if (gameState === 'ended' && userId && defaultProfileId) {
@@ -60,6 +72,7 @@ const GameProvider = ({ children }: GameProviderProps) => {
     // Clean up timer when component unmounts or game state changes
     return () => {
       if (timerRef.current) {
+        console.log('Cleaning up timer', timerRef.current);
         clearInterval(timerRef.current);
         timerRef.current = null;
       }
@@ -92,14 +105,27 @@ const GameProvider = ({ children }: GameProviderProps) => {
   const startGameTimer = () => {
     // Clear any existing timer
     if (timerRef.current) {
+      console.log('Clearing existing timer before starting new one');
       clearInterval(timerRef.current);
+      timerRef.current = null;
     }
     
     console.log('Starting game timer with', settings.timerSeconds, 'seconds');
     setTimeLeft(settings.timerSeconds);
     
+    // Use window.setInterval to ensure consistent timing
     timerRef.current = window.setInterval(() => {
       setTimeLeft(prevTime => {
+        // Only execute timer logic if game is still in playing state
+        if (gameStateRef.current !== 'playing') {
+          console.log('Game no longer in playing state, stopping timer');
+          if (timerRef.current) {
+            clearInterval(timerRef.current);
+            timerRef.current = null;
+          }
+          return prevTime;
+        }
+        
         if (prevTime <= 1) {
           if (timerRef.current) {
             clearInterval(timerRef.current);
@@ -128,6 +154,9 @@ const GameProvider = ({ children }: GameProviderProps) => {
       clearInterval(timerRef.current);
       timerRef.current = null;
     }
+    
+    // Reset timer initialization flag
+    timerInitializedRef.current = false;
     
     // Only save score on timeout (normal game end) and when user is logged in
     if (reason === 'timeout' && isLoggedIn && defaultProfileId) {

@@ -3,6 +3,7 @@ import React from 'react';
 import UserDropdown from './UserDropdown';
 import { useAuth } from '@/context/auth/useAuth';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 
 const UserProfile = () => {
   const { username, isAuthenticated, isLoadingProfile } = useAuth();
@@ -11,7 +12,7 @@ const UserProfile = () => {
     return null;
   }
   
-  if (isLoadingProfile) {
+  if (isLoadingProfile && !username) {
     return (
       <div className="flex items-center gap-2">
         <Skeleton className="h-8 w-28 rounded-full" />
@@ -21,7 +22,18 @@ const UserProfile = () => {
   
   return (
     <div className="flex items-center gap-2">
-      <UserDropdown username={username || 'User'} />
+      {username ? (
+        <UserDropdown username={username} />
+      ) : (
+        <div className="flex items-center gap-2">
+          <Avatar className="h-8 w-8">
+            <AvatarFallback className="bg-primary/20 text-primary text-xs">
+              User
+            </AvatarFallback>
+          </Avatar>
+          <span className="text-sm font-medium">Loading...</span>
+        </div>
+      )}
     </div>
   );
 };

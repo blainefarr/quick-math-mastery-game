@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import useGame from '@/context/useGame';
 import { Button } from '@/components/ui/button';
@@ -24,11 +25,10 @@ const GameScreen = () => {
   const [isNegative, setIsNegative] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const initialProblemGeneratedRef = useRef(false);
-
   const hasEndedRef = useRef(false);
-
   const isCompactHeight = useCompactHeight();
 
+  // Sync the hasEnded ref with the timeLeft state
   useEffect(() => {
     if (timeLeft <= 0) {
       hasEndedRef.current = true;
@@ -37,6 +37,7 @@ const GameScreen = () => {
     }
   }, [timeLeft]);
 
+  // Generate problem and set up the game on mount
   useEffect(() => {
     console.log('GameScreen mounted with settings:', settings);
     
@@ -59,6 +60,7 @@ const GameScreen = () => {
     };
   }, []);
 
+  // Reset negative flag when problem changes
   useEffect(() => {
     setIsNegative(false);
   }, [currentProblem]);
