@@ -111,7 +111,7 @@ const GameScreen = () => {
 
   const handleRestartGame = () => {
     console.log('Restarting game early, not saving the score');
-    endGame('manual');
+    endGame('quit');
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {

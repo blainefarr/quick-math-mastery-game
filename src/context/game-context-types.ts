@@ -18,7 +18,7 @@ export type Problem = {
   answer: number | string;
 };
 
-export type GameEndReason = 'timeout' | 'quit' | 'error';
+export type GameEndReason = 'timeout' | 'quit' | 'error' | 'manual';
 
 export interface GameContextType {
   gameState: GameState;
@@ -29,7 +29,12 @@ export interface GameContextType {
   incrementScore: () => void;
   resetScore: () => void;
   currentProblem: Problem;
-  generateNewProblem: () => void;
+  generateNewProblem: (
+    operation?: Operation,
+    range?: ProblemRange,
+    allowNegatives?: boolean,
+    focusNumber?: number | null
+  ) => void;
   timeLeft: number;
   setTimeLeft: React.Dispatch<React.SetStateAction<number>>;
   userAnswer: string;
@@ -37,7 +42,7 @@ export interface GameContextType {
   scoreHistory: UserScore[];
   saveScore: (score: number, operation: Operation, range: ProblemRange, timerSeconds: number, focusNumber: number | null, allowNegatives: boolean) => Promise<boolean>;
   isLoggedIn: boolean;
-  username: string; // Ensure username is defined as a required property
+  username: string;
   focusNumber: number | null;
   setFocusNumber: React.Dispatch<React.SetStateAction<number | null>>;
   getIsHighScore: (score: number, operation: Operation, range: ProblemRange) => boolean;
