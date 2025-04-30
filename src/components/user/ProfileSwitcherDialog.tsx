@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   Dialog, 
@@ -13,7 +12,7 @@ import { useAuth } from '@/context/auth/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Badge } from '@/components/ui/badge';
 import { Plus, User, UserCircle, AlertCircle, Loader2 } from 'lucide-react';
-import { toast } from 'sonner';
+import { toast } from '@/hooks/use-toast';
 import { CreateProfileForm } from './CreateProfileForm';
 import { ACTIVE_PROFILE_KEY } from '@/context/auth/utils/profileUtils';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -240,7 +239,7 @@ export function ProfileSwitcherDialog({ open, onOpenChange }: ProfileSwitcherDia
         onOpenChange(newOpen);
       }}
     >
-      <DialogContent className="sm:max-w-[600px] max-w-[90vw] p-0 overflow-hidden">
+      <DialogContent className="sm:max-w-[600px] max-w-[90vw] p-0 overflow-hidden z-50">
         <DialogHeader className="p-6 pb-0">
           <DialogTitle className="text-2xl">Choose a Profile</DialogTitle>
           <DialogDescription>
@@ -258,7 +257,7 @@ export function ProfileSwitcherDialog({ open, onOpenChange }: ProfileSwitcherDia
         ) : (
           <ScrollArea className="h-[60vh] md:h-auto px-6">
             <div className="p-6 pt-0">
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-6">
+              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 mb-6">
                 {loading ? (
                   <div className="col-span-full text-center py-8">
                     Loading profiles...
@@ -311,17 +310,17 @@ export function ProfileSwitcherDialog({ open, onOpenChange }: ProfileSwitcherDia
                       <Card 
                         key={profile.id}
                         onClick={() => handleSwitchProfile(profile)}
-                        className={`p-4 flex flex-col items-center cursor-pointer transition-all hover:border-primary ${
+                        className={`p-3 sm:p-4 flex flex-col items-center cursor-pointer transition-all hover:border-primary ${
                           profile.id === defaultProfileId ? 'ring-2 ring-primary' : ''
                         }`}
                       >
-                        <div className="h-16 w-16 sm:h-20 sm:w-20 rounded-full bg-primary/20 flex items-center justify-center mb-3">
-                          <UserCircle className="h-9 w-9 sm:h-12 sm:w-12 text-primary" />
+                        <div className="h-14 w-14 sm:h-20 sm:w-20 rounded-full bg-primary/20 flex items-center justify-center mb-2 sm:mb-3">
+                          <UserCircle className="h-8 w-8 sm:h-12 sm:w-12 text-primary" />
                         </div>
                         <div className="text-center">
-                          <h3 className="font-medium text-sm sm:text-base">{profile.name}</h3>
+                          <h3 className="font-medium text-xs sm:text-base truncate max-w-full">{profile.name}</h3>
                           {profile.grade && (
-                            <p className="text-xs sm:text-sm text-muted-foreground">{profile.grade}</p>
+                            <p className="text-xs text-muted-foreground truncate max-w-full">{profile.grade}</p>
                           )}
                           <div className="flex flex-wrap gap-1 mt-2 justify-center">
                             {profile.is_owner && (
@@ -338,14 +337,14 @@ export function ProfileSwitcherDialog({ open, onOpenChange }: ProfileSwitcherDia
                     {/* Add New Profile Card */}
                     <Card 
                       onClick={() => setShowCreateForm(true)}
-                      className="p-4 flex flex-col items-center cursor-pointer transition-all border-dashed hover:border-primary"
+                      className="p-3 sm:p-4 flex flex-col items-center cursor-pointer transition-all border-dashed hover:border-primary"
                     >
-                      <div className="h-16 w-16 sm:h-20 sm:w-20 rounded-full bg-muted flex items-center justify-center mb-3">
-                        <Plus className="h-8 w-8 sm:h-10 sm:w-10 text-muted-foreground" />
+                      <div className="h-14 w-14 sm:h-20 sm:w-20 rounded-full bg-muted flex items-center justify-center mb-2 sm:mb-3">
+                        <Plus className="h-7 w-7 sm:h-10 sm:w-10 text-muted-foreground" />
                       </div>
                       <div className="text-center">
-                        <h3 className="font-medium text-sm sm:text-base">Add Profile</h3>
-                        <p className="text-xs sm:text-sm text-muted-foreground">Create a new profile</p>
+                        <h3 className="font-medium text-xs sm:text-base">Add Profile</h3>
+                        <p className="text-xs text-muted-foreground">Create a new profile</p>
                       </div>
                     </Card>
                   </>

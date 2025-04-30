@@ -82,7 +82,7 @@ const Leaderboard = () => {
             <LeaderboardFilters filters={filters} onFilterChange={updateFilters} />
           </div>
 
-          {userRank && <div className="px-4">
+          {userRank && <div className="px-4 mb-4">
               <Card className="p-4 text-center bg-accent/10">
                 <p className="text-accent font-semibold">
                   Your Current Rank: #{userRank}

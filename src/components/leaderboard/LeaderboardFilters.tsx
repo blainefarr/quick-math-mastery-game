@@ -35,17 +35,17 @@ const RANGES = [
 
 export const LeaderboardFilters = ({ filters, onFilterChange, className = '' }: Props) => {
   return (
-    <div className={`flex items-center gap-2 ${className}`}>
-      <Label className="mr-2 font-medium whitespace-nowrap">Filter:</Label>
-      <div className="flex items-center gap-2">
+    <div className={`flex flex-col space-y-2 sm:space-y-0 sm:flex-row sm:items-center ${className}`}>
+      <Label className="font-medium whitespace-nowrap mr-2 mb-1 sm:mb-0">Filter:</Label>
+      <div className="flex flex-wrap gap-2">
         <Select
           value={filters.operation}
           onValueChange={(value: Operation) => onFilterChange({ operation: value })}
         >
-          <SelectTrigger className="w-[140px] h-8">
+          <SelectTrigger className="w-full sm:w-[140px] h-8">
             <SelectValue placeholder="All Operations" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="z-50">
             {OPERATIONS.map((op) => (
               <SelectItem key={op} value={op}>
                 {op.charAt(0).toUpperCase() + op.slice(1)}
@@ -68,10 +68,10 @@ export const LeaderboardFilters = ({ filters, onFilterChange, className = '' }: 
             }
           }}
         >
-          <SelectTrigger className="w-[140px] h-8">
+          <SelectTrigger className="w-full sm:w-[140px] h-8">
             <SelectValue placeholder="All Ranges" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="z-50">
             {RANGES.map((range) => (
               <SelectItem key={range.label} value={range.label}>
                 {range.label}
@@ -84,10 +84,10 @@ export const LeaderboardFilters = ({ filters, onFilterChange, className = '' }: 
           value={filters.grade || "all"}
           onValueChange={(value) => onFilterChange({ grade: value === "all" ? null : value })}
         >
-          <SelectTrigger className="w-[140px] h-8">
+          <SelectTrigger className="w-full sm:w-[140px] h-8">
             <SelectValue placeholder="All Grades" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="z-50">
             <SelectItem value="all">All Grades</SelectItem>
             {GRADES.map((grade) => (
               <SelectItem key={grade} value={grade}>
