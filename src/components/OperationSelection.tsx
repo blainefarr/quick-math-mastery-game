@@ -128,9 +128,13 @@ const OperationSelection = () => {
             max: range2Max
           }} setRange1Min={v => setRange1Min(parseOrDefault(v, range1Min))} setRange1Max={v => setRange1Max(parseOrDefault(v, range1Max))} setRange2Min={v => setRange2Min(parseOrDefault(v, range2Min))} setRange2Max={v => setRange2Max(parseOrDefault(v, range2Max))} />
 
-            <TimerSelect value={settings.timerSeconds} onChange={seconds => updateSettings({
-            timerSeconds: seconds
-          })} />
+            <TimerSelect value={settings.timerSeconds} onChange={seconds =>
+              updateSettings(prev => ({
+              ...prev,
+              timerSeconds: seconds
+            }))
+            }
+            />
 
             <AdvancedSettings 
               useFocusNumber={useFocusNumber} 
