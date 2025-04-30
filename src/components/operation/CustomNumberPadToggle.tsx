@@ -11,7 +11,7 @@ const CustomNumberPadToggle = ({
   enabled,
   onToggle
 }: CustomNumberPadToggleProps) => {
-  return <div className="flex items-center justify-between h-10 px-4 border bg-muted/50 rounded-lg">
+  return <div className="flex items-center justify-between h-10 px-4 border bg-muted/50 rounded-md">
       <div className="flex items-center gap-2">
         <Label htmlFor="custom-number-pad" className="text-sm font-medium cursor-pointer">
           Use Custom Number Pad
