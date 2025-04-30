@@ -1,23 +1,17 @@
-
 import React from 'react';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Info } from 'lucide-react';
-
 interface CustomNumberPadToggleProps {
   enabled: boolean;
   onToggle: (checked: boolean) => void;
 }
-
-const CustomNumberPadToggle = ({ enabled, onToggle }: CustomNumberPadToggleProps) => {
-  return (
-    <div className="flex items-center justify-between space-x-4 rounded-lg border p-4 shadow-sm bg-muted/5">
+const CustomNumberPadToggle = ({
+  enabled,
+  onToggle
+}: CustomNumberPadToggleProps) => {
+  return <div className="flex items-center justify-between h-10 px-4 border bg-muted/50 rounded-lg">
       <div className="flex items-center gap-2">
         <Label htmlFor="custom-number-pad" className="text-sm font-medium cursor-pointer">
           Use Custom Number Pad
@@ -33,13 +27,7 @@ const CustomNumberPadToggle = ({ enabled, onToggle }: CustomNumberPadToggleProps
           </Tooltip>
         </TooltipProvider>
       </div>
-      <Switch
-        id="custom-number-pad"
-        checked={enabled}
-        onCheckedChange={onToggle}
-      />
-    </div>
-  );
+      <Switch id="custom-number-pad" checked={enabled} onCheckedChange={onToggle} />
+    </div>;
 };
-
 export default CustomNumberPadToggle;
