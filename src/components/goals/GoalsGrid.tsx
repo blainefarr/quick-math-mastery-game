@@ -47,7 +47,7 @@ const GoalsGrid: React.FC<GoalsGridProps> = ({ goals, isLoading }) => {
               </div>
               {operations.map((op) => (
                 <div key={op} className="flex justify-center">
-                  <div className="min-w-[72px] w-full max-w-[113.25px] flex justify-center">
+                  <div className="w-full flex justify-center">
                     <OperationButton 
                       operation={op} 
                       active={true} 
@@ -76,8 +76,8 @@ const GoalsGrid: React.FC<GoalsGridProps> = ({ goals, isLoading }) => {
           {/* Grid of rows */}
           {category.ranges.map((range) => (
             <div 
-              key={`${category.title}-${range}`} 
-              className="grid grid-cols-[minmax(96px,1fr)_repeat(4,minmax(64px,1fr))] sm:grid-cols-[113.25px_repeat(4,minmax(72px,1fr))] gap-2 mb-2"
+            key={`${category.title}-${range}`} 
+            className="grid grid-cols-[minmax(72px,1fr)_repeat(4,minmax(64px,1fr))] sm:grid-cols-[113.25px_repeat(4,minmax(72px,1fr))] gap-2 mb-2"
             >
               <div className="col-span-1 flex items-center justify-start">
                 <span className="text-sm font-medium">
