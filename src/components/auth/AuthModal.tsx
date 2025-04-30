@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -164,8 +165,9 @@ const AuthModal = ({ children, defaultView = 'register' }: AuthModalProps) => {
       return;
     }
 
+    // Update with the correct redirect URL
     const { error: supaError } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: window.location.origin + '/'
+      redirectTo: `${window.location.origin}/reset-password`
     });
     setIsLoading(false);
 

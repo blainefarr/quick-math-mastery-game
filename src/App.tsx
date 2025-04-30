@@ -10,6 +10,7 @@ import MyAccount from "./pages/MyAccount";
 import NotFound from "./pages/NotFound";
 import Leaderboard from "./pages/Leaderboard";
 import Progress from "./pages/Progress";
+import ResetPassword from "./pages/ResetPassword";
 
 const queryClient = new QueryClient();
 
@@ -30,6 +31,8 @@ const App = () => (
             </Route>
             <Route path="/leaderboard" element={<Leaderboard />} />
             <Route path="/progress" element={<Progress />} />
+            {/* Add password reset route */}
+            <Route path="/reset-password" element={<ResetPassword />} />
             {/* Add future non-game pages here */}
           </Route>
 

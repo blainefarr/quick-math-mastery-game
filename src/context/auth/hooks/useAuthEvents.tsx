@@ -5,6 +5,7 @@ import { AuthStateType } from '../auth-types';
 import { fetchAndSaveAccountProfile } from '../utils/accountProfile';
 import { AuthChangeEvent, Session } from '@supabase/supabase-js';
 import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
 
 // Optimized timing constants
 const AUTH_TIMEOUT_MS = 5000; // 5s timeout for auth operations
@@ -99,6 +100,13 @@ export const useAuthEvents = (authState: AuthStateType) => {
         
         // Reset timeout whenever auth state changes
         startAuthTimeout();
+
+        // Handle PASSWORD_RECOVERY event
+        if (event === 'PASSWORD_RECOVERY') {
+          console.log('PASSWORD_RECOVERY event detected in auth context');
+          // The ResetPassword component will handle this event
+          return;
+        }
         
         if (event === 'SIGNED_OUT') {
           console.log('User signed out');
