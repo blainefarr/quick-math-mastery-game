@@ -54,7 +54,14 @@ const OperationSelection = () => {
     return !isNaN(val) ? val : def;
   };
   
-  const handleOperationSelect = (operation: Operation) => setSelectedOperation(operation);
+  const handleOperationSelect = (operation: Operation) => {
+    setSelectedOperation(operation);
+    updateSettings(prev => ({
+      ...prev,
+      operation
+    }));
+  };
+  
   
   const handleFocusNumberToggle = (checked: boolean) => {
     setUseFocusNumber(checked);
