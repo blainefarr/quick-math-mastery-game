@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Delete } from 'lucide-react';
 
@@ -9,6 +9,7 @@ interface CustomNumberPadProps {
   onNegativeToggle: () => void;
   isNegative: boolean;
   showNegativeToggle: boolean;
+  onButtonPress?: () => void; // New callback to handle focus reset
 }
 
 const CustomNumberPad: React.FC<CustomNumberPadProps> = ({
@@ -16,18 +17,37 @@ const CustomNumberPad: React.FC<CustomNumberPadProps> = ({
   onDelete,
   onNegativeToggle,
   isNegative,
-  showNegativeToggle
+  showNegativeToggle,
+  onButtonPress
 }) => {
+  // Create a wrapper for button presses that calls both handlers
+  const handleNumberPress = useCallback((number: string) => {
+    onNumberPress(number);
+    if (onButtonPress) onButtonPress();
+  }, [onNumberPress, onButtonPress]);
+
+  // Similarly for delete
+  const handleDelete = useCallback(() => {
+    onDelete();
+    if (onButtonPress) onButtonPress();
+  }, [onDelete, onButtonPress]);
+
+  // And for negative toggle
+  const handleNegativeToggle = useCallback(() => {
+    onNegativeToggle();
+    if (onButtonPress) onButtonPress();
+  }, [onNegativeToggle, onButtonPress]);
+
   return (
-    <div className="mt-4 w-full mx-auto">
+    <div className="w-full mx-auto mt-4">
       <div className="grid grid-cols-3 gap-2">
         {/* First row */}
         {[1, 2, 3].map((num) => (
           <Button
             key={num}
             variant="outline"
-            onClick={() => onNumberPress(num.toString())}
-            className="text-2xl h-16 font-medium bg-primary/10 hover:bg-primary/20 active:bg-primary/30 transition-colors"
+            onClick={() => handleNumberPress(num.toString())}
+            className="text-2xl h-16 font-semibold bg-primary/15 hover:bg-primary/25 active:bg-primary/40 transition-colors"
             aria-label={num.toString()}
           >
             {num}
@@ -39,8 +59,8 @@ const CustomNumberPad: React.FC<CustomNumberPadProps> = ({
           <Button
             key={num}
             variant="outline"
-            onClick={() => onNumberPress(num.toString())}
-            className="text-2xl h-16 font-medium bg-primary/10 hover:bg-primary/20 active:bg-primary/30 transition-colors"
+            onClick={() => handleNumberPress(num.toString())}
+            className="text-2xl h-16 font-semibold bg-primary/15 hover:bg-primary/25 active:bg-primary/40 transition-colors"
             aria-label={num.toString()}
           >
             {num}
@@ -52,8 +72,8 @@ const CustomNumberPad: React.FC<CustomNumberPadProps> = ({
           <Button
             key={num}
             variant="outline"
-            onClick={() => onNumberPress(num.toString())}
-            className="text-2xl h-16 font-medium bg-primary/10 hover:bg-primary/20 active:bg-primary/30 transition-colors"
+            onClick={() => handleNumberPress(num.toString())}
+            className="text-2xl h-16 font-semibold bg-primary/15 hover:bg-primary/25 active:bg-primary/40 transition-colors"
             aria-label={num.toString()}
           >
             {num}
@@ -64,8 +84,8 @@ const CustomNumberPad: React.FC<CustomNumberPadProps> = ({
         {showNegativeToggle ? (
           <Button
             variant="outline"
-            onClick={onNegativeToggle}
-            className={`text-2xl h-16 font-medium bg-secondary/20 hover:bg-secondary/30 active:bg-secondary/40 transition-colors ${isNegative ? 'ring-2 ring-primary' : ''}`}
+            onClick={handleNegativeToggle}
+            className={`text-2xl h-16 font-semibold bg-secondary/20 hover:bg-secondary/30 active:bg-secondary/40 transition-colors ${isNegative ? 'ring-2 ring-primary' : ''}`}
             aria-pressed={isNegative}
             aria-label={isNegative ? "Positive" : "Negative"}
           >
@@ -76,19 +96,19 @@ const CustomNumberPad: React.FC<CustomNumberPadProps> = ({
         )}
         <Button
           variant="outline"
-          onClick={() => onNumberPress('0')}
-          className="text-2xl h-16 font-medium bg-primary/10 hover:bg-primary/20 active:bg-primary/30 transition-colors"
+          onClick={() => handleNumberPress('0')}
+          className="text-2xl h-16 font-semibold bg-primary/15 hover:bg-primary/25 active:bg-primary/40 transition-colors"
           aria-label="0"
         >
           0
         </Button>
         <Button
           variant="outline"
-          onClick={onDelete}
-          className="text-2xl h-16 font-medium bg-secondary/20 hover:bg-secondary/30 active:bg-secondary/40 transition-colors"
+          onClick={handleDelete}
+          className="text-2xl h-16 font-semibold bg-secondary/20 hover:bg-secondary/30 active:bg-secondary/40 transition-colors"
           aria-label="Delete"
         >
-          <Delete className="h-6 w-6" />
+          <Delete className="h-8 w-8" /> {/* Increased size from 6 to 8 */}
         </Button>
       </div>
     </div>

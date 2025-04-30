@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import useGame from '@/context/useGame';
 import { Button } from '@/components/ui/button';
@@ -202,13 +201,12 @@ const GameScreen = () => {
   const handleNumberPress = (number: string) => {
     if (isShowingAnswer || hasEndedRef.current) return;
     
-    // Update the user answer directly without using updater function
-    const newValue = userAnswer + number;
-    setUserAnswer(newValue);
+    // Update using a callback to avoid TypeScript errors
+    setUserAnswer(prevAnswer => prevAnswer + number);
     
     // Check if this is the correct answer
     if (currentProblem) {
-      const numericValue = isNegative ? -Number(newValue) : Number(newValue);
+      const numericValue = isNegative ? -Number(userAnswer + number) : Number(userAnswer + number);
       if (numericValue === currentProblem.answer) {
         // Use setTimeout to allow the UI to update before showing feedback
         setTimeout(() => {
@@ -238,10 +236,8 @@ const GameScreen = () => {
   const handleDelete = () => {
     if (isShowingAnswer || hasEndedRef.current) return;
     
-    // Update directly without using updater function
-    if (userAnswer.length > 0) {
-      setUserAnswer(userAnswer.slice(0, -1));
-    }
+    // Update using a callback to avoid TypeScript errors
+    setUserAnswer(prevAnswer => prevAnswer.slice(0, -1));
   };
 
   const toggleNegative = () => {
@@ -286,7 +282,7 @@ const GameScreen = () => {
                 <span>{currentProblem.num1}</span>
                 <span className="mx-4">{getOperationSymbol()}</span>
                 <span>{currentProblem.num2}</span>
-                <span className="mx-6 md:mx-8">=</span>
+                <span className={`${showNegativeToggle ? 'mx-8 md:mx-10' : 'mx-6 md:mx-8'}`}>=</span>
               </>
             )}
 
@@ -342,6 +338,7 @@ const GameScreen = () => {
               onNegativeToggle={toggleNegative}
               isNegative={isNegative}
               showNegativeToggle={showNegativeToggle}
+              onButtonPress={focusInput} // Add this new prop to reset focus
             />
           </div>
         )}
