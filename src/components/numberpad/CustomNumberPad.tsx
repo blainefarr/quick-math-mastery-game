@@ -50,7 +50,7 @@ const CustomNumberPad: React.FC<CustomNumberPadProps> = ({
             <Button
               key={num}
               variant="outline"
-              onPointerDown={() => handleNumberPress(...)}
+              onPointerDown={() => handleNumberPress(num.toString())}
               className="text-3xl h-16 font-semibold bg-primary/15 hover:bg-primary/25 active:bg-primary/40 transition-colors min-h-[48px] min-w-[48px] select-none touch-manipulation"
               aria-label={num.toString()}
             >
@@ -66,7 +66,7 @@ const CustomNumberPad: React.FC<CustomNumberPadProps> = ({
             <Button
               key={num}
               variant="outline"
-              onPointerDown={() => handleNumberPress(...)}
+              onPointerDown={() => handleNumberPress(num.toString())}
               className="text-3xl h-16 font-semibold bg-primary/15 hover:bg-primary/25 active:bg-primary/40 transition-colors min-h-[48px] min-w-[48px] select-none touch-manipulation"
               aria-label={num.toString()}
             >
@@ -82,7 +82,7 @@ const CustomNumberPad: React.FC<CustomNumberPadProps> = ({
             <Button
               key={num}
               variant="outline"
-              onPointerDown={() => handleNumberPress(...)}
+              onPointerDown={() => handleNumberPress(num.toString())}
               className="text-3xl h-16 font-semibold bg-primary/15 hover:bg-primary/25 active:bg-primary/40 transition-colors min-h-[48px] min-w-[48px] select-none touch-manipulation"
               aria-label={num.toString()}
             >
@@ -95,7 +95,7 @@ const CustomNumberPad: React.FC<CustomNumberPadProps> = ({
         {showNegativeToggle ? (
           <Button
             variant="outline"
-            onPointerDown={() => handleNumberPress(...)}
+            onPointerDown={handleNegativeToggle}
             className={`text-3xl h-16 font-semibold bg-secondary/20 hover:bg-secondary/30 active:bg-secondary/40 transition-colors min-h-[48px] min-w-[48px] select-none touch-manipulation ${isNegative ? 'ring-2 ring-primary' : ''}`}
             aria-pressed={isNegative}
             aria-label={isNegative ? "Positive" : "Negative"}
@@ -107,7 +107,7 @@ const CustomNumberPad: React.FC<CustomNumberPadProps> = ({
         )}
         <Button
           variant="outline"
-          onPointerDown={() => handleNumberPress(...)}
+          onPointerDown={() => handleNumberPress(num.toString())}
           className="text-3xl h-16 font-semibold bg-primary/15 hover:bg-primary/25 active:bg-primary/40 transition-colors min-h-[48px] min-w-[48px] select-none touch-manipulation"
           aria-label="0"
         >
@@ -115,7 +115,7 @@ const CustomNumberPad: React.FC<CustomNumberPadProps> = ({
         </Button>
         <Button
           variant="outline"
-          onPointerDown={() => handleNumberPress(...)}
+          onPointerDown={handleDelete}
           className="h-16 font-semibold bg-secondary/20 hover:bg-secondary/30 active:bg-secondary/40 transition-colors min-h-[48px] min-w-[48px] select-none touch-manipulation"
           aria-label="Delete"
         >
