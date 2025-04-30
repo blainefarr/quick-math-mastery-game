@@ -38,7 +38,8 @@ const GoalsGrid: React.FC<GoalsGridProps> = ({ goals, isLoading }) => {
   return (
     <div className="w-full">
       <div className="grid grid-cols-[113.25px_repeat(4,minmax(72px,1fr))] gap-2 items-end mb-3">
-        <div className="text-sm font-medium text-muted-foreground">
+        {/* Category header */}
+        <div className="text-sm font-semibold text-muted-foreground">
           Focus Numbers
         </div>
 
@@ -63,12 +64,7 @@ const GoalsGrid: React.FC<GoalsGridProps> = ({ goals, isLoading }) => {
       
       {categories.map((category, categoryIndex) => (
         <React.Fragment key={category.title}>
-          {/* Category header */}
-          <div className="mt-6 mb-3">
-            <h3 className="text-sm font-semibold text-muted-foreground">{category.title}</h3>
-            <Separator className="mt-1" />
-          </div>
-          
+  
           {/* Ranges within this category */}
           {category.ranges.map((range) => (
             <div 
