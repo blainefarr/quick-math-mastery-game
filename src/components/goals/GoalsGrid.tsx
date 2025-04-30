@@ -55,24 +55,6 @@ const GoalsGrid: React.FC<GoalsGridProps> = ({ goals, isLoading }) => {
                 isMobile={false} 
               />
         
-        {/* Operations in the header */}
-        <div className="col-span-4 grid grid-cols-4 gap-2 mb-1">
-          {operations.map((op) => (
-            <div 
-              key={op} 
-              className="col-span-1 flex flex-col items-center justify-center"
-              style={{ maxWidth: '113.25px' }}
-            >
-              <div className="mb-1">
-                <OperationButton 
-                  operation={op} 
-                  active={true} 
-                  onClick={() => {}} 
-                  isMobile={false} 
-                />
-              </div>
-            </div>
-            <span className="text-xs font-medium">{getOperationName(op)}</span>
           </div>
         ))}
       </div>
