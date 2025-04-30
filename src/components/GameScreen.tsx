@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import useGame from '@/context/useGame';
 import { Button } from '@/components/ui/button';
@@ -202,51 +201,46 @@ const GameScreen = () => {
   const handleNumberPress = (number: string) => {
     if (isShowingAnswer || hasEndedRef.current) return;
     
-    // Append the number to the current answer
-    setUserAnswer((prev) => {
-      const newValue = prev + number;
-      
-      // Check if this is the correct answer
-      if (currentProblem) {
-        const numericValue = isNegative ? -Number(newValue) : Number(newValue);
-        if (numericValue === currentProblem.answer) {
-          // Use setTimeout to allow the UI to update before showing feedback
+    // Fix: TypeScript error by not using the updater function approach
+    const newValue = userAnswer + number;
+    setUserAnswer(newValue);
+    
+    // Check if this is the correct answer
+    if (currentProblem) {
+      const numericValue = isNegative ? -Number(newValue) : Number(newValue);
+      if (numericValue === currentProblem.answer) {
+        // Use setTimeout to allow the UI to update before showing feedback
+        setTimeout(() => {
+          setFeedback('correct');
+          incrementScore();
+          clearLearnerModeTimeouts();
+          
           setTimeout(() => {
-            setFeedback('correct');
-            incrementScore();
-            clearLearnerModeTimeouts();
+            setUserAnswer('');
+            setFeedback(null);
+            setIsNegative(false);
+            setShowEncouragement(false);
+            setCurrentQuestionShown(false);
             
-            setTimeout(() => {
-              setUserAnswer('');
-              setFeedback(null);
-              setIsNegative(false);
-              setShowEncouragement(false);
-              setCurrentQuestionShown(false);
-              
-              generateNewProblem(
-                settings.operation, 
-                settings.range,
-                settings.allowNegatives || false,
-                settings.focusNumber || null
-              );
-            }, 100);
-          }, 10);
-        }
+            generateNewProblem(
+              settings.operation, 
+              settings.range,
+              settings.allowNegatives || false,
+              settings.focusNumber || null
+            );
+          }, 100);
+        }, 10);
       }
-      
-      return newValue;
-    });
+    }
   };
 
   const handleDelete = () => {
     if (isShowingAnswer || hasEndedRef.current) return;
     
-    setUserAnswer((prev) => {
-      if (prev.length > 0) {
-        return prev.slice(0, -1);
-      }
-      return prev;
-    });
+    // Fix: TypeScript error by not using the updater function approach
+    if (userAnswer.length > 0) {
+      setUserAnswer(userAnswer.slice(0, -1));
+    }
   };
 
   const toggleNegative = () => {

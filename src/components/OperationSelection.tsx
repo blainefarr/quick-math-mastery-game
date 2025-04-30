@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import useGame from '@/context/useGame';
 import { Button } from '@/components/ui/button';
@@ -27,6 +26,7 @@ const OperationSelection = () => {
   const [selectedOperation, setSelectedOperation] = useState<Operation>(settings.operation);
   const [negativeNumbersEnabled, setNegativeNumbersEnabled] = useState(settings.allowNegatives || false);
   const [learnerModeEnabled, setLearnerModeEnabled] = useState(settings.learnerMode || false);
+  const [customNumberPadEnabled, setCustomNumberPadEnabled] = useState(settings.useCustomNumberPad || false);
   const [range1Min, setRange1Min] = useState(settings.range.min1);
   const [range1Max, setRange1Max] = useState(settings.range.max1);
   const [range2Min, setRange2Min] = useState(settings.range.min2);
@@ -43,6 +43,7 @@ const OperationSelection = () => {
     setRange2Max(settings.range.max2);
     setNegativeNumbersEnabled(settings.allowNegatives || false);
     setLearnerModeEnabled(settings.learnerMode || false);
+    setCustomNumberPadEnabled(settings.useCustomNumberPad || false);
   }, [settings]);
   
   useEffect(() => {
@@ -131,6 +132,14 @@ const OperationSelection = () => {
     });
   };
   
+  const handleCustomNumberPadToggle = (checked: boolean) => {
+    setCustomNumberPadEnabled(checked);
+    // Update global settings
+    updateSettings({
+      useCustomNumberPad: checked
+    });
+  };
+  
   // Update only the timer setting without altering other settings
   const handleTimerChange = (seconds: number) => {
     updateSettings({
@@ -200,6 +209,7 @@ const OperationSelection = () => {
       timerSeconds: settings.timerSeconds,
       allowNegatives: negativeNumbersEnabled,
       learnerMode: learnerModeEnabled,
+      useCustomNumberPad: customNumberPadEnabled,
       focusNumber: useFocusNumber ? focusNumberValue : null
     });
     if (useFocusNumber) setFocusNumber(focusNumberValue);else setFocusNumber(null);
@@ -246,10 +256,12 @@ const OperationSelection = () => {
               focusNumberValue={focusNumberValue} 
               negativeNumbersEnabled={negativeNumbersEnabled}
               learnerModeEnabled={learnerModeEnabled}
+              customNumberPadEnabled={customNumberPadEnabled}
               onFocusNumberToggle={handleFocusNumberToggle} 
               onFocusNumberChange={handleFocusNumberChange} 
               onNegativeToggle={handleNegativeToggle}
               onLearnerModeToggle={handleLearnerModeToggle}
+              onCustomNumberPadToggle={handleCustomNumberPadToggle}
             />
           </div>
         </CardContent>
