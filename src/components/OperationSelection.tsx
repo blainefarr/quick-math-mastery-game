@@ -8,7 +8,10 @@ import OperationButton from './operation/OperationButton';
 import NumberRangeSection from './operation/NumberRangeSection';
 import TimerSelect from './operation/TimerSelect';
 import AdvancedSettings from './operation/AdvancedSettings';
+import { useIsMobile } from '@/hooks/use-mobile';
+
 const OperationSelection = () => {
+  const isMobile = useIsMobile();
   const {
     settings,
     updateSettings,
@@ -97,8 +100,8 @@ const OperationSelection = () => {
           <div className="mx-auto space-y-6 px-0">
             <div>
               <h3 className="text-lg font-medium mb-3">Operation</h3>
-              <div className="flex flex-nowrap gap-2 justify-center items-center rounded-lg p-2 bg-muted/50 overflow-x-auto">
-                {(['addition', 'subtraction', 'multiplication', 'division'] as Operation[]).map(operation => <OperationButton key={operation} active={selectedOperation === operation} operation={operation} onClick={handleOperationSelect} />)}
+              <div className="flex flex-nowrap justify-center items-center rounded-lg p-2 px-0 bg-muted/50 w-full">
+                {(['addition', 'subtraction', 'multiplication', 'division'] as Operation[]).map(operation => <OperationButton key={operation} active={selectedOperation === operation} operation={operation} onClick={handleOperationSelect} isMobile={isMobile} />)}
               </div>
             </div>
 

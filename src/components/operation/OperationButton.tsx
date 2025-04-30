@@ -7,6 +7,7 @@ type Props = {
   active: boolean;
   operation: Operation;
   onClick: (operation: Operation) => void;
+  isMobile?: boolean;
 };
 
 const operationStyles: Record<Operation, string> = {
@@ -16,19 +17,20 @@ const operationStyles: Record<Operation, string> = {
   division: "bg-orange-200 border-2 border-orange-400 shadow font-bold text-primary",
 };
 
-const OperationButton = ({ active, operation, onClick }: Props) => (
+const OperationButton = ({ active, operation, onClick, isMobile = false }: Props) => (
   <button
     type="button"
     className={`
       flex items-center justify-center
-      h-10 w-20 rounded-lg transition-all
-      flex-shrink-0
+      rounded-lg transition-all
+      flex-shrink-0 flex-grow
+      ${isMobile ? 'h-9 mx-0.5' : 'h-10 mx-1'}
       ${active ? operationStyles[operation] : "bg-white border-2 border-transparent text-muted-foreground shadow hover:bg-muted"}
     `}
     aria-pressed={active}
     onClick={() => onClick(operation)}
   >
-    <MathIcon operation={operation} size={24} />
+    <MathIcon operation={operation} size={isMobile ? 20 : 24} />
   </button>
 );
 
