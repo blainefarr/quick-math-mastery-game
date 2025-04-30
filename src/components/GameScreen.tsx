@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import useGame from '@/context/useGame';
 import { Button } from '@/components/ui/button';
@@ -6,6 +7,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Clock, RefreshCw } from 'lucide-react';
 import MathIcon from './common/MathIcon';
 import { useCompactHeight } from '@/hooks/use-compact-height';
+import CustomNumberPad from './numberpad/CustomNumberPad';
 
 const GameScreen = () => {
   const {
@@ -197,14 +199,65 @@ const GameScreen = () => {
     }
   };
 
+  const handleNumberPress = (number: string) => {
+    if (isShowingAnswer || hasEndedRef.current) return;
+    
+    // Append the number to the current answer
+    setUserAnswer((prev) => {
+      const newValue = prev + number;
+      
+      // Check if this is the correct answer
+      if (currentProblem) {
+        const numericValue = isNegative ? -Number(newValue) : Number(newValue);
+        if (numericValue === currentProblem.answer) {
+          // Use setTimeout to allow the UI to update before showing feedback
+          setTimeout(() => {
+            setFeedback('correct');
+            incrementScore();
+            clearLearnerModeTimeouts();
+            
+            setTimeout(() => {
+              setUserAnswer('');
+              setFeedback(null);
+              setIsNegative(false);
+              setShowEncouragement(false);
+              setCurrentQuestionShown(false);
+              
+              generateNewProblem(
+                settings.operation, 
+                settings.range,
+                settings.allowNegatives || false,
+                settings.focusNumber || null
+              );
+            }, 100);
+          }, 10);
+        }
+      }
+      
+      return newValue;
+    });
+  };
+
+  const handleDelete = () => {
+    if (isShowingAnswer || hasEndedRef.current) return;
+    
+    setUserAnswer((prev) => {
+      if (prev.length > 0) {
+        return prev.slice(0, -1);
+      }
+      return prev;
+    });
+  };
+
   const toggleNegative = () => {
-    if (!isShowingAnswer) {
+    if (!isShowingAnswer && !hasEndedRef.current) {
       setIsNegative(prev => !prev);
       focusInput();
     }
   };
 
   const showNegativeToggle = settings.allowNegatives;
+  const useCustomNumberPad = settings.useCustomNumberPad;
 
   return (
     <div className={`flex justify-center items-center min-h-screen p-4 bg-background ${
@@ -246,7 +299,7 @@ const GameScreen = () => {
               <Input
                 ref={inputRef}
                 type="text"
-                inputMode="numeric"
+                inputMode={useCustomNumberPad ? "none" : "numeric"}
                 pattern="[0-9]*"
                 value={userAnswer}
                 onChange={handleInputChange}
@@ -254,7 +307,7 @@ const GameScreen = () => {
                   isShowingAnswer ? 'text-destructive' : ''
                 }`}
                 autoFocus
-                readOnly={isShowingAnswer}
+                readOnly={isShowingAnswer || useCustomNumberPad}
                 style={{
                   MozAppearance: 'textfield',
                   WebkitAppearance: 'none',
@@ -285,7 +338,17 @@ const GameScreen = () => {
           </div>
         )}
 
-        <div className="flex justify-center">
+        {/* Custom Number Pad */}
+        {useCustomNumberPad && (
+          <CustomNumberPad 
+            onNumberPress={handleNumberPress}
+            onDelete={handleDelete}
+            onNegativeToggle={toggleNegative}
+            isNegative={isNegative}
+          />
+        )}
+
+        <div className="flex justify-center mt-4">
           <Button 
             variant="outline"
             onClick={handleRestartGame}

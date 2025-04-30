@@ -5,16 +5,19 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import FocusNumberSection from './FocusNumberSection';
 import NegativeNumbersToggle from './NegativeNumbersToggle';
 import LearnerModeToggle from './LearnerModeToggle';
+import CustomNumberPadToggle from './CustomNumberPadToggle';
 
 interface AdvancedSettingsProps {
   useFocusNumber: boolean;
   focusNumberValue: number;
   negativeNumbersEnabled: boolean;
   learnerModeEnabled: boolean;
+  customNumberPadEnabled: boolean;
   onFocusNumberToggle: (checked: boolean) => void;
   onFocusNumberChange: (value: string) => void;
   onNegativeToggle: (checked: boolean) => void;
   onLearnerModeToggle: (checked: boolean) => void;
+  onCustomNumberPadToggle: (checked: boolean) => void;
 }
 
 const AdvancedSettings = ({
@@ -22,17 +25,19 @@ const AdvancedSettings = ({
   focusNumberValue,
   negativeNumbersEnabled,
   learnerModeEnabled,
+  customNumberPadEnabled,
   onFocusNumberToggle,
   onFocusNumberChange,
   onNegativeToggle,
-  onLearnerModeToggle
+  onLearnerModeToggle,
+  onCustomNumberPadToggle
 }: AdvancedSettingsProps) => {
   const [isOpen, setIsOpen] = React.useState(false);
 
   React.useEffect(() => {
     // Load saved state from localStorage or determine if it should be open based on active settings
     const savedState = localStorage.getItem('advancedSettingsOpen');
-    const hasActiveAdvancedSettings = useFocusNumber || negativeNumbersEnabled || learnerModeEnabled;
+    const hasActiveAdvancedSettings = useFocusNumber || negativeNumbersEnabled || learnerModeEnabled || customNumberPadEnabled;
     
     if (savedState) {
       setIsOpen(JSON.parse(savedState));
@@ -41,7 +46,7 @@ const AdvancedSettings = ({
       setIsOpen(true);
       localStorage.setItem('advancedSettingsOpen', JSON.stringify(true));
     }
-  }, [useFocusNumber, negativeNumbersEnabled, learnerModeEnabled]);
+  }, [useFocusNumber, negativeNumbersEnabled, learnerModeEnabled, customNumberPadEnabled]);
 
   const handleToggle = (open: boolean) => {
     setIsOpen(open);
@@ -72,6 +77,10 @@ const AdvancedSettings = ({
           <LearnerModeToggle
             enabled={learnerModeEnabled}
             onToggle={onLearnerModeToggle}
+          />
+          <CustomNumberPadToggle
+            enabled={customNumberPadEnabled}
+            onToggle={onCustomNumberPadToggle}
           />
         </div>
       </CollapsibleContent>
