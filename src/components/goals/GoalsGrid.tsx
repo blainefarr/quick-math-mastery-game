@@ -48,11 +48,11 @@ const GoalsGrid: React.FC<GoalsGridProps> = ({ goals, isLoading }) => {
               {operations.map((op) => (
                 <div key={op} className="flex justify-center">
                   <div className="w-full flex justify-center">
-                    <OperationButton 
+                  <OperationButton 
                       operation={op} 
                       active={true} 
                       onClick={() => {}} 
-                      isMobile={false} 
+                      isMobile={true} // or make a custom responsive prop
                     />
                   </div>
                 </div>
