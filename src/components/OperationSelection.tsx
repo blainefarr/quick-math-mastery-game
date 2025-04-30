@@ -82,6 +82,14 @@ const OperationSelection = () => {
   const handleNegativeToggle = (checked: boolean) => setNegativeNumbersEnabled(checked);
   const handleLearnerModeToggle = (checked: boolean) => setLearnerModeEnabled(checked);
   
+  // Update only the timer setting without altering other settings
+  const handleTimerChange = (seconds: number) => {
+    updateSettings({
+      ...settings,  // Keep all existing settings
+      timerSeconds: seconds  // Only update the timer
+    });
+  };
+  
   const handleStartGame = () => {
     if (range1Max < range1Min || range2Max < range2Min) {
       alert('Maximum value must be greater than or equal to minimum value');
@@ -128,9 +136,7 @@ const OperationSelection = () => {
             max: range2Max
           }} setRange1Min={v => setRange1Min(parseOrDefault(v, range1Min))} setRange1Max={v => setRange1Max(parseOrDefault(v, range1Max))} setRange2Min={v => setRange2Min(parseOrDefault(v, range2Min))} setRange2Max={v => setRange2Max(parseOrDefault(v, range2Max))} />
 
-            <TimerSelect value={settings.timerSeconds} onChange={seconds => updateSettings({
-            timerSeconds: seconds
-          })} />
+            <TimerSelect value={settings.timerSeconds} onChange={handleTimerChange} />
 
             <AdvancedSettings 
               useFocusNumber={useFocusNumber} 

@@ -30,12 +30,18 @@ const AdvancedSettings = ({
   const [isOpen, setIsOpen] = React.useState(false);
 
   React.useEffect(() => {
-    // Load saved state from localStorage
+    // Load saved state from localStorage or determine if it should be open based on active settings
     const savedState = localStorage.getItem('advancedSettingsOpen');
+    const hasActiveAdvancedSettings = useFocusNumber || negativeNumbersEnabled || learnerModeEnabled;
+    
     if (savedState) {
       setIsOpen(JSON.parse(savedState));
+    } else if (hasActiveAdvancedSettings) {
+      // If any advanced setting is enabled, automatically open the dropdown
+      setIsOpen(true);
+      localStorage.setItem('advancedSettingsOpen', JSON.stringify(true));
     }
-  }, []);
+  }, [useFocusNumber, negativeNumbersEnabled, learnerModeEnabled]);
 
   const handleToggle = (open: boolean) => {
     setIsOpen(open);

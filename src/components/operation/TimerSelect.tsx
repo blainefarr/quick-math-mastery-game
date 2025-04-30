@@ -2,6 +2,7 @@
 import React from 'react';
 import { Clock } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { GameSettings } from '@/types';
 
 interface TimerSelectProps {
   value: number;
@@ -19,10 +20,11 @@ const TimerSelect = ({
     { value: 120, label: '2 minutes' }
   ];
 
-  const handleValueChange = (newValue: string) => {
+  // Using React.useCallback to ensure this handler doesn't cause unnecessary re-renders
+  const handleValueChange = React.useCallback((newValue: string) => {
     // Convert the string value to a number and pass it to the onChange handler
     onChange(parseInt(newValue));
-  };
+  }, [onChange]);
 
   return (
     <div className="space-y-2">

@@ -30,7 +30,11 @@ export const useGameSettings = () => {
   }, [settings.learnerMode]);
 
   const updateSettings = (newSettings: Partial<GameSettings>) => {
-    setSettings(prev => ({ ...prev, ...newSettings }));
+    setSettings(prev => {
+      // By merging with prev and then newSettings, we ensure that the
+      // newSettings values take precedence but don't replace unmentioned values
+      return { ...prev, ...newSettings };
+    });
   };
 
   const resetSettings = () => {
