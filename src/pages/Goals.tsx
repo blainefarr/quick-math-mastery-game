@@ -7,7 +7,7 @@ import {
   CardHeader, 
   CardTitle 
 } from "@/components/ui/card";
-import { Target, TrendingUp, ArrowLeft } from 'lucide-react';
+import { Target, ArrowLeft } from 'lucide-react';
 import useGoalProgress from '@/hooks/useGoalProgress';
 import GoalsGrid from '@/components/goals/GoalsGrid';
 import GoalsLegend from '@/components/goals/GoalsLegend';
@@ -22,38 +22,18 @@ const GoalsPage: React.FC = () => {
   
   return (
     <div className="container mx-auto py-8 px-4 max-w-6xl">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-        <div className="flex items-center">
-          <div className="bg-primary text-white rounded-full w-10 h-10 flex items-center justify-center mr-3 shadow-md">
-            <Target size={20} />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold text-primary">Goals</h1>
-            <p className="text-sm text-muted-foreground">Track your math skills progress</p>
-          </div>
-        </div>
-        
-        <div className="flex items-center gap-2">
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="flex items-center"
-            onClick={() => navigate('/')}
-          >
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Game
-          </Button>
-          
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="flex items-center"
-            onClick={() => navigate('/progress')}
-          >
-            <TrendingUp className="mr-2 h-4 w-4" />
-            View Progress
-          </Button>
-        </div>
+      <Button 
+        variant="ghost" 
+        className="mb-6 hover:bg-muted/50 -ml-3"
+        onClick={() => navigate('/')}
+      >
+        <ArrowLeft className="mr-2 h-4 w-4" />
+        Back to Game
+      </Button>
+      
+      <div className="text-center mb-8">
+        <h1 className="text-4xl font-bold text-primary">Goals</h1>
+        <p className="text-muted-foreground mt-2">Track your math skills progress</p>
       </div>
       
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">

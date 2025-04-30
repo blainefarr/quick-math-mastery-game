@@ -67,7 +67,7 @@ const GoalsGrid: React.FC<GoalsGridProps> = ({ goals, isLoading }) => {
             >
               <div className="col-span-1 flex items-center justify-start">
                 <span className="text-sm font-medium">
-                  {category.isFocusNumber ? `${range}` : range}
+                  {category.isFocusNumber ? `${range} and 1-10` : range}
                 </span>
               </div>
               
