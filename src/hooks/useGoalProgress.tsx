@@ -134,7 +134,7 @@ export const getLevelEmoji = (level: GoalLevel): string => {
     case 'bronze': return '🥉';
     case 'learning':
     default:
-      return '🚧';
+      return '🚀';
   }
 };
 
