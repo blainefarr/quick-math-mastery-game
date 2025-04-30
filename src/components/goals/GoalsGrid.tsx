@@ -61,10 +61,13 @@ const GoalsGrid: React.FC<GoalsGridProps> = ({ goals, isLoading }) => {
           )}
   
           {/* Category header */}
-          <div className="mt-6 mb-3">
-            <h3 className="text-sm font-semibold text-muted-foreground">{category.title}</h3>
-            <Separator className="mt-1" />
-          </div>
+          {category.title !== 'Focus Numbers' && (
+            <div className="mt-6 mb-3">
+              <h3 className="text-sm font-semibold text-muted-foreground">{category.title}</h3>
+              <Separator className="mt-1" />
+            </div>
+          )}
+
   
           {/* Grid of rows */}
           {category.ranges.map((range) => (
