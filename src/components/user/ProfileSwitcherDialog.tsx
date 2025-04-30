@@ -235,7 +235,7 @@ export function ProfileSwitcherDialog({
             <CreateProfileForm onSuccess={handleProfileCreated} onCancel={() => setShowCreateForm(false)} />
           </div> : <ScrollArea className="h-[60vh] md:h-auto px-6">
             <div className="p-6 pt-0 px-[0px] my-[8px]">
-              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 mb-6">
+              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 mb-6 px-[4px]">
                 {loading ? <div className="col-span-full text-center py-8">
                     Loading profiles...
                   </div> : error ? <div className="col-span-full text-center py-8 text-red-500 flex flex-col items-center gap-2">
