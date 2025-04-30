@@ -3,7 +3,7 @@ import React from 'react';
 import { GoalProgress, Operation, GoalCategory } from '@/types';
 import GoalCell from './GoalCell';
 import { Separator } from '@/components/ui/separator';
-import MathIcon from '@/components/common/MathIcon';
+import OperationButton from '@/components/operation/OperationButton';
 
 interface GoalsGridProps {
   goals: GoalProgress[];
@@ -35,9 +35,18 @@ const GoalsGrid: React.FC<GoalsGridProps> = ({ goals, isLoading }) => {
     return <GoalsGridSkeleton />;
   }
   
+  const getOperationName = (op: Operation): string => {
+    switch (op) {
+      case 'addition': return 'Addition';
+      case 'subtraction': return 'Subtraction';
+      case 'multiplication': return 'Multiplication';
+      case 'division': return 'Division';
+    }
+  };
+
   return (
     <div className="w-full">
-      <div className="grid grid-cols-5 gap-2 mb-2">
+      <div className="grid grid-cols-5 gap-2 mb-1 items-center">
         {/* Header row */}
         <div className="col-span-1"></div>
         {operations.map((op) => (
@@ -45,8 +54,15 @@ const GoalsGrid: React.FC<GoalsGridProps> = ({ goals, isLoading }) => {
             key={op} 
             className="col-span-1 flex flex-col items-center justify-center"
           >
-            <MathIcon operation={op} size={28} className="mb-1" />
-            <span className="text-xs font-medium">{op.charAt(0).toUpperCase() + op.slice(1)}</span>
+            <div className="mb-1">
+              <OperationButton 
+                operation={op} 
+                active={true} 
+                onClick={() => {}} 
+                isMobile={false} 
+              />
+            </div>
+            <span className="text-xs font-medium">{getOperationName(op)}</span>
           </div>
         ))}
       </div>

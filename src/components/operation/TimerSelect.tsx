@@ -19,7 +19,6 @@ const TimerSelect = ({
     { value: 120, label: '2 minutes' }
   ];
 
-  // This function prevents operation reset by stopping event propagation
   const handleValueChange = (newValue: string) => {
     // Convert the string value to a number and pass it to the onChange handler
     onChange(parseInt(newValue));

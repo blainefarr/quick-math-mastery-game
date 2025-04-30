@@ -10,12 +10,10 @@ import GoalsGrid from '@/components/goals/GoalsGrid';
 import GoalsLegend from '@/components/goals/GoalsLegend';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/context/auth/useAuth';
 
 const GoalsPage: React.FC = () => {
   const { goals, isLoading } = useGoalProgress();
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuth();
   
   return (
     <div className="container mx-auto py-8 px-4 max-w-6xl">
