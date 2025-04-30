@@ -1,4 +1,3 @@
-
 export type Operation = 'addition' | 'subtraction' | 'multiplication' | 'division';
 
 export interface ProblemRange {
@@ -21,6 +20,7 @@ export type GameSettings = {
   timerSeconds: number;
   allowNegatives?: boolean;
   focusNumber?: number | null;
+  learnerMode?: boolean;
 };
 
 export interface UserScore {

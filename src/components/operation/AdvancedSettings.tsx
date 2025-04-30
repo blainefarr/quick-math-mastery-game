@@ -4,23 +4,28 @@ import { Settings, ChevronDown } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import FocusNumberSection from './FocusNumberSection';
 import NegativeNumbersToggle from './NegativeNumbersToggle';
+import LearnerModeToggle from './LearnerModeToggle';
 
 interface AdvancedSettingsProps {
   useFocusNumber: boolean;
   focusNumberValue: number;
   negativeNumbersEnabled: boolean;
+  learnerModeEnabled: boolean;
   onFocusNumberToggle: (checked: boolean) => void;
   onFocusNumberChange: (value: string) => void;
   onNegativeToggle: (checked: boolean) => void;
+  onLearnerModeToggle: (checked: boolean) => void;
 }
 
 const AdvancedSettings = ({
   useFocusNumber,
   focusNumberValue,
   negativeNumbersEnabled,
+  learnerModeEnabled,
   onFocusNumberToggle,
   onFocusNumberChange,
-  onNegativeToggle
+  onNegativeToggle,
+  onLearnerModeToggle
 }: AdvancedSettingsProps) => {
   const [isOpen, setIsOpen] = React.useState(false);
 
@@ -57,6 +62,10 @@ const AdvancedSettings = ({
           <NegativeNumbersToggle 
             enabled={negativeNumbersEnabled} 
             onToggle={onNegativeToggle} 
+          />
+          <LearnerModeToggle
+            enabled={learnerModeEnabled}
+            onToggle={onLearnerModeToggle}
           />
         </div>
       </CollapsibleContent>

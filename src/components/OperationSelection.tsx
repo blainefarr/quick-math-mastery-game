@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import useGame from '@/context/useGame';
 import { Button } from '@/components/ui/button';
@@ -22,31 +23,39 @@ const OperationSelection = () => {
     resetScore
   } = useGame();
   const [selectedOperation, setSelectedOperation] = useState<Operation>(settings.operation);
-  const [negativeNumbersEnabled, setNegativeNumbersEnabled] = useState(false);
+  const [negativeNumbersEnabled, setNegativeNumbersEnabled] = useState(settings.allowNegatives || false);
+  const [learnerModeEnabled, setLearnerModeEnabled] = useState(settings.learnerMode || false);
   const [range1Min, setRange1Min] = useState(settings.range.min1);
   const [range1Max, setRange1Max] = useState(settings.range.max1);
   const [range2Min, setRange2Min] = useState(settings.range.min2);
   const [range2Max, setRange2Max] = useState(settings.range.max2);
   const [useFocusNumber, setUseFocusNumber] = useState(focusNumber !== null);
   const [focusNumberValue, setFocusNumberValue] = useState(focusNumber || 1);
+  
   useEffect(() => {
     setSelectedOperation(settings.operation);
     setRange1Min(settings.range.min1);
     setRange1Max(settings.range.max1);
     setRange2Min(settings.range.min2);
     setRange2Max(settings.range.max2);
+    setNegativeNumbersEnabled(settings.allowNegatives || false);
+    setLearnerModeEnabled(settings.learnerMode || false);
   }, [settings]);
+  
   useEffect(() => {
     if (useFocusNumber && focusNumberValue !== null) {
       setRange1Min(focusNumberValue);
       setRange1Max(focusNumberValue);
     }
   }, [useFocusNumber, focusNumberValue]);
+  
   const parseOrDefault = (str: string, def: number) => {
     const val = parseInt(str);
     return !isNaN(val) ? val : def;
   };
+  
   const handleOperationSelect = (operation: Operation) => setSelectedOperation(operation);
+  
   const handleFocusNumberToggle = (checked: boolean) => {
     setUseFocusNumber(checked);
     if (!checked) {
@@ -59,6 +68,7 @@ const OperationSelection = () => {
       setRange1Max(focusNumberValue);
     }
   };
+  
   const handleFocusNumberChange = (value: string) => {
     const numValue = parseOrDefault(value, focusNumberValue);
     setFocusNumberValue(numValue);
@@ -68,7 +78,10 @@ const OperationSelection = () => {
       setRange1Max(numValue);
     }
   };
+  
   const handleNegativeToggle = (checked: boolean) => setNegativeNumbersEnabled(checked);
+  const handleLearnerModeToggle = (checked: boolean) => setLearnerModeEnabled(checked);
+  
   const handleStartGame = () => {
     if (range1Max < range1Min || range2Max < range2Min) {
       alert('Maximum value must be greater than or equal to minimum value');
@@ -85,12 +98,14 @@ const OperationSelection = () => {
       },
       timerSeconds: settings.timerSeconds,
       allowNegatives: negativeNumbersEnabled,
+      learnerMode: learnerModeEnabled,
       focusNumber: useFocusNumber ? focusNumberValue : null
     });
     if (useFocusNumber) setFocusNumber(focusNumberValue);else setFocusNumber(null);
     setTimeLeft(settings.timerSeconds);
     setGameState('playing');
   };
+  
   return <div className="container mx-auto px-4 py-8">
       <Card className="shadow-lg animate-fade-in mx-auto max-w-[535px] min-w-[300px]">
         <CardHeader>
@@ -117,7 +132,16 @@ const OperationSelection = () => {
             timerSeconds: seconds
           })} />
 
-            <AdvancedSettings useFocusNumber={useFocusNumber} focusNumberValue={focusNumberValue} negativeNumbersEnabled={negativeNumbersEnabled} onFocusNumberToggle={handleFocusNumberToggle} onFocusNumberChange={handleFocusNumberChange} onNegativeToggle={handleNegativeToggle} />
+            <AdvancedSettings 
+              useFocusNumber={useFocusNumber} 
+              focusNumberValue={focusNumberValue} 
+              negativeNumbersEnabled={negativeNumbersEnabled}
+              learnerModeEnabled={learnerModeEnabled}
+              onFocusNumberToggle={handleFocusNumberToggle} 
+              onFocusNumberChange={handleFocusNumberChange} 
+              onNegativeToggle={handleNegativeToggle}
+              onLearnerModeToggle={handleLearnerModeToggle}
+            />
           </div>
         </CardContent>
         <CardFooter className="px-4">

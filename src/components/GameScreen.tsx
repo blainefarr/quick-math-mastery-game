@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import useGame from '@/context/useGame';
 import { Button } from '@/components/ui/button';
@@ -24,10 +25,15 @@ const GameScreen = () => {
   const [isNegative, setIsNegative] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const initialProblemGeneratedRef = useRef(false);
-
   const hasEndedRef = useRef(false);
-
   const isCompactHeight = useCompactHeight();
+  
+  // Learner mode states
+  const [isShowingAnswer, setIsShowingAnswer] = useState(false);
+  const [showEncouragement, setShowEncouragement] = useState(false);
+  const [currentQuestionShown, setCurrentQuestionShown] = useState(false);
+  const learnerTimeoutRef = useRef<number | null>(null);
+  const showAnswerTimeoutRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (timeLeft <= 0) {
@@ -56,12 +62,71 @@ const GameScreen = () => {
     
     return () => {
       initialProblemGeneratedRef.current = false;
+      clearLearnerModeTimeouts();
     };
   }, []);
 
   useEffect(() => {
     setIsNegative(false);
+    setIsShowingAnswer(false);
+    setShowEncouragement(false);
+    setCurrentQuestionShown(false);
+    clearLearnerModeTimeouts();
+    
+    // Set up learner mode timer for the new problem
+    if (settings.learnerMode && currentProblem) {
+      startLearnerModeTimer();
+    }
   }, [currentProblem]);
+  
+  // Clean up timeouts when leaving the page
+  useEffect(() => {
+    return () => {
+      clearLearnerModeTimeouts();
+    };
+  }, []);
+  
+  const clearLearnerModeTimeouts = () => {
+    if (learnerTimeoutRef.current) {
+      window.clearTimeout(learnerTimeoutRef.current);
+      learnerTimeoutRef.current = null;
+    }
+    if (showAnswerTimeoutRef.current) {
+      window.clearTimeout(showAnswerTimeoutRef.current);
+      showAnswerTimeoutRef.current = null;
+    }
+  };
+  
+  const startLearnerModeTimer = () => {
+    if (settings.learnerMode && !hasEndedRef.current) {
+      // Clear any existing timeouts
+      clearLearnerModeTimeouts();
+      
+      // Set timeout to show answer after 6 seconds
+      learnerTimeoutRef.current = window.setTimeout(() => {
+        if (!hasEndedRef.current && currentProblem) {
+          // Convert answer to string and handle negative numbers
+          const answerStr = String(Math.abs(currentProblem.answer));
+          
+          // Show the answer
+          setUserAnswer(answerStr);
+          setIsNegative(currentProblem.answer < 0);
+          setIsShowingAnswer(true);
+          setCurrentQuestionShown(true);
+          
+          // Set timeout to hide answer and prompt retry after 2 seconds
+          showAnswerTimeoutRef.current = window.setTimeout(() => {
+            if (!hasEndedRef.current) {
+              setUserAnswer('');
+              setIsShowingAnswer(false);
+              setShowEncouragement(true);
+              inputRef.current?.focus();
+            }
+          }, 2000);
+        }
+      }, 6000);
+    }
+  };
 
   const focusInput = () => {
     setTimeout(() => {
@@ -84,16 +149,21 @@ const GameScreen = () => {
 
   const handleRestartGame = () => {
     console.log('Restarting game early, not saving the score');
+    clearLearnerModeTimeouts();
     endGame('manual');
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const rawValue = e.target.value;
     const cleanValue = rawValue.replace(/^-/, '');
-    setUserAnswer(cleanValue);
+    
+    // Don't update input if we're showing the answer in learner mode
+    if (!isShowingAnswer) {
+      setUserAnswer(cleanValue);
+    }
 
-    if (hasEndedRef.current) {
-      console.log('Game has ended, not processing answer');
+    if (hasEndedRef.current || isShowingAnswer) {
+      console.log('Game has ended or showing answer, not processing input');
       return;
     }
 
@@ -101,18 +171,30 @@ const GameScreen = () => {
       const numericValue = isNegative ? -Number(cleanValue) : Number(cleanValue);
       if (numericValue === currentProblem.answer) {
         setFeedback('correct');
-        incrementScore();
+        
+        // Only increment score if the user entered the answer 
+        // (not if it was shown in learner mode)
+        if (!currentQuestionShown) {
+          incrementScore();
+        }
+        
+        // Clear learner mode timeouts
+        clearLearnerModeTimeouts();
         
         setTimeout(() => {
           setUserAnswer('');
           setFeedback(null);
           setIsNegative(false);
+          setShowEncouragement(false);
+          setCurrentQuestionShown(false);
+          
           generateNewProblem(
             settings.operation, 
             settings.range,
             settings.allowNegatives || false,
             settings.focusNumber || null
           );
+          
           inputRef.current?.focus();
         }, 100);
       }
@@ -120,8 +202,10 @@ const GameScreen = () => {
   };
 
   const toggleNegative = () => {
-    setIsNegative(prev => !prev);
-    focusInput();
+    if (!isShowingAnswer) {
+      setIsNegative(prev => !prev);
+      focusInput();
+    }
   };
 
   const showNegativeToggle = settings.allowNegatives;
@@ -170,8 +254,11 @@ const GameScreen = () => {
                 pattern="[0-9]*"
                 value={userAnswer}
                 onChange={handleInputChange}
-                className="text-4xl md:text-6xl w-24 md:w-32 h-16 text-center font-bold p-0 border-b-4 focus-visible:ring-0 focus-visible:ring-offset-0 appearance-none"
+                className={`text-4xl md:text-6xl w-24 md:w-32 h-16 text-center font-bold p-0 border-b-4 focus-visible:ring-0 focus-visible:ring-offset-0 appearance-none ${
+                  isShowingAnswer ? 'text-destructive' : ''
+                }`}
                 autoFocus
+                readOnly={isShowingAnswer}
                 style={{
                   MozAppearance: 'textfield',
                   WebkitAppearance: 'none',
@@ -193,6 +280,15 @@ const GameScreen = () => {
           </CardContent>
         </Card>
 
+        {/* Encouragement message for learner mode */}
+        {showEncouragement && settings.learnerMode && (
+          <div className="text-center mb-4 animate-fade-in">
+            <p className="text-lg font-medium text-primary">
+              You got this! Try again 💪
+            </p>
+          </div>
+        )}
+
         <div className="flex justify-center">
           <Button 
             variant="outline"
@@ -212,6 +308,11 @@ const GameScreen = () => {
               currentProblem?.operation === 'subtraction' ? 'Subtraction' :
                 currentProblem?.operation === 'multiplication' ? 'Multiplication' : 'Division'}
           </div>
+          {settings.learnerMode && (
+            <div className="ml-2 inline-flex items-center bg-accent/30 px-2 py-1 rounded-full text-primary font-medium">
+              Learner Mode
+            </div>
+          )}
         </div>
       </div>
     </div>
