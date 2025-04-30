@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Operation } from "@/types";
 import MathIcon from "../common/MathIcon";
@@ -22,15 +23,12 @@ const OperationButton = ({ active, operation, onClick, isMobile = false }: Props
     className={`
       flex items-center justify-center
       rounded-lg transition-all
-      w-full aspect-square
+      flex-shrink-0 flex-grow
+      ${isMobile ? 'h-9 mx-0.5' : 'h-10 mx-1'}
       ${active ? operationStyles[operation] : "bg-white border-2 border-transparent text-muted-foreground shadow hover:bg-muted"}
     `}
     aria-pressed={active}
     onClick={() => onClick(operation)}
-    style={{
-      minHeight: isMobile ? "40px" : "48px",
-      maxWidth: isMobile ? "56px" : "72px",
-    }}
   >
     <MathIcon operation={operation} size={isMobile ? 20 : 24} />
   </button>
