@@ -45,19 +45,19 @@ const GoalsGrid: React.FC<GoalsGridProps> = ({ goals, isLoading }) => {
         {operations.map((op) => (
           <div 
             key={op} 
-            className="flex flex-col items-center"
+            className="flex justify-center"
           >
-            <div className="mb-1 min-w-[72px] w-full max-w-[113.25px] flex justify-center">
+            <div className="min-w-[72px] w-full max-w-[113.25px] flex justify-center">
               <OperationButton 
                 operation={op} 
                 active={true} 
                 onClick={() => {}} 
                 isMobile={false} 
               />
-        
+            </div>
           </div>
         ))}
-      </div>
+
 
       </div>
       
