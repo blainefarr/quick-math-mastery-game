@@ -22,7 +22,6 @@ export type GameSettings = {
   allowNegatives?: boolean;
   focusNumber?: number | null;
   learnerMode?: boolean;
-  useCustomNumberPad?: boolean;
 };
 
 export interface UserScore {
