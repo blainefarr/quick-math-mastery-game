@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import useGame from '@/context/useGame';
 import { Button } from '@/components/ui/button';
@@ -172,11 +171,8 @@ const GameScreen = () => {
       if (numericValue === currentProblem.answer) {
         setFeedback('correct');
         
-        // Only increment score if the user entered the answer 
-        // (not if it was shown in learner mode)
-        if (!currentQuestionShown) {
-          incrementScore();
-        }
+        // Always increment score when user enters correct answer, even after hint was shown
+        incrementScore();
         
         // Clear learner mode timeouts
         clearLearnerModeTimeouts();

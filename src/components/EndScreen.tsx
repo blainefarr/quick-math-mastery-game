@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import useGame from '@/context/useGame';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, RefreshCw, TrendingUp } from 'lucide-react';
+import { ArrowLeft, RefreshCw, TrendingUp, UserPlus } from 'lucide-react';
 import MathIcon from './common/MathIcon';
 import ConfettiEffect from './common/ConfettiEffect';
 
@@ -145,11 +145,11 @@ const EndScreen = () => {
             <Button 
               variant="outline"
               className="w-full border-primary text-primary hover:bg-primary/10 flex items-center"
-              onClick={() => navigate('/progress')} 
+              onClick={() => navigate('/account')}
               type="button"
             >
-              <TrendingUp className="mr-2" size={16} />
-              See Your Progress
+              <UserPlus className="mr-2" size={16} />
+              Sign Up to Save Your Score
             </Button>
           )}
           
