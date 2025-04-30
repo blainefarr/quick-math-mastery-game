@@ -162,7 +162,7 @@ const CustomNumberPad: React.FC<CustomNumberPadProps> = ({
           aria-label="Delete"
         >
           
-          import { Delete } from 'lucide-react';
+          <span className="text-4xl">←</span>
           
         </Button>
       </div>
