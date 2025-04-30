@@ -37,11 +37,23 @@ const GoalsGrid: React.FC<GoalsGridProps> = ({ goals, isLoading }) => {
 
   return (
     <div className="w-full">
-      <div className="grid grid-cols-5 gap-2 items-center">
-        {/* Header row with labels */}
-        <div className="col-span-1 mb-1">
-          <div className="text-sm font-medium">Range</div>
+      <div className="grid grid-cols-[113.25px_repeat(4,minmax(72px,1fr))] gap-2 items-end mb-3">
+        <div className="text-sm font-medium text-muted-foreground">
+          Focus Numbers
         </div>
+
+        {operations.map((op) => (
+          <div 
+            key={op} 
+            className="flex flex-col items-center"
+          >
+            <div className="mb-1 min-w-[72px] w-full max-w-[113.25px] flex justify-center">
+              <OperationButton 
+                operation={op} 
+                active={true} 
+                onClick={() => {}} 
+                isMobile={false} 
+              />
         
         {/* Operations in the header */}
         <div className="col-span-4 grid grid-cols-4 gap-2 mb-1">
@@ -60,8 +72,11 @@ const GoalsGrid: React.FC<GoalsGridProps> = ({ goals, isLoading }) => {
                 />
               </div>
             </div>
-          ))}
-        </div>
+            <span className="text-xs font-medium">{getOperationName(op)}</span>
+          </div>
+        ))}
+      </div>
+
       </div>
       
       {categories.map((category, categoryIndex) => (
@@ -76,7 +91,7 @@ const GoalsGrid: React.FC<GoalsGridProps> = ({ goals, isLoading }) => {
           {category.ranges.map((range) => (
             <div 
               key={`${category.title}-${range}`} 
-              className="grid grid-cols-5 gap-2 mb-2"
+              className="grid grid-cols-[113.25px_repeat(4,minmax(72px,1fr))] gap-2 mb-2"
             >
               <div className="col-span-1 flex items-center justify-start">
                 <span className="text-sm font-medium">
