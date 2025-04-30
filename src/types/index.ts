@@ -35,7 +35,7 @@ export interface UserScore {
 }
 
 // Goal feature types
-export type GoalLevel = 'starter' | 'bronze' | 'silver' | 'gold' | 'star' | 'legend';
+export type GoalLevel = 'learning' | 'bronze' | 'silver' | 'gold' | 'star' | 'legend';
 
 export interface GoalProgress {
   profile_id: string;

@@ -10,8 +10,8 @@ const GoalsLegend: React.FC = () => {
     threshold: number;
   }[] = [
     {
-      level: 'starter',
-      name: 'Starter',
+      level: 'learning',
+      name: 'Learning',
       threshold: 0
     },
     {
@@ -57,7 +57,7 @@ const GoalsLegend: React.FC = () => {
             <div className="flex flex-col">
               <span className="font-medium text-sm">{name}</span>
               <span className="text-xs text-muted-foreground">
-                {level === 'starter' ? 'Just starting' : `Score ≥ ${threshold}`}
+                {level === 'learning' ? 'Just starting' : `Score ≥ ${threshold}`}
               </span>
             </div>
           </div>

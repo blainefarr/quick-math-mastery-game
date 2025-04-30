@@ -46,25 +46,32 @@ const GoalsGrid: React.FC<GoalsGridProps> = ({ goals, isLoading }) => {
 
   return (
     <div className="w-full">
-      <div className="grid grid-cols-5 gap-2 mb-1 items-center">
-        {/* Header row */}
-        <div className="col-span-1"></div>
-        {operations.map((op) => (
-          <div 
-            key={op} 
-            className="col-span-1 flex flex-col items-center justify-center"
-          >
-            <div className="mb-1">
-              <OperationButton 
-                operation={op} 
-                active={true} 
-                onClick={() => {}} 
-                isMobile={false} 
-              />
+      <div className="grid grid-cols-5 gap-2 items-center">
+        {/* Header row with labels */}
+        <div className="col-span-1 mb-1">
+          <div className="text-sm font-medium">Range</div>
+        </div>
+        
+        {/* Operations in the header */}
+        <div className="col-span-4 grid grid-cols-4 gap-2 mb-1">
+          {operations.map((op) => (
+            <div 
+              key={op} 
+              className="col-span-1 flex flex-col items-center justify-center"
+              style={{ maxWidth: '113.25px' }}
+            >
+              <div className="mb-1">
+                <OperationButton 
+                  operation={op} 
+                  active={true} 
+                  onClick={() => {}} 
+                  isMobile={false} 
+                />
+              </div>
+              <span className="text-xs font-medium">{getOperationName(op)}</span>
             </div>
-            <span className="text-xs font-medium">{getOperationName(op)}</span>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
       
       {categories.map((category, categoryIndex) => (
@@ -84,20 +91,22 @@ const GoalsGrid: React.FC<GoalsGridProps> = ({ goals, isLoading }) => {
               <div className="col-span-1 flex items-center justify-start">
                 <span className="text-sm font-medium">
                   {category.isFocusNumber 
-                    ? `${range} and 1-10` 
-                    : `${range} and ${range}`}
+                    ? `${range} | 1-10` 
+                    : `${range} | ${range}`}
                 </span>
               </div>
               
-              {operations.map((op) => (
-                <div key={`${op}-${range}`} className="col-span-1">
-                  <GoalCell
-                    goal={findGoal(op, range)}
-                    operation={op}
-                    range={range}
-                  />
-                </div>
-              ))}
+              <div className="col-span-4 grid grid-cols-4 gap-2">
+                {operations.map((op) => (
+                  <div key={`${op}-${range}`} className="col-span-1">
+                    <GoalCell
+                      goal={findGoal(op, range)}
+                      operation={op}
+                      range={range}
+                    />
+                  </div>
+                ))}
+              </div>
             </div>
           ))}
         </React.Fragment>
@@ -107,16 +116,18 @@ const GoalsGrid: React.FC<GoalsGridProps> = ({ goals, isLoading }) => {
 };
 
 const GoalsGridSkeleton = () => {
-  // Create a 4x10 grid of skeleton cells
+  // Create a skeleton layout that matches our updated grid structure
   return (
     <div className="w-full">
       <div className="grid grid-cols-5 gap-2 mb-2">
         <div className="col-span-1"></div>
-        {[...Array(4)].map((_, i) => (
-          <div key={i} className="col-span-1 flex justify-center">
-            <div className="h-8 w-8 bg-slate-200 rounded-full animate-pulse"></div>
-          </div>
-        ))}
+        <div className="col-span-4 grid grid-cols-4 gap-2">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="col-span-1 flex justify-center">
+              <div className="h-8 w-8 bg-slate-200 rounded-full animate-pulse"></div>
+            </div>
+          ))}
+        </div>
       </div>
       
       {[...Array(2)].map((_, categoryIndex) => (
@@ -132,11 +143,13 @@ const GoalsGridSkeleton = () => {
                 <div className="h-4 w-16 bg-slate-200 rounded animate-pulse"></div>
               </div>
               
-              {[...Array(4)].map((_, colIndex) => (
-                <div key={colIndex} className="col-span-1">
-                  <div className="h-12 w-full bg-slate-200 rounded-md animate-pulse"></div>
-                </div>
-              ))}
+              <div className="col-span-4 grid grid-cols-4 gap-2">
+                {[...Array(4)].map((_, colIndex) => (
+                  <div key={colIndex} className="col-span-1">
+                    <div className="h-12 w-full bg-slate-200 rounded-md animate-pulse"></div>
+                  </div>
+                ))}
+              </div>
             </div>
           ))}
         </React.Fragment>

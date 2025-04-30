@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/auth/useAuth';
@@ -122,7 +121,7 @@ export const getGoalLevel = (score: number): GoalLevel => {
   if (score >= 40) return 'gold';
   if (score >= 30) return 'silver';
   if (score >= 20) return 'bronze';
-  return 'starter';
+  return 'learning';
 };
 
 export const getLevelEmoji = (level: GoalLevel): string => {
@@ -132,9 +131,9 @@ export const getLevelEmoji = (level: GoalLevel): string => {
     case 'gold': return '🥇';
     case 'silver': return '🥈';
     case 'bronze': return '🥉';
-    case 'starter':
+    case 'learning':
     default:
-      return '⚪';
+      return '🚧';
   }
 };
 
