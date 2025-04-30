@@ -41,7 +41,7 @@ const GoalsGrid: React.FC<GoalsGridProps> = ({ goals, isLoading }) => {
         <React.Fragment key={category.title}>
           {/* Conditionally render operation header row for Focus Numbers only */}
           {category.title === 'Focus Numbers' && (
-            <div className="grid grid-cols-[113.25px_repeat(4,minmax(72px,1fr))] gap-2 items-end mb-3">
+            <div className="grid grid-cols-[minmax(96px,1fr)_repeat(4,minmax(64px,1fr))] sm:grid-cols-[113.25px_repeat(4,minmax(72px,1fr))] gap-2 items-end mb-3">
               <div className="text-sm font-semibold text-muted-foreground">
                 Focus Number
               </div>
@@ -61,12 +61,16 @@ const GoalsGrid: React.FC<GoalsGridProps> = ({ goals, isLoading }) => {
           )}
   
           {/* Category header */}
-          {category.title !== 'Focus Numbers' && (
+          {category.title === 'Ranges' && (
             <div className="mt-6 mb-3">
               <h3 className="text-sm font-semibold text-muted-foreground">{category.title}</h3>
               <Separator className="mt-1" />
             </div>
           )}
+          {category.title === 'Focus Numbers' && (
+            <Separator className="my-3" />
+          )}
+
 
   
           {/* Grid of rows */}
