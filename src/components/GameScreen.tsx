@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import useGame from '@/context/useGame';
 import { Button } from '@/components/ui/button';
@@ -6,6 +7,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Clock, RefreshCw } from 'lucide-react';
 import MathIcon from './common/MathIcon';
 import { useCompactHeight } from '@/hooks/use-compact-height';
+import CustomNumberPad from './numberpad/CustomNumberPad';
 
 const GameScreen = () => {
   const {
@@ -33,6 +35,9 @@ const GameScreen = () => {
   const [currentQuestionShown, setCurrentQuestionShown] = useState(false);
   const learnerTimeoutRef = useRef<number | null>(null);
   const showAnswerTimeoutRef = useRef<number | null>(null);
+
+  // Whether to use custom number pad
+  const useCustomNumberPad = settings.useCustomNumberPad || false;
 
   useEffect(() => {
     if (timeLeft <= 0) {
@@ -160,14 +165,18 @@ const GameScreen = () => {
     if (!isShowingAnswer) {
       setUserAnswer(cleanValue);
     }
+    
+    checkAnswer(cleanValue);
+  };
 
+  const checkAnswer = (value: string) => {
     if (hasEndedRef.current || isShowingAnswer) {
       console.log('Game has ended or showing answer, not processing input');
       return;
     }
 
-    if (currentProblem && cleanValue.trim() !== "") {
-      const numericValue = isNegative ? -Number(cleanValue) : Number(cleanValue);
+    if (currentProblem && value.trim() !== "") {
+      const numericValue = isNegative ? -Number(value) : Number(value);
       if (numericValue === currentProblem.answer) {
         setFeedback('correct');
         
@@ -202,6 +211,34 @@ const GameScreen = () => {
       setIsNegative(prev => !prev);
       focusInput();
     }
+  };
+
+  // Custom number pad handlers
+  const handleNumberPress = (number: string) => {
+    if (isShowingAnswer) return;
+    
+    // Limit to reasonable length
+    if (userAnswer.length < 6) {
+      setUserAnswer(prev => {
+        const newValue = prev + number;
+        // Check answer immediately
+        checkAnswer(newValue);
+        return newValue;
+      });
+    }
+    
+    focusInput();
+  };
+
+  const handleBackspace = () => {
+    if (isShowingAnswer) return;
+    
+    setUserAnswer(prev => {
+      const newValue = prev.slice(0, -1);
+      return newValue;
+    });
+    
+    focusInput();
   };
 
   const showNegativeToggle = settings.allowNegatives;
@@ -254,7 +291,7 @@ const GameScreen = () => {
                   isShowingAnswer ? 'text-destructive' : ''
                 }`}
                 autoFocus
-                readOnly={isShowingAnswer}
+                readOnly={isShowingAnswer || useCustomNumberPad}
                 style={{
                   MozAppearance: 'textfield',
                   WebkitAppearance: 'none',
@@ -285,7 +322,17 @@ const GameScreen = () => {
           </div>
         )}
 
-        <div className="flex justify-center">
+        {/* Custom Number Pad */}
+        {useCustomNumberPad && (
+          <CustomNumberPad
+            onNumberPress={handleNumberPress}
+            onBackspace={handleBackspace}
+            onToggleSign={toggleNegative}
+            isNegative={isNegative}
+          />
+        )}
+
+        <div className="flex justify-center mt-4">
           <Button 
             variant="outline"
             onClick={handleRestartGame}
@@ -307,6 +354,11 @@ const GameScreen = () => {
           {settings.learnerMode && (
             <div className="ml-2 inline-flex items-center bg-accent/30 px-2 py-1 rounded-full text-primary font-medium">
               Learner Mode
+            </div>
+          )}
+          {settings.useCustomNumberPad && (
+            <div className="ml-2 inline-flex items-center bg-accent/30 px-2 py-1 rounded-full text-primary font-medium">
+              Number Pad
             </div>
           )}
         </div>

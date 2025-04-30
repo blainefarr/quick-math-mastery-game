@@ -8,26 +8,31 @@ const defaultSettings: GameSettings = {
   timerSeconds: 60,
   allowNegatives: false,
   focusNumber: null,
-  learnerMode: false
+  learnerMode: false,
+  useCustomNumberPad: false
 };
 
 export const useGameSettings = () => {
   const [settings, setSettings] = useState<GameSettings>(() => {
-    // Try to load learner mode from localStorage
+    // Try to load settings from localStorage
     const savedLearnerMode = localStorage.getItem('learnerModeEnabled');
-    if (savedLearnerMode !== null) {
-      return {
-        ...defaultSettings,
-        learnerMode: JSON.parse(savedLearnerMode)
-      };
-    }
-    return defaultSettings;
+    const savedCustomNumberPad = localStorage.getItem('customNumberPadEnabled');
+    
+    return {
+      ...defaultSettings,
+      learnerMode: savedLearnerMode !== null ? JSON.parse(savedLearnerMode) : defaultSettings.learnerMode,
+      useCustomNumberPad: savedCustomNumberPad !== null ? JSON.parse(savedCustomNumberPad) : defaultSettings.useCustomNumberPad
+    };
   });
 
-  // Save learner mode setting to localStorage when it changes
+  // Save learner mode and custom number pad settings to localStorage when they change
   useEffect(() => {
     localStorage.setItem('learnerModeEnabled', JSON.stringify(settings.learnerMode));
   }, [settings.learnerMode]);
+  
+  useEffect(() => {
+    localStorage.setItem('customNumberPadEnabled', JSON.stringify(settings.useCustomNumberPad));
+  }, [settings.useCustomNumberPad]);
 
   const updateSettings = (newSettings: Partial<GameSettings>) => {
     setSettings(prev => {

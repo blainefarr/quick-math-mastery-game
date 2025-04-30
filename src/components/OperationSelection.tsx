@@ -1,265 +1,286 @@
-
 import React, { useState, useEffect } from 'react';
-import useGame from '@/context/useGame';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowRight } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Slider } from "@/components/ui/slider";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { useToast } from "@/components/ui/use-toast";
+import { useGame } from '@/context/useGame';
 import { Operation } from '@/types';
-import OperationButton from './operation/OperationButton';
-import NumberRangeSection from './operation/NumberRangeSection';
-import TimerSelect from './operation/TimerSelect';
 import AdvancedSettings from './operation/AdvancedSettings';
-import { useIsMobile } from '@/hooks/use-mobile';
+import { useCompactHeight } from '@/hooks/use-compact-height';
+
+interface NumberRange {
+  min1: string;
+  max1: string;
+  min2: string;
+  max2: string;
+}
 
 const OperationSelection = () => {
-  const isMobile = useIsMobile();
-  const {
-    settings,
-    updateSettings,
-    setGameState,
-    setTimeLeft,
-    focusNumber,
-    setFocusNumber,
-    resetScore
-  } = useGame();
-  
-  // Local state for form values
-  const [selectedOperation, setSelectedOperation] = useState<Operation>(settings.operation);
-  const [negativeNumbersEnabled, setNegativeNumbersEnabled] = useState(settings.allowNegatives || false);
-  const [learnerModeEnabled, setLearnerModeEnabled] = useState(settings.learnerMode || false);
-  const [range1Min, setRange1Min] = useState(settings.range.min1);
-  const [range1Max, setRange1Max] = useState(settings.range.max1);
-  const [range2Min, setRange2Min] = useState(settings.range.min2);
-  const [range2Max, setRange2Max] = useState(settings.range.max2);
-  const [useFocusNumber, setUseFocusNumber] = useState(focusNumber !== null);
-  const [focusNumberValue, setFocusNumberValue] = useState(focusNumber || 1);
-  
-  // Synchronize local state with global settings whenever settings change
-  useEffect(() => {
-    setSelectedOperation(settings.operation);
-    setRange1Min(settings.range.min1);
-    setRange1Max(settings.range.max1);
-    setRange2Min(settings.range.min2);
-    setRange2Max(settings.range.max2);
-    setNegativeNumbersEnabled(settings.allowNegatives || false);
-    setLearnerModeEnabled(settings.learnerMode || false);
-  }, [settings]);
+  const navigate = useNavigate();
+  const { settings, updateSettings, setGameState } = useGame();
+  const { toast } = useToast();
+  const isCompactHeight = useCompactHeight();
+
+  const [operation, setOperation] = useState<Operation>(settings.operation || 'addition');
+  const [numberRange, setNumberRange] = useState<NumberRange>({
+    min1: String(settings.range.min1 || 1),
+    max1: String(settings.range.max1 || 10),
+    min2: String(settings.range.min2 || 1),
+    max2: String(settings.range.max2 || 10),
+  });
+  const [selectedTimer, setSelectedTimer] = useState<number>(settings.timerSeconds || 60);
+  const [useFocusNumber, setUseFocusNumber] = useState<boolean>(settings.focusNumber !== null);
+  const [focusNumberValue, setFocusNumberValue] = useState<number>(settings.focusNumber || 7);
+  const [negativeNumbersEnabled, setNegativeNumbersEnabled] = useState<boolean>(settings.allowNegatives || false);
+  const [learnerModeEnabled, setLearnerModeEnabled] = useState<boolean>(settings.learnerMode || false);
+
+  // Add customNumberPadEnabled state and handler
+  const [customNumberPadEnabled, setCustomNumberPadEnabled] = useState<boolean>(
+    settings.useCustomNumberPad || false
+  );
   
   useEffect(() => {
-    if (useFocusNumber && focusNumberValue !== null) {
-      setRange1Min(focusNumberValue);
-      setRange1Max(focusNumberValue);
-    }
-  }, [useFocusNumber, focusNumberValue]);
-  
-  const parseOrDefault = (str: string, def: number) => {
-    const val = parseInt(str);
-    return !isNaN(val) ? val : def;
+    // Load settings from localStorage on component mount
+    const savedOperation = localStorage.getItem('operation');
+    const savedNumberRange = localStorage.getItem('numberRange');
+    const savedTimer = localStorage.getItem('selectedTimer');
+    const savedFocusNumber = localStorage.getItem('focusNumber');
+    const savedUseFocusNumber = localStorage.getItem('useFocusNumber');
+    const savedNegativeNumbers = localStorage.getItem('negativeNumbersEnabled');
+    const savedLearnerMode = localStorage.getItem('learnerModeEnabled');
+    const savedCustomNumberPad = localStorage.getItem('customNumberPadEnabled');
+
+    if (savedOperation) setOperation(savedOperation as Operation);
+    if (savedNumberRange) setNumberRange(JSON.parse(savedNumberRange));
+    if (savedTimer) setSelectedTimer(Number(savedTimer));
+    if (savedUseFocusNumber) setUseFocusNumber(JSON.parse(savedUseFocusNumber));
+    if (savedFocusNumber) setFocusNumberValue(Number(savedFocusNumber));
+    if (savedNegativeNumbers) setNegativeNumbersEnabled(JSON.parse(savedNegativeNumbers));
+    if (savedLearnerMode) setLearnerModeEnabled(JSON.parse(savedLearnerMode));
+    if (savedCustomNumberPad) setCustomNumberPadEnabled(JSON.parse(savedCustomNumberPad));
+  }, []);
+
+  useEffect(() => {
+    // Save settings to localStorage whenever they change
+    localStorage.setItem('operation', operation);
+    localStorage.setItem('numberRange', JSON.stringify(numberRange));
+    localStorage.setItem('selectedTimer', String(selectedTimer));
+    localStorage.setItem('focusNumber', String(focusNumberValue));
+    localStorage.setItem('useFocusNumber', JSON.stringify(useFocusNumber));
+    localStorage.setItem('negativeNumbersEnabled', JSON.stringify(negativeNumbersEnabled));
+    localStorage.setItem('learnerModeEnabled', JSON.stringify(learnerModeEnabled));
+    localStorage.setItem('customNumberPadEnabled', JSON.stringify(customNumberPadEnabled));
+  }, [operation, numberRange, selectedTimer, focusNumberValue, useFocusNumber, negativeNumbersEnabled, learnerModeEnabled, customNumberPadEnabled]);
+
+  const handleOperationChange = (value: Operation) => {
+    setOperation(value);
   };
-  
-  const handleOperationSelect = (operation: Operation) => {
-    setSelectedOperation(operation);
-    // Update global settings when operation changes
-    updateSettings({
-      operation
-    });
+
+  const handleNumberRangeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setNumberRange(prevState => ({
+      ...prevState,
+      [name]: value,
+    }));
   };
-  
+
+  const handleTimerChange = (value: number[]) => {
+    setSelectedTimer(value[0]);
+  };
+
   const handleFocusNumberToggle = (checked: boolean) => {
     setUseFocusNumber(checked);
-    if (!checked) {
-      setFocusNumber(null);
-      setRange1Min(1);
-      setRange1Max(10);
-      // Update global settings when focus number is toggled off
-      updateSettings({
-        focusNumber: null,
-        range: {
-          ...settings.range,
-          min1: 1,
-          max1: 10
-        }
-      });
-    } else {
-      setFocusNumber(focusNumberValue);
-      setRange1Min(focusNumberValue);
-      setRange1Max(focusNumberValue);
-      // Update global settings when focus number is toggled on
-      updateSettings({
-        focusNumber: focusNumberValue,
-        range: {
-          ...settings.range,
-          min1: focusNumberValue,
-          max1: focusNumberValue
-        }
-      });
-    }
   };
-  
+
   const handleFocusNumberChange = (value: string) => {
-    const numValue = parseOrDefault(value, focusNumberValue);
-    setFocusNumberValue(numValue);
-    if (useFocusNumber) {
-      setFocusNumber(numValue);
-      setRange1Min(numValue);
-      setRange1Max(numValue);
-      // Update global settings when focus number changes
-      updateSettings({
-        focusNumber: numValue,
-        range: {
-          ...settings.range,
-          min1: numValue,
-          max1: numValue
-        }
-      });
+    const parsedValue = parseInt(value);
+    if (!isNaN(parsedValue)) {
+      setFocusNumberValue(parsedValue);
     }
   };
-  
-  const handleNegativeToggle = (checked: boolean) => {
+
+  const handleNegativeNumbersToggle = (checked: boolean) => {
     setNegativeNumbersEnabled(checked);
-    // Update global settings when negative toggle changes
-    updateSettings({
-      allowNegatives: checked
-    });
   };
-  
+
   const handleLearnerModeToggle = (checked: boolean) => {
     setLearnerModeEnabled(checked);
-    // Update global settings when learner mode changes
-    updateSettings({
-      learnerMode: checked
-    });
   };
   
-  // Update only the timer setting without altering other settings
-  const handleTimerChange = (seconds: number) => {
-    updateSettings({
-      timerSeconds: seconds
-    });
+  const handleCustomNumberPadToggle = (checked: boolean) => {
+    setCustomNumberPadEnabled(checked);
   };
   
-  // Handle range changes
-  const handleRange1MinChange = (value: string) => {
-    const numValue = parseOrDefault(value, range1Min);
-    setRange1Min(numValue);
-    updateSettings({
-      range: {
-        ...settings.range,
-        min1: numValue
-      }
-    });
+  const validateRange = () => {
+    const min1 = parseInt(numberRange.min1);
+    const max1 = parseInt(numberRange.max1);
+    const min2 = parseInt(numberRange.min2);
+    const max2 = parseInt(numberRange.max2);
+
+    if (isNaN(min1) || isNaN(max1) || isNaN(min2) || isNaN(max2)) {
+      toast({
+        title: "Error",
+        description: "Please enter valid numbers for the number ranges.",
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    if (min1 > max1 || min2 > max2) {
+      toast({
+        title: "Error",
+        description: "Minimum value cannot be greater than maximum value.",
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    return true;
   };
-  
-  const handleRange1MaxChange = (value: string) => {
-    const numValue = parseOrDefault(value, range1Max);
-    setRange1Max(numValue);
-    updateSettings({
-      range: {
-        ...settings.range,
-        max1: numValue
-      }
-    });
-  };
-  
-  const handleRange2MinChange = (value: string) => {
-    const numValue = parseOrDefault(value, range2Min);
-    setRange2Min(numValue);
-    updateSettings({
-      range: {
-        ...settings.range,
-        min2: numValue
-      }
-    });
-  };
-  
-  const handleRange2MaxChange = (value: string) => {
-    const numValue = parseOrDefault(value, range2Max);
-    setRange2Max(numValue);
-    updateSettings({
-      range: {
-        ...settings.range,
-        max2: numValue
-      }
-    });
-  };
-  
+
   const handleStartGame = () => {
-    if (range1Max < range1Min || range2Max < range2Min) {
-      alert('Maximum value must be greater than or equal to minimum value');
+    if (!validateRange()) {
       return;
     }
-    resetScore();
+    
     updateSettings({
-      operation: selectedOperation,
+      operation,
       range: {
-        min1: useFocusNumber ? focusNumberValue : range1Min,
-        max1: useFocusNumber ? focusNumberValue : range1Max,
-        min2: range2Min,
-        max2: range2Max
+        min1: parseInt(numberRange.min1),
+        max1: parseInt(numberRange.max1),
+        min2: parseInt(numberRange.min2),
+        max2: parseInt(numberRange.max2),
       },
-      timerSeconds: settings.timerSeconds,
+      timerSeconds: selectedTimer,
       allowNegatives: negativeNumbersEnabled,
+      focusNumber: useFocusNumber ? focusNumberValue : null,
       learnerMode: learnerModeEnabled,
-      focusNumber: useFocusNumber ? focusNumberValue : null
+      useCustomNumberPad: customNumberPadEnabled
     });
-    if (useFocusNumber) setFocusNumber(focusNumberValue);else setFocusNumber(null);
-    setTimeLeft(settings.timerSeconds);
+    
     setGameState('playing');
   };
-  
-  return <div className="container mx-auto px-4 py-8">
-      <Card className="shadow-lg animate-fade-in mx-auto max-w-[535px] min-w-[300px]">
-        <CardHeader>
-          <CardTitle className="text-2xl font-bold text-center">Minute Math Settings</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="mx-auto space-y-6 px-0">
-            <div>
-              <h3 className="text-lg font-medium mb-3">Operation</h3>
-              <div className="flex flex-nowrap justify-center items-center rounded-lg p-2 px-0 bg-muted/50 w-full">
-                {(['addition', 'subtraction', 'multiplication', 'division'] as Operation[]).map(operation => <OperationButton key={operation} active={selectedOperation === operation} operation={operation} onClick={handleOperationSelect} isMobile={isMobile} />)}
+
+  const handleGoToGoals = () => {
+    navigate('/goals');
+  };
+
+  return (
+    <div className={`flex justify-center items-center min-h-screen p-4 bg-background ${
+      isCompactHeight ? 'pt-0 mt-0' : 'pt-4'
+    }`}>
+      <div className={`w-full max-w-md ${
+        isCompactHeight ? 'mt-0' : 'mt-8'
+      }`}>
+        <Card className="animate-in fade-in duration-700">
+          <CardHeader>
+            <CardTitle className="text-2xl">Math Game</CardTitle>
+            <CardDescription>Select your operation and number range.</CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-4">
+            <div className="grid gap-2">
+              <Label htmlFor="operation">Operation</Label>
+              <Select value={operation} onValueChange={handleOperationChange}>
+                <SelectTrigger id="operation">
+                  <SelectValue placeholder="Select" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="addition">Addition (+)</SelectItem>
+                  <SelectItem value="subtraction">Subtraction (−)</SelectItem>
+                  <SelectItem value="multiplication">Multiplication (×)</SelectItem>
+                  <SelectItem value="division">Division (÷)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="min1">Range 1 Min</Label>
+                <Input
+                  type="number"
+                  id="min1"
+                  name="min1"
+                  value={numberRange.min1}
+                  onChange={handleNumberRangeChange}
+                />
+              </div>
+              <div>
+                <Label htmlFor="max1">Range 1 Max</Label>
+                <Input
+                  type="number"
+                  id="max1"
+                  name="max1"
+                  value={numberRange.max1}
+                  onChange={handleNumberRangeChange}
+                />
+              </div>
+              <div>
+                <Label htmlFor="min2">Range 2 Min</Label>
+                <Input
+                  type="number"
+                  id="min2"
+                  name="min2"
+                  value={numberRange.min2}
+                  onChange={handleNumberRangeChange}
+                />
+              </div>
+              <div>
+                <Label htmlFor="max2">Range 2 Max</Label>
+                <Input
+                  type="number"
+                  id="max2"
+                  name="max2"
+                  value={numberRange.max2}
+                  onChange={handleNumberRangeChange}
+                />
               </div>
             </div>
+            <div className="grid gap-2">
+              <Label htmlFor="timer">Timer (seconds)</Label>
+              <Slider
+                id="timer"
+                defaultValue={[selectedTimer]}
+                max={180}
+                step={15}
+                aria-label="Timer duration in seconds"
+                onValueChange={handleTimerChange}
+              />
+              <p className="text-sm text-muted-foreground">
+                Selected timer: {selectedTimer} seconds
+              </p>
+            </div>
+          </CardContent>
+        </Card>
 
-            <NumberRangeSection 
-              focusNumberEnabled={useFocusNumber} 
-              focusNumber={focusNumberValue} 
-              negativeNumbersEnabled={negativeNumbersEnabled} 
-              range1={{
-                min: range1Min,
-                max: range1Max
-              }} 
-              range2={{
-                min: range2Min,
-                max: range2Max
-              }} 
-              setRange1Min={handleRange1MinChange}
-              setRange1Max={handleRange1MaxChange}
-              setRange2Min={handleRange2MinChange}
-              setRange2Max={handleRange2MaxChange}
-            />
+        <AdvancedSettings
+          useFocusNumber={useFocusNumber}
+          focusNumberValue={focusNumberValue}
+          negativeNumbersEnabled={negativeNumbersEnabled}
+          learnerModeEnabled={learnerModeEnabled}
+          customNumberPadEnabled={customNumberPadEnabled}
+          onFocusNumberToggle={handleFocusNumberToggle}
+          onFocusNumberChange={handleFocusNumberChange}
+          onNegativeToggle={handleNegativeNumbersToggle}
+          onLearnerModeToggle={handleLearnerModeToggle}
+          onCustomNumberPadToggle={handleCustomNumberPadToggle}
+        />
 
-            <TimerSelect value={settings.timerSeconds} onChange={handleTimerChange} />
-
-            <AdvancedSettings 
-              useFocusNumber={useFocusNumber} 
-              focusNumberValue={focusNumberValue} 
-              negativeNumbersEnabled={negativeNumbersEnabled}
-              learnerModeEnabled={learnerModeEnabled}
-              onFocusNumberToggle={handleFocusNumberToggle} 
-              onFocusNumberChange={handleFocusNumberChange} 
-              onNegativeToggle={handleNegativeToggle}
-              onLearnerModeToggle={handleLearnerModeToggle}
-            />
-          </div>
-        </CardContent>
-        <CardFooter className="px-4">
-          <Button onClick={handleStartGame} className="w-full py-6 text-lg font-bold bg-primary hover:bg-primary/90 transition-all">
-            Start Game
-            <ArrowRight className="ml-2" />
-          </Button>
-        </CardFooter>
-      </Card>
-    </div>;
+        <div className="flex justify-between mt-6">
+          <Button onClick={handleStartGame}>Start Game</Button>
+          <Button variant="secondary" onClick={handleGoToGoals}>View Goals</Button>
+        </div>
+      </div>
+    </div>
+  );
 };
+
 export default OperationSelection;
