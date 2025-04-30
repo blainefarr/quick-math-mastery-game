@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Backspace } from 'lucide-react';
+import { Delete } from 'lucide-react';
 
 interface CustomNumberPadProps {
   onNumberPress: (number: string) => void;
@@ -107,7 +107,7 @@ const CustomNumberPad: React.FC<CustomNumberPadProps> = ({
           onClick={onBackspace}
           aria-label="Backspace"
         >
-          <Backspace size={20} />
+          <Delete size={20} />
         </button>
       </div>
     </div>
