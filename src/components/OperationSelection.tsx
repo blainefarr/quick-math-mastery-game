@@ -56,12 +56,11 @@ const OperationSelection = () => {
   
   const handleOperationSelect = (operation: Operation) => {
     setSelectedOperation(operation);
-    updateSettings(prev => ({
-      ...prev,
+    updateSettings({
+      ...settings,
       operation
-    }));
+    });
   };
-  
   
   const handleFocusNumberToggle = (checked: boolean) => {
     setUseFocusNumber(checked);
