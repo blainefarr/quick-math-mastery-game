@@ -34,15 +34,6 @@ const GoalsGrid: React.FC<GoalsGridProps> = ({ goals, isLoading }) => {
   if (isLoading) {
     return <GoalsGridSkeleton />;
   }
-  
-  const getOperationName = (op: Operation): string => {
-    switch (op) {
-      case 'addition': return 'Addition';
-      case 'subtraction': return 'Subtraction';
-      case 'multiplication': return 'Multiplication';
-      case 'division': return 'Division';
-    }
-  };
 
   return (
     <div className="w-full">
@@ -68,7 +59,6 @@ const GoalsGrid: React.FC<GoalsGridProps> = ({ goals, isLoading }) => {
                   isMobile={false} 
                 />
               </div>
-              <span className="text-xs font-medium">{getOperationName(op)}</span>
             </div>
           ))}
         </div>

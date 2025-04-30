@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/auth/useAuth';
@@ -70,8 +71,8 @@ export const useGoalProgress = () => {
       // Only update if it's a new best score
       const shouldUpdateBestScore = !existingGoal || score > existingGoal.best_score;
       const bestScore = existingGoal && !shouldUpdateBestScore ? existingGoal.best_score : score;
-      const previousLevel = existingGoal?.level || 'starter';
-      const leveledUp = previousLevel !== level && level !== 'starter';
+      const previousLevel = existingGoal?.level || 'learning';
+      const leveledUp = previousLevel !== level && level !== 'learning';
       
       const goalData = {
         profile_id: defaultProfileId,
