@@ -19,23 +19,28 @@ const GoalsPage: React.FC = () => {
   
   return (
     <div className="container mx-auto py-8 px-4 max-w-6xl">
-      <div className="flex items-center gap-4 mb-2">
-        <Button variant="outline" size="sm" onClick={() => navigate('/')} className="h-8 rounded-full">
+      <div className="flex items-center mb-6">
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={() => navigate('/')} 
+          className="h-8 rounded-full mr-auto"
+        >
           <ArrowLeft size={16} className="mr-1" />
           Back to Game
         </Button>
       </div>
 
-      <div className="text-center">
+      <div className="text-center mb-8">
         <h1 className="text-4xl font-bold text-primary mb-2">Goals</h1>
         <p className="text-muted-foreground">Track your math skills progress</p>
       </div>
 
-      <div className="mt-6">
+      <div className="mt-6 mb-8">
         <GoalsLegend />
       </div>
       
-      <div className="mt-6">
+      <div className="mt-6 mb-8">
         <Card>
           <CardContent className="p-6">
             <GoalsGrid 

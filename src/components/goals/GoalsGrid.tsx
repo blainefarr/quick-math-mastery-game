@@ -43,9 +43,9 @@ const GoalsGrid: React.FC<GoalsGridProps> = ({ goals, isLoading }) => {
         {operations.map((op) => (
           <div 
             key={op} 
-            className="col-span-1 flex flex-col items-center justify-center p-2"
+            className="col-span-1 flex flex-col items-center justify-center"
           >
-            <MathIcon operation={op} className="mb-1" />
+            <MathIcon operation={op} size={28} className="mb-1" />
             <span className="text-xs font-medium">{op.charAt(0).toUpperCase() + op.slice(1)}</span>
           </div>
         ))}
@@ -67,7 +67,9 @@ const GoalsGrid: React.FC<GoalsGridProps> = ({ goals, isLoading }) => {
             >
               <div className="col-span-1 flex items-center justify-start">
                 <span className="text-sm font-medium">
-                  {category.isFocusNumber ? `${range} and 1-10` : `${range} and ${range}`}
+                  {category.isFocusNumber 
+                    ? `${range} and 1-10` 
+                    : `${range} and ${range}`}
                 </span>
               </div>
               

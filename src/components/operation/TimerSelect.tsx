@@ -21,8 +21,7 @@ const TimerSelect = ({
 
   // This function prevents operation reset by stopping event propagation
   const handleValueChange = (newValue: string) => {
-    // Stop event propagation to prevent any parent components from re-rendering
-    // or resetting state when the timer value changes
+    // Convert the string value to a number and pass it to the onChange handler
     onChange(parseInt(newValue));
   };
 
