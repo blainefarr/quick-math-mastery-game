@@ -287,7 +287,7 @@ export function ProfileSwitcherDialog({
                   </>}
               </div>
               
-              <div className="flex justify-end">
+              <div className="flex justify-end mx-[4px]">
                 <Button variant="outline" onClick={() => {
               // Enhanced cleanup before closing
               onOpenChange(false);
