@@ -5,6 +5,7 @@ import { useAuth } from '@/context/auth/useAuth';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ProfileSwitcherDialog } from './ProfileSwitcherDialog';
 import { Loader2 } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 const UserProfile = () => {
   const { 
@@ -17,26 +18,45 @@ const UserProfile = () => {
     userId
   } = useAuth();
   const [showProfileSwitcher, setShowProfileSwitcher] = useState(false);
+  const [profilesChecked, setProfilesChecked] = useState(false);
   
-  // Auto-show profile switcher only when user has multiple profiles and no active profile selected
+  // Check if we need to show the profile switcher when user has multiple profiles
   useEffect(() => {
     // Don't show anything during initial load or for new signups that are being processed
-    if (isLoadingProfile || isNewSignup) {
+    if (!isAuthenticated || isLoadingProfile || isNewSignup) {
       console.log('UserProfile: Not showing profile switcher yet: still loading or new signup');
       return;
     }
     
-    // Only auto-show if we have multiple profiles and no recent showings
-    if (hasMultipleProfiles && !defaultProfileId) {
-      console.log('UserProfile: Auto-showing profile switcher: multiple profiles detected and no default');
-      setShowProfileSwitcher(true);
-    } 
-    // Only show if we've completed loading and there's no profile
-    else if (!defaultProfileId && !isNewSignup) {
-      console.log('UserProfile: Auto-showing profile switcher: no active profile');
-      setShowProfileSwitcher(true);
+    // User is authenticated and profile loading is complete
+    if (hasMultipleProfiles && !profilesChecked) {
+      console.log('UserProfile: Multiple profiles detected, checking if we need to show picker');
+      
+      // Check if user has an active profile set
+      const checkActiveProfile = async () => {
+        try {
+          // Get the currently active profile
+          const activeProfileId = localStorage.getItem('math_game_active_profile');
+          
+          if (!activeProfileId) {
+            console.log('UserProfile: No active profile found with multiple profiles, showing selector');
+            setShowProfileSwitcher(true);
+          } else {
+            console.log('UserProfile: Active profile found:', activeProfileId);
+          }
+        } catch (error) {
+          console.error('Error checking profiles:', error);
+        } finally {
+          setProfilesChecked(true);
+        }
+      };
+      
+      checkActiveProfile();
+    } else if (!profilesChecked) {
+      // Single profile - just mark as checked to prevent further checks
+      setProfilesChecked(true);
     }
-  }, [isLoadingProfile, hasMultipleProfiles, defaultProfileId, isNewSignup]);
+  }, [isAuthenticated, isLoadingProfile, hasMultipleProfiles, defaultProfileId, isNewSignup, profilesChecked]);
   
   // Debug user state
   useEffect(() => {
@@ -48,13 +68,15 @@ const UserProfile = () => {
         isLoadingProfile,
         hasMultipleProfiles,
         isNewSignup,
+        showProfileSwitcher,
+        profilesChecked,
         renderDecision: isNewSignup ? "showing setup message" :
                        isLoadingProfile ? "showing skeleton" :
                        !defaultProfileId ? "showing loading message" :
                        "showing dropdown"
       });
     }
-  }, [isAuthenticated, userId, username, defaultProfileId, isLoadingProfile, hasMultipleProfiles, isNewSignup]);
+  }, [isAuthenticated, userId, username, defaultProfileId, isLoadingProfile, hasMultipleProfiles, isNewSignup, showProfileSwitcher, profilesChecked]);
   
   if (!isAuthenticated) {
     console.log('UserProfile: Not authenticated, returning null');
@@ -98,7 +120,10 @@ const UserProfile = () => {
   console.log('UserProfile: Rendering dropdown with username:', username);
   return (
     <div className="flex items-center gap-2">
-      <UserDropdown username={username || 'User'} />
+      <UserDropdown 
+        username={username || 'User'} 
+        hasMultipleProfiles={hasMultipleProfiles}
+      />
       
       {/* Profile Switcher Dialog */}
       <ProfileSwitcherDialog 

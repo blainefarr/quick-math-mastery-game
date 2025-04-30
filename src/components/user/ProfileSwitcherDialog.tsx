@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { 
   Dialog, 
@@ -11,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/context/auth/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Badge } from '@/components/ui/badge';
-import { Plus, User, UserCircle, Check, AlertCircle, Loader2 } from 'lucide-react';
+import { Plus, User, UserCircle, AlertCircle, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { CreateProfileForm } from './CreateProfileForm';
 import { ACTIVE_PROFILE_KEY } from '@/context/auth/utils/profileUtils';
@@ -321,12 +322,6 @@ export function ProfileSwitcherDialog({ open, onOpenChange }: ProfileSwitcherDia
                           <p className="text-sm text-muted-foreground">{profile.grade}</p>
                         )}
                         <div className="flex flex-wrap gap-1 mt-2 justify-center">
-                          {profile.id === defaultProfileId && (
-                            <Badge variant="outline" className="flex items-center gap-1">
-                              <Check className="h-3 w-3" />
-                              <span>Active</span>
-                            </Badge>
-                          )}
                           {profile.is_owner && (
                             <Badge variant="secondary" className="flex items-center gap-1">
                               <User className="h-3 w-3" />

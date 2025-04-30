@@ -7,10 +7,10 @@ import { AuthChangeEvent, Session } from '@supabase/supabase-js';
 import { toast } from 'sonner';
 
 // Optimized timing constants
-const AUTH_TIMEOUT_MS = 5000; // Reduced from 10s to 5s
-const MAX_PROFILE_RETRY_ATTEMPTS = 3; // Reduced from 5 to 3
-const PROFILE_RETRY_DELAY_MS = 1000; // Reduced from 1.5s to 1s
-const INITIAL_FETCH_DELAY_MS = 300; // Reduced from 1s to 300ms
+const AUTH_TIMEOUT_MS = 5000; // 5s timeout for auth operations
+const MAX_PROFILE_RETRY_ATTEMPTS = 3;
+const PROFILE_RETRY_DELAY_MS = 1000;
+const INITIAL_FETCH_DELAY_MS = 300;
 
 // Add debounce control
 let isCurrentlyFetching = false;

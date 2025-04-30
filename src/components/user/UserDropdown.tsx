@@ -19,15 +19,17 @@ interface UserDropdownProps {
   username: string;
   dropdownLabel?: string;
   onOpenProfile?: () => void;
+  hasMultipleProfiles?: boolean;
 }
 
 const UserDropdown = ({ 
   username, 
   dropdownLabel = "My Progress",
-  onOpenProfile
+  onOpenProfile,
+  hasMultipleProfiles = false
 }: UserDropdownProps) => {
   const navigate = useNavigate();
-  const { handleLogout, hasMultipleProfiles } = useAuth();
+  const { handleLogout } = useAuth();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [showProfileSwitcher, setShowProfileSwitcher] = useState(false);
 
