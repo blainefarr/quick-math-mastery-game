@@ -120,7 +120,7 @@ const CustomNumberPad: React.FC<CustomNumberPadProps> = ({
           className="text-3xl h-16 font-semibold bg-secondary/20 hover:bg-secondary/30 active:bg-secondary/40 transition-colors"
           aria-label="Delete"
         >
-          <Delete className="h-10 w-10" /> {/* Increased size from 8 to 10 */}
+          <Delete className="h-8 w-8 stroke-[2.5]" />
         </Button>
       </div>
     </div>
