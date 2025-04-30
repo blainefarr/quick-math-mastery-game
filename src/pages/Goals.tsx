@@ -41,7 +41,7 @@ const GoalsPage: React.FC = () => {
         
         <div className="mt-6 mb-8">
           <Card>
-            <CardContent className="p-6">
+          <CardContent className="px-2 sm:px-6 py-6">
               <GoalsGrid 
                 goals={goals}
                 isLoading={isLoading}
