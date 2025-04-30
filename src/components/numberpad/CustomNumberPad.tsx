@@ -9,7 +9,7 @@ interface CustomNumberPadProps {
   onNegativeToggle: () => void;
   isNegative: boolean;
   showNegativeToggle: boolean;
-  onButtonPress?: () => void; // New callback to handle focus reset
+  onButtonPress?: () => void;
 }
 
 const CustomNumberPad: React.FC<CustomNumberPadProps> = ({
@@ -38,6 +38,12 @@ const CustomNumberPad: React.FC<CustomNumberPadProps> = ({
     if (onButtonPress) onButtonPress();
   }, [onNegativeToggle, onButtonPress]);
 
+  // Improve touch responsiveness by handling touch events directly
+  const handleTouchStart = useCallback((e: React.TouchEvent, callback: () => void) => {
+    e.preventDefault(); // Prevent default to avoid delays
+    callback();
+  }, []);
+
   return (
     <div className="w-full mx-auto mt-4">
       <div className="grid grid-cols-3 gap-2">
@@ -47,7 +53,8 @@ const CustomNumberPad: React.FC<CustomNumberPadProps> = ({
             key={num}
             variant="outline"
             onClick={() => handleNumberPress(num.toString())}
-            className="text-2xl h-16 font-semibold bg-primary/15 hover:bg-primary/25 active:bg-primary/40 transition-colors"
+            onTouchStart={(e) => handleTouchStart(e, () => handleNumberPress(num.toString()))}
+            className="text-3xl h-16 font-semibold bg-primary/15 hover:bg-primary/25 active:bg-primary/40 transition-colors"
             aria-label={num.toString()}
           >
             {num}
@@ -60,7 +67,8 @@ const CustomNumberPad: React.FC<CustomNumberPadProps> = ({
             key={num}
             variant="outline"
             onClick={() => handleNumberPress(num.toString())}
-            className="text-2xl h-16 font-semibold bg-primary/15 hover:bg-primary/25 active:bg-primary/40 transition-colors"
+            onTouchStart={(e) => handleTouchStart(e, () => handleNumberPress(num.toString()))}
+            className="text-3xl h-16 font-semibold bg-primary/15 hover:bg-primary/25 active:bg-primary/40 transition-colors"
             aria-label={num.toString()}
           >
             {num}
@@ -73,7 +81,8 @@ const CustomNumberPad: React.FC<CustomNumberPadProps> = ({
             key={num}
             variant="outline"
             onClick={() => handleNumberPress(num.toString())}
-            className="text-2xl h-16 font-semibold bg-primary/15 hover:bg-primary/25 active:bg-primary/40 transition-colors"
+            onTouchStart={(e) => handleTouchStart(e, () => handleNumberPress(num.toString()))}
+            className="text-3xl h-16 font-semibold bg-primary/15 hover:bg-primary/25 active:bg-primary/40 transition-colors"
             aria-label={num.toString()}
           >
             {num}
@@ -85,7 +94,8 @@ const CustomNumberPad: React.FC<CustomNumberPadProps> = ({
           <Button
             variant="outline"
             onClick={handleNegativeToggle}
-            className={`text-2xl h-16 font-semibold bg-secondary/20 hover:bg-secondary/30 active:bg-secondary/40 transition-colors ${isNegative ? 'ring-2 ring-primary' : ''}`}
+            onTouchStart={(e) => handleTouchStart(e, () => handleNegativeToggle())}
+            className={`text-3xl h-16 font-semibold bg-secondary/20 hover:bg-secondary/30 active:bg-secondary/40 transition-colors ${isNegative ? 'ring-2 ring-primary' : ''}`}
             aria-pressed={isNegative}
             aria-label={isNegative ? "Positive" : "Negative"}
           >
@@ -97,7 +107,8 @@ const CustomNumberPad: React.FC<CustomNumberPadProps> = ({
         <Button
           variant="outline"
           onClick={() => handleNumberPress('0')}
-          className="text-2xl h-16 font-semibold bg-primary/15 hover:bg-primary/25 active:bg-primary/40 transition-colors"
+          onTouchStart={(e) => handleTouchStart(e, () => handleNumberPress('0'))}
+          className="text-3xl h-16 font-semibold bg-primary/15 hover:bg-primary/25 active:bg-primary/40 transition-colors"
           aria-label="0"
         >
           0
@@ -105,10 +116,11 @@ const CustomNumberPad: React.FC<CustomNumberPadProps> = ({
         <Button
           variant="outline"
           onClick={handleDelete}
-          className="text-2xl h-16 font-semibold bg-secondary/20 hover:bg-secondary/30 active:bg-secondary/40 transition-colors"
+          onTouchStart={(e) => handleTouchStart(e, () => handleDelete())}
+          className="text-3xl h-16 font-semibold bg-secondary/20 hover:bg-secondary/30 active:bg-secondary/40 transition-colors"
           aria-label="Delete"
         >
-          <Delete className="h-8 w-8" /> {/* Increased size from 6 to 8 */}
+          <Delete className="h-10 w-10" /> {/* Increased size from 8 to 10 */}
         </Button>
       </div>
     </div>

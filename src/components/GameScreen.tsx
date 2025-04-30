@@ -201,8 +201,8 @@ const GameScreen = () => {
   const handleNumberPress = (number: string) => {
     if (isShowingAnswer || hasEndedRef.current) return;
     
-    // Update using a callback to avoid TypeScript errors
-    setUserAnswer(prevAnswer => prevAnswer + number);
+    // Fix: Using direct string instead of function with prevAnswer parameter
+    setUserAnswer(userAnswer + number);
     
     // Check if this is the correct answer
     if (currentProblem) {
@@ -236,8 +236,8 @@ const GameScreen = () => {
   const handleDelete = () => {
     if (isShowingAnswer || hasEndedRef.current) return;
     
-    // Update using a callback to avoid TypeScript errors
-    setUserAnswer(prevAnswer => prevAnswer.slice(0, -1));
+    // Fix: Using direct string manipulation instead of function with prevAnswer parameter
+    setUserAnswer(userAnswer.slice(0, -1));
   };
 
   const toggleNegative = () => {
