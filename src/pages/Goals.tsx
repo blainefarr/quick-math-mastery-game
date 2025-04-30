@@ -2,12 +2,9 @@
 import React from 'react';
 import { 
   Card, 
-  CardContent, 
-  CardDescription, 
-  CardHeader, 
-  CardTitle 
+  CardContent
 } from "@/components/ui/card";
-import { Target, ArrowLeft } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import useGoalProgress from '@/hooks/useGoalProgress';
 import GoalsGrid from '@/components/goals/GoalsGrid';
 import GoalsLegend from '@/components/goals/GoalsLegend';
@@ -22,52 +19,42 @@ const GoalsPage: React.FC = () => {
   
   return (
     <div className="container mx-auto py-8 px-4 max-w-6xl">
-      <Button 
-        variant="ghost" 
-        className="mb-6 hover:bg-muted/50 -ml-3"
-        onClick={() => navigate('/')}
-      >
-        <ArrowLeft className="mr-2 h-4 w-4" />
-        Back to Game
-      </Button>
-      
-      <div className="text-center mb-8">
-        <h1 className="text-4xl font-bold text-primary">Goals</h1>
-        <p className="text-muted-foreground mt-2">Track your math skills progress</p>
+      <div className="flex items-center gap-4 mb-2">
+        <Button variant="outline" size="sm" onClick={() => navigate('/')} className="h-8 rounded-full">
+          <ArrowLeft size={16} className="mr-1" />
+          Back to Game
+        </Button>
+      </div>
+
+      <div className="text-center">
+        <h1 className="text-4xl font-bold text-primary mb-2">Goals</h1>
+        <p className="text-muted-foreground">Track your math skills progress</p>
+      </div>
+
+      <div className="mt-6">
+        <GoalsLegend />
       </div>
       
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        <div className="lg:col-span-3">
-          <Card>
-            <CardHeader>
-              <CardTitle>Goal Progress</CardTitle>
-              <CardDescription>
-                Track your mastery level across different math operations and number ranges
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="overflow-x-auto">
-              <GoalsGrid 
-                goals={goals}
-                isLoading={isLoading}
-              />
-            </CardContent>
-          </Card>
-        </div>
-        
-        <div className="lg:col-span-1">
-          <GoalsLegend />
-          
-          <div className="mt-6 bg-accent/10 rounded-md p-4 text-sm">
-            <h3 className="font-medium mb-2">How it works</h3>
-            <p className="text-muted-foreground mb-3">
-              Each cell shows your current achievement level for that combination 
-              of operation and number range.
-            </p>
-            <p className="text-muted-foreground">
-              Play games to improve your scores and earn higher achievement levels!
-            </p>
-          </div>
-        </div>
+      <div className="mt-6">
+        <Card>
+          <CardContent className="p-6">
+            <GoalsGrid 
+              goals={goals}
+              isLoading={isLoading}
+            />
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="mt-6 bg-accent/10 rounded-md p-4 text-sm">
+        <h3 className="font-medium mb-2">How it works</h3>
+        <p className="text-muted-foreground mb-3">
+          Each cell shows your current achievement level for that combination 
+          of operation and number range.
+        </p>
+        <p className="text-muted-foreground">
+          Play games to improve your scores and earn higher achievement levels!
+        </p>
       </div>
     </div>
   );

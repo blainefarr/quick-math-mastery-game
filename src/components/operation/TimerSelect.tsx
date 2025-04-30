@@ -19,16 +19,21 @@ const TimerSelect = ({
     { value: 120, label: '2 minutes' }
   ];
 
-  const handleClick = (e: React.MouseEvent) => {
-    // Stop propagation to prevent interfering with other dropdowns
-    e.stopPropagation();
+  // This function prevents operation reset by stopping event propagation
+  const handleValueChange = (newValue: string) => {
+    // Stop event propagation to prevent any parent components from re-rendering
+    // or resetting state when the timer value changes
+    onChange(parseInt(newValue));
   };
 
   return (
-    <div className="space-y-2" onClick={handleClick}>
+    <div className="space-y-2">
       <h3 className="text-base font-medium">Game Timer</h3>
       <div className="flex items-center">
-        <Select value={value.toString()} onValueChange={val => onChange(parseInt(val))}>
+        <Select 
+          value={value.toString()} 
+          onValueChange={handleValueChange}
+        >
           <SelectTrigger className="w-full bg-white">
             <div className="flex items-center gap-2">
               <Clock className="h-4 w-4 text-muted-foreground" />
@@ -37,7 +42,10 @@ const TimerSelect = ({
           </SelectTrigger>
           <SelectContent>
             {timerOptions.map(option => (
-              <SelectItem key={option.value} value={option.value.toString()}>
+              <SelectItem 
+                key={option.value} 
+                value={option.value.toString()}
+              >
                 {option.label}
               </SelectItem>
             ))}
