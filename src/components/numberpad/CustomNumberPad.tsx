@@ -162,7 +162,7 @@ const CustomNumberPad: React.FC<CustomNumberPadProps> = ({
           aria-label="Delete"
         >
           
-          <span className="text-4xl">←</span>
+          <span className="text-3xl sm:text-4xl font-bold -mt-0.5">←</span>
           
         </Button>
       </div>
