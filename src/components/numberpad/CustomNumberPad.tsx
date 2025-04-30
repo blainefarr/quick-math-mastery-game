@@ -107,7 +107,7 @@ const CustomNumberPad: React.FC<CustomNumberPadProps> = ({
         )}
         <Button
           variant="outline"
-          onPointerDown={() => handleNumberPress(num.toString())}
+          onPointerDown={() => handleNumberPress('0')}
           className="text-3xl h-16 font-semibold bg-primary/15 hover:bg-primary/25 active:bg-primary/40 transition-colors min-h-[48px] min-w-[48px] select-none touch-manipulation"
           aria-label="0"
         >
