@@ -25,6 +25,7 @@ const UserProfile = () => {
   const [showProfileSwitcher, setShowProfileSwitcher] = useState(false);
   const [profilesChecked, setProfilesChecked] = useState(false);
   const [isForceLogout, setIsForceLogout] = useState(false);
+  const [autoLogoutTimer, setAutoLogoutTimer] = useState<NodeJS.Timeout | null>(null);
   
   // Check if we need to show the profile switcher when user has multiple profiles
   useEffect(() => {
@@ -56,21 +57,45 @@ const UserProfile = () => {
   
   // Handle failed profile loading - Automatically log out user if no profile is found
   useEffect(() => {
-    if (isAuthenticated && !isLoadingProfile && !defaultProfileId && !isNewSignup && !isForceLogout) {
-      console.log('UserProfile: No profile loaded after authentication completed, forcing logout');
-      setIsForceLogout(true);
-      
-      // Show a message and force logout after a short delay
-      toast({
-        title: "Profile loading failed",
-        description: "Signing you out for security reasons.",
-        variant: "destructive"
-      });
-      
-      setTimeout(() => {
-        handleLogout();
-      }, 2000);
+    // Clear any existing timer when dependencies change
+    if (autoLogoutTimer) {
+      clearTimeout(autoLogoutTimer);
+      setAutoLogoutTimer(null);
     }
+
+    // Only setup the timer if we've completed authentication and loading state
+    if (isAuthenticated && !isLoadingProfile && !defaultProfileId && !isNewSignup && !isForceLogout) {
+      console.log('UserProfile: No profile loaded, will wait 3 seconds before logging out');
+      
+      // Set a timer to wait before logging out
+      const timer = setTimeout(() => {
+        // Check again if profile loaded during the delay
+        if (!defaultProfileId) {
+          console.log('UserProfile: No profile loaded after delay, forcing logout');
+          setIsForceLogout(true);
+          
+          // Show a message and force logout
+          toast({
+            title: "Profile loading failed",
+            description: "Signing you out for security reasons.",
+            variant: "destructive"
+          });
+          
+          setTimeout(() => {
+            handleLogout();
+          }, 2000);
+        }
+      }, 3000); // 3 second delay before forcing logout
+      
+      setAutoLogoutTimer(timer);
+    }
+    
+    // Cleanup timer on unmount
+    return () => {
+      if (autoLogoutTimer) {
+        clearTimeout(autoLogoutTimer);
+      }
+    };
   }, [isAuthenticated, isLoadingProfile, defaultProfileId, isNewSignup, handleLogout, isForceLogout]);
   
   // Clear the profile switcher shown flag when the user logs out
