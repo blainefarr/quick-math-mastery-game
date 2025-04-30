@@ -76,8 +76,9 @@ const GoalsGrid: React.FC<GoalsGridProps> = ({ goals, isLoading }) => {
           {/* Grid of rows */}
           {category.ranges.map((range) => (
             <div 
-            key={`${category.title}-${range}`} 
-            <div className="grid grid-cols-5 gap-2 mb-2">
+              key={`${category.title}-${range}`} 
+              className="grid grid-cols-5 gap-2 mb-2"
+            >
               <div className="col-span-1 flex items-center justify-start">
                 <span className="text-sm font-medium">
                   {category.isFocusNumber 
@@ -98,6 +99,7 @@ const GoalsGrid: React.FC<GoalsGridProps> = ({ goals, isLoading }) => {
               </div>
             </div>
           ))}
+
         </React.Fragment>
       ))}
     </div>
