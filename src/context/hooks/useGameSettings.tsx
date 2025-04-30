@@ -44,7 +44,8 @@ export const useGameSettings = () => {
       Object.keys(newSettings).forEach(key => {
         const typedKey = key as keyof Partial<GameSettings>;
         if (typedKey !== 'range') {
-          updatedSettings[typedKey] = newSettings[typedKey] as any;
+          // Fix: Use type assertion to avoid TypeScript error
+          (updatedSettings as Record<string, any>)[typedKey] = newSettings[typedKey];
         }
       });
       
