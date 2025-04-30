@@ -15,10 +15,12 @@ const UserProfile = () => {
     hasMultipleProfiles,
     defaultProfileId,
     isNewSignup,
-    userId
+    userId,
+    handleLogout
   } = useAuth();
   const [showProfileSwitcher, setShowProfileSwitcher] = useState(false);
   const [profilesChecked, setProfilesChecked] = useState(false);
+  const [isForceLogout, setIsForceLogout] = useState(false);
   
   // Check if we need to show the profile switcher when user has multiple profiles
   useEffect(() => {
@@ -30,33 +32,29 @@ const UserProfile = () => {
     
     // User is authenticated and profile loading is complete
     if (hasMultipleProfiles && !profilesChecked) {
-      console.log('UserProfile: Multiple profiles detected, checking if we need to show picker');
-      
-      // Check if user has an active profile set
-      const checkActiveProfile = async () => {
-        try {
-          // Get the currently active profile
-          const activeProfileId = localStorage.getItem('math_game_active_profile');
-          
-          if (!activeProfileId) {
-            console.log('UserProfile: No active profile found with multiple profiles, showing selector');
-            setShowProfileSwitcher(true);
-          } else {
-            console.log('UserProfile: Active profile found:', activeProfileId);
-          }
-        } catch (error) {
-          console.error('Error checking profiles:', error);
-        } finally {
-          setProfilesChecked(true);
-        }
-      };
-      
-      checkActiveProfile();
+      console.log('UserProfile: Multiple profiles detected, showing picker');
+      setShowProfileSwitcher(true);
+      setProfilesChecked(true);
     } else if (!profilesChecked) {
       // Single profile - just mark as checked to prevent further checks
       setProfilesChecked(true);
     }
-  }, [isAuthenticated, isLoadingProfile, hasMultipleProfiles, defaultProfileId, isNewSignup, profilesChecked]);
+  }, [isAuthenticated, isLoadingProfile, hasMultipleProfiles, isNewSignup, profilesChecked]);
+  
+  // Handle failed profile loading - Automatically log out user if no profile is found
+  useEffect(() => {
+    if (isAuthenticated && !isLoadingProfile && !defaultProfileId && !isNewSignup && !isForceLogout) {
+      console.log('UserProfile: No profile loaded after authentication completed, forcing logout');
+      setIsForceLogout(true);
+      
+      // Show a message and force logout after a short delay
+      toast.error('Profile loading failed. Signing you out for security reasons.');
+      
+      setTimeout(() => {
+        handleLogout();
+      }, 2000);
+    }
+  }, [isAuthenticated, isLoadingProfile, defaultProfileId, isNewSignup, handleLogout, isForceLogout]);
   
   // Debug user state
   useEffect(() => {

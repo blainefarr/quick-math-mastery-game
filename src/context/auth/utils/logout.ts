@@ -13,10 +13,14 @@ export const handleLogout = async (authState: AuthStateType) => {
     setUserId, 
     setUsername, 
     setDefaultProfileId, 
-    setHasMultipleProfiles 
+    setHasMultipleProfiles,
+    setIsLoadingProfile
   } = authState;
 
   try {
+    // Reset loading state to prevent UI issues
+    setIsLoadingProfile(false);
+    
     // Sign out from Supabase
     const { error } = await supabase.auth.signOut();
     if (error) {
@@ -33,13 +37,30 @@ export const handleLogout = async (authState: AuthStateType) => {
     // Clear active profile from localStorage
     localStorage.removeItem(ACTIVE_PROFILE_KEY);
     
+    // Also clear any other potential auth-related data in localStorage
+    try {
+      // Clear any potential supabase auth data
+      localStorage.removeItem('supabase.auth.token');
+      // Clear any potential session data
+      localStorage.removeItem('sb-session');
+    } catch (err) {
+      // Ignore errors from localStorage operations
+      console.warn('Error clearing localStorage items:', err);
+    }
+    
     window.location.href = '/'; // Redirect to home page after logout
   } catch (error) {
+    console.error('Error during logout:', error);
+    
     // Even if error occurs, still reset client-side state
     setIsLoggedIn(false);
     setUserId(null);
     setUsername('');
     setDefaultProfileId(null);
     setHasMultipleProfiles(false);
+    setIsLoadingProfile(false);
+    
+    // Still try to redirect
+    window.location.href = '/';
   }
 };
