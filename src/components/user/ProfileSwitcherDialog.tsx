@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { 
   Dialog, 
@@ -135,7 +136,11 @@ export function ProfileSwitcherDialog({ open, onOpenChange }: ProfileSwitcherDia
         setError('Failed to load profiles');
         
         if (!isRetry) {
-          toast.error('Failed to load profiles');
+          toast({
+            variant: "destructive",
+            title: "Failed to load profiles",
+            description: "Please try again later"
+          });
         }
         return false;
       }
@@ -198,7 +203,10 @@ export function ProfileSwitcherDialog({ open, onOpenChange }: ProfileSwitcherDia
       localStorage.setItem(ACTIVE_PROFILE_KEY, profile.id);
       
       // Show success message
-      toast.success(`Switched to ${profile.name}`);
+      toast({
+        title: "Profile switched",
+        description: `Switched to ${profile.name}`
+      });
       
       // Refresh user profile in the auth context
       await refreshUserProfile();
@@ -214,7 +222,11 @@ export function ProfileSwitcherDialog({ open, onOpenChange }: ProfileSwitcherDia
       }, 100);
     } catch (err) {
       console.error('Error switching profile:', err);
-      toast.error('Failed to switch profile');
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to switch profile"
+      });
     }
   };
 

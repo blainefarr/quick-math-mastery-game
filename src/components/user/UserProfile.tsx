@@ -8,6 +8,8 @@ import { Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 
+const PROFILE_SWITCHER_SHOWN_KEY = 'math_game_profile_switcher_shown';
+
 const UserProfile = () => {
   const { 
     username, 
@@ -19,6 +21,7 @@ const UserProfile = () => {
     userId,
     handleLogout
   } = useAuth();
+  
   const [showProfileSwitcher, setShowProfileSwitcher] = useState(false);
   const [profilesChecked, setProfilesChecked] = useState(false);
   const [isForceLogout, setIsForceLogout] = useState(false);
@@ -31,16 +34,25 @@ const UserProfile = () => {
       return;
     }
     
-    // Always show profile switcher when user has multiple profiles, regardless of active profile
-    if (hasMultipleProfiles) {
-      console.log('UserProfile: Multiple profiles detected, showing picker');
-      setShowProfileSwitcher(true);
+    // Only show profile switcher once after login when user has multiple profiles
+    if (hasMultipleProfiles && defaultProfileId) {
+      const hasShownSwitcherForSession = sessionStorage.getItem(PROFILE_SWITCHER_SHOWN_KEY) === 'true';
+      
+      if (!hasShownSwitcherForSession) {
+        console.log('UserProfile: Multiple profiles detected, showing picker once after login');
+        setShowProfileSwitcher(true);
+        // Mark that we've shown the switcher for this session
+        sessionStorage.setItem(PROFILE_SWITCHER_SHOWN_KEY, 'true');
+      } else {
+        console.log('UserProfile: Multiple profiles detected, but already shown for this session');
+      }
+      
       setProfilesChecked(true);
     } else if (!profilesChecked) {
       // Single profile - just mark as checked to prevent further checks
       setProfilesChecked(true);
     }
-  }, [isAuthenticated, isLoadingProfile, hasMultipleProfiles, isNewSignup, profilesChecked]);
+  }, [isAuthenticated, isLoadingProfile, hasMultipleProfiles, isNewSignup, profilesChecked, defaultProfileId]);
   
   // Handle failed profile loading - Automatically log out user if no profile is found
   useEffect(() => {
@@ -60,6 +72,13 @@ const UserProfile = () => {
       }, 2000);
     }
   }, [isAuthenticated, isLoadingProfile, defaultProfileId, isNewSignup, handleLogout, isForceLogout]);
+  
+  // Clear the profile switcher shown flag when the user logs out
+  useEffect(() => {
+    if (!isAuthenticated) {
+      sessionStorage.removeItem(PROFILE_SWITCHER_SHOWN_KEY);
+    }
+  }, [isAuthenticated]);
   
   // Debug user state
   useEffect(() => {

@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { LogOut, Trophy, TrendingUp, Settings, Users } from 'lucide-react';
-import { toast } from 'sonner';
+import { toast } from '@/hooks/use-toast';
 import { ProfileSwitcherDialog } from './ProfileSwitcherDialog';
 
 interface UserDropdownProps {
@@ -36,18 +36,25 @@ const UserDropdown = ({
   const handleUserLogout = async () => {
     try {
       setIsLoggingOut(true);
-      toast.loading('Logging out...');
+      toast({
+        title: "Logging out...",
+      });
       
       // Close the dropdown first to prevent UI issues
       setTimeout(async () => {
         await handleLogout();
-        toast.dismiss();
-        toast.success('Logged out successfully');
+        toast({
+          title: "Logged out successfully"
+        });
         // No need to navigate here as handleLogout already does window.location.href = '/'
       }, 100);
     } catch (error) {
       console.error("Error during logout:", error);
-      toast.error("Error during logout. Please try again.");
+      toast({
+        title: "Error during logout",
+        description: "Please try again",
+        variant: "destructive"
+      });
       setIsLoggingOut(false);
     }
   };
@@ -60,7 +67,11 @@ const UserDropdown = ({
             {username}
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-[200px]">
+        <DropdownMenuContent align="end" className="w-[200px] pointer-events-auto" 
+          onInteractOutside={(e) => {
+            // Prevent clicks from propagating to elements behind the dropdown
+            e.preventDefault();
+          }}>
           <DropdownMenuLabel>
             <div className="flex flex-col">
               <span>Hi, {username}!</span>
