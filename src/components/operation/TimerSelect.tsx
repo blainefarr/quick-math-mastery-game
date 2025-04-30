@@ -20,6 +20,7 @@ const TimerSelect = ({
   ];
 
   const handleClick = (e: React.MouseEvent) => {
+    // Stop propagation to prevent interfering with other dropdowns
     e.stopPropagation();
   };
 
