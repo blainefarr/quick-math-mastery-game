@@ -22,6 +22,8 @@ const OperationSelection = () => {
     setFocusNumber,
     resetScore
   } = useGame();
+  
+  // Local state for form values
   const [selectedOperation, setSelectedOperation] = useState<Operation>(settings.operation);
   const [negativeNumbersEnabled, setNegativeNumbersEnabled] = useState(settings.allowNegatives || false);
   const [learnerModeEnabled, setLearnerModeEnabled] = useState(settings.learnerMode || false);
@@ -32,6 +34,7 @@ const OperationSelection = () => {
   const [useFocusNumber, setUseFocusNumber] = useState(focusNumber !== null);
   const [focusNumberValue, setFocusNumberValue] = useState(focusNumber || 1);
   
+  // Synchronize local state with global settings whenever settings change
   useEffect(() => {
     setSelectedOperation(settings.operation);
     setRange1Min(settings.range.min1);
@@ -54,7 +57,13 @@ const OperationSelection = () => {
     return !isNaN(val) ? val : def;
   };
   
-  const handleOperationSelect = (operation: Operation) => setSelectedOperation(operation);
+  const handleOperationSelect = (operation: Operation) => {
+    setSelectedOperation(operation);
+    // Update global settings when operation changes
+    updateSettings({
+      operation
+    });
+  };
   
   const handleFocusNumberToggle = (checked: boolean) => {
     setUseFocusNumber(checked);
@@ -62,10 +71,28 @@ const OperationSelection = () => {
       setFocusNumber(null);
       setRange1Min(1);
       setRange1Max(10);
+      // Update global settings when focus number is toggled off
+      updateSettings({
+        focusNumber: null,
+        range: {
+          ...settings.range,
+          min1: 1,
+          max1: 10
+        }
+      });
     } else {
       setFocusNumber(focusNumberValue);
       setRange1Min(focusNumberValue);
       setRange1Max(focusNumberValue);
+      // Update global settings when focus number is toggled on
+      updateSettings({
+        focusNumber: focusNumberValue,
+        range: {
+          ...settings.range,
+          min1: focusNumberValue,
+          max1: focusNumberValue
+        }
+      });
     }
   };
   
@@ -76,17 +103,83 @@ const OperationSelection = () => {
       setFocusNumber(numValue);
       setRange1Min(numValue);
       setRange1Max(numValue);
+      // Update global settings when focus number changes
+      updateSettings({
+        focusNumber: numValue,
+        range: {
+          ...settings.range,
+          min1: numValue,
+          max1: numValue
+        }
+      });
     }
   };
   
-  const handleNegativeToggle = (checked: boolean) => setNegativeNumbersEnabled(checked);
-  const handleLearnerModeToggle = (checked: boolean) => setLearnerModeEnabled(checked);
+  const handleNegativeToggle = (checked: boolean) => {
+    setNegativeNumbersEnabled(checked);
+    // Update global settings when negative toggle changes
+    updateSettings({
+      allowNegatives: checked
+    });
+  };
+  
+  const handleLearnerModeToggle = (checked: boolean) => {
+    setLearnerModeEnabled(checked);
+    // Update global settings when learner mode changes
+    updateSettings({
+      learnerMode: checked
+    });
+  };
   
   // Update only the timer setting without altering other settings
   const handleTimerChange = (seconds: number) => {
     updateSettings({
-      ...settings,  // Keep all existing settings
-      timerSeconds: seconds  // Only update the timer
+      timerSeconds: seconds
+    });
+  };
+  
+  // Handle range changes
+  const handleRange1MinChange = (value: string) => {
+    const numValue = parseOrDefault(value, range1Min);
+    setRange1Min(numValue);
+    updateSettings({
+      range: {
+        ...settings.range,
+        min1: numValue
+      }
+    });
+  };
+  
+  const handleRange1MaxChange = (value: string) => {
+    const numValue = parseOrDefault(value, range1Max);
+    setRange1Max(numValue);
+    updateSettings({
+      range: {
+        ...settings.range,
+        max1: numValue
+      }
+    });
+  };
+  
+  const handleRange2MinChange = (value: string) => {
+    const numValue = parseOrDefault(value, range2Min);
+    setRange2Min(numValue);
+    updateSettings({
+      range: {
+        ...settings.range,
+        min2: numValue
+      }
+    });
+  };
+  
+  const handleRange2MaxChange = (value: string) => {
+    const numValue = parseOrDefault(value, range2Max);
+    setRange2Max(numValue);
+    updateSettings({
+      range: {
+        ...settings.range,
+        max2: numValue
+      }
     });
   };
   
@@ -128,13 +221,23 @@ const OperationSelection = () => {
               </div>
             </div>
 
-            <NumberRangeSection focusNumberEnabled={useFocusNumber} focusNumber={focusNumberValue} negativeNumbersEnabled={negativeNumbersEnabled} range1={{
-            min: range1Min,
-            max: range1Max
-          }} range2={{
-            min: range2Min,
-            max: range2Max
-          }} setRange1Min={v => setRange1Min(parseOrDefault(v, range1Min))} setRange1Max={v => setRange1Max(parseOrDefault(v, range1Max))} setRange2Min={v => setRange2Min(parseOrDefault(v, range2Min))} setRange2Max={v => setRange2Max(parseOrDefault(v, range2Max))} />
+            <NumberRangeSection 
+              focusNumberEnabled={useFocusNumber} 
+              focusNumber={focusNumberValue} 
+              negativeNumbersEnabled={negativeNumbersEnabled} 
+              range1={{
+                min: range1Min,
+                max: range1Max
+              }} 
+              range2={{
+                min: range2Min,
+                max: range2Max
+              }} 
+              setRange1Min={handleRange1MinChange}
+              setRange1Max={handleRange1MaxChange}
+              setRange2Min={handleRange2MinChange}
+              setRange2Max={handleRange2MaxChange}
+            />
 
             <TimerSelect value={settings.timerSeconds} onChange={handleTimerChange} />
 

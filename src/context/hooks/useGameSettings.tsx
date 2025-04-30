@@ -31,9 +31,24 @@ export const useGameSettings = () => {
 
   const updateSettings = (newSettings: Partial<GameSettings>) => {
     setSettings(prev => {
-      // By merging with prev and then newSettings, we ensure that the
-      // newSettings values take precedence but don't replace unmentioned values
-      return { ...prev, ...newSettings };
+      // Create a deep copy of the previous settings to avoid partial updates
+      const updatedSettings = { 
+        ...prev,
+        // Deep copy the range object if it exists in the update
+        range: newSettings.range ? 
+          { ...prev.range, ...newSettings.range } : 
+          { ...prev.range }
+      };
+      
+      // Apply all other updates
+      Object.keys(newSettings).forEach(key => {
+        const typedKey = key as keyof Partial<GameSettings>;
+        if (typedKey !== 'range') {
+          updatedSettings[typedKey] = newSettings[typedKey] as any;
+        }
+      });
+      
+      return updatedSettings;
     });
   };
 
