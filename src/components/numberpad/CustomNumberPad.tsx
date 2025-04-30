@@ -42,7 +42,7 @@ const CustomNumberPad: React.FC<CustomNumberPadProps> = ({
 
   return (
     <div className="w-full mx-auto mt-4">
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
         {/* First row */}
         {[1, 2, 3].map((num) => {
           const buttonId = `num-${num}`;
@@ -51,7 +51,7 @@ const CustomNumberPad: React.FC<CustomNumberPadProps> = ({
               key={num}
               variant="outline"
               onPointerDown={() => handleNumberPress(num.toString())}
-              className="text-3xl h-16 font-semibold bg-primary/15 hover:bg-primary/25 active:bg-primary/40 transition-colors min-h-[48px] min-w-[48px] select-none touch-manipulation"
+              className="text-3xl h-14 sm:h-16 font-semibold bg-primary/15 hover:bg-primary/25 active:bg-primary/40 transition-colors min-h-[48px] min-w-[48px] select-none touch-manipulation"
               aria-label={num.toString()}
             >
               {num}
@@ -67,7 +67,7 @@ const CustomNumberPad: React.FC<CustomNumberPadProps> = ({
               key={num}
               variant="outline"
               onPointerDown={() => handleNumberPress(num.toString())}
-              className="text-3xl h-16 font-semibold bg-primary/15 hover:bg-primary/25 active:bg-primary/40 transition-colors min-h-[48px] min-w-[48px] select-none touch-manipulation"
+              className="text-3xl h-14 sm:h-16 font-semibold bg-primary/15 hover:bg-primary/25 active:bg-primary/40 transition-colors min-h-[48px] min-w-[48px] select-none touch-manipulation"
               aria-label={num.toString()}
             >
               {num}
@@ -83,7 +83,7 @@ const CustomNumberPad: React.FC<CustomNumberPadProps> = ({
               key={num}
               variant="outline"
               onPointerDown={() => handleNumberPress(num.toString())}
-              className="text-3xl h-16 font-semibold bg-primary/15 hover:bg-primary/25 active:bg-primary/40 transition-colors min-h-[48px] min-w-[48px] select-none touch-manipulation"
+              className="text-3xl h-14 sm:h-16 font-semibold bg-primary/15 hover:bg-primary/25 active:bg-primary/40 transition-colors min-h-[48px] min-w-[48px] select-none touch-manipulation"
               aria-label={num.toString()}
             >
               {num}
@@ -96,7 +96,7 @@ const CustomNumberPad: React.FC<CustomNumberPadProps> = ({
           <Button
             variant="outline"
             onPointerDown={handleNegativeToggle}
-            className={`text-3xl h-16 font-semibold bg-secondary/20 hover:bg-secondary/30 active:bg-secondary/40 transition-colors min-h-[48px] min-w-[48px] select-none touch-manipulation ${isNegative ? 'ring-2 ring-primary' : ''}`}
+            className={`text-3xl h-14 sm:h-16 font-semibold bg-secondary/20 hover:bg-secondary/30 active:bg-secondary/40 transition-colors min-h-[48px] min-w-[48px] select-none touch-manipulation ${isNegative ? 'ring-2 ring-primary' : ''}`}
             aria-pressed={isNegative}
             aria-label={isNegative ? "Positive" : "Negative"}
           >
@@ -108,7 +108,7 @@ const CustomNumberPad: React.FC<CustomNumberPadProps> = ({
         <Button
           variant="outline"
           onPointerDown={() => handleNumberPress('0')}
-          className="text-3xl h-16 font-semibold bg-primary/15 hover:bg-primary/25 active:bg-primary/40 transition-colors min-h-[48px] min-w-[48px] select-none touch-manipulation"
+          className="text-3xl h-14 sm:h-16 font-semibold bg-primary/15 hover:bg-primary/25 active:bg-primary/40 transition-colors min-h-[48px] min-w-[48px] select-none touch-manipulation"
           aria-label="0"
         >
           0
@@ -116,7 +116,7 @@ const CustomNumberPad: React.FC<CustomNumberPadProps> = ({
         <Button
           variant="outline"
           onPointerDown={handleDelete}
-          className="h-16 font-semibold bg-secondary/20 hover:bg-secondary/30 active:bg-secondary/40 transition-colors min-h-[48px] min-w-[48px] select-none touch-manipulation"
+          className="h-14 sm:h-16 font-semibold bg-secondary/20 hover:bg-secondary/30 active:bg-secondary/40 transition-colors min-h-[48px] min-w-[48px] select-none touch-manipulation"
           aria-label="Delete"
         >
           
