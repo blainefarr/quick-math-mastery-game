@@ -67,11 +67,7 @@ const UserDropdown = ({
             {username}
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-[200px] pointer-events-auto" 
-          onInteractOutside={(e) => {
-            // Prevent clicks from propagating to elements behind the dropdown
-            e.preventDefault();
-          }}>
+        <DropdownMenuContent align="end" className="w-[200px] pointer-events-auto">
           <DropdownMenuLabel>
             <div className="flex flex-col">
               <span>Hi, {username}!</span>

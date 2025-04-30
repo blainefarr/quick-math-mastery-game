@@ -5,7 +5,7 @@ import { useForm, FormProvider } from "react-hook-form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, Users } from 'lucide-react';
+import { ArrowLeft, Users, User } from 'lucide-react';
 import {
   Form,
   FormControl,
@@ -35,6 +35,14 @@ type FormData = {
   email: string;
 };
 
+type Profile = {
+  id: string;
+  name: string;
+  grade?: string;
+  is_owner: boolean;
+  created_at: string;
+};
+
 const gradeOptions = [
   "Pre-k",
   "Kindergarten",
@@ -58,6 +66,7 @@ const MyAccount = () => {
   const [isProfileOwner, setIsProfileOwner] = useState(true);
   const [accountEmail, setAccountEmail] = useState('');
   const [showProfileSwitcher, setShowProfileSwitcher] = useState(false);
+  const [allProfiles, setAllProfiles] = useState<Profile[]>([]);
   
   const form = useForm<FormData>({
     defaultValues: {
@@ -66,6 +75,30 @@ const MyAccount = () => {
       email: '',
     }
   });
+
+  // Fetch all profiles for account owner
+  const fetchAllProfiles = async (accountId: string) => {
+    if (!isProfileOwner) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('account_id', accountId)
+        .order('created_at', { ascending: true });
+        
+      if (error) {
+        console.error('Error fetching all profiles:', error);
+        return;
+      }
+      
+      if (data) {
+        setAllProfiles(data);
+      }
+    } catch (err) {
+      console.error('Error in fetchAllProfiles:', err);
+    }
+  };
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -121,7 +154,13 @@ const MyAccount = () => {
 
         if (profile) {
           // Check if this is the primary profile (owner)
-          setIsProfileOwner(profile.is_owner);
+          const isPrimaryOwner = profile.is_owner;
+          setIsProfileOwner(isPrimaryOwner);
+          
+          // If primary owner, fetch all profiles for this account
+          if (isPrimaryOwner) {
+            fetchAllProfiles(userId);
+          }
           
           form.reset({
             name: profile.name || '',
@@ -302,20 +341,7 @@ const MyAccount = () => {
             </form>
           </Form>
 
-          {/* Manage Profiles Section */}
-          <div className="mt-8 pt-6 border-t">
-            <h3 className="text-lg font-medium mb-4">Manage Profiles</h3>
-            <Button 
-              variant="outline" 
-              onClick={() => setShowProfileSwitcher(true)}
-              className="flex items-center gap-2 w-full justify-center"
-            >
-              <Users size={16} />
-              Switch Profile
-            </Button>
-          </div>
-
-          {/* Password section - only for account owner */}
+          {/* Password section - moved up for primary owners */}
           {isProfileOwner && (
             <div className="mt-8 pt-6 border-t">
               <Label className="text-base">Password</Label>
@@ -347,6 +373,38 @@ const MyAccount = () => {
               </Button>
             </div>
           )}
+
+          {/* Manage Profiles Section - Only shown for primary account owners */}
+          {isProfileOwner && (
+            <div className="mt-8 pt-6 border-t">
+              <h3 className="text-lg font-medium mb-4">Manage Profiles</h3>
+              
+              {/* List of all profiles */}
+              <div className="space-y-3 mb-4">
+                {allProfiles.length > 0 ? (
+                  allProfiles.map(profile => (
+                    <div key={profile.id} className="flex items-center justify-between p-3 bg-background border rounded-md">
+                      <div className="flex items-center gap-3">
+                        <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center">
+                          <User className="h-4 w-4 text-primary" />
+                        </div>
+                        <div>
+                          <p className="font-medium">{profile.name}</p>
+                          {profile.grade && <p className="text-xs text-muted-foreground">{profile.grade}</p>}
+                        </div>
+                      </div>
+                      {profile.is_owner && (
+                        <Badge variant="outline" className="ml-auto">Primary</Badge>
+                      )}
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-sm text-muted-foreground">No profiles found</p>
+                )}
+              </div>
+            </div>
+          )}
+          
         </CardContent>
       </Card>
       
