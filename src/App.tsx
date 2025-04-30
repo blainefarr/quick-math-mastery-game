@@ -10,6 +10,7 @@ import MyAccount from "./pages/MyAccount";
 import NotFound from "./pages/NotFound";
 import Leaderboard from "./pages/Leaderboard";
 import Progress from "./pages/Progress";
+import Goals from "./pages/Goals";
 import ResetPassword from "./pages/ResetPassword";
 
 const queryClient = new QueryClient();
@@ -34,6 +35,7 @@ const App = () => (
             </Route>
             <Route path="/leaderboard" element={<Leaderboard />} />
             <Route path="/progress" element={<Progress />} />
+            <Route path="/goals" element={<Goals />} />
             {/* Add future non-game pages here */}
           </Route>
 

@@ -39,6 +39,47 @@ export type Database = {
         }
         Relationships: []
       }
+      goal_progress: {
+        Row: {
+          attempts: number
+          best_score: number
+          last_attempt: string | null
+          last_level_up: string | null
+          level: string
+          operation: string
+          profile_id: string
+          range: string
+        }
+        Insert: {
+          attempts?: number
+          best_score?: number
+          last_attempt?: string | null
+          last_level_up?: string | null
+          level?: string
+          operation: string
+          profile_id: string
+          range: string
+        }
+        Update: {
+          attempts?: number
+          best_score?: number
+          last_attempt?: string | null
+          last_level_up?: string | null
+          level?: string
+          operation?: string
+          profile_id?: string
+          range?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "goal_progress_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           account_id: string

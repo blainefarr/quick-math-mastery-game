@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { UserScore, Operation, ProblemRange } from '@/types';
 import { toast } from 'sonner';
 import { useAuth } from '@/context/auth/useAuth';
+import { getGoalLevel } from '@/hooks/useGoalProgress';
 
 // Local storage key for active profile
 const ACTIVE_PROFILE_KEY = 'math_game_active_profile';
@@ -179,6 +180,9 @@ export const useScoreManagement = (userId: string | null) => {
       console.log('Score saved successfully:', score);
       toast.success('Score saved!');
       
+      // Update goal progress
+      await updateGoalProgress(profileId, operation, range, focusNumber, score);
+      
       const updatedScores = await fetchUserScores();
       setScoreHistory(updatedScores);
       setSavingScore(false);
@@ -188,6 +192,91 @@ export const useScoreManagement = (userId: string | null) => {
       toast.error('Failed to save your score');
       setSavingScore(false);
       return false;
+    }
+  };
+  
+  // Update goal progress based on game results
+  const updateGoalProgress = async (
+    profileId: string,
+    operation: Operation,
+    range: ProblemRange,
+    focusNumber: number | null,
+    score: number
+  ) => {
+    try {
+      // Determine what type of goal this is (focus number or range)
+      let goalRange: string;
+      
+      if (focusNumber !== null) {
+        // This is a focus number goal
+        goalRange = focusNumber.toString();
+      } else {
+        // This is a range goal
+        goalRange = `${range.min2}-${range.max2}`;
+        
+        // Check if both operands have the same range, if so use that
+        if (range.min1 === range.min2 && range.max1 === range.max2) {
+          goalRange = `${range.min1}-${range.max1}`;
+        }
+      }
+      
+      // Get existing goal if any
+      const { data: existingGoal } = await supabase
+        .from('goal_progress')
+        .select('*')
+        .eq('profile_id', profileId)
+        .eq('operation', operation)
+        .eq('range', goalRange)
+        .single();
+      
+      const currentBest = existingGoal?.best_score || 0;
+      const currentLevel = existingGoal?.level || 'starter';
+      const newLevel = getGoalLevel(score);
+      const leveledUp = currentLevel !== newLevel && score > currentBest;
+      
+      // Only update if it's a new best score
+      if (score > currentBest) {
+        await supabase
+          .from('goal_progress')
+          .upsert({
+            profile_id: profileId,
+            operation,
+            range: goalRange,
+            best_score: score,
+            level: newLevel,
+            attempts: (existingGoal?.attempts || 0) + 1,
+            last_attempt: new Date().toISOString(),
+            last_level_up: leveledUp ? new Date().toISOString() : existingGoal?.last_level_up
+          }, {
+            onConflict: 'profile_id,operation,range'
+          });
+          
+        console.log('Goal progress updated:', { operation, range: goalRange, newLevel });
+        
+        if (leveledUp) {
+          toast.success(`New achievement: ${newLevel.charAt(0).toUpperCase() + newLevel.slice(1)} level!`);
+        }
+      } else {
+        // Just increment attempts
+        await supabase
+          .from('goal_progress')
+          .upsert({
+            profile_id: profileId,
+            operation,
+            range: goalRange,
+            best_score: currentBest,
+            level: currentLevel,
+            attempts: (existingGoal?.attempts || 0) + 1,
+            last_attempt: new Date().toISOString(),
+            last_level_up: existingGoal?.last_level_up
+          }, {
+            onConflict: 'profile_id,operation,range'
+          });
+          
+        console.log('Goal attempts updated:', { operation, range: goalRange });
+      }
+    } catch (error) {
+      console.error('Error updating goal progress:', error);
     }
   };
 

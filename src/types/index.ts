@@ -1,3 +1,4 @@
+
 export type Operation = 'addition' | 'subtraction' | 'multiplication' | 'division';
 
 export interface ProblemRange {
@@ -31,4 +32,24 @@ export interface UserScore {
   duration?: number;
   focusNumber?: number | null;
   allowNegatives?: boolean;
+}
+
+// New types for Goals feature
+export type GoalLevel = 'starter' | 'bronze' | 'silver' | 'gold' | 'star' | 'legend';
+
+export interface GoalProgress {
+  profile_id: string;
+  operation: Operation;
+  range: string; // Format: '1-5', '7' (focus number)
+  best_score: number;
+  level: GoalLevel;
+  attempts: number;
+  last_attempt: string | null;
+  last_level_up: string | null;
+}
+
+export interface GoalCategory {
+  title: string;
+  ranges: string[];
+  isFocusNumber?: boolean;
 }

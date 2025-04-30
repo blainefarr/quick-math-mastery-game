@@ -1,0 +1,130 @@
+
+import React from 'react';
+import { GoalProgress, Operation, GoalCategory } from '@/types';
+import GoalCell from './GoalCell';
+import { Separator } from '@/components/ui/separator';
+import MathIcon from '@/components/common/MathIcon';
+
+interface GoalsGridProps {
+  goals: GoalProgress[];
+  isLoading: boolean;
+}
+
+const GoalsGrid: React.FC<GoalsGridProps> = ({ goals, isLoading }) => {
+  // Define operations and ranges to display
+  const operations: Operation[] = ['addition', 'subtraction', 'multiplication', 'division'];
+  
+  const categories: GoalCategory[] = [
+    {
+      title: "Focus Numbers",
+      ranges: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'],
+      isFocusNumber: true
+    },
+    {
+      title: "Ranges", 
+      ranges: ['1-5', '1-10']
+    }
+  ];
+  
+  // Find goal for a specific operation and range
+  const findGoal = (operation: Operation, range: string) => {
+    return goals.find(goal => goal.operation === operation && goal.range === range);
+  };
+  
+  if (isLoading) {
+    return <GoalsGridSkeleton />;
+  }
+  
+  return (
+    <div className="w-full">
+      <div className="grid grid-cols-5 gap-2 mb-2">
+        {/* Header row */}
+        <div className="col-span-1"></div>
+        {operations.map((op) => (
+          <div 
+            key={op} 
+            className="col-span-1 flex flex-col items-center justify-center p-2"
+          >
+            <MathIcon operation={op} className="mb-1" />
+            <span className="text-xs font-medium">{op.charAt(0).toUpperCase() + op.slice(1)}</span>
+          </div>
+        ))}
+      </div>
+      
+      {categories.map((category, categoryIndex) => (
+        <React.Fragment key={category.title}>
+          {/* Category header */}
+          <div className="mt-6 mb-3">
+            <h3 className="text-sm font-semibold text-muted-foreground">{category.title}</h3>
+            <Separator className="mt-1" />
+          </div>
+          
+          {/* Ranges within this category */}
+          {category.ranges.map((range) => (
+            <div 
+              key={`${category.title}-${range}`} 
+              className="grid grid-cols-5 gap-2 mb-2"
+            >
+              <div className="col-span-1 flex items-center justify-start">
+                <span className="text-sm font-medium">
+                  {category.isFocusNumber ? `${range}` : range}
+                </span>
+              </div>
+              
+              {operations.map((op) => (
+                <div key={`${op}-${range}`} className="col-span-1">
+                  <GoalCell
+                    goal={findGoal(op, range)}
+                    operation={op}
+                    range={range}
+                  />
+                </div>
+              ))}
+            </div>
+          ))}
+        </React.Fragment>
+      ))}
+    </div>
+  );
+};
+
+const GoalsGridSkeleton = () => {
+  // Create a 4x10 grid of skeleton cells
+  return (
+    <div className="w-full">
+      <div className="grid grid-cols-5 gap-2 mb-2">
+        <div className="col-span-1"></div>
+        {[...Array(4)].map((_, i) => (
+          <div key={i} className="col-span-1 flex justify-center">
+            <div className="h-8 w-8 bg-slate-200 rounded-full animate-pulse"></div>
+          </div>
+        ))}
+      </div>
+      
+      {[...Array(2)].map((_, categoryIndex) => (
+        <React.Fragment key={categoryIndex}>
+          <div className="mt-6 mb-3">
+            <div className="h-4 w-32 bg-slate-200 rounded animate-pulse"></div>
+            <Separator className="mt-1" />
+          </div>
+          
+          {[...Array(categoryIndex === 0 ? 10 : 2)].map((_, rowIndex) => (
+            <div key={rowIndex} className="grid grid-cols-5 gap-2 mb-2">
+              <div className="col-span-1 flex items-center">
+                <div className="h-4 w-16 bg-slate-200 rounded animate-pulse"></div>
+              </div>
+              
+              {[...Array(4)].map((_, colIndex) => (
+                <div key={colIndex} className="col-span-1">
+                  <div className="h-12 w-full bg-slate-200 rounded-md animate-pulse"></div>
+                </div>
+              ))}
+            </div>
+          ))}
+        </React.Fragment>
+      ))}
+    </div>
+  );
+};
+
+export default GoalsGrid;

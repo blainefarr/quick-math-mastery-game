@@ -11,7 +11,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { LogOut, Trophy, TrendingUp, Settings, Users } from 'lucide-react';
+import { LogOut, Trophy, TrendingUp, Settings, Users, Target } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { ProfileSwitcherDialog } from './ProfileSwitcherDialog';
 
@@ -88,6 +88,13 @@ const UserDropdown = ({
           >
             <TrendingUp className="mr-2 h-4 w-4" />
             {dropdownLabel}
+          </DropdownMenuItem>
+          <DropdownMenuItem 
+            onClick={() => navigate('/goals')}
+            className="cursor-pointer hover:bg-accent"
+          >
+            <Target className="mr-2 h-4 w-4" />
+            Goals
           </DropdownMenuItem>
           <DropdownMenuItem 
             onClick={() => navigate('/leaderboard')}
