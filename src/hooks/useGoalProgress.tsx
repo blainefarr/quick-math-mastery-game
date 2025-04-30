@@ -31,7 +31,14 @@ export const useGoalProgress = () => {
         throw error;
       }
       
-      setGoals(data || []);
+      // Properly type-cast the operations from the database to match our Operation type
+      const typedGoals: GoalProgress[] = (data || []).map(item => ({
+        ...item,
+        operation: item.operation as Operation,
+        level: item.level as GoalLevel
+      }));
+      
+      setGoals(typedGoals);
     } catch (err) {
       console.error('Error fetching goals:', err);
       setError('Failed to load goals data');

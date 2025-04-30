@@ -7,7 +7,7 @@ import {
   CardHeader, 
   CardTitle 
 } from "@/components/ui/card";
-import { Target, TrendingUp } from 'lucide-react';
+import { Target, TrendingUp, ArrowLeft } from 'lucide-react';
 import useGoalProgress from '@/hooks/useGoalProgress';
 import GoalsGrid from '@/components/goals/GoalsGrid';
 import GoalsLegend from '@/components/goals/GoalsLegend';
@@ -33,15 +33,27 @@ const GoalsPage: React.FC = () => {
           </div>
         </div>
         
-        <Button 
-          variant="outline" 
-          size="sm" 
-          className="flex items-center"
-          onClick={() => navigate('/progress')}
-        >
-          <TrendingUp className="mr-2 h-4 w-4" />
-          View Detailed Progress
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="flex items-center"
+            onClick={() => navigate('/')}
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Game
+          </Button>
+          
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="flex items-center"
+            onClick={() => navigate('/progress')}
+          >
+            <TrendingUp className="mr-2 h-4 w-4" />
+            View Progress
+          </Button>
+        </div>
       </div>
       
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">

@@ -34,7 +34,7 @@ export interface UserScore {
   allowNegatives?: boolean;
 }
 
-// New types for Goals feature
+// Goal feature types
 export type GoalLevel = 'starter' | 'bronze' | 'silver' | 'gold' | 'star' | 'legend';
 
 export interface GoalProgress {
