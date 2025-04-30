@@ -65,7 +65,7 @@ const UserProfile = () => {
 
     // Only setup the timer if we've completed authentication and loading state
     if (isAuthenticated && !isLoadingProfile && !defaultProfileId && !isNewSignup && !isForceLogout) {
-      console.log('UserProfile: No profile loaded, will wait 3 seconds before logging out');
+      console.log('UserProfile: No profile loaded, will wait 8 seconds before logging out');
       
       // Set a timer to wait before logging out
       const timer = setTimeout(() => {
@@ -85,7 +85,7 @@ const UserProfile = () => {
             handleLogout();
           }, 2000);
         }
-      }, 3000); // 3 second delay before forcing logout
+      }, 8000); // 8 second delay before forcing logout
       
       setAutoLogoutTimer(timer);
     }
