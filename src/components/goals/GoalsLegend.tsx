@@ -57,7 +57,7 @@ const GoalsLegend: React.FC = () => {
             <div className="flex flex-col">
               <span className="font-medium text-sm">{name}</span>
               <span className="text-xs text-muted-foreground">
-                {level === 'learning' ? 'Just starting' : `Score ≥ ${threshold}`}
+                {level === 'learning' ? 'Keep Going!' : `Score ≥ ${threshold}`}
               </span>
             </div>
           </div>
