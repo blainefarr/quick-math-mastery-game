@@ -170,17 +170,7 @@ const Progress = () => {
             <div className="flex items-center gap-2">
               <Label className="mr-2 font-medium whitespace-nowrap">Filter:</Label>
               <div className="flex flex-wrap gap-2">
-                <Select value={selectedRange} onValueChange={setSelectedRange}>
-                  <SelectTrigger className="w-[140px] h-8">
-                    <SelectValue placeholder="All Ranges" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Ranges</SelectItem>
-                    {uniqueRanges.map((range, index) => <SelectItem key={index} value={range}>{range}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-                
-                <Select value={selectedOperation} onValueChange={setSelectedOperation}>
+              <Select value={selectedOperation} onValueChange={setSelectedOperation}>
                   <SelectTrigger className="w-[160px] h-8">
                     <SelectValue placeholder="All Operations" />
                   </SelectTrigger>
@@ -192,6 +182,17 @@ const Progress = () => {
                     <SelectItem value="division">Division</SelectItem>
                   </SelectContent>
                 </Select>
+
+                <Select value={selectedRange} onValueChange={setSelectedRange}>
+                  <SelectTrigger className="w-[140px] h-8">
+                    <SelectValue placeholder="All Ranges" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Ranges</SelectItem>
+                    {uniqueRanges.map((range, index) => <SelectItem key={index} value={range}>{range}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+                
               </div>
             </div>
           </div>
