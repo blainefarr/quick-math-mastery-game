@@ -161,9 +161,9 @@ const CustomNumberPad: React.FC<CustomNumberPadProps> = ({
           className="h-16 font-semibold bg-secondary/20 hover:bg-secondary/30 active:bg-secondary/40 transition-colors"
           aria-label="Delete"
         >
-          <div className="flex items-center justify-center w-full h-full">
+          
             <Delete className="h-10 w-10 stroke-[2.5] shrink-0" />
-          </div>
+          
         </Button>
       </div>
     </div>
