@@ -1,4 +1,3 @@
-
 import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { AuthStateType } from '../auth-types';
@@ -30,6 +29,8 @@ export const useAuthEvents = (authState: AuthStateType) => {
     setIsNewSignup,
     setRetryAttempts
   } = authState;
+
+  const navigate = useNavigate();
 
   // Retry profile fetch for new signups - optimized
   useEffect(() => {
@@ -104,7 +105,8 @@ export const useAuthEvents = (authState: AuthStateType) => {
         // Handle PASSWORD_RECOVERY event
         if (event === 'PASSWORD_RECOVERY') {
           console.log('PASSWORD_RECOVERY event detected in auth context');
-          // The ResetPassword component will handle this event
+          // Navigate to reset password page
+          navigate('/reset-password');
           return;
         }
         

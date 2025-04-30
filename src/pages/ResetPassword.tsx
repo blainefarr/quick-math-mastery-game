@@ -28,6 +28,16 @@ const ResetPassword = () => {
       }
     );
 
+    // Check for recovery state on load - needed if user refreshes the page
+    const checkForRecoveryState = async () => {
+      const { data } = await supabase.auth.getSession();
+      if (data.session?.user) {
+        setRecovery(true);
+      }
+    };
+
+    checkForRecoveryState();
+
     return () => {
       subscription.unsubscribe();
     };

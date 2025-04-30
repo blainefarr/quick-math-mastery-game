@@ -19,6 +19,9 @@ const App = () => (
     <BrowserRouter>
       <Routes>
         <Route element={<RootLayout />}>
+          {/* Password reset route - outside of layouts that might redirect */}
+          <Route path="/reset-password" element={<ResetPassword />} />
+          
           {/* Game routes with GameProvider */}
           <Route element={<GameLayout />}>
             <Route path="/" element={<Index />} />
@@ -31,8 +34,6 @@ const App = () => (
             </Route>
             <Route path="/leaderboard" element={<Leaderboard />} />
             <Route path="/progress" element={<Progress />} />
-            {/* Add password reset route */}
-            <Route path="/reset-password" element={<ResetPassword />} />
             {/* Add future non-game pages here */}
           </Route>
 

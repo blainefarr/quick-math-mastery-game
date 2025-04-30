@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -35,6 +34,7 @@ const AuthModal = ({ children, defaultView = 'register' }: AuthModalProps) => {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
+  const [resetCooldown, setResetCooldown] = useState(60); // Default 60 seconds cooldown
 
   useEffect(() => {
     return () => {
@@ -166,13 +166,25 @@ const AuthModal = ({ children, defaultView = 'register' }: AuthModalProps) => {
     }
 
     // Update with the correct redirect URL
-    const { error: supaError } = await supabase.auth.resetPasswordForEmail(email, {
+    const { error: supaError, data } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/reset-password`
     });
     setIsLoading(false);
 
     if (supaError) {
-      setError(supaError.message);
+      if (supaError.message.includes('For security purposes, you can only request this once every')) {
+        // Extract cooldown time from error message
+        const match = supaError.message.match(/once every (\d+) seconds/);
+        if (match && match[1]) {
+          const cooldownSeconds = parseInt(match[1]);
+          setResetCooldown(cooldownSeconds);
+          setError(`For security purposes, you can only request this once every ${cooldownSeconds} seconds.`);
+        } else {
+          setError(supaError.message);
+        }
+      } else {
+        setError(supaError.message);
+      }
       return;
     }
     setSuccessMsg("Password reset email sent! Check your inbox.");
