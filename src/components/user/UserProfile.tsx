@@ -6,6 +6,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ProfileSwitcherDialog } from './ProfileSwitcherDialog';
 import { Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/hooks/use-toast';
 
 const UserProfile = () => {
   const { 
@@ -30,8 +31,8 @@ const UserProfile = () => {
       return;
     }
     
-    // User is authenticated and profile loading is complete
-    if (hasMultipleProfiles && !profilesChecked) {
+    // Always show profile switcher when user has multiple profiles, regardless of active profile
+    if (hasMultipleProfiles) {
       console.log('UserProfile: Multiple profiles detected, showing picker');
       setShowProfileSwitcher(true);
       setProfilesChecked(true);
@@ -48,7 +49,11 @@ const UserProfile = () => {
       setIsForceLogout(true);
       
       // Show a message and force logout after a short delay
-      toast.error('Profile loading failed. Signing you out for security reasons.');
+      toast({
+        title: "Profile loading failed",
+        description: "Signing you out for security reasons.",
+        variant: "destructive"
+      });
       
       setTimeout(() => {
         handleLogout();
