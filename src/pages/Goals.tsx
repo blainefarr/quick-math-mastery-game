@@ -16,7 +16,7 @@ const GoalsPage: React.FC = () => {
   const navigate = useNavigate();
   
   return (
-    <div className="container mx-auto py-8 px-4">
+    <div className="container mx-auto py-8 px-2 sm:px-4">
       <div className="mx-auto max-w-[800px]">
         <div className="flex items-center mb-6">
           <Button 

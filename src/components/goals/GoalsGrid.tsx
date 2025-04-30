@@ -36,7 +36,7 @@ const GoalsGrid: React.FC<GoalsGridProps> = ({ goals, isLoading }) => {
   }
 
   return (
-    <div className="w-full px-1 sm:px-2 md:px-4">
+    <div className="w-full">
       {categories.map((category) => (
         <React.Fragment key={category.title}>
           {/* Conditionally render operation header row for Focus Numbers only */}
@@ -109,7 +109,7 @@ const GoalsGrid: React.FC<GoalsGridProps> = ({ goals, isLoading }) => {
 const GoalsGridSkeleton = () => {
   // Create a skeleton layout that matches our updated grid structure
   return (
-    <div className="w-full px-1 sm:px-2 md:px-4">
+    <div className="w-full">
       <div className="grid grid-cols-5 gap-2 mb-2">
         <div className="col-span-1"></div>
         <div className="col-span-4 grid grid-cols-4 gap-2">
