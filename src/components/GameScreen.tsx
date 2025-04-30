@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import useGame from '@/context/useGame';
 import { Button } from '@/components/ui/button';
@@ -201,7 +202,7 @@ const GameScreen = () => {
   const handleNumberPress = (number: string) => {
     if (isShowingAnswer || hasEndedRef.current) return;
     
-    // Fix: TypeScript error by not using the updater function approach
+    // Update the user answer directly without using updater function
     const newValue = userAnswer + number;
     setUserAnswer(newValue);
     
@@ -237,7 +238,7 @@ const GameScreen = () => {
   const handleDelete = () => {
     if (isShowingAnswer || hasEndedRef.current) return;
     
-    // Fix: TypeScript error by not using the updater function approach
+    // Update directly without using updater function
     if (userAnswer.length > 0) {
       setUserAnswer(userAnswer.slice(0, -1));
     }
@@ -245,7 +246,7 @@ const GameScreen = () => {
 
   const toggleNegative = () => {
     if (!isShowingAnswer && !hasEndedRef.current) {
-      setIsNegative(prev => !prev);
+      setIsNegative(!isNegative);
       focusInput();
     }
   };
@@ -309,7 +310,7 @@ const GameScreen = () => {
                 }}
               />
               {isNegative && (
-                <span className="absolute top-1/2 transform -translate-y-1/2 -left-8 text-4xl md:text-6xl z-20 select-none">-</span>
+                <span className="absolute top-1/2 transform -translate-y-1/2 -left-10 text-4xl md:text-6xl z-20 select-none">-</span>
               )}
               {feedback && (
                 <div
@@ -334,12 +335,15 @@ const GameScreen = () => {
 
         {/* Custom Number Pad */}
         {useCustomNumberPad && (
-          <CustomNumberPad 
-            onNumberPress={handleNumberPress}
-            onDelete={handleDelete}
-            onNegativeToggle={toggleNegative}
-            isNegative={isNegative}
-          />
+          <div className="w-full max-w-md mx-auto md:max-w-xl">
+            <CustomNumberPad 
+              onNumberPress={handleNumberPress}
+              onDelete={handleDelete}
+              onNegativeToggle={toggleNegative}
+              isNegative={isNegative}
+              showNegativeToggle={showNegativeToggle}
+            />
+          </div>
         )}
 
         <div className="flex justify-center mt-4">

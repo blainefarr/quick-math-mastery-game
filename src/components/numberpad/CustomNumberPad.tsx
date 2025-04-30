@@ -8,16 +8,18 @@ interface CustomNumberPadProps {
   onDelete: () => void;
   onNegativeToggle: () => void;
   isNegative: boolean;
+  showNegativeToggle: boolean;
 }
 
 const CustomNumberPad: React.FC<CustomNumberPadProps> = ({
   onNumberPress,
   onDelete,
   onNegativeToggle,
-  isNegative
+  isNegative,
+  showNegativeToggle
 }) => {
   return (
-    <div className="mt-4 w-full max-w-xs mx-auto">
+    <div className="mt-4 w-full mx-auto">
       <div className="grid grid-cols-3 gap-2">
         {/* First row */}
         {[1, 2, 3].map((num) => (
@@ -25,7 +27,8 @@ const CustomNumberPad: React.FC<CustomNumberPadProps> = ({
             key={num}
             variant="outline"
             onClick={() => onNumberPress(num.toString())}
-            className="text-xl h-14 font-medium"
+            className="text-2xl h-16 font-medium bg-primary/10 hover:bg-primary/20 active:bg-primary/30 transition-colors"
+            aria-label={num.toString()}
           >
             {num}
           </Button>
@@ -37,7 +40,8 @@ const CustomNumberPad: React.FC<CustomNumberPadProps> = ({
             key={num}
             variant="outline"
             onClick={() => onNumberPress(num.toString())}
-            className="text-xl h-14 font-medium"
+            className="text-2xl h-16 font-medium bg-primary/10 hover:bg-primary/20 active:bg-primary/30 transition-colors"
+            aria-label={num.toString()}
           >
             {num}
           </Button>
@@ -49,36 +53,42 @@ const CustomNumberPad: React.FC<CustomNumberPadProps> = ({
             key={num}
             variant="outline"
             onClick={() => onNumberPress(num.toString())}
-            className="text-xl h-14 font-medium"
+            className="text-2xl h-16 font-medium bg-primary/10 hover:bg-primary/20 active:bg-primary/30 transition-colors"
+            aria-label={num.toString()}
           >
             {num}
           </Button>
         ))}
         
         {/* Fourth row */}
-        <Button
-          variant="outline"
-          onClick={onNegativeToggle}
-          className={`text-xl h-14 font-medium ${isNegative ? 'bg-muted' : ''}`}
-          aria-pressed={isNegative}
-          aria-label={isNegative ? "Positive" : "Negative"}
-        >
-          +/-
-        </Button>
+        {showNegativeToggle ? (
+          <Button
+            variant="outline"
+            onClick={onNegativeToggle}
+            className={`text-2xl h-16 font-medium bg-secondary/20 hover:bg-secondary/30 active:bg-secondary/40 transition-colors ${isNegative ? 'ring-2 ring-primary' : ''}`}
+            aria-pressed={isNegative}
+            aria-label={isNegative ? "Positive" : "Negative"}
+          >
+            +/-
+          </Button>
+        ) : (
+          <div></div> // Empty cell when negative numbers are not allowed
+        )}
         <Button
           variant="outline"
           onClick={() => onNumberPress('0')}
-          className="text-xl h-14 font-medium"
+          className="text-2xl h-16 font-medium bg-primary/10 hover:bg-primary/20 active:bg-primary/30 transition-colors"
+          aria-label="0"
         >
           0
         </Button>
         <Button
           variant="outline"
           onClick={onDelete}
-          className="text-xl h-14 font-medium"
+          className="text-2xl h-16 font-medium bg-secondary/20 hover:bg-secondary/30 active:bg-secondary/40 transition-colors"
           aria-label="Delete"
         >
-          <Delete className="h-5 w-5" />
+          <Delete className="h-6 w-6" />
         </Button>
       </div>
     </div>
