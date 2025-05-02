@@ -177,9 +177,9 @@ export function ProfileSwitcherDialog({
     }
     onOpenChange(newOpen);
   };
-  
+
   return (
-    <Dialog open={open && !isNewSignup} onOpenChange={handleDialogChange}>  
+    <Dialog open={open && !isNewSignup} onOpenChange={handleDialogChange}>
       <DialogContent className="sm:max-w-[600px] max-w-[90vw] p-0 overflow-hidden z-50">
         <DialogHeader className="p-6 pb-0 py-[16px]">
           <DialogTitle className="text-2xl">Choose a Profile</DialogTitle>
