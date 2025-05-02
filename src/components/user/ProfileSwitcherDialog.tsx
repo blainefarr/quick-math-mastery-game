@@ -197,47 +197,52 @@ export function ProfileSwitcherDialog({
         ) : (
           <ScrollArea className="h-[60vh] md:h-auto px-6">
             <div className="p-6 pt-0 px-[0px] my-[8px]">
-              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 mb-6 px-[4px]">
-                  <>
-                    {profiles.map(profile => (
-                      <Card 
-                        key={profile.id} 
-                        onClick={() => handleSwitchProfile(profile)} 
-                        className={`p-3 sm:p-4 flex flex-col items-center cursor-pointer transition-all hover:border-primary ${profile.id === defaultProfileId ? 'ring-2 ring-primary' : ''}`}
-                      >
-                        <div className="h-14 w-14 sm:h-20 sm:w-20 rounded-full bg-primary/20 flex items-center justify-center mb-2 sm:mb-3">
-                          <UserCircle className="h-8 w-8 sm:h-12 sm:w-12 text-primary" />
-                        </div>
-                        <div className="text-center">
-                          <h3 className="font-medium text-xs sm:text-base truncate max-w-full">{profile.name}</h3>
-                          {profile.grade && <p className="text-xs text-muted-foreground truncate max-w-full">{profile.grade}</p>}
-                          <div className="flex flex-wrap gap-1 mt-2 justify-center">
-                            {profile.is_owner && (
-                              <Badge variant="secondary" className="flex items-center gap-1 text-xs">
-                                <User className="h-3 w-3" />
-                                <span>Primary</span>
-                              </Badge>
-                            )}
-                          </div>
-                        </div>
-                      </Card>
-                    ))}
-                    
-                    {/* Add New Profile Card */}
+            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 mb-6 px-[4px]">
+              {!isLoading && (
+                <>
+                  {profiles.map(profile => (
                     <Card 
-                      onClick={() => setShowCreateForm(true)} 
-                      className="p-3 sm:p-4 flex flex-col items-center cursor-pointer transition-all border-dashed hover:border-primary"
+                      key={profile.id} 
+                      onClick={() => handleSwitchProfile(profile)} 
+                      className={`p-3 sm:p-4 flex flex-col items-center cursor-pointer transition-all hover:border-primary ${profile.id === defaultProfileId ? 'ring-2 ring-primary' : ''}`}
                     >
-                      <div className="h-14 w-14 sm:h-20 sm:w-20 rounded-full bg-muted flex items-center justify-center mb-2 sm:mb-3">
-                        <Plus className="h-7 w-7 sm:h-10 sm:w-10 text-muted-foreground" />
+                      <div className="h-14 w-14 sm:h-20 sm:w-20 rounded-full bg-primary/20 flex items-center justify-center mb-2 sm:mb-3">
+                        <UserCircle className="h-8 w-8 sm:h-12 sm:w-12 text-primary" />
                       </div>
                       <div className="text-center">
-                        <h3 className="font-medium text-xs sm:text-base">Add Profile</h3>
-                        <p className="text-xs text-muted-foreground">Create a new profile</p>
+                        <h3 className="font-medium text-xs sm:text-base truncate max-w-full">{profile.name}</h3>
+                        {profile.grade && (
+                          <p className="text-xs text-muted-foreground truncate max-w-full">{profile.grade}</p>
+                        )}
+                        <div className="flex flex-wrap gap-1 mt-2 justify-center">
+                          {profile.is_owner && (
+                            <Badge variant="secondary" className="flex items-center gap-1 text-xs">
+                              <User className="h-3 w-3" />
+                              <span>Primary</span>
+                            </Badge>
+                          )}
+                        </div>
                       </div>
                     </Card>
-                  </>
-              </div>
+                  ))}
+
+                  {/* Add New Profile Card */}
+                  <Card 
+                    onClick={() => setShowCreateForm(true)} 
+                    className="p-3 sm:p-4 flex flex-col items-center cursor-pointer transition-all border-dashed hover:border-primary"
+                  >
+                    <div className="h-14 w-14 sm:h-20 sm:w-20 rounded-full bg-muted flex items-center justify-center mb-2 sm:mb-3">
+                      <Plus className="h-7 w-7 sm:h-10 sm:w-10 text-muted-foreground" />
+                    </div>
+                    <div className="text-center">
+                      <h3 className="font-medium text-xs sm:text-base">Add Profile</h3>
+                      <p className="text-xs text-muted-foreground">Create a new profile</p>
+                    </div>
+                  </Card>
+                </>
+              )}
+            </div>
+
               
               <div className="flex justify-end mx-[4px]">
                 <Button variant="outline" onClick={() => {
