@@ -179,6 +179,65 @@ export const useLeaderboard = () => {
     }
   }, [defaultProfileId, isLoadingProfile]); 
 
+  // Utility function to calculate ranking for a score against unique profile high scores
+  const calculateGuestRankForScore = useCallback(async (
+    score: number,
+    operation: Operation,
+    range: { min1: number, max1: number, min2: number, max2: number },
+    grade: string | null = null
+  ) => {
+    try {
+      // Fetch scores with unique profile_id and calculate rank
+      const { data, error } = await supabase
+        .from('scores')
+        .select(`
+          profile_id,
+          score,
+          operation,
+          min1,
+          max1,
+          min2,
+          max2
+        `)
+        .eq('operation', operation)
+        .eq('min1', range.min1)
+        .eq('max1', range.max1)
+        .eq('min2', range.min2)
+        .eq('max2', range.max2)
+        .eq('duration', 60)
+        .eq('allow_negatives', false)
+        .order('score', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching scores for guest rank:', error);
+        return null;
+      }
+
+      // Get highest score for each profile
+      const profileHighScores = new Map<string, number>();
+      data?.forEach(item => {
+        const currentBest = profileHighScores.get(item.profile_id) || 0;
+        if (item.score > currentBest) {
+          profileHighScores.set(item.profile_id, item.score);
+        }
+      });
+
+      // Convert to array of unique profile high scores
+      const uniqueHighScores = Array.from(profileHighScores.values());
+      uniqueHighScores.sort((a, b) => b - a);  // Sort descending
+
+      // Calculate rank (how many scores are higher than the given score + 1)
+      const rank = uniqueHighScores.filter(s => s > score).length + 1;
+      
+      console.log('Guest rank calculation:', { score, rank, uniqueScores: uniqueHighScores.length });
+      
+      return rank;
+    } catch (err) {
+      console.error('Error calculating guest rank:', err);
+      return null;
+    }
+  }, []);
+
   // Initial fetch on mount and when URL changes
   useEffect(() => {
     if (!initialLoadDone.current && !isLoadingProfile) {
@@ -231,5 +290,6 @@ export const useLeaderboard = () => {
     userRank,
     updateFilters,
     fetchLeaderboard,
+    calculateGuestRankForScore
   };
 };
