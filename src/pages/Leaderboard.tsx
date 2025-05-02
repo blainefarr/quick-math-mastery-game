@@ -1,4 +1,3 @@
-
 import { useEffect } from 'react';
 import { useLeaderboard } from '@/hooks/useLeaderboard';
 import { LeaderboardFilters } from '@/components/leaderboard/LeaderboardFilters';
@@ -10,7 +9,6 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Trophy, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
-
 const Leaderboard = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -30,7 +28,6 @@ const Leaderboard = () => {
     updateFilters,
     fetchLeaderboard
   } = useLeaderboard();
-  
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const operation = params.get('operation');
@@ -48,7 +45,7 @@ const Leaderboard = () => {
       });
     }
   }, []);
-  
+
   // Trigger a leaderboard refresh when the profile is loaded
   useEffect(() => {
     if (defaultProfileId && !isLoadingProfile) {
@@ -56,10 +53,8 @@ const Leaderboard = () => {
       fetchLeaderboard();
     }
   }, [isLoadingProfile, defaultProfileId, fetchLeaderboard]);
-
   const hasNoEntries = !isLoading && entries.length === 0;
-  
-  return <div className="container mx-auto py-8 px-4 max-w-4xl space-y-6">
+  return <div className="container mx-auto py-8 px-4 max-w-2xl space-y-6">
       <div className="flex items-center gap-4 mb-2">
         <Button variant="outline" size="sm" onClick={() => navigate('/')} className="h-8 rounded-full">
           <ArrowLeft size={16} className="mr-1" />
@@ -72,12 +67,9 @@ const Leaderboard = () => {
         <p className="text-muted-foreground">See how you stack up!</p>
       </div>
 
-      {isLoadingProfile ? (
-        <Card className="p-8 flex items-center justify-center">
+      {isLoadingProfile ? <Card className="p-8 flex items-center justify-center">
           <p className="text-muted-foreground">Loading your profile...</p>
-        </Card>
-      ) : (
-        <Card className="overflow-hidden">
+        </Card> : <Card className="overflow-hidden">
           <div className="p-4 sticky top-0 backdrop-blur z-10 bg-white">
             <LeaderboardFilters filters={filters} onFilterChange={updateFilters} />
           </div>
@@ -126,21 +118,19 @@ const Leaderboard = () => {
                     <PaginationContent>
                       <PaginationItem>
                         <PaginationPrevious onClick={() => updateFilters({
-                    page: Math.max(1, filters.page - 1)
-                  })} aria-disabled={filters.page === 1} className={filters.page === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"} />
+                  page: Math.max(1, filters.page - 1)
+                })} aria-disabled={filters.page === 1} className={filters.page === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"} />
                       </PaginationItem>
                       <PaginationItem>
                         <PaginationNext onClick={() => updateFilters({
-                    page: Math.min(totalPages, filters.page + 1)
-                  })} aria-disabled={filters.page === totalPages} className={filters.page === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"} />
+                  page: Math.min(totalPages, filters.page + 1)
+                })} aria-disabled={filters.page === totalPages} className={filters.page === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"} />
                       </PaginationItem>
                     </PaginationContent>
                   </Pagination>
                 </div>}
             </>}
-        </Card>
-      )}
+        </Card>}
     </div>;
 };
-
 export default Leaderboard;
