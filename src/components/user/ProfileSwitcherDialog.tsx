@@ -32,6 +32,8 @@ export function ProfileSwitcherDialog({
 }: ProfileSwitcherDialogProps) {
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [showCreateForm, setShowCreateForm] = useState(false);
+
   
   const {
     userId,
@@ -260,5 +262,6 @@ export function ProfileSwitcherDialog({
             </ScrollArea>
           )          
       </DialogContent>
-    </Dialog>);
+    </Dialog>
+  );
 }
