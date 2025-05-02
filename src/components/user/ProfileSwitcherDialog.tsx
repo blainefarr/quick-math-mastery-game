@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/context/auth/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Badge } from '@/components/ui/badge';
-import { Plus, User, UserCircle, AlertCircle, Loader2 } from 'lucide-react';
+import { Plus, User, UserCircle, Loader2 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { CreateProfileForm } from './CreateProfileForm';
 import { ACTIVE_PROFILE_KEY } from '@/context/auth/utils/profileUtils';
@@ -31,12 +31,8 @@ export function ProfileSwitcherDialog({
   onOpenChange
 }: ProfileSwitcherDialogProps) {
   const [profiles, setProfiles] = useState<Profile[]>([]);
-  // We're setting loading to false by default and never changing it
-  const [loading, setLoading] = useState(false);
   const [showCreateForm, setShowCreateForm] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [retryCount, setRetryCount] = useState(0);
-  const [isRetrying, setIsRetrying] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   
   const {
     userId,
@@ -44,7 +40,6 @@ export function ProfileSwitcherDialog({
     setDefaultProfileId,
     setUsername,
     refreshUserProfile,
-    hasMultipleProfiles,
     isNewSignup
   } = useAuth();
 
@@ -83,33 +78,15 @@ export function ProfileSwitcherDialog({
     }
   }, [open]);
 
-  // Retry fetching profiles for new users
-  const retryFetchProfiles = async () => {
-    if (!userId || retryCount >= 4) return;
-    setIsRetrying(true);
-    setError(null);
-    console.log(`Retry attempt ${retryCount + 1}/4 for profiles...`);
-
-    // Wait before retrying
-    await new Promise(resolve => setTimeout(resolve, 500));
-    const success = await fetchProfiles(true);
-    if (!success) {
-      setRetryCount(prev => prev + 1);
-    } else {
-      setRetryCount(0);
-    }
-    setIsRetrying(false);
-  };
-
   // Fetch all profiles for this account
-  const fetchProfiles = async (isRetry = false): Promise<boolean> => {
+  const fetchProfiles = async (): Promise<boolean> => {
     if (!userId) {
       console.error('Cannot fetch profiles: No user ID available');
-      setError('No user ID available');
       return false;
     }
+    
     try {
-      setError(null);
+      setIsLoading(true);
       console.log('Fetching profiles for user ID:', userId);
 
       // Get all profiles for this account sorted by creation time
@@ -119,32 +96,25 @@ export function ProfileSwitcherDialog({
       } = await supabase.from('profiles').select('*').eq('account_id', userId).order('created_at', {
         ascending: true
       });
+      
       if (error) {
         console.error('Error fetching profiles:', error);
-        setError('Failed to load profiles');
-        if (!isRetry) {
-          toast({
-            variant: "destructive",
-            title: "Failed to load profiles",
-            description: "Please try again later"
-          });
+        if (profiles.length === 0) {
+          setShowCreateForm(true);
         }
         return false;
       }
 
       // Get the active profile ID from localStorage
       const activeProfileId = localStorage.getItem(ACTIVE_PROFILE_KEY) || defaultProfileId;
+      
       if (!data || data.length === 0) {
-        console.error('No profiles found for account:', userId);
-        setError('No profiles found');
+        console.log('No profiles found, showing create form');
+        setShowCreateForm(true);
         setProfiles([]);
-        if (!isRetry && retryCount === 0) {
-          console.log('No profiles found, will retry shortly...');
-          // Schedule first retry
-          setTimeout(() => retryFetchProfiles(), 500);
-        }
         return false;
       }
+      
       console.log(`Found ${data.length} profiles, activeProfileId:`, activeProfileId);
       const processedProfiles = data.map(profile => ({
         ...profile,
@@ -155,8 +125,9 @@ export function ProfileSwitcherDialog({
       return true;
     } catch (err) {
       console.error('Error in profile fetch:', err);
-      setError('An unexpected error occurred');
       return false;
+    } finally {
+      setIsLoading(false);
     }
   };
   
@@ -236,27 +207,19 @@ export function ProfileSwitcherDialog({
           </div> : <ScrollArea className="h-[60vh] md:h-auto px-6">
             <div className="p-6 pt-0 px-[0px] my-[8px]">
               <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 mb-6 px-[4px]">
-                {error ? <div className="col-span-full text-center py-8 text-red-500 flex flex-col items-center gap-2">
-                    <AlertCircle className="h-8 w-8" />
-                    <p>{error}</p>
-                    {retryCount < 4 ? <Button variant="outline" onClick={() => retryFetchProfiles()} className="mt-2 flex items-center gap-2" disabled={isRetrying}>
-                        {isRetrying ? <>
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                            Retrying...
-                          </> : <>Try Again ({retryCount}/4)</>}
-                      </Button> : <div className="text-center mt-2">
-                        <p className="text-sm mb-2">Maximum retries reached.</p>
-                        <Button onClick={() => setShowCreateForm(true)} className="mx-auto">
-                          Create New Profile
-                        </Button>
-                      </div>}
-                  </div> : profiles.length === 0 ? <div className="col-span-full text-center py-8">
-                    <p className="mb-4">No profiles found for your account.</p>
-                    <Button onClick={() => setShowCreateForm(true)} className="mx-auto">
-                      Create Your First Profile
-                    </Button>
-                  </div> : <>
-                    {profiles.map(profile => <Card key={profile.id} onClick={() => handleSwitchProfile(profile)} className={`p-3 sm:p-4 flex flex-col items-center cursor-pointer transition-all hover:border-primary ${profile.id === defaultProfileId ? 'ring-2 ring-primary' : ''}`}>
+                {isLoading ? (
+                  <div className="col-span-full text-center py-8 flex flex-col items-center gap-2">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                    <p className="text-muted-foreground">Loading profiles...</p>
+                  </div>
+                ) : (
+                  <>
+                    {profiles.map(profile => (
+                      <Card 
+                        key={profile.id} 
+                        onClick={() => handleSwitchProfile(profile)} 
+                        className={`p-3 sm:p-4 flex flex-col items-center cursor-pointer transition-all hover:border-primary ${profile.id === defaultProfileId ? 'ring-2 ring-primary' : ''}`}
+                      >
                         <div className="h-14 w-14 sm:h-20 sm:w-20 rounded-full bg-primary/20 flex items-center justify-center mb-2 sm:mb-3">
                           <UserCircle className="h-8 w-8 sm:h-12 sm:w-12 text-primary" />
                         </div>
@@ -264,16 +227,22 @@ export function ProfileSwitcherDialog({
                           <h3 className="font-medium text-xs sm:text-base truncate max-w-full">{profile.name}</h3>
                           {profile.grade && <p className="text-xs text-muted-foreground truncate max-w-full">{profile.grade}</p>}
                           <div className="flex flex-wrap gap-1 mt-2 justify-center">
-                            {profile.is_owner && <Badge variant="secondary" className="flex items-center gap-1 text-xs">
+                            {profile.is_owner && (
+                              <Badge variant="secondary" className="flex items-center gap-1 text-xs">
                                 <User className="h-3 w-3" />
                                 <span>Primary</span>
-                              </Badge>}
+                              </Badge>
+                            )}
                           </div>
                         </div>
-                      </Card>)}
+                      </Card>
+                    ))}
                     
                     {/* Add New Profile Card */}
-                    <Card onClick={() => setShowCreateForm(true)} className="p-3 sm:p-4 flex flex-col items-center cursor-pointer transition-all border-dashed hover:border-primary">
+                    <Card 
+                      onClick={() => setShowCreateForm(true)} 
+                      className="p-3 sm:p-4 flex flex-col items-center cursor-pointer transition-all border-dashed hover:border-primary"
+                    >
                       <div className="h-14 w-14 sm:h-20 sm:w-20 rounded-full bg-muted flex items-center justify-center mb-2 sm:mb-3">
                         <Plus className="h-7 w-7 sm:h-10 sm:w-10 text-muted-foreground" />
                       </div>
@@ -282,18 +251,19 @@ export function ProfileSwitcherDialog({
                         <p className="text-xs text-muted-foreground">Create a new profile</p>
                       </div>
                     </Card>
-                  </>}
+                  </>
+                )}
               </div>
               
               <div className="flex justify-end mx-[4px]">
                 <Button variant="outline" onClick={() => {
-              // Enhanced cleanup before closing
-              onOpenChange(false);
-              setTimeout(() => {
-                document.body.style.pointerEvents = '';
-                document.body.style.overflow = '';
-              }, 50);
-            }}>
+                  // Enhanced cleanup before closing
+                  onOpenChange(false);
+                  setTimeout(() => {
+                    document.body.style.pointerEvents = '';
+                    document.body.style.overflow = '';
+                  }, 50);
+                }}>
                   Close
                 </Button>
               </div>
