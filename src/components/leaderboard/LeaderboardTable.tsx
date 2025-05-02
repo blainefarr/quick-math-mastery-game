@@ -38,9 +38,9 @@ export const LeaderboardTable = ({ entries, className = '' }: Props) => {
           <TableRow>
             <TableHead className="w-[100px]">Rank</TableHead>
             <TableHead>Player</TableHead>
+            <TableHead className="w-[80px]">Score</TableHead>
             <TableHead>Operation</TableHead>
             <TableHead>Range</TableHead>
-            <TableHead className="text-right">Score</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -69,11 +69,11 @@ export const LeaderboardTable = ({ entries, className = '' }: Props) => {
                     )}
                   </div>
                 </TableCell>
+                <TableCell className="font-bold">{entry.best_score}</TableCell>
                 <TableCell>
                   {entry.operation.charAt(0).toUpperCase() + entry.operation.slice(1)}
                 </TableCell>
                 <TableCell>{`${entry.min1}-${entry.max1}`}</TableCell>
-                <TableCell className="text-right font-bold">{entry.best_score}</TableCell>
               </TableRow>
             );
           })}
