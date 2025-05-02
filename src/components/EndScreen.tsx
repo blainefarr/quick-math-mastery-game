@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import useGame from '@/context/useGame';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, RefreshCw, TrendingUp, Medal, Settings, Trophy, Award, Star } from 'lucide-react';
+import { ArrowLeft, RefreshCw, TrendingUp, Medal, Settings, Trophy, Award, Star, UserPlus } from 'lucide-react';
 import MathIcon from './common/MathIcon';
 import ConfettiEffect from './common/ConfettiEffect';
 import { Badge } from '@/components/ui/badge';
@@ -50,10 +50,10 @@ const EndScreen = () => {
     const sortedScores = [...matchingScores].sort((a, b) => b.score - a.score);
     const position = sortedScores.findIndex(s => s.score === score) + 1;
     
-    if (position === 1) return "Personal Best!";
-    if (position === 2) return "Your 2nd Best!";
-    if (position === 3) return "Your 3rd Best!";
-    if (position <= 10) return `Your ${position}th Best!`;
+    if (position === 1) return { position: 1, label: "Personal Best!" };
+    if (position === 2) return { position: 2, label: "Your 2nd Best!" };
+    if (position === 3) return { position: 3, label: "Your 3rd Best!" };
+    if (position <= 10) return { position: position, label: `Your ${position}th Best!` };
     return null;
   };
   
@@ -112,6 +112,43 @@ const EndScreen = () => {
   
   const personalBestRank = getPersonalBestRanking();
   const achievementMessage = getAchievementMessage();
+  
+  // Determine if we should add background celebration
+  const shouldShowCelebration = isHighScore || personalBestRank?.position <= 3 || achievementMessage !== null;
+
+  // Get badge style for personal best
+  const getPersonalBestBadgeStyle = () => {
+    if (!personalBestRank) return {};
+    
+    switch (personalBestRank.position) {
+      case 1:
+        return { variant: "secondary", className: "bg-amber-400/70 text-black hover:bg-amber-400/90 border-amber-500" };
+      case 2:
+        return { variant: "secondary", className: "bg-zinc-300/70 text-black hover:bg-zinc-300/90 border-zinc-400" };
+      case 3:
+        return { variant: "secondary", className: "bg-amber-700/70 text-white hover:bg-amber-700/90 border-amber-800" };
+      default:
+        return { variant: "outline", className: "hover:bg-muted/50" };
+    }
+  };
+  
+  // Get badge icon for personal best
+  const getPersonalBestIcon = () => {
+    if (!personalBestRank) return <Trophy size={14} className="mr-1" />;
+    
+    switch (personalBestRank.position) {
+      case 1:
+        return <Trophy size={14} className="mr-1 text-amber-700" />;
+      case 2:
+        return <Medal size={14} className="mr-1" />;
+      case 3:
+        return <Award size={14} className="mr-1" />;
+      default:
+        return <Trophy size={14} className="mr-1" />;
+    }
+  };
+  
+  const personalBestBadgeStyle = getPersonalBestBadgeStyle();
 
   return (
     <main className="flex flex-col items-center w-full min-h-screen px-4 pt-6 sm:pt-10">
@@ -124,33 +161,72 @@ const EndScreen = () => {
         <CardContent className="space-y-5">
           {/* Score Display */}
           <div className="flex justify-center">
-            <div className={`text-center ${isHighScore && score > 0 ? 'bg-gradient-to-r from-primary/20 to-secondary/20' : 'bg-muted/50'} rounded-xl w-full py-6 flex flex-col justify-center items-center shadow-inner animate-pop`}>
-              <span className={`text-sm ${isHighScore && score > 0 ? 'text-accent' : 'text-muted-foreground'} font-medium`}>
+            <div className={`text-center ${shouldShowCelebration ? 'bg-gradient-to-r from-primary/20 to-secondary/20' : 'bg-muted/50'} rounded-xl w-full py-6 flex flex-col justify-center items-center shadow-inner relative overflow-hidden`}>
+              {/* Celebration background for high scores/achievements */}
+              {shouldShowCelebration && (
+                <div className="absolute inset-0 z-0 opacity-20">
+                  {Array.from({ length: 12 }).map((_, i) => (
+                    <div 
+                      key={i}
+                      className="absolute rounded-full"
+                      style={{
+                        width: `${Math.random() * 20 + 10}px`,
+                        height: `${Math.random() * 20 + 10}px`,
+                        backgroundColor: ['#9b87f5', '#7E69AB', '#FEC6A1', '#FEF7CD', '#F2FCE2', '#D3E4FD'][Math.floor(Math.random() * 6)],
+                        top: `${Math.random() * 100}%`,
+                        left: `${Math.random() * 100}%`,
+                      }}
+                    />
+                  ))}
+                </div>
+              )}
+            
+              <span className={`text-sm ${isHighScore && score > 0 ? 'text-accent' : 'text-muted-foreground'} font-medium relative z-10`}>
                 {isHighScore && score > 0 ? 'New High Score!' : 'Final Score'}
               </span>
-              <span className={`text-6xl font-bold ${isHighScore && score > 0 ? 'text-primary animate-bounce' : 'text-primary'}`}>
+              <span className={`text-6xl font-bold ${isHighScore && score > 0 ? 'text-primary' : 'text-primary'} relative z-10`}>
                 {score}
               </span>
               {score > 0 && (
-                <div className="mt-2 flex flex-wrap justify-center gap-2">
+                <div className="mt-2 flex flex-wrap justify-center gap-2 relative z-10">
                   {personalBestRank && (
                     <Badge 
-                      variant="secondary" 
-                      className="cursor-pointer animate-fade-in" 
+                      variant={personalBestBadgeStyle.variant as any}
+                      className={`cursor-pointer animate-fade-in ${personalBestBadgeStyle.className}`} 
                       onClick={() => navigate('/progress')}
                     >
-                      <Trophy size={14} className="mr-1" /> {personalBestRank}
+                      {getPersonalBestIcon()} {personalBestRank.label}
                     </Badge>
                   )}
                   
-                  {userRank && (
-                    <Badge 
-                      variant="outline" 
-                      className="cursor-pointer animate-fade-in" 
-                      onClick={() => navigate('/leaderboard')}
-                    >
-                      <Award size={14} className="mr-1" /> #{userRank} All-time
-                    </Badge>
+                  {isLoggedIn ? (
+                    userRank && (
+                      <Badge 
+                        variant="outline" 
+                        className="cursor-pointer animate-fade-in hover:bg-muted/50" 
+                        onClick={() => navigate('/leaderboard')}
+                      >
+                        <Award size={14} className="mr-1" /> #{userRank} All-time
+                      </Badge>
+                    )
+                  ) : (
+                    <div className="flex flex-col items-center w-full gap-2 mt-1">
+                      <Badge 
+                        variant="outline" 
+                        className="cursor-default animate-fade-in hover:bg-muted/50"
+                      >
+                        <Award size={14} className="mr-1" /> #{Math.floor(Math.random() * 30) + 1} All-time
+                      </Badge>
+                      <Button 
+                        size="sm" 
+                        variant="secondary"
+                        className="text-xs py-1 h-auto animate-fade-in"
+                        onClick={() => navigate('/account')}
+                      >
+                        <UserPlus size={14} className="mr-1" /> 
+                        Sign up to join the leaderboard
+                      </Button>
+                    </div>
                   )}
                 </div>
               )}
@@ -223,7 +299,7 @@ const EndScreen = () => {
               onClick={() => navigate('/account')}
               type="button"
             >
-              <Medal className="mr-2" size={16} />
+              <UserPlus className="mr-2" size={16} />
               Sign Up to Save Progress
             </Button>
           )}
