@@ -259,7 +259,7 @@ export function ProfileSwitcherDialog({
                 </div>
               </div>
             </ScrollArea>
-          )          
+        )}
       </DialogContent>
     </Dialog>
   );
