@@ -108,12 +108,13 @@ export function ProfileSwitcherDialog({
       // Get the active profile ID from localStorage
       const activeProfileId = localStorage.getItem(ACTIVE_PROFILE_KEY) || defaultProfileId;
       
-      if (!data || data.length === 0) {
+      if (data && data.length === 0) {
         console.log('No profiles found, showing create form');
-        setShowCreateForm(true);
         setProfiles([]);
+        setTimeout(() => setShowCreateForm(true), 100); // Delay to prevent flash
         return false;
       }
+      
       
       console.log(`Found ${data.length} profiles, activeProfileId:`, activeProfileId);
       const processedProfiles = data.map(profile => ({
