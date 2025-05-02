@@ -260,5 +260,5 @@ export function ProfileSwitcherDialog({
             </ScrollArea>
           )          
       </DialogContent>
-    </Dialog>;
+    </Dialog>);
 }
