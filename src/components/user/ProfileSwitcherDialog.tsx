@@ -164,11 +164,12 @@ export function ProfileSwitcherDialog({
   };
 
   // Handle profile creation success
-  const handleProfileCreated = (newProfile: Profile) => {
+  const handleProfileCreated = async (newProfile: Profile) => {
     setShowCreateForm(false);
-    fetchProfiles();
-    handleSwitchProfile(newProfile);
+    await fetchProfiles();
+    await handleSwitchProfile(newProfile);
   };
+  
   
   const handleDialogChange = (newOpen: boolean) => {
     if (!newOpen) {
