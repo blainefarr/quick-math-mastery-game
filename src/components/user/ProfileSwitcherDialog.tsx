@@ -195,15 +195,19 @@ export function ProfileSwitcherDialog({
               />
           </div>
         ) : (
-          <ScrollArea className="h-[60vh] md:h-auto px-6">
-            <div className="p-6 pt-0 px-[0px] my-[8px]">
-            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 mb-6 px-[4px]">
-              {!isLoading && (
-                <>
+          {isLoading ? (
+            <div className="flex flex-col items-center justify-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-primary mb-2" />
+              <p className="text-muted-foreground text-sm">Loading profiles...</p>
+            </div>
+          ) : (
+            <ScrollArea className="h-[60vh] md:h-auto px-6">
+              <div className="p-6 pt-0 px-[0px] my-[8px]">
+                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 mb-6 px-[4px]">
                   {profiles.map(profile => (
                     <Card 
-                      key={profile.id} 
-                      onClick={() => handleSwitchProfile(profile)} 
+                      key={profile.id}
+                      onClick={() => handleSwitchProfile(profile)}
                       className={`p-3 sm:p-4 flex flex-col items-center cursor-pointer transition-all hover:border-primary ${profile.id === defaultProfileId ? 'ring-2 ring-primary' : ''}`}
                     >
                       <div className="h-14 w-14 sm:h-20 sm:w-20 rounded-full bg-primary/20 flex items-center justify-center mb-2 sm:mb-3">
@@ -225,7 +229,7 @@ export function ProfileSwitcherDialog({
                       </div>
                     </Card>
                   ))}
-
+          
                   {/* Add New Profile Card */}
                   <Card 
                     onClick={() => setShowCreateForm(true)} 
@@ -239,25 +243,22 @@ export function ProfileSwitcherDialog({
                       <p className="text-xs text-muted-foreground">Create a new profile</p>
                     </div>
                   </Card>
-                </>
-              )}
-            </div>
-
-              
-              <div className="flex justify-end mx-[4px]">
-                <Button variant="outline" onClick={() => {
-                  // Enhanced cleanup before closing
-                  onOpenChange(false);
-                  setTimeout(() => {
-                    document.body.style.pointerEvents = '';
-                    document.body.style.overflow = '';
-                  }, 50);
-                }}>
-                  Close
-                </Button>
+                </div>
+          
+                <div className="flex justify-end mx-[4px]">
+                  <Button variant="outline" onClick={() => {
+                    onOpenChange(false);
+                    setTimeout(() => {
+                      document.body.style.pointerEvents = '';
+                      document.body.style.overflow = '';
+                    }, 50);
+                  }}>
+                    Close
+                  </Button>
+                </div>
               </div>
-            </div>
-          </ScrollArea>)}
+            </ScrollArea>
+          )}          
       </DialogContent>
     </Dialog>;
 }
