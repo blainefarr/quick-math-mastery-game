@@ -1,4 +1,3 @@
-
 import { useCallback, useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Operation } from '@/types';
@@ -187,7 +186,9 @@ export const useLeaderboard = () => {
     grade: string | null = null
   ) => {
     try {
-      // Fetch scores with unique profile_id and calculate rank
+      console.log('Calculating guest rank for score:', score, 'with operation:', operation, 'and range:', range);
+      
+      // Fetch scores with unique profile_id that match the operation and range
       const { data, error } = await supabase
         .from('scores')
         .select(`
@@ -205,31 +206,42 @@ export const useLeaderboard = () => {
         .eq('min2', range.min2)
         .eq('max2', range.max2)
         .eq('duration', 60)
-        .eq('allow_negatives', false)
-        .order('score', { ascending: false });
+        .eq('allow_negatives', false);
 
       if (error) {
         console.error('Error fetching scores for guest rank:', error);
         return null;
       }
 
+      console.log('Raw scores data:', data);
+      
+      if (!data || data.length === 0) {
+        console.log('No scores found, guest would be ranked #1');
+        return 1;
+      }
+
       // Get highest score for each profile
       const profileHighScores = new Map<string, number>();
-      data?.forEach(item => {
-        const currentBest = profileHighScores.get(item.profile_id) || 0;
-        if (item.score > currentBest) {
+      data.forEach(item => {
+        if (!profileHighScores.has(item.profile_id) || item.score > profileHighScores.get(item.profile_id)!) {
           profileHighScores.set(item.profile_id, item.score);
         }
       });
 
+      console.log('Profile high scores map:', Array.from(profileHighScores.entries()));
+
       // Convert to array of unique profile high scores
       const uniqueHighScores = Array.from(profileHighScores.values());
       uniqueHighScores.sort((a, b) => b - a);  // Sort descending
+      
+      console.log('Unique high scores (sorted):', uniqueHighScores);
 
       // Calculate rank (how many scores are higher than the given score + 1)
-      const rank = uniqueHighScores.filter(s => s > score).length + 1;
+      const higherScores = uniqueHighScores.filter(s => s > score);
+      const rank = higherScores.length + 1;
       
-      console.log('Guest rank calculation:', { score, rank, uniqueScores: uniqueHighScores.length });
+      console.log('Higher scores than', score, ':', higherScores);
+      console.log('Guest rank calculation result:', { score, rank, totalUniqueScores: uniqueHighScores.length });
       
       return rank;
     } catch (err) {

@@ -1,10 +1,10 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import useGame from '@/context/useGame';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, RefreshCw, TrendingUp, Medal, Settings, Trophy, Award, Star, UserPlus } from 'lucide-react';
+import { ArrowLeft, RefreshCw, TrendingUp, Medal, Settings, Trophy, Award, Star, UserPlus, Loader2 } from 'lucide-react';
 import MathIcon from './common/MathIcon';
 import ConfettiEffect from './common/ConfettiEffect';
 import { Badge } from '@/components/ui/badge';
@@ -25,13 +25,49 @@ const EndScreen = () => {
     scoreHistory
   } = useGame();
   
+  // Add state for calculated guest rank and loading state
+  const [guestRank, setGuestRank] = useState<number | null>(null);
+  const [isCalculatingRank, setIsCalculatingRank] = useState(false);
+  
   const isHighScore = getIsHighScore(score, settings.operation, settings.range);
   
   // Get goal progress info
   const { updateGoalProgress } = useGoalProgress();
   
-  // Get user rank info from leaderboard
-  const { userRank } = useLeaderboard();
+  // Get user rank info from leaderboard and the calculateGuestRankForScore function
+  const { userRank, calculateGuestRankForScore } = useLeaderboard();
+  
+  // Effect to calculate guest rank when component mounts or score changes
+  useEffect(() => {
+    // Only calculate for non-logged in users with a positive score
+    if (!isLoggedIn && score > 0) {
+      setIsCalculatingRank(true);
+      
+      // Calculate guest rank
+      const calculateRank = async () => {
+        try {
+          console.log('Calculating guest rank for score:', score);
+          
+          const calculatedRank = await calculateGuestRankForScore(
+            score,
+            settings.operation,
+            settings.range
+          );
+          
+          console.log('Calculated guest rank:', calculatedRank);
+          setGuestRank(calculatedRank);
+        } catch (error) {
+          console.error('Error calculating guest rank:', error);
+          // Fallback to a reasonable rank if calculation fails
+          setGuestRank(null);
+        } finally {
+          setIsCalculatingRank(false);
+        }
+      };
+      
+      calculateRank();
+    }
+  }, [score, isLoggedIn, calculateGuestRankForScore, settings.operation, settings.range]);
   
   // Determine personal best ranking
   const getPersonalBestRanking = () => {
@@ -150,6 +186,9 @@ const EndScreen = () => {
   
   const personalBestBadgeStyle = getPersonalBestBadgeStyle();
 
+  // Determine what rank to display for non-logged in users
+  const displayGuestRank = guestRank || null;
+
   return (
     <main className="flex flex-col items-center w-full min-h-screen px-4 pt-6 sm:pt-10">
       <ConfettiEffect score={score} />
@@ -211,12 +250,28 @@ const EndScreen = () => {
                     )
                   ) : (
                     <div className="flex flex-col items-center w-full gap-2 mt-1">
-                      <Badge 
-                        variant="outline" 
-                        className="cursor-default animate-fade-in hover:bg-muted/50"
-                      >
-                        <Award size={14} className="mr-1" /> #{Math.floor(Math.random() * 30) + 1} All-time
-                      </Badge>
+                      {isCalculatingRank ? (
+                        <Badge 
+                          variant="outline" 
+                          className="cursor-default animate-fade-in hover:bg-muted/50"
+                        >
+                          <Loader2 size={14} className="mr-1 animate-spin" /> Calculating rank...
+                        </Badge>
+                      ) : displayGuestRank ? (
+                        <Badge 
+                          variant="outline" 
+                          className="cursor-default animate-fade-in hover:bg-muted/50"
+                        >
+                          <Award size={14} className="mr-1" /> #{displayGuestRank} All-time
+                        </Badge>
+                      ) : (
+                        <Badge 
+                          variant="outline" 
+                          className="cursor-default animate-fade-in hover:bg-muted/50"
+                        >
+                          <Award size={14} className="mr-1" /> Rank unavailable
+                        </Badge>
+                      )}
                       <Button 
                         size="sm" 
                         variant="secondary"
