@@ -27,7 +27,7 @@ export function ProfileSwitcherDialog({
   onOpenChange
 }: ProfileSwitcherDialogProps) {
   const [profiles, setProfiles] = useState<Profile[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false); // Changed to false by default
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
@@ -100,13 +100,9 @@ export function ProfileSwitcherDialog({
     if (!userId) {
       console.error('Cannot fetch profiles: No user ID available');
       setError('No user ID available');
-      setLoading(false);
       return false;
     }
     try {
-      if (!isRetry) {
-        setLoading(true);
-      }
       setError(null);
       console.log('Fetching profiles for user ID:', userId);
 
@@ -155,10 +151,6 @@ export function ProfileSwitcherDialog({
       console.error('Error in profile fetch:', err);
       setError('An unexpected error occurred');
       return false;
-    } finally {
-      if (!isRetry) {
-        setLoading(false);
-      }
     }
   };
   useEffect(() => {
@@ -236,9 +228,7 @@ export function ProfileSwitcherDialog({
           </div> : <ScrollArea className="h-[60vh] md:h-auto px-6">
             <div className="p-6 pt-0 px-[0px] my-[8px]">
               <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 mb-6 px-[4px]">
-                {loading ? <div className="col-span-full text-center py-8">
-                    Loading profiles...
-                  </div> : error ? <div className="col-span-full text-center py-8 text-red-500 flex flex-col items-center gap-2">
+                {error ? <div className="col-span-full text-center py-8 text-red-500 flex flex-col items-center gap-2">
                     <AlertCircle className="h-8 w-8" />
                     <p>{error}</p>
                     {retryCount < 4 ? <Button variant="outline" onClick={() => retryFetchProfiles()} className="mt-2 flex items-center gap-2" disabled={isRetrying}>
