@@ -187,6 +187,8 @@ export const useLeaderboard = () => {
     grade: string | null = null
   ) => {
     try {
+      console.log('Calculating guest rank for score:', score);
+      
       // Fetch scores with unique profile_id and calculate rank
       const { data, error } = await supabase
         .from('scores')
@@ -213,8 +215,10 @@ export const useLeaderboard = () => {
         return null;
       }
 
-      // Get highest score for each profile
+      // Map for highest score per profile
       const profileHighScores = new Map<string, number>();
+      
+      // Get highest score for each profile
       data?.forEach(item => {
         const currentBest = profileHighScores.get(item.profile_id) || 0;
         if (item.score > currentBest) {
@@ -225,11 +229,21 @@ export const useLeaderboard = () => {
       // Convert to array of unique profile high scores
       const uniqueHighScores = Array.from(profileHighScores.values());
       uniqueHighScores.sort((a, b) => b - a);  // Sort descending
-
-      // Calculate rank (how many scores are higher than the given score + 1)
-      const rank = uniqueHighScores.filter(s => s > score).length + 1;
       
-      console.log('Guest rank calculation:', { score, rank, uniqueScores: uniqueHighScores.length });
+      console.log('Unique high scores for ranking:', uniqueHighScores);
+      
+      // Count how many scores are strictly higher than our score
+      const higherScores = uniqueHighScores.filter(s => s > score).length;
+      
+      // Rank is the count of higher scores + 1
+      const rank = higherScores + 1;
+      
+      console.log('Guest rank calculation result:', { 
+        score, 
+        rank, 
+        higherScores,
+        totalUniqueScores: uniqueHighScores.length
+      });
       
       return rank;
     } catch (err) {
