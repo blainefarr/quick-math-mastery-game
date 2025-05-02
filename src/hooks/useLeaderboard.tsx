@@ -1,3 +1,4 @@
+
 import { useCallback, useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Operation } from '@/types';
@@ -46,127 +47,73 @@ export const useLeaderboard = () => {
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
   const [totalPages, setTotalPages] = useState(1);
   const [userRank, setUserRank] = useState<number | null>(null);
+  
   const initialLoadDone = useRef(false);
   const fetchInProgress = useRef(false);
   const { defaultProfileId, isLoadingProfile } = useAuth();
   
+  // Parse current filters from URL params
+  const filtersRef = useRef<LeaderboardFilters>(parseFiltersFromParams(searchParams));
+
   // Parse numeric values from search params
-  const parseNumericParam = (param: string | null): number | null => {
+  function parseNumericParam(param: string | null): number | null {
     if (param === null || param === 'null') return null;
     const value = parseInt(param);
     return isNaN(value) ? null : value;
-  };
+  }
 
-  // Use ref for currentFilters to avoid re-renders
-  const filtersRef = useRef<LeaderboardFilters>({
-    operation: (searchParams.get('operation') as Operation) || DEFAULT_FILTERS.operation,
-    min1: parseNumericParam(searchParams.get('min1')) ?? DEFAULT_FILTERS.min1,
-    max1: parseNumericParam(searchParams.get('max1')) ?? DEFAULT_FILTERS.max1,
-    min2: parseNumericParam(searchParams.get('min2')) ?? DEFAULT_FILTERS.min2,
-    max2: parseNumericParam(searchParams.get('max2')) ?? DEFAULT_FILTERS.max2,
-    grade: searchParams.get('grade') === "null" ? null : searchParams.get('grade') || DEFAULT_FILTERS.grade,
-    page: parseInt(searchParams.get('page') || String(DEFAULT_FILTERS.page)),
-  });
+  // Helper function to parse filters from URL params
+  function parseFiltersFromParams(params: URLSearchParams): LeaderboardFilters {
+    return {
+      operation: (params.get('operation') as Operation) || DEFAULT_FILTERS.operation,
+      min1: parseNumericParam(params.get('min1')) ?? DEFAULT_FILTERS.min1,
+      max1: parseNumericParam(params.get('max1')) ?? DEFAULT_FILTERS.max1,
+      min2: parseNumericParam(params.get('min2')) ?? DEFAULT_FILTERS.min2,
+      max2: parseNumericParam(params.get('max2')) ?? DEFAULT_FILTERS.max2,
+      grade: params.get('grade') === "null" ? null : params.get('grade') || DEFAULT_FILTERS.grade,
+      page: parseInt(params.get('page') || String(DEFAULT_FILTERS.page)),
+    };
+  }
 
   // Update filters from URL params when search params change
   useEffect(() => {
-    filtersRef.current = {
-      operation: (searchParams.get('operation') as Operation) || DEFAULT_FILTERS.operation,
-      min1: parseNumericParam(searchParams.get('min1')) ?? DEFAULT_FILTERS.min1,
-      max1: parseNumericParam(searchParams.get('max1')) ?? DEFAULT_FILTERS.max1,
-      min2: parseNumericParam(searchParams.get('min2')) ?? DEFAULT_FILTERS.min2,
-      max2: parseNumericParam(searchParams.get('max2')) ?? DEFAULT_FILTERS.max2,
-      grade: searchParams.get('grade') === "null" ? null : searchParams.get('grade') || DEFAULT_FILTERS.grade,
-      page: parseInt(searchParams.get('page') || String(DEFAULT_FILTERS.page)),
-    };
+    filtersRef.current = parseFiltersFromParams(searchParams);
   }, [searchParams]);
 
+  // Fetch leaderboard data from Supabase
   const fetchLeaderboard = useCallback(async () => {
-    // Don't fetch if profile is still loading
-    if (isLoadingProfile) {
-      console.log('Profile still loading, deferring leaderboard fetch');
+    // Don't fetch if profile is still loading or if a fetch is already in progress
+    if (isLoadingProfile || fetchInProgress.current) {
+      console.log('Skipping leaderboard fetch:', 
+        isLoadingProfile ? 'profile still loading' : 'fetch already in progress');
       return;
     }
-    
-    // Prevent concurrent fetches
-    if (fetchInProgress.current) return;
     
     fetchInProgress.current = true;
     setIsLoading(true);
     setError(null);
-
-    const currentFilters = filtersRef.current;
     
+    const currentFilters = filtersRef.current;
     try {
       console.log('Fetching leaderboard with filters:', currentFilters);
       
-      const { data: leaderboardData, error: leaderboardError } = await supabase
-        .rpc('get_leaderboard', {
-          p_operation: currentFilters.operation,
-          p_min1: currentFilters.min1,
-          p_max1: currentFilters.max1,
-          p_min2: currentFilters.min2,
-          p_max2: currentFilters.max2,
-          p_grade: currentFilters.grade === "all" ? null : currentFilters.grade,
-          p_page: currentFilters.page,
-        });
-
-      if (leaderboardError) {
-        console.error('Leaderboard error:', leaderboardError);
-        throw leaderboardError;
-      }
+      // Get leaderboard entries
+      const { data: leaderboardData, error: leaderboardError } = await fetchLeaderboardData(currentFilters);
+      if (leaderboardError) throw leaderboardError;
       
-      console.log('Leaderboard data:', leaderboardData);
-
-      const { data: countData, error: countError } = await supabase
-        .rpc('get_leaderboard_count', {
-          p_operation: currentFilters.operation,
-          p_min1: currentFilters.min1,
-          p_max1: currentFilters.max1,
-          p_min2: currentFilters.min2,
-          p_max2: currentFilters.max2,
-          p_grade: currentFilters.grade === "all" ? null : currentFilters.grade,
-        });
-
-      if (countError) {
-        console.error('Count error:', countError);
-        throw countError;
-      }
+      // Get total count for pagination
+      const { data: countData, error: countError } = await fetchLeaderboardCount(currentFilters);
+      if (countError) throw countError;
       
-      console.log('Total count:', countData);
-
-      // Cast the operation field to Operation type
-      const typedEntries = leaderboardData?.map(entry => ({
-        ...entry,
-        operation: entry.operation as Operation
-      })) || [];
-      
-      setEntries(typedEntries as LeaderboardEntry[]);
+      // Update state with fetched data
+      setEntries(leaderboardData || []);
       setTotalPages(Math.max(1, Math.ceil((countData || 0) / 25)));
-
-      // Skip user rank if we have no profile ID
-      if (!defaultProfileId) {
-        console.log('No profile ID available, skipping user rank fetch');
-        return;
-      }
-
-      // Fetch user rank using the profile ID
-      const { data: rankData, error: rankError } = await supabase
-        .rpc('get_user_rank', {
-          p_profile_id: defaultProfileId,
-          p_operation: currentFilters.operation,
-          p_min1: currentFilters.min1,
-          p_max1: currentFilters.max1,
-          p_min2: currentFilters.min2,
-          p_max2: currentFilters.max2,
-          p_grade: currentFilters.grade === "all" ? null : currentFilters.grade,
-        });
-
-      if (rankError) {
-        console.error('Rank error:', rankError);
+      
+      // Fetch user rank if profile ID is available
+      if (defaultProfileId) {
+        await fetchUserRank(defaultProfileId, currentFilters);
       } else {
-        setUserRank(rankData);
-        console.log('User rank:', rankData);
+        console.log('No profile ID available, skipping user rank fetch');
       }
     } catch (err) {
       console.error('Leaderboard error:', err);
@@ -176,9 +123,59 @@ export const useLeaderboard = () => {
       setIsLoading(false);
       fetchInProgress.current = false;
     }
-  }, [defaultProfileId, isLoadingProfile]); 
+  }, [defaultProfileId, isLoadingProfile]);
 
-  // Updated function to calculate guest rank using the get_leaderboard RPC function
+  // Helper function to fetch leaderboard data
+  async function fetchLeaderboardData(filters: LeaderboardFilters) {
+    return supabase.rpc('get_leaderboard', {
+      p_operation: filters.operation,
+      p_min1: filters.min1,
+      p_max1: filters.max1,
+      p_min2: filters.min2,
+      p_max2: filters.max2,
+      p_grade: filters.grade === "all" ? null : filters.grade,
+      p_page: filters.page,
+    });
+  }
+
+  // Helper function to fetch total count for pagination
+  async function fetchLeaderboardCount(filters: LeaderboardFilters) {
+    return supabase.rpc('get_leaderboard_count', {
+      p_operation: filters.operation,
+      p_min1: filters.min1,
+      p_max1: filters.max1,
+      p_min2: filters.min2,
+      p_max2: filters.max2,
+      p_grade: filters.grade === "all" ? null : filters.grade,
+    });
+  }
+
+  // Helper function to fetch user rank
+  async function fetchUserRank(profileId: string, filters: LeaderboardFilters) {
+    try {
+      const { data: rankData, error: rankError } = await supabase
+        .rpc('get_user_rank', {
+          p_profile_id: profileId,
+          p_operation: filters.operation,
+          p_min1: filters.min1,
+          p_max1: filters.max1,
+          p_min2: filters.min2,
+          p_max2: filters.max2,
+          p_grade: filters.grade === "all" ? null : filters.grade,
+        });
+
+      if (rankError) {
+        console.error('Rank error:', rankError);
+      } else {
+        setUserRank(rankData);
+        console.log('User rank:', rankData);
+      }
+    } catch (error) {
+      console.error('Error fetching user rank:', error);
+    }
+  }
+
+  // Calculate guest rank for a score
   const calculateGuestRankForScore = useCallback(async (
     score: number,
     operation: Operation,
@@ -188,8 +185,7 @@ export const useLeaderboard = () => {
     try {
       console.log('Calculating guest rank for score:', score, 'with operation:', operation, 'and range:', range);
       
-      // Use the same get_leaderboard RPC function that the leaderboard uses
-      // But with a large page size to get all scores
+      // Use the same get_leaderboard RPC function for consistency
       const { data: leaderboardData, error: leaderboardError } = await supabase
         .rpc('get_leaderboard', {
           p_operation: operation,
@@ -226,7 +222,6 @@ export const useLeaderboard = () => {
       }
       
       console.log('Guest rank calculation result:', { score, rank: guestRank, totalEntries: leaderboardData.length });
-      
       return guestRank;
     } catch (err) {
       console.error('Error calculating guest rank:', err);
@@ -243,7 +238,7 @@ export const useLeaderboard = () => {
     }
   }, [fetchLeaderboard, isLoadingProfile]);
 
-  // Listen for profile loading completion to trigger refresh
+  // Fetch when profile loads
   useEffect(() => {
     if (!isLoadingProfile && defaultProfileId && initialLoadDone.current) {
       console.log('Profile loaded, refreshing leaderboard');
@@ -251,8 +246,9 @@ export const useLeaderboard = () => {
     }
   }, [isLoadingProfile, defaultProfileId, fetchLeaderboard]);
 
+  // Update filters and trigger a fetch
   const updateFilters = useCallback((newFilters: Partial<LeaderboardFilters>) => {
-    // For a filter change, reset to page 1 if it's not a page change
+    // Reset to page 1 if it's not a page change
     const shouldResetPage = !('page' in newFilters);
     
     const updatedFilters = {
@@ -261,13 +257,13 @@ export const useLeaderboard = () => {
       ...(shouldResetPage ? { page: 1 } : {}),
     };
 
-    // Convert null to "null" strings for URL
+    // Update URL params
     const paramsToSet = new URLSearchParams();
     Object.entries(updatedFilters).forEach(([key, value]) => {
       paramsToSet.set(key, value === null ? "null" : String(value));
     });
 
-    // Update the URL without causing extra re-renders
+    // Update URL without causing extra re-renders
     setSearchParams(paramsToSet, { replace: true });
 
     // Update the ref directly
