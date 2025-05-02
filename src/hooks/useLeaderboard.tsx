@@ -101,12 +101,18 @@ export const useLeaderboard = () => {
       const { data: leaderboardData, error: leaderboardError } = await fetchLeaderboardData(currentFilters);
       if (leaderboardError) throw leaderboardError;
       
+      // Type casting the operation field to ensure compatibility with LeaderboardEntry
+      const typedLeaderboardData = leaderboardData?.map(entry => ({
+        ...entry,
+        operation: entry.operation as Operation
+      })) || [];
+      
       // Get total count for pagination
       const { data: countData, error: countError } = await fetchLeaderboardCount(currentFilters);
       if (countError) throw countError;
       
       // Update state with fetched data
-      setEntries(leaderboardData || []);
+      setEntries(typedLeaderboardData);
       setTotalPages(Math.max(1, Math.ceil((countData || 0) / 25)));
       
       // Fetch user rank if profile ID is available
