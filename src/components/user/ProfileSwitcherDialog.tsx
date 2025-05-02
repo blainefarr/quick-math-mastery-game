@@ -31,7 +31,6 @@ export function ProfileSwitcherDialog({
   onOpenChange
 }: ProfileSwitcherDialogProps) {
   const [profiles, setProfiles] = useState<Profile[]>([]);
-  const [showCreateForm, setShowCreateForm] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   
   const {
@@ -191,17 +190,16 @@ export function ProfileSwitcherDialog({
           <div className="p-6">
              <CreateProfileForm
               onSuccess={handleProfileCreated} 
-              onCancel={() => setShowCreateForm(false)}
+              onCancel={() => fetchProfiles()}
               />
           </div>
+        ) : isLoading ? (
+          <div className="flex flex-col items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-primary mb-2" />
+            <p className="text-muted-foreground text-sm">Loading profiles...</p>
+          </div>
         ) : (
-          {isLoading ? (
-            <div className="flex flex-col items-center justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-primary mb-2" />
-              <p className="text-muted-foreground text-sm">Loading profiles...</p>
-            </div>
-          ) : (
-            <ScrollArea className="h-[60vh] md:h-auto px-6">
+          <ScrollArea className="h-[60vh] md:h-auto px-6">
               <div className="p-6 pt-0 px-[0px] my-[8px]">
                 <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 mb-6 px-[4px]">
                   {profiles.map(profile => (
@@ -258,7 +256,7 @@ export function ProfileSwitcherDialog({
                 </div>
               </div>
             </ScrollArea>
-          )}          
+          )          
       </DialogContent>
     </Dialog>;
 }
