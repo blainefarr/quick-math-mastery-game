@@ -33,7 +33,6 @@ export function ProfileSwitcherDialog({
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [showCreateForm, setShowCreateForm] = useState(false);
-
   
   const {
     userId,
@@ -169,7 +168,6 @@ export function ProfileSwitcherDialog({
     await fetchProfiles();
     await handleSwitchProfile(newProfile);
   };
-  
   
   const handleDialogChange = (newOpen: boolean) => {
     if (!newOpen) {
