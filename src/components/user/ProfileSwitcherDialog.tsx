@@ -198,12 +198,6 @@ export function ProfileSwitcherDialog({
           <ScrollArea className="h-[60vh] md:h-auto px-6">
             <div className="p-6 pt-0 px-[0px] my-[8px]">
               <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 mb-6 px-[4px]">
-                {isLoading ? (
-                  <div className="col-span-full text-center py-8 flex flex-col items-center gap-2">
-                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                    <p className="text-muted-foreground">Loading profiles...</p>
-                  </div>
-                ) : (
                   <>
                     {profiles.map(profile => (
                       <Card 
@@ -243,7 +237,6 @@ export function ProfileSwitcherDialog({
                       </div>
                     </Card>
                   </>
-                )}
               </div>
               
               <div className="flex justify-end mx-[4px]">
