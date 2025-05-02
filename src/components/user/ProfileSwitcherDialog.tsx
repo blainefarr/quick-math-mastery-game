@@ -187,7 +187,7 @@ export function ProfileSwitcherDialog({
           </DialogDescription>
         </DialogHeader>
         
-        {!isLoading && showCreateForm ? (
+        {!isLoading && profiles.length === 0 ? (
           <div className="p-6">
              <CreateProfileForm
               onSuccess={handleProfileCreated} 
