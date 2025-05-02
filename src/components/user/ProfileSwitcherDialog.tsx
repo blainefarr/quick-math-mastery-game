@@ -31,8 +31,6 @@ export function ProfileSwitcherDialog({
   onOpenChange
 }: ProfileSwitcherDialogProps) {
   const [profiles, setProfiles] = useState<Profile[]>([]);
-  // We're setting loading to false by default and never changing it
-  const [loading, setLoading] = useState(false);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
@@ -134,17 +132,15 @@ export function ProfileSwitcherDialog({
 
       // Get the active profile ID from localStorage
       const activeProfileId = localStorage.getItem(ACTIVE_PROFILE_KEY) || defaultProfileId;
+      
+      // Even if no profiles are found, don't show an error or empty state
+      // We'll just have an empty list, and the user can create a new profile
       if (!data || data.length === 0) {
-        console.error('No profiles found for account:', userId);
-        setError('No profiles found');
+        console.log('No profiles found for account:', userId);
         setProfiles([]);
-        if (!isRetry && retryCount === 0) {
-          console.log('No profiles found, will retry shortly...');
-          // Schedule first retry
-          setTimeout(() => retryFetchProfiles(), 500);
-        }
         return false;
       }
+      
       console.log(`Found ${data.length} profiles, activeProfileId:`, activeProfileId);
       const processedProfiles = data.map(profile => ({
         ...profile,
@@ -250,12 +246,8 @@ export function ProfileSwitcherDialog({
                           Create New Profile
                         </Button>
                       </div>}
-                  </div> : profiles.length === 0 ? <div className="col-span-full text-center py-8">
-                    <p className="mb-4">No profiles found for your account.</p>
-                    <Button onClick={() => setShowCreateForm(true)} className="mx-auto">
-                      Create Your First Profile
-                    </Button>
-                  </div> : <>
+                  </div> : 
+                  <>
                     {profiles.map(profile => <Card key={profile.id} onClick={() => handleSwitchProfile(profile)} className={`p-3 sm:p-4 flex flex-col items-center cursor-pointer transition-all hover:border-primary ${profile.id === defaultProfileId ? 'ring-2 ring-primary' : ''}`}>
                         <div className="h-14 w-14 sm:h-20 sm:w-20 rounded-full bg-primary/20 flex items-center justify-center mb-2 sm:mb-3">
                           <UserCircle className="h-8 w-8 sm:h-12 sm:w-12 text-primary" />
