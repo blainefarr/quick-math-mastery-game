@@ -54,7 +54,7 @@ const Leaderboard = () => {
     }
   }, [isLoadingProfile, defaultProfileId, fetchLeaderboard]);
   const hasNoEntries = !isLoading && entries.length === 0;
-  return <div className="container mx-auto py-8 px-4 max-w-2xl space-y-6">
+  return <div className="container mx-auto py-8 px-4 max-w-3xl space-y-6">
       <div className="flex items-center gap-4 mb-2">
         <Button variant="outline" size="sm" onClick={() => navigate('/')} className="h-8 rounded-full">
           <ArrowLeft size={16} className="mr-1" />
