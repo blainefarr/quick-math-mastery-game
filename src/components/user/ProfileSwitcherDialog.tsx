@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Card } from '@/components/ui/card';
@@ -10,6 +11,7 @@ import { toast } from '@/hooks/use-toast';
 import { CreateProfileForm } from './CreateProfileForm';
 import { ACTIVE_PROFILE_KEY } from '@/context/auth/utils/profileUtils';
 import { ScrollArea } from '@/components/ui/scroll-area';
+
 interface Profile {
   id: string;
   name: string;
@@ -18,20 +20,24 @@ interface Profile {
   created_at: string;
   is_owner: boolean;
 }
+
 interface ProfileSwitcherDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
+
 export function ProfileSwitcherDialog({
   open,
   onOpenChange
 }: ProfileSwitcherDialogProps) {
   const [profiles, setProfiles] = useState<Profile[]>([]);
-  const [loading, setLoading] = useState(false); // Changed to false by default
+  // We're setting loading to false by default and never changing it
+  const [loading, setLoading] = useState(false);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
   const [isRetrying, setIsRetrying] = useState(false);
+  
   const {
     userId,
     defaultProfileId,
@@ -153,6 +159,7 @@ export function ProfileSwitcherDialog({
       return false;
     }
   };
+  
   useEffect(() => {
     if (open && userId) {
       fetchProfiles();
@@ -205,6 +212,7 @@ export function ProfileSwitcherDialog({
     fetchProfiles();
     handleSwitchProfile(newProfile);
   };
+  
   return <Dialog open={open && !isNewSignup} onOpenChange={newOpen => {
     // Extra cleanup when dialog is closing
     if (!newOpen) {
