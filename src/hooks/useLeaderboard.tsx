@@ -178,7 +178,7 @@ export const useLeaderboard = () => {
     }
   }, [defaultProfileId, isLoadingProfile]); 
 
-  // Utility function to calculate ranking for a score against unique profile high scores
+  // Updated function to calculate guest rank using the get_leaderboard RPC function
   const calculateGuestRankForScore = useCallback(async (
     score: number,
     operation: Operation,
@@ -188,62 +188,46 @@ export const useLeaderboard = () => {
     try {
       console.log('Calculating guest rank for score:', score, 'with operation:', operation, 'and range:', range);
       
-      // Fetch scores with unique profile_id that match the operation and range
-      const { data, error } = await supabase
-        .from('scores')
-        .select(`
-          profile_id,
-          score,
-          operation,
-          min1,
-          max1,
-          min2,
-          max2
-        `)
-        .eq('operation', operation)
-        .eq('min1', range.min1)
-        .eq('max1', range.max1)
-        .eq('min2', range.min2)
-        .eq('max2', range.max2)
-        .eq('duration', 60)
-        .eq('allow_negatives', false);
+      // Use the same get_leaderboard RPC function that the leaderboard uses
+      // But with a large page size to get all scores
+      const { data: leaderboardData, error: leaderboardError } = await supabase
+        .rpc('get_leaderboard', {
+          p_operation: operation,
+          p_min1: range.min1,
+          p_max1: range.max1,
+          p_min2: range.min2,
+          p_max2: range.max2,
+          p_grade: grade === "all" ? null : grade,
+          p_page: 1,
+          p_page_size: 1000 // Get a large number of scores to ensure we have enough for ranking
+        });
 
-      if (error) {
-        console.error('Error fetching scores for guest rank:', error);
+      if (leaderboardError) {
+        console.error('Error fetching leaderboard data for guest rank:', leaderboardError);
         return null;
       }
 
-      console.log('Raw scores data:', data);
+      console.log('Leaderboard data for guest ranking:', leaderboardData);
       
-      if (!data || data.length === 0) {
-        console.log('No scores found, guest would be ranked #1');
+      if (!leaderboardData || leaderboardData.length === 0) {
+        console.log('No leaderboard entries found, guest would be ranked #1');
         return 1;
       }
 
-      // Get highest score for each profile
-      const profileHighScores = new Map<string, number>();
-      data.forEach(item => {
-        if (!profileHighScores.has(item.profile_id) || item.score > profileHighScores.get(item.profile_id)!) {
-          profileHighScores.set(item.profile_id, item.score);
+      // Find where this score would be positioned
+      let guestRank = 1; // Default to 1 if higher than all scores
+      
+      for (const entry of leaderboardData) {
+        if (entry.best_score >= score) {
+          guestRank++;
+        } else {
+          break; // Leaderboard data is already sorted by score descending
         }
-      });
-
-      console.log('Profile high scores map:', Array.from(profileHighScores.entries()));
-
-      // Convert to array of unique profile high scores
-      const uniqueHighScores = Array.from(profileHighScores.values());
-      uniqueHighScores.sort((a, b) => b - a);  // Sort descending
+      }
       
-      console.log('Unique high scores (sorted):', uniqueHighScores);
-
-      // Calculate rank (how many scores are higher than the given score + 1)
-      const higherScores = uniqueHighScores.filter(s => s > score);
-      const rank = higherScores.length + 1;
+      console.log('Guest rank calculation result:', { score, rank: guestRank, totalEntries: leaderboardData.length });
       
-      console.log('Higher scores than', score, ':', higherScores);
-      console.log('Guest rank calculation result:', { score, rank, totalUniqueScores: uniqueHighScores.length });
-      
-      return rank;
+      return guestRank;
     } catch (err) {
       console.error('Error calculating guest rank:', err);
       return null;
