@@ -203,9 +203,15 @@ export function ProfileSwitcherDialog({
           </DialogDescription>
         </DialogHeader>
         
-        {showCreateForm ? <div className="p-6">
-            <CreateProfileForm onSuccess={handleProfileCreated} onCancel={() => setShowCreateForm(false)} />
-          </div> : <ScrollArea className="h-[60vh] md:h-auto px-6">
+        {!isLoading && showCreateForm ? (
+          <div className="p-6">
+             <CreateProfileForm
+              onSuccess={handleProfileCreated} 
+              onCancel={() => setShowCreateForm(false)}
+              />
+          </div>
+        ) : (
+          <ScrollArea className="h-[60vh] md:h-auto px-6">
             <div className="p-6 pt-0 px-[0px] my-[8px]">
               <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 mb-6 px-[4px]">
                 {isLoading ? (
@@ -269,7 +275,7 @@ export function ProfileSwitcherDialog({
                 </Button>
               </div>
             </div>
-          </ScrollArea>}
+          </ScrollArea>)}
       </DialogContent>
     </Dialog>;
 }
