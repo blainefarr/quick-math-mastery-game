@@ -20,8 +20,6 @@ const TypingWarmup = ({ timeLimit, customNumberPadEnabled, onComplete }: TypingW
   const [currentNumber, setCurrentNumber] = useState('');
   const [userInput, setUserInput] = useState('');
   const [correctCount, setCorrectCount] = useState(0);
-  const [isTransitioning, setIsTransitioning] = useState(false);
-  const [countdown, setCountdown] = useState<number | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const isCompactHeight = useCompactHeight();
   const { setGameState } = useGame();
@@ -42,12 +40,9 @@ const TypingWarmup = ({ timeLimit, customNumberPadEnabled, onComplete }: TypingW
       setTimeLeft((prevTime) => {
         if (prevTime <= 1) {
           clearInterval(timer);
+          // Calculate typing speed and call onComplete directly
           const typingSpeed = correctCount / timeLimit;
-          
-          // Enter transition phase
-          setIsTransitioning(true);
-          setCountdown(3);
-          
+          onComplete(typingSpeed);
           return 0;
         }
         return prevTime - 1;
@@ -56,21 +51,6 @@ const TypingWarmup = ({ timeLimit, customNumberPadEnabled, onComplete }: TypingW
     
     return () => clearInterval(timer);
   }, []);
-
-  // Handle the transition countdown
-  useEffect(() => {
-    if (isTransitioning && countdown !== null) {
-      if (countdown > 0) {
-        const countdownTimer = setTimeout(() => {
-          setCountdown(countdown - 1);
-        }, 1000);
-        return () => clearTimeout(countdownTimer);
-      } else {
-        const typingSpeed = correctCount / timeLimit;
-        onComplete(typingSpeed);
-      }
-    }
-  }, [isTransitioning, countdown, correctCount, timeLimit, onComplete]);
 
   // Handle user input
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -131,48 +111,34 @@ const TypingWarmup = ({ timeLimit, customNumberPadEnabled, onComplete }: TypingW
           </Card>
         </div>
 
-        {isTransitioning ? (
-          <Card className={`${
-            isCompactHeight ? 'mb-4 py-6' : 'mb-6 py-10'
-          } px-6 shadow-lg animate-fade-in`}>
-            <CardContent className="flex flex-col justify-center items-center text-center gap-4">
-              <h2 className="text-2xl font-bold mt-4">Let's now do math questions!</h2>
-              <div className="text-4xl font-bold mt-2 text-green-500">
-                {countdown}
-              </div>
-              <p className="text-muted-foreground mt-2">Prepare yourself...</p>
-            </CardContent>
-          </Card>
-        ) : (
-          <Card className={`${
-            isCompactHeight ? 'mb-4 py-6' : 'mb-6 py-10'
-          } px-6 shadow-lg animate-bounce-in`}>
-            <CardContent className="flex flex-col justify-center items-center text-center">
-              <h2 className="text-xl font-bold mb-6">Type the number as fast as you can!</h2>
-              <div className="text-4xl md:text-6xl font-bold mb-6">
-                {currentNumber}
-              </div>
-              <div className="relative flex items-center">
-                <Input
-                  ref={inputRef}
-                  type="text"
-                  inputMode={customNumberPadEnabled ? "none" : "numeric"}
-                  pattern="[0-9]*"
-                  value={userInput}
-                  onChange={handleInputChange}
-                  className="text-4xl md:text-6xl w-24 md:w-32 h-16 text-center font-bold p-0 border-b-4 focus-visible:ring-0 focus-visible:ring-offset-0 appearance-none"
-                  autoFocus
-                  readOnly={customNumberPadEnabled}
-                  style={{
-                    MozAppearance: 'textfield',
-                    WebkitAppearance: 'none',
-                    appearance: 'none'
-                  }}
-                />
-              </div>
-            </CardContent>
-          </Card>
-        )}
+        <Card className={`${
+          isCompactHeight ? 'mb-4 py-6' : 'mb-6 py-10'
+        } px-6 shadow-lg animate-bounce-in`}>
+          <CardContent className="flex flex-col justify-center items-center text-center">
+            <h2 className="text-xl font-bold mb-6">Type the number as fast as you can!</h2>
+            <div className="text-4xl md:text-6xl font-bold mb-6">
+              {currentNumber}
+            </div>
+            <div className="relative flex items-center">
+              <Input
+                ref={inputRef}
+                type="text"
+                inputMode={customNumberPadEnabled ? "none" : "numeric"}
+                pattern="[0-9]*"
+                value={userInput}
+                onChange={handleInputChange}
+                className="text-4xl md:text-6xl w-24 md:w-32 h-16 text-center font-bold p-0 border-b-4 focus-visible:ring-0 focus-visible:ring-offset-0 appearance-none"
+                autoFocus
+                readOnly={customNumberPadEnabled}
+                style={{
+                  MozAppearance: 'textfield',
+                  WebkitAppearance: 'none',
+                  appearance: 'none'
+                }}
+              />
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Restart button */}
         <div className="flex justify-center mb-4">
@@ -186,7 +152,7 @@ const TypingWarmup = ({ timeLimit, customNumberPadEnabled, onComplete }: TypingW
         </div>
 
         {/* Custom Number Pad */}
-        {customNumberPadEnabled && !isTransitioning && (
+        {customNumberPadEnabled && (
           <div className="w-full max-w-md mx-auto md:max-w-xl">
             <CustomNumberPad 
               onNumberPress={handleNumberPress}
