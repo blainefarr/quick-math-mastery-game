@@ -23,6 +23,7 @@ export type GameSettings = {
   focusNumber?: number | null;
   learnerMode?: boolean;
   useCustomNumberPad?: boolean;
+  typingSpeedAdjustment?: boolean;
 };
 
 export interface UserScore {

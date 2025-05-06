@@ -83,7 +83,8 @@ export const useScoreManagement = (userId: string | null) => {
     range: ProblemRange, 
     timerSeconds: number,
     focusNumber: number | null = null,
-    allowNegatives: boolean = false
+    allowNegatives: boolean = false,
+    typingSpeed: number | null = null
   ) => {
     console.log('Calling saveScore with:', {
       score,
@@ -92,6 +93,7 @@ export const useScoreManagement = (userId: string | null) => {
       timerSeconds,
       focusNumber,
       allowNegatives,
+      typingSpeed,
       userId
     });
 
@@ -126,7 +128,8 @@ export const useScoreManagement = (userId: string | null) => {
       range,
       timerSeconds,
       focusNumber,
-      allowNegatives
+      allowNegatives,
+      typingSpeed
     );
   }, [userId, savingScore, defaultProfileId, isLoadingProfile]);
 
@@ -138,7 +141,8 @@ export const useScoreManagement = (userId: string | null) => {
     range: ProblemRange,
     timerSeconds: number,
     focusNumber: number | null = null,
-    allowNegatives: boolean = false
+    allowNegatives: boolean = false,
+    typingSpeed: number | null = null
   ) => {
     if (score < 0 || typeof score !== 'number' || isNaN(score)) {
       console.error(`Invalid score value: ${score}`);
@@ -148,6 +152,15 @@ export const useScoreManagement = (userId: string | null) => {
 
     try {
       setSavingScore(true);
+      
+      // Calculate total speed and adjusted math speed if typing speed is available
+      let totalSpeed = null;
+      let adjustedMathSpeed = null;
+      
+      if (typingSpeed !== null) {
+        totalSpeed = score / timerSeconds;
+        adjustedMathSpeed = totalSpeed - typingSpeed;
+      }
       
       const scoreData = {
         score,
@@ -161,7 +174,10 @@ export const useScoreManagement = (userId: string | null) => {
         duration: timerSeconds ?? 0,
         focus_number: focusNumber ?? null,
         allow_negatives: allowNegatives ?? false,
-        date: new Date().toISOString()
+        date: new Date().toISOString(),
+        typing_speed: typingSpeed,
+        total_speed: totalSpeed,
+        adjusted_math_speed: adjustedMathSpeed
       };
 
       console.log('About to save score data with profile_id:', scoreData);

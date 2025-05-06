@@ -27,6 +27,7 @@ const OperationSelection = () => {
   const [negativeNumbersEnabled, setNegativeNumbersEnabled] = useState(settings.allowNegatives || false);
   const [learnerModeEnabled, setLearnerModeEnabled] = useState(settings.learnerMode || false);
   const [customNumberPadEnabled, setCustomNumberPadEnabled] = useState(settings.useCustomNumberPad || false);
+  const [typingSpeedEnabled, setTypingSpeedEnabled] = useState(settings.typingSpeedAdjustment || false);
   const [range1Min, setRange1Min] = useState(settings.range.min1);
   const [range1Max, setRange1Max] = useState(settings.range.max1);
   const [range2Min, setRange2Min] = useState(settings.range.min2);
@@ -44,6 +45,7 @@ const OperationSelection = () => {
     setNegativeNumbersEnabled(settings.allowNegatives || false);
     setLearnerModeEnabled(settings.learnerMode || false);
     setCustomNumberPadEnabled(settings.useCustomNumberPad || false);
+    setTypingSpeedEnabled(settings.typingSpeedAdjustment || false);
   }, [settings]);
   
   useEffect(() => {
@@ -139,6 +141,14 @@ const OperationSelection = () => {
       useCustomNumberPad: checked
     });
   };
+
+  const handleTypingSpeedToggle = (checked: boolean) => {
+    setTypingSpeedEnabled(checked);
+    // Update global settings
+    updateSettings({
+      typingSpeedAdjustment: checked
+    });
+  };
   
   // Update only the timer setting without altering other settings
   const handleTimerChange = (seconds: number) => {
@@ -210,11 +220,18 @@ const OperationSelection = () => {
       allowNegatives: negativeNumbersEnabled,
       learnerMode: learnerModeEnabled,
       useCustomNumberPad: customNumberPadEnabled,
+      typingSpeedAdjustment: typingSpeedEnabled,
       focusNumber: useFocusNumber ? focusNumberValue : null
     });
     if (useFocusNumber) setFocusNumber(focusNumberValue);else setFocusNumber(null);
     setTimeLeft(settings.timerSeconds);
-    setGameState('playing');
+    
+    // Go to warmup first if typing speed adjustment is enabled
+    if (typingSpeedEnabled) {
+      setGameState('warmup');
+    } else {
+      setGameState('playing');
+    }
   };
   
   return <div className="container mx-auto px-4 py-8">
@@ -257,11 +274,13 @@ const OperationSelection = () => {
               negativeNumbersEnabled={negativeNumbersEnabled}
               learnerModeEnabled={learnerModeEnabled}
               customNumberPadEnabled={customNumberPadEnabled}
+              typingSpeedEnabled={typingSpeedEnabled}
               onFocusNumberToggle={handleFocusNumberToggle} 
               onFocusNumberChange={handleFocusNumberChange} 
               onNegativeToggle={handleNegativeToggle}
               onLearnerModeToggle={handleLearnerModeToggle}
               onCustomNumberPadToggle={handleCustomNumberPadToggle}
+              onTypingSpeedToggle={handleTypingSpeedToggle}
             />
           </div>
         </CardContent>

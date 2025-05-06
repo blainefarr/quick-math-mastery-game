@@ -126,6 +126,7 @@ export type Database = {
       }
       scores: {
         Row: {
+          adjusted_math_speed: number | null
           allow_negatives: boolean | null
           date: string
           duration: number | null
@@ -138,9 +139,12 @@ export type Database = {
           operation: string
           profile_id: string | null
           score: number
+          total_speed: number | null
+          typing_speed: number | null
           user_id: string
         }
         Insert: {
+          adjusted_math_speed?: number | null
           allow_negatives?: boolean | null
           date?: string
           duration?: number | null
@@ -153,9 +157,12 @@ export type Database = {
           operation: string
           profile_id?: string | null
           score: number
+          total_speed?: number | null
+          typing_speed?: number | null
           user_id: string
         }
         Update: {
+          adjusted_math_speed?: number | null
           allow_negatives?: boolean | null
           date?: string
           duration?: number | null
@@ -168,6 +175,8 @@ export type Database = {
           operation?: string
           profile_id?: string | null
           score?: number
+          total_speed?: number | null
+          typing_speed?: number | null
           user_id?: string
         }
         Relationships: [

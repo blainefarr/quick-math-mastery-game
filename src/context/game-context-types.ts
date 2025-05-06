@@ -2,7 +2,7 @@
 import { ReactNode } from "react";
 import { GameSettings, Operation, Problem, ProblemRange, UserScore } from "@/types";
 
-export type GameState = 'selection' | 'playing' | 'ended';
+export type GameState = 'selection' | 'playing' | 'warmup' | 'ended';
 export type GameEndReason = 'timeout' | 'manual';
 
 export interface GameContextType {
@@ -44,7 +44,8 @@ export interface GameContextType {
     range: ProblemRange, 
     timerSeconds: number,
     focusNumber?: number | null,
-    allowNegatives?: boolean
+    allowNegatives?: boolean,
+    typingSpeed?: number
   ) => Promise<boolean>;
   
   // Auth state (now pulled from AuthContext)
@@ -63,6 +64,10 @@ export interface GameContextType {
   
   // Game end handler
   endGame: (reason: GameEndReason) => Promise<void>;
+
+  // Typing speed
+  typingSpeed: number | null;
+  setTypingSpeed: (speed: number) => void;
 }
 
 export interface GameProviderProps {

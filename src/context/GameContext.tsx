@@ -8,7 +8,8 @@ const defaultValue: Partial<GameContextType> = {
   scoreHistory: [],
   gameState: 'selection',
   score: 0,
-  timeLeft: 60
+  timeLeft: 60,
+  typingSpeed: null
   // We don't include required function properties to ensure proper error handling
 };
 

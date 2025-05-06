@@ -9,7 +9,8 @@ const defaultSettings: GameSettings = {
   allowNegatives: false,
   focusNumber: null,
   learnerMode: false,
-  useCustomNumberPad: false
+  useCustomNumberPad: false,
+  typingSpeedAdjustment: false
 };
 
 export const useGameSettings = () => {
@@ -18,6 +19,7 @@ export const useGameSettings = () => {
     try {
       const savedLearnerMode = localStorage.getItem('learnerModeEnabled');
       const savedCustomNumberPad = localStorage.getItem('customNumberPadEnabled');
+      const savedTypingSpeedAdjustment = localStorage.getItem('typingSpeedAdjustmentEnabled');
       
       const storedSettings: Partial<GameSettings> = {};
       
@@ -27,6 +29,10 @@ export const useGameSettings = () => {
       
       if (savedCustomNumberPad !== null) {
         storedSettings.useCustomNumberPad = JSON.parse(savedCustomNumberPad);
+      }
+      
+      if (savedTypingSpeedAdjustment !== null) {
+        storedSettings.typingSpeedAdjustment = JSON.parse(savedTypingSpeedAdjustment);
       }
       
       return {
@@ -43,7 +49,8 @@ export const useGameSettings = () => {
   useEffect(() => {
     localStorage.setItem('learnerModeEnabled', JSON.stringify(settings.learnerMode));
     localStorage.setItem('customNumberPadEnabled', JSON.stringify(settings.useCustomNumberPad));
-  }, [settings.learnerMode, settings.useCustomNumberPad]);
+    localStorage.setItem('typingSpeedAdjustmentEnabled', JSON.stringify(settings.typingSpeedAdjustment));
+  }, [settings.learnerMode, settings.useCustomNumberPad, settings.typingSpeedAdjustment]);
 
   const updateSettings = (newSettings: Partial<GameSettings>) => {
     setSettings(prev => {

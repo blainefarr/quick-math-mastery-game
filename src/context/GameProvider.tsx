@@ -18,6 +18,7 @@ const GameProvider = ({ children }: GameProviderProps) => {
   const [timeLeft, setTimeLeft] = useState(settings.timerSeconds);
   const [userAnswer, setUserAnswer] = useState('');
   const [focusNumber, setFocusNumber] = useState<number | null>(null);
+  const [typingSpeed, setTypingSpeed] = useState<number | null>(null);
   
   // Use refs to reliably track the current score and game state
   const scoreRef = useRef(0);
@@ -84,6 +85,7 @@ const GameProvider = ({ children }: GameProviderProps) => {
   const resetScore = () => {
     setScore(0);
     scoreRef.current = 0;
+    setTypingSpeed(null);
   };
 
   // Get auth state from useAuth
@@ -133,13 +135,24 @@ const GameProvider = ({ children }: GameProviderProps) => {
     if (reason === 'timeout' && isLoggedIn && defaultProfileId) {
       console.log(`Attempting to save score: ${finalScore}`);
       try {
+        // Calculate total speed and adjusted math speed
+        let totalSpeed = finalScore / settings.timerSeconds;
+        let adjustedMathSpeed = totalSpeed;
+        
+        // Adjust math speed if typing speed is available
+        if (typingSpeed !== null) {
+          adjustedMathSpeed = totalSpeed - typingSpeed;
+          console.log(`Typing speed: ${typingSpeed}, Total speed: ${totalSpeed}, Adjusted math speed: ${adjustedMathSpeed}`);
+        }
+        
         const success = await saveScore(
           finalScore,
           settings.operation,
           settings.range,
           settings.timerSeconds,
           settings.focusNumber || null,
-          settings.allowNegatives || false
+          settings.allowNegatives || false,
+          typingSpeed
         );
         
         if (success) {
@@ -186,7 +199,9 @@ const GameProvider = ({ children }: GameProviderProps) => {
     setFocusNumber,
     getIsHighScore,
     userId,
-    endGame
+    endGame,
+    typingSpeed,
+    setTypingSpeed
   };
 
   return (
