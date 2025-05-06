@@ -3,10 +3,11 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Clock } from 'lucide-react';
+import { Clock, RotateCw } from 'lucide-react';
 import { useCompactHeight } from '@/hooks/use-compact-height';
 import CustomNumberPad from './numberpad/CustomNumberPad';
 import { toast } from 'sonner';
+import useGame from '@/context/useGame';
 
 interface TypingWarmupProps {
   timeLimit: number;
@@ -23,6 +24,7 @@ const TypingWarmup = ({ timeLimit, customNumberPadEnabled, onComplete }: TypingW
   const [countdown, setCountdown] = useState<number | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const isCompactHeight = useCompactHeight();
+  const { setGameState } = useGame();
   
   // Generate a random number between 1 and 20
   const generateRandomNumber = () => {
@@ -104,6 +106,11 @@ const TypingWarmup = ({ timeLimit, customNumberPadEnabled, onComplete }: TypingW
     inputRef.current?.focus();
   };
 
+  // Handle restart game
+  const handleRestartGame = () => {
+    setGameState('selection');
+  };
+
   return (
     <div className={`flex justify-center items-center min-h-screen p-4 bg-background ${
       isCompactHeight ? 'pt-0 mt-0' : 'pt-4'
@@ -130,7 +137,7 @@ const TypingWarmup = ({ timeLimit, customNumberPadEnabled, onComplete }: TypingW
           } px-6 shadow-lg animate-fade-in`}>
             <CardContent className="flex flex-col justify-center items-center text-center gap-4">
               <h2 className="text-2xl font-bold mt-4">Let's now do math questions!</h2>
-              <div className="text-4xl font-bold mt-2">
+              <div className="text-4xl font-bold mt-2 text-green-500">
                 {countdown}
               </div>
               <p className="text-muted-foreground mt-2">Prepare yourself...</p>
@@ -166,6 +173,17 @@ const TypingWarmup = ({ timeLimit, customNumberPadEnabled, onComplete }: TypingW
             </CardContent>
           </Card>
         )}
+
+        {/* Restart button */}
+        <div className="flex justify-center mb-4">
+          <Button 
+            variant="outline" 
+            onClick={handleRestartGame} 
+            className="flex items-center gap-2"
+          >
+            <RotateCw className="h-4 w-4" /> Restart Game
+          </Button>
+        </div>
 
         {/* Custom Number Pad */}
         {customNumberPadEnabled && !isTransitioning && (
