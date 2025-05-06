@@ -230,7 +230,8 @@ const OperationSelection = () => {
     if (typingSpeedEnabled) {
       setGameState('warmup');
     } else {
-      setGameState('playing');
+      // Go to countdown instead of directly to playing
+      setGameState('countdown');
     }
   };
   

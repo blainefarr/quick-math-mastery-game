@@ -5,6 +5,7 @@ import GameScreen from '@/components/GameScreen';
 import EndScreen from '@/components/EndScreen';
 import useGame from '@/context/useGame';
 import TypingWarmup from '@/components/TypingWarmup';
+import GameCountdown from '@/components/GameCountdown';
 
 // Main content that uses the game context
 const Index = () => {
@@ -13,6 +14,10 @@ const Index = () => {
   const handleWarmupComplete = (speed: number) => {
     console.log('Typing warmup completed with speed:', speed);
     setTypingSpeed(speed);
+    setGameState('countdown');
+  };
+
+  const handleCountdownComplete = () => {
     setGameState('playing');
   };
 
@@ -25,6 +30,9 @@ const Index = () => {
           customNumberPadEnabled={settings.useCustomNumberPad || false}
           onComplete={handleWarmupComplete}
         />
+      }
+      {gameState === 'countdown' && 
+        <GameCountdown onComplete={handleCountdownComplete} />
       }
       {gameState === 'playing' && <GameScreen />}
       {gameState === 'ended' && <EndScreen />}
