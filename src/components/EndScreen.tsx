@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import useGame from '@/context/useGame';
@@ -122,7 +121,14 @@ const EndScreen = () => {
     resetScore();
     setTimeLeft(settings.timerSeconds);
     setUserAnswer(''); // Clear any previous answer
-    setGameState('playing');
+    
+    if (settings.typingSpeedAdjustment) {
+      // If typing speed adjustment is enabled, start with warmup-countdown
+      setGameState('warmup-countdown');
+    } else {
+      // Otherwise go directly to countdown
+      setGameState('countdown');
+    }
   };
   
   const handleBackToSelection = () => {

@@ -1,9 +1,10 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import useGame from '@/context/useGame';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
-import { Clock, RefreshCw } from 'lucide-react';
+import { Clock, ArrowLeft } from 'lucide-react';
 import MathIcon from './common/MathIcon';
 import { useCompactHeight } from '@/hooks/use-compact-height';
 import CustomNumberPad from './numberpad/CustomNumberPad';
@@ -18,7 +19,8 @@ const GameScreen = () => {
     userAnswer,
     setUserAnswer,
     settings,
-    endGame
+    endGame,
+    setGameState
   } = useGame();
 
   const [feedback, setFeedback] = useState<'correct' | 'incorrect' | null>(null);
@@ -150,7 +152,7 @@ const GameScreen = () => {
   const handleRestartGame = () => {
     console.log('Restarting game early, not saving the score');
     clearLearnerModeTimeouts();
-    endGame('manual');
+    setGameState('selection');
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -347,10 +349,10 @@ const GameScreen = () => {
           <Button 
             variant="outline"
             onClick={handleRestartGame}
-            className="text-lg py-6 px-6 border-primary text-primary hover:bg-primary/10 transition-all"
+            className="flex items-center gap-2 bg-white text-primary border-primary hover:bg-primary/5"
           >
-            <RefreshCw className="mr-2" />
-            Restart Game
+            <ArrowLeft size={18} />
+            Back to Selection
           </Button>
         </div>
 
