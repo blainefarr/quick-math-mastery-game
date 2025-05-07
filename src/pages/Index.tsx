@@ -17,6 +17,10 @@ const Index = () => {
     setGameState('countdown');
   };
 
+  const handleWarmupCountdownComplete = () => {
+    setGameState('warmup');
+  };
+
   const handleCountdownComplete = () => {
     setGameState('playing');
   };
@@ -24,6 +28,12 @@ const Index = () => {
   return (
     <>
       {gameState === 'selection' && <OperationSelection />}
+      {gameState === 'warmup-countdown' && 
+        <GameCountdown 
+          onComplete={handleWarmupCountdownComplete}
+          message="Let's start with a typing warmup!"
+        />
+      }
       {gameState === 'warmup' && 
         <TypingWarmup 
           timeLimit={15}

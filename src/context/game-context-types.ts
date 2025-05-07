@@ -2,7 +2,7 @@
 import { ReactNode } from "react";
 import { GameSettings, Operation, Problem, ProblemRange, UserScore } from "@/types";
 
-export type GameState = 'selection' | 'warmup' | 'countdown' | 'playing' | 'ended';
+export type GameState = 'selection' | 'warmup-countdown' | 'warmup' | 'countdown' | 'playing' | 'ended';
 export type GameEndReason = 'timeout' | 'manual';
 
 export interface GameContextType {

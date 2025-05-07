@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import useGame from '@/context/useGame';
 import { Button } from '@/components/ui/button';
@@ -226,11 +227,11 @@ const OperationSelection = () => {
     if (useFocusNumber) setFocusNumber(focusNumberValue);else setFocusNumber(null);
     setTimeLeft(settings.timerSeconds);
     
-    // Go to warmup first if typing speed adjustment is enabled
+    // Go to warmup-countdown first if typing speed adjustment is enabled
     if (typingSpeedEnabled) {
-      setGameState('warmup');
+      setGameState('warmup-countdown');
     } else {
-      // Go to countdown instead of directly to playing
+      // Go to countdown before playing
       setGameState('countdown');
     }
   };
