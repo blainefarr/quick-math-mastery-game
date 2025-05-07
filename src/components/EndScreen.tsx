@@ -36,7 +36,7 @@ const EndScreen = () => {
     <div className={`flex justify-center items-center min-h-screen p-4 bg-background ${
       isCompactHeight ? 'pt-0 mt-0' : 'pt-8'
     }`}>
-      {isHighScore && <ConfettiEffect />}
+      {isHighScore && <ConfettiEffect score={score} />}
       <div className="w-full max-w-md animate-fade-in-up">
         <Card className="border-2 border-primary shadow-lg">
           <CardHeader className="text-center bg-primary/10 py-6">
