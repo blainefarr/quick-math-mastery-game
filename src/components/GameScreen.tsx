@@ -1,10 +1,9 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import useGame from '@/context/useGame';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
-import { Clock, RotateCw } from 'lucide-react';
+import { Clock, RefreshCw } from 'lucide-react';
 import MathIcon from './common/MathIcon';
 import { useCompactHeight } from '@/hooks/use-compact-height';
 import CustomNumberPad from './numberpad/CustomNumberPad';
@@ -344,14 +343,14 @@ const GameScreen = () => {
           </div>
         )}
 
-        {/* Restart button - Now using the same style as in TypingWarmup */}
-        <div className="flex justify-center mb-4">
+        <div className="flex justify-center mt-4">
           <Button 
-            variant="outline" 
-            onClick={handleRestartGame} 
-            className="flex items-center gap-2"
+            variant="outline"
+            onClick={handleRestartGame}
+            className="text-lg py-6 px-6 border-primary text-primary hover:bg-primary/10 transition-all"
           >
-            <RotateCw className="h-4 w-4" /> Restart Game
+            <RefreshCw className="mr-2" />
+            Restart Game
           </Button>
         </div>
 
