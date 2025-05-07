@@ -1,10 +1,9 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import useGame from '@/context/useGame';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
-import { Clock, ArrowLeft } from 'lucide-react';
+import { Clock, RotateCw } from 'lucide-react';
 import MathIcon from './common/MathIcon';
 import { useCompactHeight } from '@/hooks/use-compact-height';
 import CustomNumberPad from './numberpad/CustomNumberPad';
@@ -347,12 +346,11 @@ const GameScreen = () => {
 
         <div className="flex justify-center mt-4">
           <Button 
-            variant="outline"
-            onClick={handleRestartGame}
-            className="flex items-center gap-2 bg-white text-primary border-primary hover:bg-primary/5"
+            variant="outline" 
+            onClick={handleRestartGame} 
+            className="flex items-center gap-2"
           >
-            <ArrowLeft size={18} />
-            Back to Selection
+            <RotateCw className="h-4 w-4" /> Restart Game
           </Button>
         </div>
 
