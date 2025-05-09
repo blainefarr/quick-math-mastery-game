@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import GameContext from './GameContext';
 import { GameContextType, GameState, GameProviderProps, GameEndReason } from './game-context-types';
@@ -181,10 +180,9 @@ const GameProvider = ({ children }: GameProviderProps) => {
     // Store current game state in sessionStorage for the playing state only
     if (gameState === 'playing') {
       sessionStorage.setItem(GAME_STATE_KEY, gameState);
-    } else if (gameState !== 'playing' && sessionStorage.getItem(GAME_STATE_KEY)) {
-      // Fixed: Remove the direct comparison that was causing the TypeScript error
-      // Clear session storage when exiting playing state
-      console.log('Exiting playing state, clearing session storage');
+    } else if (sessionStorage.getItem(GAME_STATE_KEY)) {
+      // Only clear session storage when exiting from any state if there's an entry in storage
+      console.log('Clearing game state session storage');
       sessionStorage.removeItem(GAME_STATE_KEY);
       sessionStorage.removeItem(GAME_END_TIME_KEY);
     }
