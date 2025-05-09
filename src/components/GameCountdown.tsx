@@ -9,11 +9,13 @@ import useGame from '@/context/useGame';
 interface GameCountdownProps {
   onComplete: () => void;
   message?: string;
+  isTypingWarmup?: boolean;
 }
 
 const GameCountdown = ({ 
   onComplete,
-  message = "⚡ It's game time! ⚡"
+  message = "⚡ It's game time! ⚡",
+  isTypingWarmup = false
 }: GameCountdownProps) => {
   const [countdown, setCountdown] = useState<number>(3);
   const isCompactHeight = useCompactHeight();
@@ -88,7 +90,8 @@ const GameCountdown = ({
             <div className="text-4xl font-bold mt-2 text-green-500">
               {countdown || "GO!"}
             </div>
-            <p className="text-gray-600">{getMotivationalText()}</p>
+            {/* Only show motivational text for game countdown, not typing warmup */}
+            {!isTypingWarmup && <p className="text-gray-600">{getMotivationalText()}</p>}
           </CardContent>
         </Card>
 

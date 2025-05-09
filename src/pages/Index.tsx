@@ -32,6 +32,7 @@ const Index = () => {
         <GameCountdown 
           onComplete={handleWarmupCountdownComplete}
           message="Let's start with a typing warmup!"
+          isTypingWarmup={true}
         />
       }
       {gameState === 'warmup' && 
