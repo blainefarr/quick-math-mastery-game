@@ -215,7 +215,7 @@ export const useScoreManagement = (userId: string | null) => {
       setSavingScore(false);
       return false;
     }
-  }, [userId, savingScore, defaultProfileId, isLoadingProfile]);
+  };
   
   // Update goal progress based on game results
   const updateGoalProgress = async (
