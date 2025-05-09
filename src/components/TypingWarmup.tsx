@@ -41,7 +41,8 @@ const TypingWarmup = ({ timeLimit, customNumberPadEnabled, onComplete }: TypingW
         if (prevTime <= 1) {
           clearInterval(timer);
           // Calculate typing speed and call onComplete directly
-          const typingSpeed = correctCount / timeLimit;
+          const typingSpeed = Math.max(0, correctCount / timeLimit);
+          console.log(`Typing warmup completed with correct count: ${correctCount}, time limit: ${timeLimit}, calculated speed: ${typingSpeed}`);
           onComplete(typingSpeed);
           return 0;
         }

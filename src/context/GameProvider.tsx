@@ -20,8 +20,9 @@ const GameProvider = ({ children }: GameProviderProps) => {
   const [focusNumber, setFocusNumber] = useState<number | null>(null);
   const [typingSpeed, setTypingSpeed] = useState<number | null>(null);
   
-  // Use refs to reliably track the current score and game state
+  // Use refs to reliably track the current score, typing speed and game state
   const scoreRef = useRef(0);
+  const typingSpeedRef = useRef<number | null>(null);
   const gameStateRef = useRef<GameState>('selection');
   const timerRef = useRef<number | null>(null);
   // Add a new ref to track if the game is ending
@@ -39,6 +40,11 @@ const GameProvider = ({ children }: GameProviderProps) => {
   useEffect(() => {
     scoreRef.current = score;
   }, [score]);
+
+  useEffect(() => {
+    typingSpeedRef.current = typingSpeed;
+    console.log('Typing speed updated in ref:', typingSpeed);
+  }, [typingSpeed]);
 
   useEffect(() => {
     gameStateRef.current = gameState;
@@ -86,6 +92,7 @@ const GameProvider = ({ children }: GameProviderProps) => {
     setScore(0);
     scoreRef.current = 0;
     setTypingSpeed(null);
+    typingSpeedRef.current = null;
   };
 
   // Get auth state from useAuth
@@ -121,9 +128,11 @@ const GameProvider = ({ children }: GameProviderProps) => {
     // Set the ending flag to prevent further score increments
     isEndingRef.current = true;
     
-    // Use the ref to get the accurate score regardless of state updates
+    // Use the ref to get the accurate score and typing speed regardless of state updates
     const finalScore = scoreRef.current;
-    console.log(`Ending game with reason: ${reason}, final score: ${finalScore}`);
+    const finalTypingSpeed = typingSpeedRef.current;
+    
+    console.log(`Ending game with reason: ${reason}, final score: ${finalScore}, typing speed: ${finalTypingSpeed}`);
     
     // Clear timer if it's running
     if (timerRef.current) {
@@ -140,9 +149,10 @@ const GameProvider = ({ children }: GameProviderProps) => {
         let adjustedMathSpeed = totalSpeed;
         
         // Adjust math speed if typing speed is available
-        if (typingSpeed !== null) {
-          adjustedMathSpeed = totalSpeed - typingSpeed;
-          console.log(`Typing speed: ${typingSpeed}, Total speed: ${totalSpeed}, Adjusted math speed: ${adjustedMathSpeed}`);
+        if (finalTypingSpeed !== null) {
+          // Ensure adjusted math speed doesn't go below zero
+          adjustedMathSpeed = Math.max(0, totalSpeed - finalTypingSpeed);
+          console.log(`Typing speed: ${finalTypingSpeed}, Total speed: ${totalSpeed}, Adjusted math speed: ${adjustedMathSpeed}`);
         }
         
         const success = await saveScore(
@@ -152,7 +162,7 @@ const GameProvider = ({ children }: GameProviderProps) => {
           settings.timerSeconds,
           settings.focusNumber || null,
           settings.allowNegatives || false,
-          typingSpeed
+          finalTypingSpeed
         );
         
         if (success) {

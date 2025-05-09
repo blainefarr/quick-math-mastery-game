@@ -52,7 +52,6 @@ const GameCountdown = ({
             <div className="text-4xl font-bold mt-2 text-green-500">
               {countdown || "GO!"}
             </div>
-            <p className="text-muted-foreground mt-2">Prepare yourself...</p>
           </CardContent>
         </Card>
 
