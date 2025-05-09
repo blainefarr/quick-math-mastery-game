@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import useGame from '@/context/useGame';
 import { Button } from '@/components/ui/button';
@@ -59,7 +60,12 @@ const GameScreen = () => {
       initialProblemGeneratedRef.current = true;
     }
     
-    inputRef.current?.focus();
+    // Automatically focus on input with a slight delay to ensure UI is ready
+    setTimeout(() => {
+      if (inputRef.current) {
+        inputRef.current.focus();
+      }
+    }, 100);
     
     return () => {
       initialProblemGeneratedRef.current = false;

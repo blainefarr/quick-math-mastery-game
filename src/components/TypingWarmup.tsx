@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -39,7 +38,13 @@ const TypingWarmup = ({ timeLimit, customNumberPadEnabled, onComplete }: TypingW
   // Initialize the game
   useEffect(() => {
     setCurrentNumber(generateRandomNumber());
-    inputRef.current?.focus();
+    
+    // Automatically focus on input with a slight delay to ensure UI is ready
+    setTimeout(() => {
+      if (inputRef.current) {
+        inputRef.current.focus();
+      }
+    }, 100);
     
     // Start the timer
     const timer = setInterval(() => {

@@ -65,8 +65,11 @@ const GameCountdown = ({
       }, 1000);
       return () => clearTimeout(countdownTimer);
     } else {
-      // Countdown is complete, proceed to the game
-      onComplete();
+      // Make sure we trigger the onComplete callback after a brief delay
+      // This gives time for the next component to mount before focus is attempted
+      setTimeout(() => {
+        onComplete();
+      }, 50);
     }
   }, [countdown, onComplete]);
 
