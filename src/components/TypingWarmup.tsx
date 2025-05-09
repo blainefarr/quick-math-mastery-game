@@ -40,9 +40,8 @@ const TypingWarmup = ({ timeLimit, customNumberPadEnabled, onComplete }: TypingW
       setTimeLeft((prevTime) => {
         if (prevTime <= 1) {
           clearInterval(timer);
-          // Calculate typing speed - number of correct entries per second
+          // Calculate typing speed and call onComplete directly
           const typingSpeed = correctCount / timeLimit;
-          console.log('Typing warmup completed with speed:', typingSpeed);
           onComplete(typingSpeed);
           return 0;
         }
@@ -51,7 +50,7 @@ const TypingWarmup = ({ timeLimit, customNumberPadEnabled, onComplete }: TypingW
     }, 1000);
     
     return () => clearInterval(timer);
-  }, [timeLimit, onComplete]);
+  }, []);
 
   // Handle user input
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
