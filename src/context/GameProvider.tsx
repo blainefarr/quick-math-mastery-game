@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import GameContext from './GameContext';
 import { GameContextType, GameState, GameProviderProps, GameEndReason } from './game-context-types';
@@ -24,13 +23,9 @@ const GameProvider = ({ children }: GameProviderProps) => {
   const scoreRef = useRef(0);
   const typingSpeedRef = useRef<number | null>(null);
   const gameStateRef = useRef<GameState>('selection');
-  
-  // Timer tracking refs
+  // Replace timerRef with better timing refs
   const gameStartTimeRef = useRef<number>(0);
-  const pausedTimeRef = useRef<number>(0);
-  const isVisibleRef = useRef<boolean>(true);
   const rafIdRef = useRef<number | null>(null);
-  
   // Add a new ref to track if the game is ending
   const isEndingRef = useRef(false);
 
@@ -55,49 +50,6 @@ const GameProvider = ({ children }: GameProviderProps) => {
   useEffect(() => {
     gameStateRef.current = gameState;
   }, [gameState]);
-
-  // Handle visibility change events
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (gameStateRef.current !== 'playing') {
-        return; // Only care about visibility during active gameplay
-      }
-      
-      // If document is hidden (tab switched), pause the game timer
-      if (document.hidden) {
-        console.log("Game timer: Tab hidden, pausing timer");
-        isVisibleRef.current = false;
-        
-        if (rafIdRef.current !== null) {
-          cancelAnimationFrame(rafIdRef.current);
-          rafIdRef.current = null;
-        }
-        pausedTimeRef.current = Date.now();
-      } else {
-        console.log("Game timer: Tab visible, resuming timer");
-        isVisibleRef.current = true;
-        
-        // If we were paused and the game is still going, adjust start time and resume
-        if (pausedTimeRef.current > 0 && gameStateRef.current === 'playing' && !isEndingRef.current) {
-          const pauseDuration = Date.now() - pausedTimeRef.current;
-          gameStartTimeRef.current += pauseDuration;
-          pausedTimeRef.current = 0;
-          
-          // Resume game timer
-          if (rafIdRef.current === null) {
-            rafIdRef.current = requestAnimationFrame(updateTimer);
-          }
-        }
-      }
-    };
-    
-    // Register visibility change listener
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-    
-    return () => {
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
-    };
-  }, []);
 
   // Reset timer and fetch scores when game state changes
   useEffect(() => {
@@ -154,51 +106,41 @@ const GameProvider = ({ children }: GameProviderProps) => {
       rafIdRef.current = null;
     }
     
-    // Reset timer tracking refs
-    isVisibleRef.current = true;
-    pausedTimeRef.current = 0;
-    isEndingRef.current = false;
-    
     // Set the start time for the game
     gameStartTimeRef.current = Date.now();
     setTimeLeft(settings.timerSeconds);
     
+    const updateTimer = () => {
+      const elapsedSeconds = Math.floor((Date.now() - gameStartTimeRef.current) / 1000);
+      const remaining = settings.timerSeconds - elapsedSeconds;
+      
+      setTimeLeft(prev => {
+        // If time has run out or we're already at 0, end the game
+        if (remaining <= 0 || prev <= 0) {
+          if (rafIdRef.current !== null) {
+            cancelAnimationFrame(rafIdRef.current);
+            rafIdRef.current = null;
+          }
+          
+          // Use setTimeout to ensure state updates have completed
+          setTimeout(() => endGame('timeout'), 0);
+          return 0;
+        }
+        return remaining;
+      });
+      
+      // Schedule next update if game is still playing
+      if (gameStateRef.current === 'playing' && remaining > 0) {
+        rafIdRef.current = requestAnimationFrame(updateTimer);
+      }
+    };
+    
     // Start the animation loop
     rafIdRef.current = requestAnimationFrame(updateTimer);
   };
-
-  const updateTimer = () => {
-    // Skip updates if game is not playing, tab is hidden, or game is ending
-    if (gameStateRef.current !== 'playing' || !isVisibleRef.current || isEndingRef.current) {
-      return;
-    }
-    
-    const elapsedSeconds = Math.floor((Date.now() - gameStartTimeRef.current) / 1000);
-    const remaining = settings.timerSeconds - elapsedSeconds;
-    
-    setTimeLeft(prev => {
-      // If time has run out or we're already at 0, end the game
-      if (remaining <= 0 || prev <= 0) {
-        if (rafIdRef.current !== null) {
-          cancelAnimationFrame(rafIdRef.current);
-          rafIdRef.current = null;
-        }
-        
-        // Use setTimeout to ensure state updates have completed
-        setTimeout(() => endGame('timeout'), 0);
-        return 0;
-      }
-      return remaining;
-    });
-    
-    // Schedule next update if game is still playing
-    if (gameStateRef.current === 'playing' && !isEndingRef.current) {
-      rafIdRef.current = requestAnimationFrame(updateTimer);
-    }
-  };
   
   const endGame = async (reason: GameEndReason) => {
-    // Set the ending flag to prevent further score increments and timer updates
+    // Set the ending flag to prevent further score increments
     isEndingRef.current = true;
     
     // Use the ref to get the accurate score and typing speed regardless of state updates
