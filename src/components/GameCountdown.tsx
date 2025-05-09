@@ -21,9 +21,12 @@ const GameCountdown = ({
   const isCompactHeight = useCompactHeight();
   const { setGameState, settings, scoreHistory, isLoggedIn } = useGame();
   
-  // Refs for timestamp tracking
+  // Refs for time tracking
   const startTimeRef = useRef<number>(0);
+  const pausedTimeRef = useRef<number>(0);
+  const isVisibleRef = useRef<boolean>(true);
   const rafIdRef = useRef<number | null>(null);
+  const isCompletedRef = useRef<boolean>(false);
 
   // Get the best score for the current game settings
   const getBestScore = () => {
@@ -61,38 +64,86 @@ const GameCountdown = ({
     return "🔥 Set a new record";
   };
 
-  // Handle the countdown using requestAnimationFrame for better timing
+  // Handle visibility change events
   useEffect(() => {
-    // Initialize start time when component mounts
-    startTimeRef.current = Date.now();
-    setCountdown(3); // Reset countdown to ensure we start at 3
-    
-    // Update function that will run on each animation frame
-    const updateCountdown = () => {
-      const elapsedTime = Math.floor((Date.now() - startTimeRef.current) / 1000);
-      const newCountdown = 3 - elapsedTime;
-      
-      if (newCountdown <= 0) {
-        // Countdown complete, clean up and proceed
+    const handleVisibilityChange = () => {
+      // If document is hidden (tab switched), record current time and pause animation
+      if (document.hidden) {
+        console.log("Tab visibility: hidden");
+        isVisibleRef.current = false;
+        
         if (rafIdRef.current !== null) {
           cancelAnimationFrame(rafIdRef.current);
           rafIdRef.current = null;
         }
-        setCountdown(0);
-        // Small delay for "GO!" to be visible
-        setTimeout(() => onComplete(), 500);
-        return;
+        pausedTimeRef.current = Date.now();
+      } else {
+        console.log("Tab visibility: visible");
+        isVisibleRef.current = true;
+        
+        // If we were paused and not already completed, adjust start time and resume
+        if (pausedTimeRef.current > 0 && !isCompletedRef.current) {
+          const pauseDuration = Date.now() - pausedTimeRef.current;
+          startTimeRef.current += pauseDuration;
+          pausedTimeRef.current = 0;
+          
+          // Resume countdown animation
+          if (rafIdRef.current === null) {
+            rafIdRef.current = requestAnimationFrame(updateCountdown);
+          }
+        }
       }
-      
-      setCountdown(newCountdown);
-      // Schedule next update
-      rafIdRef.current = requestAnimationFrame(updateCountdown);
     };
+    
+    // Register visibility change listener
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, []);
+
+  // Update function that will run on each animation frame
+  const updateCountdown = () => {
+    // If already completed or not visible, don't proceed
+    if (isCompletedRef.current || !isVisibleRef.current) {
+      return;
+    }
+    
+    const elapsedTime = Math.floor((Date.now() - startTimeRef.current) / 1000);
+    const newCountdown = 3 - elapsedTime;
+    
+    if (newCountdown <= 0) {
+      // Countdown complete, clean up and proceed
+      if (rafIdRef.current !== null) {
+        cancelAnimationFrame(rafIdRef.current);
+        rafIdRef.current = null;
+      }
+      setCountdown(0);
+      isCompletedRef.current = true;
+      // Small delay for "GO!" to be visible
+      setTimeout(() => onComplete(), 500);
+      return;
+    }
+    
+    setCountdown(newCountdown);
+    // Schedule next update
+    rafIdRef.current = requestAnimationFrame(updateCountdown);
+  };
+
+  // Initialize countdown when component mounts
+  useEffect(() => {
+    // Reset the state
+    isCompletedRef.current = false;
+    isVisibleRef.current = true;
+    pausedTimeRef.current = 0;
+    startTimeRef.current = Date.now();
+    setCountdown(3); // Reset countdown to ensure we start at 3
     
     // Start the animation loop
     rafIdRef.current = requestAnimationFrame(updateCountdown);
     
-    // Cleanup function to cancel animation frame on unmount
+    // Cleanup function
     return () => {
       if (rafIdRef.current !== null) {
         cancelAnimationFrame(rafIdRef.current);
