@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 const GAME_SESSION_ID_KEY = 'math_game_session_id';
 const GAME_START_TIME_KEY = 'math_game_start_time';
 const GAME_STATE_KEY = 'math_game_state';
+const GAME_END_TIME_KEY = 'math_game_end_time';
 
 const GameProvider = ({ children }: GameProviderProps) => {
   const { settings, updateSettings, resetSettings } = useGameSettings();
@@ -30,18 +31,14 @@ const GameProvider = ({ children }: GameProviderProps) => {
   const typingSpeedRef = useRef<number | null>(null);
   const gameStateRef = useRef<GameState>('selection');
   const timerRef = useRef<number | null>(null);
-  // Add a new ref to track if the game is ending
   const isEndingRef = useRef(false);
-  // Add reference for game start time
   const gameStartTimeRef = useRef<number | null>(null);
-  // Animation frame reference
+  const gameEndTimeRef = useRef<number | null>(null);
   const animationFrameRef = useRef<number | null>(null);
-  // New ref to track if timer has been initialized for this game session
   const timerInitializedRef = useRef(false);
-  // Track current game session ID
   const gameSessionIdRef = useRef<string | null>(null);
-  // Track document visibility
   const isDocumentVisibleRef = useRef(true);
+  const lastVisibilityTimestampRef = useRef<number | null>(null);
 
   const { 
     scoreHistory, 
@@ -54,36 +51,54 @@ const GameProvider = ({ children }: GameProviderProps) => {
   // Handle document visibility changes
   useEffect(() => {
     const handleVisibilityChange = () => {
+      const now = Date.now();
+      const wasVisible = isDocumentVisibleRef.current;
       isDocumentVisibleRef.current = document.visibilityState === 'visible';
       
-      // If document becomes visible and game is playing, resume timer without restarting
-      if (isDocumentVisibleRef.current && gameStateRef.current === 'playing' && gameStartTimeRef.current) {
-        // Resume animation frame loop without resetting the start time
-        if (animationFrameRef.current === null) {
-          const updateTimerWithoutReset = () => {
-            if (gameStateRef.current !== 'playing') return;
-            
-            const elapsedSeconds = (Date.now() - gameStartTimeRef.current!) / 1000;
-            const newTimeLeft = Math.max(0, settings.timerSeconds - Math.floor(elapsedSeconds));
-            
-            setTimeLeft(newTimeLeft);
-            
-            if (newTimeLeft <= 0) {
-              if (animationFrameRef.current) {
-                cancelAnimationFrame(animationFrameRef.current);
-                animationFrameRef.current = null;
-              }
-              
+      // If game state is 'playing' and the tab becomes visible again
+      if (isDocumentVisibleRef.current && gameStateRef.current === 'playing') {
+        console.log('Tab became visible, updating timer');
+        
+        // Calculate hidden duration if we have a previous timestamp
+        if (lastVisibilityTimestampRef.current !== null && !wasVisible) {
+          const hiddenDuration = now - lastVisibilityTimestampRef.current;
+          console.log(`Tab was hidden for ${hiddenDuration/1000} seconds`);
+          
+          // Check if game should have ended during hidden time
+          if (gameStartTimeRef.current !== null && gameEndTimeRef.current !== null) {
+            if (now >= gameEndTimeRef.current) {
+              console.log('Game should have ended while tab was hidden');
+              // End the game on next tick to avoid state update conflicts
               setTimeout(() => endGame('timeout'), 0);
               return;
             }
             
-            animationFrameRef.current = requestAnimationFrame(updateTimerWithoutReset);
-          };
-          
-          animationFrameRef.current = requestAnimationFrame(updateTimerWithoutReset);
+            // Force an immediate UI update of the time left
+            const newTimeLeft = Math.max(0, Math.ceil((gameEndTimeRef.current - now) / 1000));
+            setTimeLeft(newTimeLeft);
+            console.log(`Updated time left: ${newTimeLeft}`);
+          }
+        }
+        
+        // Resume animation frame loop only if we were in playing state and timer was not running
+        if (animationFrameRef.current === null) {
+          console.log('Resuming timer animation frame');
+          startGameTimer(false); // false means don't reset the timer
+        }
+      } else if (!isDocumentVisibleRef.current) {
+        // Tab became hidden, save the timestamp
+        console.log('Tab became hidden');
+        
+        // Cancel the animation frame to save resources
+        if (animationFrameRef.current !== null) {
+          console.log('Cancelling animation frame on tab hide');
+          cancelAnimationFrame(animationFrameRef.current);
+          animationFrameRef.current = null;
         }
       }
+      
+      // Update the last visibility timestamp
+      lastVisibilityTimestampRef.current = now;
     };
     
     document.addEventListener('visibilitychange', handleVisibilityChange);
@@ -98,14 +113,37 @@ const GameProvider = ({ children }: GameProviderProps) => {
     const storedSessionId = sessionStorage.getItem(GAME_SESSION_ID_KEY);
     const storedStartTime = sessionStorage.getItem(GAME_START_TIME_KEY);
     const storedGameState = sessionStorage.getItem(GAME_STATE_KEY);
+    const storedEndTime = sessionStorage.getItem(GAME_END_TIME_KEY);
     
-    if (storedSessionId && storedStartTime && storedGameState === 'playing') {
+    // Only restore if we have all the required data and the stored state is 'playing'
+    if (storedSessionId && storedStartTime && storedGameState === 'playing' && storedEndTime) {
+      const startTime = parseInt(storedStartTime, 10);
+      const endTime = parseInt(storedEndTime, 10);
+      const now = Date.now();
+      
+      // Check if the game should have ended
+      if (now >= endTime) {
+        console.log('Game should have ended based on stored end time');
+        // Clean up storage and end game
+        sessionStorage.removeItem(GAME_SESSION_ID_KEY);
+        sessionStorage.removeItem(GAME_START_TIME_KEY);
+        sessionStorage.removeItem(GAME_STATE_KEY);
+        sessionStorage.removeItem(GAME_END_TIME_KEY);
+        setGameState('ended');
+        return;
+      }
+      
       // Restore game session
       gameSessionIdRef.current = storedSessionId;
-      gameStartTimeRef.current = parseInt(storedStartTime, 10);
+      gameStartTimeRef.current = startTime;
+      gameEndTimeRef.current = endTime;
       gameStateRef.current = 'playing';
       setGameState('playing');
       timerInitializedRef.current = true;
+      
+      // Update time left immediately
+      const newTimeLeft = Math.max(0, Math.ceil((endTime - now) / 1000));
+      setTimeLeft(newTimeLeft);
       
       // Resume timer
       startGameTimer(false); // false means don't reset the timer
@@ -131,6 +169,7 @@ const GameProvider = ({ children }: GameProviderProps) => {
     } else if (gameState !== 'playing' && sessionStorage.getItem(GAME_STATE_KEY) === 'playing') {
       // Clear session storage when exiting playing state
       sessionStorage.removeItem(GAME_STATE_KEY);
+      sessionStorage.removeItem(GAME_END_TIME_KEY);
     }
     
     // Reset timer initialization when game state changes to anything other than playing
@@ -147,8 +186,10 @@ const GameProvider = ({ children }: GameProviderProps) => {
       if (gameState !== 'countdown' && gameState !== 'warmup' && gameState !== 'warmup-countdown') {
         gameSessionIdRef.current = null;
         gameStartTimeRef.current = null;
+        gameEndTimeRef.current = null;
         sessionStorage.removeItem(GAME_SESSION_ID_KEY);
         sessionStorage.removeItem(GAME_START_TIME_KEY);
+        sessionStorage.removeItem(GAME_END_TIME_KEY);
       }
     }
   }, [gameState]);
@@ -226,41 +267,53 @@ const GameProvider = ({ children }: GameProviderProps) => {
     
     // Only reset the timer if specifically requested
     if (resetTimer) {
+      const now = Date.now();
       setTimeLeft(settings.timerSeconds);
       
-      // Set the start time and mark timer as initialized
-      gameStartTimeRef.current = Date.now();
-      // Store start time in sessionStorage for persistence
+      // Set the start time and calculate end time
+      gameStartTimeRef.current = now;
+      gameEndTimeRef.current = now + (settings.timerSeconds * 1000);
+      
+      // Store times in sessionStorage for persistence
       sessionStorage.setItem(GAME_START_TIME_KEY, gameStartTimeRef.current.toString());
+      sessionStorage.setItem(GAME_END_TIME_KEY, gameEndTimeRef.current.toString());
+      
       timerInitializedRef.current = true;
+      lastVisibilityTimestampRef.current = now;
     }
     
-    // Function to update the timer based on elapsed time
+    // Function to update the timer based on absolute time elapsed
     const updateTimer = () => {
-      if (gameStartTimeRef.current === null) return;
+      if (gameStartTimeRef.current === null || gameEndTimeRef.current === null) return;
       
-      // Only update if document is visible, to save resources
-      if (isDocumentVisibleRef.current) {
-        const elapsedSeconds = (Date.now() - gameStartTimeRef.current) / 1000;
-        const newTimeLeft = Math.max(0, settings.timerSeconds - Math.floor(elapsedSeconds));
-        
+      const now = Date.now();
+      const newTimeLeft = Math.max(0, Math.ceil((gameEndTimeRef.current - now) / 1000));
+      
+      // Only update UI if needed
+      if (newTimeLeft !== timeLeft) {
         setTimeLeft(newTimeLeft);
-        
-        if (newTimeLeft <= 0) {
-          // Time's up
-          if (animationFrameRef.current) {
-            cancelAnimationFrame(animationFrameRef.current);
-            animationFrameRef.current = null;
-          }
-          
-          // Use setTimeout to ensure state updates have completed
-          setTimeout(() => endGame('timeout'), 0);
-          return;
-        }
       }
       
-      // Continue the animation loop
-      animationFrameRef.current = requestAnimationFrame(updateTimer);
+      if (newTimeLeft <= 0) {
+        // Time's up
+        if (animationFrameRef.current) {
+          cancelAnimationFrame(animationFrameRef.current);
+          animationFrameRef.current = null;
+        }
+        
+        // Use setTimeout to ensure state updates have completed
+        setTimeout(() => endGame('timeout'), 0);
+        return;
+      }
+      
+      // Continue the animation loop if document is visible
+      if (isDocumentVisibleRef.current) {
+        animationFrameRef.current = requestAnimationFrame(updateTimer);
+      } else {
+        // If document becomes hidden, we'll stop the animation frame
+        // and rely on the visibility change event to resume it later
+        animationFrameRef.current = null;
+      }
     };
     
     // Start the animation loop
@@ -286,12 +339,14 @@ const GameProvider = ({ children }: GameProviderProps) => {
     // Clear game session data
     gameSessionIdRef.current = null;
     gameStartTimeRef.current = null;
+    gameEndTimeRef.current = null;
     timerInitializedRef.current = false;
     
     // Clear session storage
     sessionStorage.removeItem(GAME_SESSION_ID_KEY);
     sessionStorage.removeItem(GAME_START_TIME_KEY);
     sessionStorage.removeItem(GAME_STATE_KEY);
+    sessionStorage.removeItem(GAME_END_TIME_KEY);
     
     // Only save score on timeout (normal game end) and when user is logged in
     if (reason === 'timeout' && isLoggedIn && defaultProfileId) {
