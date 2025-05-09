@@ -13,11 +13,47 @@ interface GameCountdownProps {
 
 const GameCountdown = ({ 
   onComplete,
-  message = "Let's do math questions!"
+  message = "⚡ It's game time! ⚡"
 }: GameCountdownProps) => {
   const [countdown, setCountdown] = useState<number>(3);
   const isCompactHeight = useCompactHeight();
-  const { setGameState } = useGame();
+  const { setGameState, settings, scoreHistory, isLoggedIn } = useGame();
+
+  // Get the best score for the current game settings
+  const getBestScore = () => {
+    if (!isLoggedIn || !scoreHistory || scoreHistory.length === 0) {
+      return null;
+    }
+
+    // Filter scores that match current game settings
+    const matchingScores = scoreHistory.filter(s => 
+      s.operation === settings.operation &&
+      s.range.min1 === settings.range.min1 &&
+      s.range.max1 === settings.range.max1 &&
+      s.range.min2 === settings.range.min2 &&
+      s.range.max2 === settings.range.max2 &&
+      s.allowNegatives === (settings.allowNegatives || false) &&
+      s.focusNumber === (settings.focusNumber || null)
+    );
+
+    if (matchingScores.length === 0) {
+      return null;
+    }
+
+    // Return the highest score
+    return Math.max(...matchingScores.map(s => s.score));
+  };
+
+  // Get motivational text based on user's best score
+  const getMotivationalText = () => {
+    const bestScore = getBestScore();
+    
+    if (bestScore) {
+      return `🔥 Beat your record: ${bestScore}`;
+    }
+    
+    return "🔥 Set a new record";
+  };
 
   // Handle the countdown
   useEffect(() => {
@@ -52,6 +88,7 @@ const GameCountdown = ({
             <div className="text-4xl font-bold mt-2 text-green-500">
               {countdown || "GO!"}
             </div>
+            <p className="text-gray-600">{getMotivationalText()}</p>
           </CardContent>
         </Card>
 
