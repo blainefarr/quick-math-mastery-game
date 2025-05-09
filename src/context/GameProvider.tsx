@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import GameContext from './GameContext';
 import { GameContextType, GameState, GameProviderProps, GameEndReason } from './game-context-types';
@@ -39,6 +38,7 @@ const GameProvider = ({ children }: GameProviderProps) => {
   const gameSessionIdRef = useRef<string | null>(null);
   const isDocumentVisibleRef = useRef(true);
   const lastVisibilityTimestampRef = useRef<number | null>(null);
+  const lastTimerUpdateRef = useRef<number | null>(null);
 
   const { 
     scoreHistory, 
@@ -55,17 +55,23 @@ const GameProvider = ({ children }: GameProviderProps) => {
       const wasVisible = isDocumentVisibleRef.current;
       isDocumentVisibleRef.current = document.visibilityState === 'visible';
       
-      // If game state is 'playing' and the tab becomes visible again
-      if (isDocumentVisibleRef.current && gameStateRef.current === 'playing') {
-        console.log('Tab became visible, updating timer');
+      console.log(`Visibility changed to: ${isDocumentVisibleRef.current ? 'visible' : 'hidden'}`);
+      console.log(`Current game state: ${gameStateRef.current}`);
+      
+      if (isDocumentVisibleRef.current) {
+        // Tab became visible
+        console.log('Tab became visible');
         
         // Calculate hidden duration if we have a previous timestamp
         if (lastVisibilityTimestampRef.current !== null && !wasVisible) {
           const hiddenDuration = now - lastVisibilityTimestampRef.current;
           console.log(`Tab was hidden for ${hiddenDuration/1000} seconds`);
           
-          // Check if game should have ended during hidden time
-          if (gameStartTimeRef.current !== null && gameEndTimeRef.current !== null) {
+          // If we're in playing state, check if game should have ended
+          if (gameStateRef.current === 'playing' && gameStartTimeRef.current !== null && gameEndTimeRef.current !== null) {
+            console.log(`Game end time: ${new Date(gameEndTimeRef.current).toISOString()}`);
+            console.log(`Current time: ${new Date(now).toISOString()}`);
+            
             if (now >= gameEndTimeRef.current) {
               console.log('Game should have ended while tab was hidden');
               // End the game on next tick to avoid state update conflicts
@@ -75,17 +81,18 @@ const GameProvider = ({ children }: GameProviderProps) => {
             
             // Force an immediate UI update of the time left
             const newTimeLeft = Math.max(0, Math.ceil((gameEndTimeRef.current - now) / 1000));
-            setTimeLeft(newTimeLeft);
             console.log(`Updated time left: ${newTimeLeft}`);
+            setTimeLeft(newTimeLeft);
+            lastTimerUpdateRef.current = now;
+            
+            // Resume animation frame loop
+            if (animationFrameRef.current === null) {
+              console.log('Resuming timer animation frame');
+              startGameTimer(false); // false means don't reset the timer
+            }
           }
         }
-        
-        // Resume animation frame loop only if we were in playing state and timer was not running
-        if (animationFrameRef.current === null) {
-          console.log('Resuming timer animation frame');
-          startGameTimer(false); // false means don't reset the timer
-        }
-      } else if (!isDocumentVisibleRef.current) {
+      } else {
         // Tab became hidden, save the timestamp
         console.log('Tab became hidden');
         
@@ -115,11 +122,16 @@ const GameProvider = ({ children }: GameProviderProps) => {
     const storedGameState = sessionStorage.getItem(GAME_STATE_KEY);
     const storedEndTime = sessionStorage.getItem(GAME_END_TIME_KEY);
     
-    // Only restore if we have all the required data and the stored state is 'playing'
+    // Only restore if we have all the required data
     if (storedSessionId && storedStartTime && storedGameState === 'playing' && storedEndTime) {
       const startTime = parseInt(storedStartTime, 10);
       const endTime = parseInt(storedEndTime, 10);
       const now = Date.now();
+      
+      console.log(`Restoring game session: ${storedGameState}`);
+      console.log(`Start time: ${new Date(startTime).toISOString()}`);
+      console.log(`End time: ${new Date(endTime).toISOString()}`);
+      console.log(`Current time: ${new Date(now).toISOString()}`);
       
       // Check if the game should have ended
       if (now >= endTime) {
@@ -143,14 +155,16 @@ const GameProvider = ({ children }: GameProviderProps) => {
       
       // Update time left immediately
       const newTimeLeft = Math.max(0, Math.ceil((endTime - now) / 1000));
+      console.log(`Restored time left: ${newTimeLeft}`);
       setTimeLeft(newTimeLeft);
+      lastTimerUpdateRef.current = now;
       
       // Resume timer
       startGameTimer(false); // false means don't reset the timer
     }
   }, []);
 
-  // Sync state with refs for reliable access in async contexts
+  // Sync refs with state for reliable access in async contexts
   useEffect(() => {
     scoreRef.current = score;
   }, [score]);
@@ -163,11 +177,12 @@ const GameProvider = ({ children }: GameProviderProps) => {
   useEffect(() => {
     gameStateRef.current = gameState;
     
-    // Store current game state in sessionStorage
+    // Store current game state in sessionStorage for the playing state only
     if (gameState === 'playing') {
       sessionStorage.setItem(GAME_STATE_KEY, gameState);
     } else if (gameState !== 'playing' && sessionStorage.getItem(GAME_STATE_KEY) === 'playing') {
       // Clear session storage when exiting playing state
+      console.log('Exiting playing state, clearing session storage');
       sessionStorage.removeItem(GAME_STATE_KEY);
       sessionStorage.removeItem(GAME_END_TIME_KEY);
     }
@@ -183,6 +198,7 @@ const GameProvider = ({ children }: GameProviderProps) => {
       }
       
       // Clear game session when leaving playing state
+      // But not when in countdown or warmup states as those lead to playing
       if (gameState !== 'countdown' && gameState !== 'warmup' && gameState !== 'warmup-countdown') {
         gameSessionIdRef.current = null;
         gameStartTimeRef.current = null;
@@ -280,29 +296,44 @@ const GameProvider = ({ children }: GameProviderProps) => {
       
       timerInitializedRef.current = true;
       lastVisibilityTimestampRef.current = now;
+      lastTimerUpdateRef.current = now;
     }
     
     // Function to update the timer based on absolute time elapsed
     const updateTimer = () => {
+      if (gameStateRef.current !== 'playing') {
+        // If we're not in playing state anymore, stop the timer
+        if (animationFrameRef.current) {
+          cancelAnimationFrame(animationFrameRef.current);
+          animationFrameRef.current = null;
+        }
+        return;
+      }
+      
       if (gameStartTimeRef.current === null || gameEndTimeRef.current === null) return;
       
       const now = Date.now();
       const newTimeLeft = Math.max(0, Math.ceil((gameEndTimeRef.current - now) / 1000));
       
-      // Only update UI if needed
-      if (newTimeLeft !== timeLeft) {
+      // Update the UI at most once per second to avoid excessive re-rendering
+      // But always update on first run or when the time changes
+      if (lastTimerUpdateRef.current === null || 
+          now - lastTimerUpdateRef.current >= 500 || 
+          Math.floor(newTimeLeft) !== Math.floor(timeLeft)) {
         setTimeLeft(newTimeLeft);
+        lastTimerUpdateRef.current = now;
       }
       
       if (newTimeLeft <= 0) {
         // Time's up
+        console.log('Timer reached zero, ending game');
         if (animationFrameRef.current) {
           cancelAnimationFrame(animationFrameRef.current);
           animationFrameRef.current = null;
         }
         
-        // Use setTimeout to ensure state updates have completed
-        setTimeout(() => endGame('timeout'), 0);
+        // End the game
+        endGame('timeout');
         return;
       }
       
