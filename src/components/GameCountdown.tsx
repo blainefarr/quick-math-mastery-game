@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { RotateCw } from 'lucide-react';
@@ -20,17 +20,7 @@ const GameCountdown = ({
   const [countdown, setCountdown] = useState<number>(3);
   const isCompactHeight = useCompactHeight();
   const { setGameState, settings, scoreHistory, isLoggedIn } = useGame();
-  
-  // Refs to track the countdown state
-  const countdownIdRef = useRef<string>(Date.now().toString());
-  const startTimeRef = useRef<number>(Date.now());
-  const endTimeRef = useRef<number>(Date.now() + 3 * 1000); // 3 second countdown
-  const animationFrameRef = useRef<number | null>(null);
-  const isCompletedRef = useRef(false);
-  const isVisibleRef = useRef(true);
-  const lastVisibilityTimestampRef = useRef<number>(Date.now());
-  const lastUpdateTimeRef = useRef<number>(Date.now());
-  
+
   // Get the best score for the current game settings
   const getBestScore = () => {
     if (!isLoggedIn || !scoreHistory || scoreHistory.length === 0) {
@@ -67,125 +57,18 @@ const GameCountdown = ({
     return "🔥 Set a new record";
   };
 
-  // Handle document visibility changes
+  // Handle the countdown
   useEffect(() => {
-    const handleVisibilityChange = () => {
-      const now = Date.now();
-      const wasVisible = isVisibleRef.current;
-      isVisibleRef.current = document.visibilityState === 'visible';
-      
-      console.log(`Countdown visibility changed: ${isVisibleRef.current ? 'visible' : 'hidden'}`);
-      
-      // If becoming visible after being hidden
-      if (isVisibleRef.current && !wasVisible) {
-        const hiddenDuration = now - lastVisibilityTimestampRef.current;
-        console.log(`Countdown was hidden for ${hiddenDuration/1000} seconds`);
-        
-        // Check if countdown should have ended during hidden time
-        if (now >= endTimeRef.current) {
-          console.log('Countdown should have completed while tab was hidden');
-          if (!isCompletedRef.current) {
-            isCompletedRef.current = true;
-            setCountdown(0);
-            setTimeout(() => onComplete(), 0);
-          }
-          return;
-        }
-        
-        // Update the countdown display immediately
-        const timeRemaining = endTimeRef.current - now;
-        const remainingSeconds = Math.max(0, Math.ceil(timeRemaining / 1000));
-        console.log(`Countdown remaining: ${remainingSeconds} seconds`);
-        setCountdown(remainingSeconds);
-        
-        // Start a new animation frame loop if not completed
-        if (!isCompletedRef.current && animationFrameRef.current === null) {
-          startCountdownAnimation();
-        }
-      } else if (!isVisibleRef.current) {
-        // Cancel animation frame when tab becomes hidden to save resources
-        if (animationFrameRef.current) {
-          cancelAnimationFrame(animationFrameRef.current);
-          animationFrameRef.current = null;
-        }
-      }
-      
-      // Update the last visibility timestamp
-      lastVisibilityTimestampRef.current = now;
-    };
-    
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-    };
-  }, [onComplete]);
-
-  // Function to start or resume countdown animation
-  const startCountdownAnimation = () => {
-    if (animationFrameRef.current) {
-      cancelAnimationFrame(animationFrameRef.current);
+    if (countdown > 0) {
+      const countdownTimer = setTimeout(() => {
+        setCountdown(countdown - 1);
+      }, 1000);
+      return () => clearTimeout(countdownTimer);
+    } else {
+      // Countdown is complete, proceed to the game
+      onComplete();
     }
-    
-    const updateCountdown = () => {
-      const now = Date.now();
-      const timeRemaining = endTimeRef.current - now;
-      const newCountdown = Math.max(0, Math.ceil(timeRemaining / 1000));
-      
-      // Only update UI when countdown changes or at least 100ms have passed
-      if (newCountdown !== countdown || now - lastUpdateTimeRef.current >= 100) {
-        setCountdown(newCountdown);
-        lastUpdateTimeRef.current = now;
-      }
-      
-      if (timeRemaining <= 0) {
-        if (animationFrameRef.current) {
-          cancelAnimationFrame(animationFrameRef.current);
-          animationFrameRef.current = null;
-        }
-        
-        if (!isCompletedRef.current) {
-          isCompletedRef.current = true;
-          console.log('Countdown complete, calling onComplete');
-          onComplete();
-        }
-        return;
-      }
-      
-      if (isVisibleRef.current) {
-        animationFrameRef.current = requestAnimationFrame(updateCountdown);
-      } else {
-        animationFrameRef.current = null;
-      }
-    };
-    
-    animationFrameRef.current = requestAnimationFrame(updateCountdown);
-  };
-
-  // Initialize and start the countdown
-  useEffect(() => {
-    console.log('Initializing countdown');
-    
-    // Set the initial start and end times
-    const now = Date.now();
-    startTimeRef.current = now;
-    endTimeRef.current = now + 3 * 1000;
-    isCompletedRef.current = false;
-    lastVisibilityTimestampRef.current = now;
-    lastUpdateTimeRef.current = now;
-    isVisibleRef.current = document.visibilityState === 'visible';
-    
-    // Start the countdown animation
-    startCountdownAnimation();
-    
-    // Cleanup function
-    return () => {
-      if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current);
-        animationFrameRef.current = null;
-      }
-    };
-  }, [onComplete]);
+  }, [countdown, onComplete]);
 
   // Handle restart game
   const handleRestartGame = () => {
