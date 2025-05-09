@@ -8,6 +8,11 @@ import { useScoreManagement } from './hooks/useScoreManagement';
 import { useAuth } from './auth/useAuth';
 import { toast } from 'sonner';
 
+// Game session storage keys
+const GAME_SESSION_ID_KEY = 'math_game_session_id';
+const GAME_START_TIME_KEY = 'math_game_start_time';
+const GAME_STATE_KEY = 'math_game_state';
+
 const GameProvider = ({ children }: GameProviderProps) => {
   const { settings, updateSettings, resetSettings } = useGameSettings();
   const { currentProblem, generateNewProblem } = useProblemGenerator();
@@ -31,6 +36,12 @@ const GameProvider = ({ children }: GameProviderProps) => {
   const gameStartTimeRef = useRef<number | null>(null);
   // Animation frame reference
   const animationFrameRef = useRef<number | null>(null);
+  // New ref to track if timer has been initialized for this game session
+  const timerInitializedRef = useRef(false);
+  // Track current game session ID
+  const gameSessionIdRef = useRef<string | null>(null);
+  // Track document visibility
+  const isDocumentVisibleRef = useRef(true);
 
   const { 
     scoreHistory, 
@@ -39,6 +50,67 @@ const GameProvider = ({ children }: GameProviderProps) => {
     getIsHighScore,
     setScoreHistory 
   } = useScoreManagement(userId);
+
+  // Handle document visibility changes
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      isDocumentVisibleRef.current = document.visibilityState === 'visible';
+      
+      // If document becomes visible and game is playing, resume timer without restarting
+      if (isDocumentVisibleRef.current && gameStateRef.current === 'playing' && gameStartTimeRef.current) {
+        // Resume animation frame loop without resetting the start time
+        if (animationFrameRef.current === null) {
+          const updateTimerWithoutReset = () => {
+            if (gameStateRef.current !== 'playing') return;
+            
+            const elapsedSeconds = (Date.now() - gameStartTimeRef.current!) / 1000;
+            const newTimeLeft = Math.max(0, settings.timerSeconds - Math.floor(elapsedSeconds));
+            
+            setTimeLeft(newTimeLeft);
+            
+            if (newTimeLeft <= 0) {
+              if (animationFrameRef.current) {
+                cancelAnimationFrame(animationFrameRef.current);
+                animationFrameRef.current = null;
+              }
+              
+              setTimeout(() => endGame('timeout'), 0);
+              return;
+            }
+            
+            animationFrameRef.current = requestAnimationFrame(updateTimerWithoutReset);
+          };
+          
+          animationFrameRef.current = requestAnimationFrame(updateTimerWithoutReset);
+        }
+      }
+    };
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [settings.timerSeconds]);
+
+  // Attempt to restore game session from sessionStorage
+  useEffect(() => {
+    const storedSessionId = sessionStorage.getItem(GAME_SESSION_ID_KEY);
+    const storedStartTime = sessionStorage.getItem(GAME_START_TIME_KEY);
+    const storedGameState = sessionStorage.getItem(GAME_STATE_KEY);
+    
+    if (storedSessionId && storedStartTime && storedGameState === 'playing') {
+      // Restore game session
+      gameSessionIdRef.current = storedSessionId;
+      gameStartTimeRef.current = parseInt(storedStartTime, 10);
+      gameStateRef.current = 'playing';
+      setGameState('playing');
+      timerInitializedRef.current = true;
+      
+      // Resume timer
+      startGameTimer(false); // false means don't reset the timer
+    }
+  }, []);
 
   // Sync state with refs for reliable access in async contexts
   useEffect(() => {
@@ -52,14 +124,55 @@ const GameProvider = ({ children }: GameProviderProps) => {
 
   useEffect(() => {
     gameStateRef.current = gameState;
+    
+    // Store current game state in sessionStorage
+    if (gameState === 'playing') {
+      sessionStorage.setItem(GAME_STATE_KEY, gameState);
+    } else if (gameState !== 'playing' && sessionStorage.getItem(GAME_STATE_KEY) === 'playing') {
+      // Clear session storage when exiting playing state
+      sessionStorage.removeItem(GAME_STATE_KEY);
+    }
+    
+    // Reset timer initialization when game state changes to anything other than playing
+    if (gameState !== 'playing') {
+      timerInitializedRef.current = false;
+      
+      // Clean up any existing animation frame
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+        animationFrameRef.current = null;
+      }
+      
+      // Clear game session when leaving playing state
+      if (gameState !== 'countdown' && gameState !== 'warmup' && gameState !== 'warmup-countdown') {
+        gameSessionIdRef.current = null;
+        gameStartTimeRef.current = null;
+        sessionStorage.removeItem(GAME_SESSION_ID_KEY);
+        sessionStorage.removeItem(GAME_START_TIME_KEY);
+      }
+    }
   }, [gameState]);
 
   // Reset timer and fetch scores when game state changes
   useEffect(() => {
     if (gameState === 'playing') {
-      startGameTimer();
-      // Reset the isEnding flag when starting a new game
-      isEndingRef.current = false;
+      // Only start a new timer if one isn't already initialized
+      if (!timerInitializedRef.current) {
+        console.log('Starting new game timer');
+        
+        // Generate new game session ID
+        if (!gameSessionIdRef.current) {
+          gameSessionIdRef.current = Date.now().toString();
+          sessionStorage.setItem(GAME_SESSION_ID_KEY, gameSessionIdRef.current);
+        }
+        
+        startGameTimer(true); // true means reset the timer
+        
+        // Reset the isEnding flag when starting a new game
+        isEndingRef.current = false;
+      } else {
+        console.log('Game timer already initialized, not starting a new one');
+      }
     } else if (gameState === 'ended' && userId && defaultProfileId) {
       fetchUserScores().then(scores => {
         if (scores) {
@@ -102,38 +215,48 @@ const GameProvider = ({ children }: GameProviderProps) => {
   // Get auth state from useAuth
   const { isLoggedIn, username } = useAuth();
   
-  const startGameTimer = () => {
+  const startGameTimer = (resetTimer: boolean = true) => {
     // Clear any existing animation frame
     if (animationFrameRef.current) {
       cancelAnimationFrame(animationFrameRef.current);
       animationFrameRef.current = null;
     }
     
-    console.log('Starting game timer with', settings.timerSeconds, 'seconds');
-    setTimeLeft(settings.timerSeconds);
+    console.log('Starting game timer with', settings.timerSeconds, 'seconds, resetTimer:', resetTimer);
     
-    // Set the start time
-    gameStartTimeRef.current = Date.now();
+    // Only reset the timer if specifically requested
+    if (resetTimer) {
+      setTimeLeft(settings.timerSeconds);
+      
+      // Set the start time and mark timer as initialized
+      gameStartTimeRef.current = Date.now();
+      // Store start time in sessionStorage for persistence
+      sessionStorage.setItem(GAME_START_TIME_KEY, gameStartTimeRef.current.toString());
+      timerInitializedRef.current = true;
+    }
     
     // Function to update the timer based on elapsed time
     const updateTimer = () => {
       if (gameStartTimeRef.current === null) return;
       
-      const elapsedSeconds = (Date.now() - gameStartTimeRef.current) / 1000;
-      const newTimeLeft = Math.max(0, settings.timerSeconds - Math.floor(elapsedSeconds));
-      
-      setTimeLeft(newTimeLeft);
-      
-      if (newTimeLeft <= 0) {
-        // Time's up
-        if (animationFrameRef.current) {
-          cancelAnimationFrame(animationFrameRef.current);
-          animationFrameRef.current = null;
-        }
+      // Only update if document is visible, to save resources
+      if (isDocumentVisibleRef.current) {
+        const elapsedSeconds = (Date.now() - gameStartTimeRef.current) / 1000;
+        const newTimeLeft = Math.max(0, settings.timerSeconds - Math.floor(elapsedSeconds));
         
-        // Use setTimeout to ensure state updates have completed
-        setTimeout(() => endGame('timeout'), 0);
-        return;
+        setTimeLeft(newTimeLeft);
+        
+        if (newTimeLeft <= 0) {
+          // Time's up
+          if (animationFrameRef.current) {
+            cancelAnimationFrame(animationFrameRef.current);
+            animationFrameRef.current = null;
+          }
+          
+          // Use setTimeout to ensure state updates have completed
+          setTimeout(() => endGame('timeout'), 0);
+          return;
+        }
       }
       
       // Continue the animation loop
@@ -154,11 +277,21 @@ const GameProvider = ({ children }: GameProviderProps) => {
     
     console.log(`Ending game with reason: ${reason}, final score: ${finalScore}, typing time per problem: ${finalTypingSpeed}`);
     
-    // Clear timer if it's running
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
-      timerRef.current = null;
+    // Clear any running animation frame
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current);
+      animationFrameRef.current = null;
     }
+    
+    // Clear game session data
+    gameSessionIdRef.current = null;
+    gameStartTimeRef.current = null;
+    timerInitializedRef.current = false;
+    
+    // Clear session storage
+    sessionStorage.removeItem(GAME_SESSION_ID_KEY);
+    sessionStorage.removeItem(GAME_START_TIME_KEY);
+    sessionStorage.removeItem(GAME_STATE_KEY);
     
     // Only save score on timeout (normal game end) and when user is logged in
     if (reason === 'timeout' && isLoggedIn && defaultProfileId) {

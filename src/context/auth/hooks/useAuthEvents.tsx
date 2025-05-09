@@ -1,4 +1,5 @@
-import { useEffect } from 'react';
+
+import { useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { AuthStateType } from '../auth-types';
 import { fetchAndSaveAccountProfile } from '../utils/accountProfile';
@@ -11,6 +12,7 @@ const AUTH_TIMEOUT_MS = 5000; // 5s timeout for auth operations
 const MAX_PROFILE_RETRY_ATTEMPTS = 3;
 const PROFILE_RETRY_DELAY_MS = 1000;
 const INITIAL_FETCH_DELAY_MS = 300;
+const AUTH_REFRESH_DEBOUNCE_MS = 30000; // 30s debounce for refresh operations
 
 // Add debounce control
 let isCurrentlyFetching = false;
@@ -31,6 +33,10 @@ export const useAuthEvents = (authState: AuthStateType) => {
   } = authState;
 
   const navigate = useNavigate();
+  
+  // Tracking refs for tab visibility and last refresh time
+  const isDocumentVisibleRef = useRef(true);
+  const lastAuthRefreshTimeRef = useRef<number>(0);
 
   // Retry profile fetch for new signups - optimized
   useEffect(() => {
@@ -67,6 +73,32 @@ export const useAuthEvents = (authState: AuthStateType) => {
       return () => clearTimeout(timer);
     }
   }, [isNewSignup, userId, retryAttempts]);
+
+  // Track document visibility changes
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      isDocumentVisibleRef.current = document.visibilityState === 'visible';
+      
+      // When tab becomes visible, check if we should refresh auth
+      // but only if it's been a significant time since last refresh
+      if (isDocumentVisibleRef.current) {
+        const currentTime = Date.now();
+        if (currentTime - lastAuthRefreshTimeRef.current > AUTH_REFRESH_DEBOUNCE_MS) {
+          console.log('Tab became visible, debounced auth refresh will occur');
+          // We don't refresh immediately, but let the regular auth check handle it
+          lastAuthRefreshTimeRef.current = currentTime;
+        } else {
+          console.log('Tab became visible, but auth refresh debounced');
+        }
+      }
+    };
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, []);
 
   // Auth initialization and event handling - optimized
   useEffect(() => {
@@ -132,6 +164,14 @@ export const useAuthEvents = (authState: AuthStateType) => {
             setIsLoggedIn(true);
             setUserId(session.user.id);
             
+            // For TOKEN_REFRESHED, don't fetch profile again if we already have it
+            // This helps prevent unnecessary profile fetches when tabs regain focus
+            if (event === 'TOKEN_REFRESHED' && authState.defaultProfileId) {
+              console.log('Token refreshed but profile already loaded, skipping profile fetch');
+              setIsLoadingProfile(false);
+              return;
+            }
+            
             // Prevent duplicate fetches
             if (isCurrentlyFetching) return;
             isCurrentlyFetching = true;
@@ -175,6 +215,7 @@ export const useAuthEvents = (authState: AuthStateType) => {
         const { data: { session } } = await supabase.auth.getSession();
         
         initialSessionChecked = true;
+        lastAuthRefreshTimeRef.current = Date.now();
         
         if (session?.user) {
           console.log('Existing session found, user:', session.user.id);

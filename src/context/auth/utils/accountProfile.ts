@@ -9,6 +9,10 @@ let isFetchingProfile = false;
 const FETCH_TIMEOUT_MS = 5000; // 5 seconds
 const MAX_RETRY_ATTEMPTS = 3;
 const RETRY_DELAY_MS = 1000; // 1 second
+const AUTH_REFRESH_DEBOUNCE_MS = 30000; // 30s debounce for refresh operations
+
+// Map to track when profiles were last fetched for each user ID
+const lastProfileFetchTimeMap = new Map<string, number>();
 
 /**
  * Function to fetch and save account and profile info after auth events
@@ -25,11 +29,32 @@ export const fetchAndSaveAccountProfile = async (
     return false;
   }
   
+  // Check if we recently fetched this profile and have a defaultProfileId already
+  // This helps prevent duplicate fetches during tab switches
+  const now = Date.now();
+  const lastFetchTime = lastProfileFetchTimeMap.get(userId) || 0;
+  if (
+    !isRetry && 
+    authState.defaultProfileId && 
+    now - lastFetchTime < AUTH_REFRESH_DEBOUNCE_MS
+  ) {
+    console.log(`Profile for ${userId} was fetched recently, skipping duplicate fetch`);
+    authState.setIsLoadingProfile(false);
+    return true;
+  }
+  
   // Prevent duplicate concurrent fetches
   if (isFetchingProfile) {
     console.log('Already fetching profile, skipping this request');
     return false;
   }
+  
+  // Set up a timeout to release the lock if the operation takes too long
+  const fetchTimeoutId = setTimeout(() => {
+    console.warn('Profile fetch operation timed out, releasing lock');
+    isFetchingProfile = false;
+    authState.setIsLoadingProfile(false);
+  }, FETCH_TIMEOUT_MS);
   
   try {
     isFetchingProfile = true;
@@ -140,6 +165,9 @@ export const fetchAndSaveAccountProfile = async (
     }
     
     if (selectedProfile) {
+      // Store the timestamp of this successful fetch
+      lastProfileFetchTimeMap.set(userId, Date.now());
+      
       // Use profile name as requested by the user
       authState.setDefaultProfileId(selectedProfile.id);
       authState.setUsername(selectedProfile.name);
@@ -166,6 +194,9 @@ export const fetchAndSaveAccountProfile = async (
     }
     return false;
   } finally {
+    // Clear the timeout since we're done
+    clearTimeout(fetchTimeoutId);
+    
     if (!isRetry) {
       authState.setIsLoadingProfile(false);
     }
