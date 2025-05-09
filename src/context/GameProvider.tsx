@@ -132,7 +132,7 @@ const GameProvider = ({ children }: GameProviderProps) => {
     const finalScore = scoreRef.current;
     const finalTypingSpeed = typingSpeedRef.current;
     
-    console.log(`Ending game with reason: ${reason}, final score: ${finalScore}, typing speed: ${finalTypingSpeed}`);
+    console.log(`Ending game with reason: ${reason}, final score: ${finalScore}, typing time per problem: ${finalTypingSpeed}`);
     
     // Clear timer if it's running
     if (timerRef.current) {
@@ -144,15 +144,17 @@ const GameProvider = ({ children }: GameProviderProps) => {
     if (reason === 'timeout' && isLoggedIn && defaultProfileId) {
       console.log(`Attempting to save score: ${finalScore}`);
       try {
-        // Calculate total speed and adjusted math speed
-        let totalSpeed = finalScore / settings.timerSeconds;
-        let adjustedMathSpeed = totalSpeed;
+        // Calculate metrics with updated logic and variables
+        // Now assuming typing speed represents seconds per typing problem
+        let answer_time_per_problem = finalScore > 0 ? settings.timerSeconds / finalScore : 0;
+        let math_time_per_problem = answer_time_per_problem;
         
-        // Adjust math speed if typing speed is available
+        // Adjust math time if typing speed is available
         if (finalTypingSpeed !== null) {
-          // Ensure adjusted math speed doesn't go below zero
-          adjustedMathSpeed = Math.max(0, totalSpeed - finalTypingSpeed);
-          console.log(`Typing speed: ${finalTypingSpeed}, Total speed: ${totalSpeed}, Adjusted math speed: ${adjustedMathSpeed}`);
+          // Typing speed is now seconds per typing problem
+          // Math time is answer time minus typing time
+          math_time_per_problem = Math.max(0, answer_time_per_problem - finalTypingSpeed);
+          console.log(`Typing time per problem: ${finalTypingSpeed}, Answer time per problem: ${answer_time_per_problem}, Math time per problem: ${math_time_per_problem}`);
         }
         
         const success = await saveScore(

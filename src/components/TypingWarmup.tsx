@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -45,11 +46,12 @@ const TypingWarmup = ({ timeLimit, customNumberPadEnabled, onComplete }: TypingW
       setTimeLeft((prevTime) => {
         if (prevTime <= 1) {
           clearInterval(timer);
-          // Calculate typing speed using the ref value to get the latest count
+          // Calculate typing time per problem using the ref value to get the latest count
           const finalCount = correctCountRef.current;
-          const typingSpeed = Math.max(0, finalCount / timeLimit);
-          console.log(`Typing warmup completed with correct count: ${finalCount}, time limit: ${timeLimit}, calculated speed: ${typingSpeed}`);
-          onComplete(typingSpeed);
+          // Changed calculation: seconds per correct answer (with safety check for division by zero)
+          const typingTimePerProblem = finalCount > 0 ? timeLimit / finalCount : 0;
+          console.log(`Typing warmup completed with correct count: ${finalCount}, time limit: ${timeLimit}, calculated typing time per problem: ${typingTimePerProblem}`);
+          onComplete(typingTimePerProblem);
           return 0;
         }
         return prevTime - 1;

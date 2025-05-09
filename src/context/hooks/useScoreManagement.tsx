@@ -153,13 +153,19 @@ export const useScoreManagement = (userId: string | null) => {
     try {
       setSavingScore(true);
       
-      // Calculate total speed and adjusted math speed if typing speed is available
-      let totalSpeed = null;
-      let adjustedMathSpeed = null;
+      // Calculate metrics with updated logic and new variable names
+      let answer_time_per_problem = null;
+      let math_time_per_problem = null;
       
-      if (typingSpeed !== null) {
-        totalSpeed = score / timerSeconds;
-        adjustedMathSpeed = totalSpeed - typingSpeed;
+      if (score > 0) {
+        // Changed calculation: seconds per math problem
+        answer_time_per_problem = timerSeconds / score;
+        
+        // If typing speed is available (it represents seconds per typing problem now)
+        if (typingSpeed !== null) {
+          // Changed calculation: actual math time is typing time subtracted from total answer time
+          math_time_per_problem = Math.max(0, answer_time_per_problem - typingSpeed);
+        }
       }
       
       const scoreData = {
@@ -175,9 +181,9 @@ export const useScoreManagement = (userId: string | null) => {
         focus_number: focusNumber ?? null,
         allow_negatives: allowNegatives ?? false,
         date: new Date().toISOString(),
-        typing_speed: typingSpeed,
-        total_speed: totalSpeed,
-        adjusted_math_speed: adjustedMathSpeed
+        typing_speed: typingSpeed,              // Now represents typing_time_per_problem
+        total_speed: answer_time_per_problem,   // Now represents answer_time_per_problem
+        adjusted_math_speed: math_time_per_problem   // Now represents math_time_per_problem
       };
 
       console.log('About to save score data with profile_id:', scoreData);
@@ -209,7 +215,7 @@ export const useScoreManagement = (userId: string | null) => {
       setSavingScore(false);
       return false;
     }
-  };
+  }, [userId, savingScore, defaultProfileId, isLoadingProfile]);
   
   // Update goal progress based on game results
   const updateGoalProgress = async (
