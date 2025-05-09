@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -21,6 +20,7 @@ const TypingWarmup = ({ timeLimit, customNumberPadEnabled, onComplete }: TypingW
   const [userInput, setUserInput] = useState('');
   const [correctCount, setCorrectCount] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
+  const correctCountRef = useRef(0); // Add a ref to track the current correct count
   const isCompactHeight = useCompactHeight();
   const { setGameState } = useGame();
   
@@ -29,6 +29,11 @@ const TypingWarmup = ({ timeLimit, customNumberPadEnabled, onComplete }: TypingW
     const newNumber = Math.floor(Math.random() * 20) + 1;
     return String(newNumber);
   };
+
+  // Keep correctCountRef in sync with correctCount state
+  useEffect(() => {
+    correctCountRef.current = correctCount;
+  }, [correctCount]);
 
   // Initialize the game
   useEffect(() => {
@@ -40,9 +45,10 @@ const TypingWarmup = ({ timeLimit, customNumberPadEnabled, onComplete }: TypingW
       setTimeLeft((prevTime) => {
         if (prevTime <= 1) {
           clearInterval(timer);
-          // Calculate typing speed and call onComplete directly
-          const typingSpeed = Math.max(0, correctCount / timeLimit);
-          console.log(`Typing warmup completed with correct count: ${correctCount}, time limit: ${timeLimit}, calculated speed: ${typingSpeed}`);
+          // Calculate typing speed using the ref value to get the latest count
+          const finalCount = correctCountRef.current;
+          const typingSpeed = Math.max(0, finalCount / timeLimit);
+          console.log(`Typing warmup completed with correct count: ${finalCount}, time limit: ${timeLimit}, calculated speed: ${typingSpeed}`);
           onComplete(typingSpeed);
           return 0;
         }
