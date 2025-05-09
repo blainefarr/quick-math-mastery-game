@@ -27,6 +27,10 @@ const GameProvider = ({ children }: GameProviderProps) => {
   const timerRef = useRef<number | null>(null);
   // Add a new ref to track if the game is ending
   const isEndingRef = useRef(false);
+  // Add reference for game start time
+  const gameStartTimeRef = useRef<number | null>(null);
+  // Animation frame reference
+  const animationFrameRef = useRef<number | null>(null);
 
   const { 
     scoreHistory, 
@@ -66,9 +70,9 @@ const GameProvider = ({ children }: GameProviderProps) => {
     
     // Clean up timer when component unmounts or game state changes
     return () => {
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-        timerRef.current = null;
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+        animationFrameRef.current = null;
       }
     };
   }, [gameState, userId, fetchUserScores, setScoreHistory, defaultProfileId]);
@@ -99,29 +103,45 @@ const GameProvider = ({ children }: GameProviderProps) => {
   const { isLoggedIn, username } = useAuth();
   
   const startGameTimer = () => {
-    // Clear any existing timer
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
+    // Clear any existing animation frame
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current);
+      animationFrameRef.current = null;
     }
     
     console.log('Starting game timer with', settings.timerSeconds, 'seconds');
     setTimeLeft(settings.timerSeconds);
     
-    timerRef.current = window.setInterval(() => {
-      setTimeLeft(prevTime => {
-        if (prevTime <= 1) {
-          if (timerRef.current) {
-            clearInterval(timerRef.current);
-            timerRef.current = null;
-          }
-          
-          // Use setTimeout to ensure state updates have completed
-          setTimeout(() => endGame('timeout'), 0);
-          return 0;
+    // Set the start time
+    gameStartTimeRef.current = Date.now();
+    
+    // Function to update the timer based on elapsed time
+    const updateTimer = () => {
+      if (gameStartTimeRef.current === null) return;
+      
+      const elapsedSeconds = (Date.now() - gameStartTimeRef.current) / 1000;
+      const newTimeLeft = Math.max(0, settings.timerSeconds - Math.floor(elapsedSeconds));
+      
+      setTimeLeft(newTimeLeft);
+      
+      if (newTimeLeft <= 0) {
+        // Time's up
+        if (animationFrameRef.current) {
+          cancelAnimationFrame(animationFrameRef.current);
+          animationFrameRef.current = null;
         }
-        return prevTime - 1;
-      });
-    }, 1000);
+        
+        // Use setTimeout to ensure state updates have completed
+        setTimeout(() => endGame('timeout'), 0);
+        return;
+      }
+      
+      // Continue the animation loop
+      animationFrameRef.current = requestAnimationFrame(updateTimer);
+    };
+    
+    // Start the animation loop
+    animationFrameRef.current = requestAnimationFrame(updateTimer);
   };
   
   const endGame = async (reason: GameEndReason) => {

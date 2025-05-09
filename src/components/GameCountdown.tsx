@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { RotateCw } from 'lucide-react';
@@ -20,7 +19,12 @@ const GameCountdown = ({
   const [countdown, setCountdown] = useState<number>(3);
   const isCompactHeight = useCompactHeight();
   const { setGameState, settings, scoreHistory, isLoggedIn } = useGame();
-
+  
+  // Refs to track the countdown state even when component doesn't re-render
+  const startTimeRef = useRef<number>(Date.now());
+  const countdownDurationSeconds = 3; // 3 second countdown
+  const animationFrameRef = useRef<number | null>(null);
+  
   // Get the best score for the current game settings
   const getBestScore = () => {
     if (!isLoggedIn || !scoreHistory || scoreHistory.length === 0) {
@@ -57,18 +61,41 @@ const GameCountdown = ({
     return "🔥 Set a new record";
   };
 
-  // Handle the countdown
+  // Track time using animation frame and timestamp for consistent timing
   useEffect(() => {
-    if (countdown > 0) {
-      const countdownTimer = setTimeout(() => {
-        setCountdown(countdown - 1);
-      }, 1000);
-      return () => clearTimeout(countdownTimer);
-    } else {
-      // Countdown is complete, proceed to the game
-      onComplete();
-    }
-  }, [countdown, onComplete]);
+    // Set the initial start time when the countdown begins
+    startTimeRef.current = Date.now();
+    
+    // Function to update the countdown based on elapsed time
+    const updateCountdown = () => {
+      const elapsedSeconds = (Date.now() - startTimeRef.current) / 1000;
+      const newCountdown = Math.max(0, countdownDurationSeconds - Math.floor(elapsedSeconds));
+      
+      setCountdown(newCountdown);
+      
+      if (newCountdown <= 0) {
+        // Countdown is complete, proceed to the game
+        if (animationFrameRef.current) {
+          cancelAnimationFrame(animationFrameRef.current);
+        }
+        onComplete();
+        return;
+      }
+      
+      // Continue the animation loop
+      animationFrameRef.current = requestAnimationFrame(updateCountdown);
+    };
+    
+    // Start the animation loop
+    animationFrameRef.current = requestAnimationFrame(updateCountdown);
+    
+    // Cleanup function
+    return () => {
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+    };
+  }, [onComplete]);
 
   // Handle restart game
   const handleRestartGame = () => {
