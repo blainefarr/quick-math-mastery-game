@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { RotateCw } from 'lucide-react';
@@ -20,6 +20,10 @@ const GameCountdown = ({
   const [countdown, setCountdown] = useState<number>(3);
   const isCompactHeight = useCompactHeight();
   const { setGameState, settings, scoreHistory, isLoggedIn } = useGame();
+  
+  // Refs for timestamp tracking
+  const startTimeRef = useRef<number>(0);
+  const rafIdRef = useRef<number | null>(null);
 
   // Get the best score for the current game settings
   const getBestScore = () => {
@@ -57,18 +61,45 @@ const GameCountdown = ({
     return "🔥 Set a new record";
   };
 
-  // Handle the countdown
+  // Handle the countdown using requestAnimationFrame for better timing
   useEffect(() => {
-    if (countdown > 0) {
-      const countdownTimer = setTimeout(() => {
-        setCountdown(countdown - 1);
-      }, 1000);
-      return () => clearTimeout(countdownTimer);
-    } else {
-      // Countdown is complete, proceed to the game
-      onComplete();
-    }
-  }, [countdown, onComplete]);
+    // Initialize start time when component mounts
+    startTimeRef.current = Date.now();
+    setCountdown(3); // Reset countdown to ensure we start at 3
+    
+    // Update function that will run on each animation frame
+    const updateCountdown = () => {
+      const elapsedTime = Math.floor((Date.now() - startTimeRef.current) / 1000);
+      const newCountdown = 3 - elapsedTime;
+      
+      if (newCountdown <= 0) {
+        // Countdown complete, clean up and proceed
+        if (rafIdRef.current !== null) {
+          cancelAnimationFrame(rafIdRef.current);
+          rafIdRef.current = null;
+        }
+        setCountdown(0);
+        // Small delay for "GO!" to be visible
+        setTimeout(() => onComplete(), 500);
+        return;
+      }
+      
+      setCountdown(newCountdown);
+      // Schedule next update
+      rafIdRef.current = requestAnimationFrame(updateCountdown);
+    };
+    
+    // Start the animation loop
+    rafIdRef.current = requestAnimationFrame(updateCountdown);
+    
+    // Cleanup function to cancel animation frame on unmount
+    return () => {
+      if (rafIdRef.current !== null) {
+        cancelAnimationFrame(rafIdRef.current);
+        rafIdRef.current = null;
+      }
+    };
+  }, [onComplete]);
 
   // Handle restart game
   const handleRestartGame = () => {

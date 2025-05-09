@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import GameContext from './GameContext';
 import { GameContextType, GameState, GameProviderProps, GameEndReason } from './game-context-types';
@@ -24,7 +23,9 @@ const GameProvider = ({ children }: GameProviderProps) => {
   const scoreRef = useRef(0);
   const typingSpeedRef = useRef<number | null>(null);
   const gameStateRef = useRef<GameState>('selection');
-  const timerRef = useRef<number | null>(null);
+  // Replace timerRef with better timing refs
+  const gameStartTimeRef = useRef<number>(0);
+  const rafIdRef = useRef<number | null>(null);
   // Add a new ref to track if the game is ending
   const isEndingRef = useRef(false);
 
@@ -66,9 +67,9 @@ const GameProvider = ({ children }: GameProviderProps) => {
     
     // Clean up timer when component unmounts or game state changes
     return () => {
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-        timerRef.current = null;
+      if (rafIdRef.current !== null) {
+        cancelAnimationFrame(rafIdRef.current);
+        rafIdRef.current = null;
       }
     };
   }, [gameState, userId, fetchUserScores, setScoreHistory, defaultProfileId]);
@@ -99,29 +100,43 @@ const GameProvider = ({ children }: GameProviderProps) => {
   const { isLoggedIn, username } = useAuth();
   
   const startGameTimer = () => {
-    // Clear any existing timer
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
+    // Clear any existing animation frame
+    if (rafIdRef.current !== null) {
+      cancelAnimationFrame(rafIdRef.current);
+      rafIdRef.current = null;
     }
     
-    console.log('Starting game timer with', settings.timerSeconds, 'seconds');
+    // Set the start time for the game
+    gameStartTimeRef.current = Date.now();
     setTimeLeft(settings.timerSeconds);
     
-    timerRef.current = window.setInterval(() => {
-      setTimeLeft(prevTime => {
-        if (prevTime <= 1) {
-          if (timerRef.current) {
-            clearInterval(timerRef.current);
-            timerRef.current = null;
+    const updateTimer = () => {
+      const elapsedSeconds = Math.floor((Date.now() - gameStartTimeRef.current) / 1000);
+      const remaining = settings.timerSeconds - elapsedSeconds;
+      
+      setTimeLeft(prev => {
+        // If time has run out or we're already at 0, end the game
+        if (remaining <= 0 || prev <= 0) {
+          if (rafIdRef.current !== null) {
+            cancelAnimationFrame(rafIdRef.current);
+            rafIdRef.current = null;
           }
           
           // Use setTimeout to ensure state updates have completed
           setTimeout(() => endGame('timeout'), 0);
           return 0;
         }
-        return prevTime - 1;
+        return remaining;
       });
-    }, 1000);
+      
+      // Schedule next update if game is still playing
+      if (gameStateRef.current === 'playing' && remaining > 0) {
+        rafIdRef.current = requestAnimationFrame(updateTimer);
+      }
+    };
+    
+    // Start the animation loop
+    rafIdRef.current = requestAnimationFrame(updateTimer);
   };
   
   const endGame = async (reason: GameEndReason) => {
@@ -135,9 +150,9 @@ const GameProvider = ({ children }: GameProviderProps) => {
     console.log(`Ending game with reason: ${reason}, final score: ${finalScore}, typing time per problem: ${finalTypingSpeed}`);
     
     // Clear timer if it's running
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
-      timerRef.current = null;
+    if (rafIdRef.current !== null) {
+      cancelAnimationFrame(rafIdRef.current);
+      rafIdRef.current = null;
     }
     
     // Only save score on timeout (normal game end) and when user is logged in
