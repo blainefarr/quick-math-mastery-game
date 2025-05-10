@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { 
   Card, 
   CardContent
@@ -9,11 +9,18 @@ import useGoalProgress from '@/hooks/useGoalProgress';
 import GoalsGrid from '@/components/goals/GoalsGrid';
 import GoalsLegend from '@/components/goals/GoalsLegend';
 import { Button } from '@/components/ui/button';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { toast } from 'sonner';
 
 const GoalsPage: React.FC = () => {
-  const { goals, isLoading } = useGoalProgress();
+  const { goals, isLoading, fetchGoals } = useGoalProgress();
   const navigate = useNavigate();
+  const location = useLocation();
+  
+  // Refresh goals when navigating to this page
+  useEffect(() => {
+    fetchGoals();
+  }, [fetchGoals, location]);
   
   return (
     <div className="container mx-auto py-8 px-2 sm:px-4">
@@ -41,7 +48,7 @@ const GoalsPage: React.FC = () => {
         
         <div className="mt-6 mb-8">
           <Card>
-          <CardContent className="px-2 sm:px-6 py-6">
+            <CardContent className="px-2 sm:px-6 py-6">
               <GoalsGrid 
                 goals={goals}
                 isLoading={isLoading}
@@ -55,6 +62,9 @@ const GoalsPage: React.FC = () => {
           <p className="text-muted-foreground mb-3">
             Each cell shows your current achievement level for that combination 
             of operation and number range.
+          </p>
+          <p className="text-muted-foreground mb-3">
+            Click on any cell to see your stats and start a game with those settings.
           </p>
           <p className="text-muted-foreground">
             Play games to improve your scores and earn higher achievement levels!

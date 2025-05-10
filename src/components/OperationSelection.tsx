@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import useGame from '@/context/useGame';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,6 +14,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 
 const OperationSelection = () => {
   const isMobile = useIsMobile();
+  const [searchParams] = useSearchParams();
   const {
     settings,
     updateSettings,
@@ -35,6 +37,77 @@ const OperationSelection = () => {
   const [range2Max, setRange2Max] = useState(settings.range.max2);
   const [useFocusNumber, setUseFocusNumber] = useState(focusNumber !== null);
   const [focusNumberValue, setFocusNumberValue] = useState(focusNumber || 1);
+  
+  // Process URL parameters on initial load
+  useEffect(() => {
+    const urlOperation = searchParams.get('operation');
+    const urlFocusNumber = searchParams.get('focusNumber');
+    const urlRangeMin = searchParams.get('rangeMin');
+    const urlRangeMax = searchParams.get('rangeMax');
+    
+    // Only apply URL parameters if they exist
+    if (urlOperation || urlFocusNumber || (urlRangeMin && urlRangeMax)) {
+      console.log('Applying URL parameters to game settings');
+      
+      const updatedSettings = { ...settings };
+      
+      // Handle operation parameter
+      if (urlOperation && ['addition', 'subtraction', 'multiplication', 'division'].includes(urlOperation)) {
+        const typedOperation = urlOperation as Operation;
+        setSelectedOperation(typedOperation);
+        updatedSettings.operation = typedOperation;
+      }
+      
+      // Handle focus number parameter
+      if (urlFocusNumber) {
+        const parsedFocusNumber = parseInt(urlFocusNumber, 10);
+        if (!isNaN(parsedFocusNumber)) {
+          setUseFocusNumber(true);
+          setFocusNumberValue(parsedFocusNumber);
+          setFocusNumber(parsedFocusNumber);
+          setRange1Min(parsedFocusNumber);
+          setRange1Max(parsedFocusNumber);
+          
+          updatedSettings.focusNumber = parsedFocusNumber;
+          updatedSettings.range = {
+            ...updatedSettings.range,
+            min1: parsedFocusNumber,
+            max1: parsedFocusNumber
+          };
+        }
+      }
+      // Handle range parameters
+      else if (urlRangeMin && urlRangeMax) {
+        const parsedMin = parseInt(urlRangeMin, 10);
+        const parsedMax = parseInt(urlRangeMax, 10);
+        
+        if (!isNaN(parsedMin) && !isNaN(parsedMax)) {
+          setUseFocusNumber(false);
+          setFocusNumber(null);
+          setRange1Min(parsedMin);
+          setRange1Max(parsedMax);
+          
+          updatedSettings.focusNumber = null;
+          updatedSettings.range = {
+            ...updatedSettings.range,
+            min1: parsedMin,
+            max1: parsedMax
+          };
+        }
+      }
+      
+      // Apply the updated settings
+      updateSettings(updatedSettings);
+      
+      // Clear the URL parameters after applying them
+      // This prevents them from being applied again on refresh
+      // We use replaceState to avoid adding a new entry to the browser history
+      if (window.history && window.history.replaceState) {
+        const newUrl = window.location.pathname;
+        window.history.replaceState({}, document.title, newUrl);
+      }
+    }
+  }, [searchParams, updateSettings, setFocusNumber, settings]);
   
   // Synchronize local state with global settings whenever settings change
   useEffect(() => {

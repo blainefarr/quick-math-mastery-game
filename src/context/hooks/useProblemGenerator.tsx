@@ -1,87 +1,115 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Problem, Operation, ProblemRange } from '@/types';
 
 export const useProblemGenerator = () => {
   const [currentProblem, setCurrentProblem] = useState<Problem | null>(null);
-
+  const [previousProblem, setPreviousProblem] = useState<Problem | null>(null);
+  
+  // Generate a new math problem based on the operation and number range settings
   const generateNewProblem = (
     operation: Operation, 
-    range: ProblemRange, 
-    allowNegatives: boolean = false, 
+    range: ProblemRange,
+    allowNegatives: boolean = false,
     focusNumber: number | null = null
   ) => {
-    const random = (min: number, max: number) => 
-      Math.floor(Math.random() * (max - min + 1)) + min;
-
-    let num1, num2, answer;
-    const { min1, max1, min2, max2 } = range;
-
-    if (focusNumber !== null) {
-      switch (operation) {
-        case 'addition':
-          num1 = focusNumber;
-          num2 = random(min2, max2);
-          answer = num1 + num2;
-          break;
-        case 'subtraction':
-          num1 = focusNumber;
-          num2 = random(min2, max2);
-          if (!allowNegatives && num1 < num2) [num1, num2] = [num2, num1];
-          answer = num1 - num2;
-          break;
-        case 'multiplication':
-          num1 = focusNumber;
-          num2 = random(min2, max2);
-          answer = num1 * num2;
-          break;
-        case 'division':
-          // FIXED: For division with focus number, use focus number as divisor
-          num2 = focusNumber; // focus number is the divisor
-          
-          // Generate a random multiplier from the second range
-          const multiplier = random(min2, max2);
-          
-          // Calculate dividend by multiplying the focus number by the multiplier
-          num1 = num2 * multiplier;
-          
-          // The answer is the multiplier
-          answer = multiplier;
-          
-          console.log(`Generated division problem: ${num1} ÷ ${num2} = ${answer}`);
-          break;
-        default:
-          num1 = 0; num2 = 0; answer = 0;
+    // Store the current problem as previous
+    setPreviousProblem(currentProblem);
+    
+    // Generate random numbers within the specified range
+    const getRandomNumber = (min: number, max: number): number => {
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    };
+    
+    // Try to generate a different problem than the previous one
+    const MAX_ATTEMPTS = 5; // Prevent infinite loops
+    let attempts = 0;
+    let newProblem: Problem;
+    
+    do {
+      let num1: number;
+      let num2: number;
+      
+      // If there's a focus number, use it for num1
+      if (focusNumber !== null) {
+        num1 = focusNumber;
+      } else {
+        num1 = getRandomNumber(range.min1, range.max1);
       }
-    } else {
-      num1 = random(min1, max1);
-      num2 = random(min2, max2);
-
+      num2 = getRandomNumber(range.min2, range.max2);
+      
+      // For subtraction, ensure no negative results unless allowed
+      if (operation === 'subtraction' && !allowNegatives && num2 > num1) {
+        // Swap the values to ensure result is non-negative
+        [num1, num2] = [num2, num1];
+      }
+      
+      // For division, ensure we'll get a clean integer result
+      if (operation === 'division') {
+        // Special handling for division to create "clean" division problems
+        // First, get a random divisor within the range
+        num2 = getRandomNumber(
+          Math.max(range.min2, 1), // Ensure divisor is at least 1
+          range.max2
+        );
+        
+        // For focus number mode, create a problem that results in the focus number
+        if (focusNumber !== null) {
+          // To get a desired quotient, multiply quotient × divisor
+          num1 = focusNumber * num2;
+        } else {
+          // Otherwise, create random dividend that's divisible by num2
+          const quotient = getRandomNumber(range.min1, range.max1);
+          num1 = quotient * num2;
+        }
+      }
+      
+      // Calculate the answer based on the operation
+      let answer: number;
       switch (operation) {
         case 'addition':
           answer = num1 + num2;
           break;
         case 'subtraction':
-          if (!allowNegatives && num1 < num2) [num1, num2] = [num2, num1];
           answer = num1 - num2;
           break;
         case 'multiplication':
           answer = num1 * num2;
           break;
         case 'division':
-          answer = random(min1, max1);
-          num2 = random(min2, max2) || 1;
-          if (num2 === 0) num2 = 1;
-          num1 = answer * num2;
+          answer = num1 / num2;
           break;
         default:
           answer = 0;
       }
+      
+      newProblem = {
+        num1,
+        num2,
+        operation,
+        answer
+      };
+      
+      attempts++;
+    } while (
+      attempts < MAX_ATTEMPTS && 
+      previousProblem !== null && 
+      previousProblem.num1 === newProblem.num1 && 
+      previousProblem.num2 === newProblem.num2 &&
+      previousProblem.operation === newProblem.operation
+    );
+    
+    if (attempts >= MAX_ATTEMPTS) {
+      console.log("Max attempts reached while trying to generate a different problem");
     }
-
-    const problem: Problem = { num1, num2, operation, answer };
-    setCurrentProblem(problem);
-    return problem;
+    
+    setCurrentProblem(newProblem);
+    return newProblem;
   };
-
-  return { currentProblem, generateNewProblem };
+  
+  return {
+    currentProblem,
+    generateNewProblem
+  };
 };
+
+export default useProblemGenerator;

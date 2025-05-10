@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { RotateCw } from 'lucide-react';
@@ -22,6 +21,7 @@ interface TypingWarmupProps {
 
 const TypingWarmup = ({ timeLimit, customNumberPadEnabled, onComplete }: TypingWarmupProps) => {
   const [currentNumber, setCurrentNumber] = useState('');
+  const [previousNumber, setPreviousNumber] = useState<string | null>(null);
   const [userInput, setUserInput] = useState('');
   const [correctCount, setCorrectCount] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -55,7 +55,8 @@ const TypingWarmup = ({ timeLimit, customNumberPadEnabled, onComplete }: TypingW
   });
 
   // Generate a random number based on answer range from current game settings
-  const generateTargetNumber = () => {
+  // Now accepts previousNumber to avoid repeats
+  const generateTargetNumber = (prevNumber: string | null): string => {
     // Calculate appropriate range based on game settings
     const answerRange = calculateAnswerRange(
       settings.operation,
@@ -66,11 +67,28 @@ const TypingWarmup = ({ timeLimit, customNumberPadEnabled, onComplete }: TypingW
     // Log the calculated range for debugging
     console.log(`Generated answer range for ${settings.operation}: ${answerRange.min} to ${answerRange.max}`);
     
-    // Generate a number within the calculated range
-    const newNumber = generateRandomInRange(answerRange.min, answerRange.max);
+    // Maximum number of attempts to avoid an infinite loop
+    const MAX_ATTEMPTS = 10;
+    let attempts = 0;
+    let newNumber: string;
     
-    // Convert to string for display and comparison
-    return String(newNumber);
+    // Keep generating until we get a different number than the previous one
+    // or until we reach the max attempts
+    do {
+      // Generate a number within the calculated range
+      const randomNum = generateRandomInRange(answerRange.min, answerRange.max);
+      newNumber = String(randomNum);
+      attempts++;
+      
+      // If the range is very small (only 1 or 2 possible values), we might not be able
+      // to generate a different number, so break after a few attempts
+      if (attempts >= MAX_ATTEMPTS) {
+        console.log(`Reached maximum attempts (${MAX_ATTEMPTS}) to generate a different number`);
+        break;
+      }
+    } while (newNumber === prevNumber);
+    
+    return newNumber;
   };
 
   // Keep correctCountRef in sync with correctCount state
@@ -80,7 +98,9 @@ const TypingWarmup = ({ timeLimit, customNumberPadEnabled, onComplete }: TypingW
 
   // Initialize the game with improved focus handling
   useEffect(() => {
-    setCurrentNumber(generateTargetNumber());
+    const initialNumber = generateTargetNumber(null);
+    setCurrentNumber(initialNumber);
+    setPreviousNumber(null);
     
     // Initial delay before starting focus attempts - increased for better reliability
     const initialDelay = 1000;
@@ -116,8 +136,13 @@ const TypingWarmup = ({ timeLimit, customNumberPadEnabled, onComplete }: TypingW
       
       // Clear feedback and move to next number after a brief delay
       setTimeout(() => {
+        // Save the current number as previous before generating a new one
+        setPreviousNumber(currentNumber);
         setUserInput('');
-        setCurrentNumber(generateTargetNumber());
+        
+        // Generate a new number that isn't the same as the current one
+        const newNumber = generateTargetNumber(currentNumber);
+        setCurrentNumber(newNumber);
       }, 100);
     }, 100);
   };
