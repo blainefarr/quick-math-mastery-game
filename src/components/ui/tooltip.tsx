@@ -1,6 +1,8 @@
 
 import * as React from "react"
 import * as TooltipPrimitive from "@radix-ui/react-tooltip"
+import { PopoverTooltip } from "@/components/ui/popover"
+import { useIsMobile } from "@/hooks/use-mobile"
 
 import { cn } from "@/lib/utils"
 
@@ -21,15 +23,6 @@ const TooltipContent = React.forwardRef<
       "z-50 overflow-hidden rounded-md border bg-popover px-3 py-1.5 text-sm text-popover-foreground shadow-md animate-in fade-in-0 zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2",
       className
     )}
-    // Enhanced handling for all devices
-    onPointerDownOutside={(e) => {
-      // Prevent closing when tapped
-      e.preventDefault();
-    }}
-    onClick={(e) => {
-      // Prevent click events from bubbling
-      e.stopPropagation();
-    }}
     {...props}
   />
 ))
@@ -38,7 +31,7 @@ TooltipContent.displayName = TooltipPrimitive.Content.displayName
 // Delay configuration for Tooltips
 const DEFAULT_DELAY = { open: 300, close: 200 };
 
-// Tooltip component with consistent behavior
+// Enhanced TooltipWrapper that adapts for mobile devices using popover instead
 const TooltipWrapper = React.forwardRef<
   React.ElementRef<typeof Tooltip>,
   React.ComponentPropsWithoutRef<typeof Tooltip> & {
@@ -46,16 +39,34 @@ const TooltipWrapper = React.forwardRef<
     children: React.ReactNode;
     delayDuration?: number;
   }
->(({ content, children, delayDuration = DEFAULT_DELAY.open, ...props }, ref) => (
-  <Tooltip delayDuration={delayDuration} {...props}>
-    <TooltipTrigger asChild>
-      {children}
-    </TooltipTrigger>
-    <TooltipContent>
-      {content}
-    </TooltipContent>
-  </Tooltip>
-))
+>(({ content, children, delayDuration = DEFAULT_DELAY.open, ...props }, ref) => {
+  const isMobile = useIsMobile();
+
+  // On mobile devices, use Popover instead of Tooltip for better touch interaction
+  if (isMobile) {
+    return (
+      <PopoverTooltip content={content}>
+        <div className="inline-flex cursor-pointer">
+          {children}
+        </div>
+      </PopoverTooltip>
+    );
+  }
+
+  // On desktop, use standard tooltip with hover
+  return (
+    <Tooltip delayDuration={delayDuration} {...props}>
+      <TooltipTrigger asChild>
+        <div className="inline-flex cursor-help">
+          {children}
+        </div>
+      </TooltipTrigger>
+      <TooltipContent>
+        {content}
+      </TooltipContent>
+    </Tooltip>
+  );
+});
 TooltipWrapper.displayName = 'TooltipWrapper';
 
 export { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider, TooltipWrapper, DEFAULT_DELAY }

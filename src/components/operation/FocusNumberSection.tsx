@@ -1,11 +1,10 @@
+
 import React from 'react';
 import { Info } from "lucide-react";
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
-import { TooltipProvider, TooltipWrapper } from "@/components/ui/tooltip";
-import { HoverCard, HoverCardTrigger, HoverCardContent } from '@/components/ui/hover-card';
-import { useIsMobile } from '@/hooks/use-mobile';
+import { TooltipWrapper } from "@/components/ui/tooltip";
 
 interface FocusNumberSectionProps {
   enabled: boolean;
@@ -20,9 +19,6 @@ const FocusNumberSection = ({
   onToggle,
   onChange
 }: FocusNumberSectionProps) => {
-  const isMobile = useIsMobile();
-  const [showMobileTooltip, setShowMobileTooltip] = React.useState(false);
-  
   const tooltipContent = "When enabled, all questions will include this number as one of the operands.";
 
   return (
@@ -33,26 +29,9 @@ const FocusNumberSection = ({
             Use Focus Number
           </Label>
           
-          {isMobile ? (
-            <div className="relative">
-              <Info 
-                size={16} 
-                className="text-muted-foreground flex-shrink-0 cursor-pointer"
-                onClick={() => setShowMobileTooltip(!showMobileTooltip)}
-              />
-              {showMobileTooltip && (
-                <div className="absolute z-50 top-6 left-0 bg-popover p-2 rounded-md shadow-md text-xs w-48">
-                  {tooltipContent}
-                </div>
-              )}
-            </div>
-          ) : (
-            <TooltipProvider>
-              <TooltipWrapper content={<p className="max-w-xs">{tooltipContent}</p>}>
-                <Info size={16} className="text-muted-foreground flex-shrink-0 cursor-help" />
-              </TooltipWrapper>
-            </TooltipProvider>
-          )}
+          <TooltipWrapper content={<p className="max-w-xs">{tooltipContent}</p>}>
+            <Info size={16} className="text-muted-foreground flex-shrink-0" />
+          </TooltipWrapper>
         </div>
         <Switch id="focus-number-toggle" checked={enabled} onCheckedChange={onToggle} className="flex-shrink-0" />
       </div>

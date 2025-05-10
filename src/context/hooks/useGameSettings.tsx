@@ -34,9 +34,18 @@ export const useGameSettings = () => {
         storedSettings.useCustomNumberPad = JSON.parse(savedCustomNumberPad);
       } else {
         // If no stored setting, default to enabled on mobile or tablet
-        storedSettings.useCustomNumberPad = isMobileOrTablet;
+        const isMobileOrTabletDevice = isMobileOrTablet || 
+          (typeof navigator !== 'undefined' && /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(navigator.userAgent.toLowerCase()));
+        
+        console.log('No saved custom number pad setting, defaulting based on device:', isMobileOrTabletDevice ? 'mobile/tablet' : 'desktop');
+        storedSettings.useCustomNumberPad = isMobileOrTabletDevice;
+        
         // Also save this default to localStorage for future visits
-        localStorage.setItem('customNumberPadEnabled', JSON.stringify(isMobileOrTablet));
+        try {
+          localStorage.setItem('customNumberPadEnabled', JSON.stringify(isMobileOrTabletDevice));
+        } catch (error) {
+          console.error("Error saving custom number pad setting:", error);
+        }
       }
       
       if (savedTypingSpeedAdjustment !== null) {
@@ -50,9 +59,17 @@ export const useGameSettings = () => {
     } catch (error) {
       console.error("Error loading settings from localStorage:", error);
       // If there was an error, still set default custom keypad on mobile or tablet
-      const useCustomPad = isMobileOrTablet;
+      const useCustomPad = isMobileOrTablet || 
+        (typeof navigator !== 'undefined' && /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(navigator.userAgent.toLowerCase()));
+      
+      console.log('Error loading settings, defaulting custom pad based on device:', useCustomPad ? 'mobile/tablet' : 'desktop');
+      
       // Save this default to localStorage for future visits
-      localStorage.setItem('customNumberPadEnabled', JSON.stringify(useCustomPad));
+      try {
+        localStorage.setItem('customNumberPadEnabled', JSON.stringify(useCustomPad));
+      } catch (storageError) {
+        console.error("Error saving to localStorage:", storageError);
+      }
       
       return {
         ...defaultSettings,
@@ -61,11 +78,42 @@ export const useGameSettings = () => {
     }
   });
 
+  // Re-evaluate mobile/tablet status on component mount or when isMobileOrTablet changes
+  useEffect(() => {
+    const currentSetting = settings.useCustomNumberPad;
+    
+    // Only update if no user preference has been set (first visit)
+    const hasUserPreference = localStorage.getItem('customNumberPadEnabled') !== null;
+    
+    if (!hasUserPreference) {
+      const shouldUseCustomPad = isMobileOrTablet || 
+        (typeof navigator !== 'undefined' && /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(navigator.userAgent.toLowerCase()));
+      
+      if (currentSetting !== shouldUseCustomPad) {
+        console.log('Updating custom number pad setting based on device detection:', shouldUseCustomPad ? 'enabled' : 'disabled');
+        setSettings(prev => ({
+          ...prev,
+          useCustomNumberPad: shouldUseCustomPad
+        }));
+        
+        try {
+          localStorage.setItem('customNumberPadEnabled', JSON.stringify(shouldUseCustomPad));
+        } catch (error) {
+          console.error("Error saving custom number pad setting:", error);
+        }
+      }
+    }
+  }, [isMobileOrTablet]);
+
   // Save settings to localStorage when they change
   useEffect(() => {
-    localStorage.setItem('learnerModeEnabled', JSON.stringify(settings.learnerMode));
-    localStorage.setItem('customNumberPadEnabled', JSON.stringify(settings.useCustomNumberPad));
-    localStorage.setItem('typingSpeedAdjustmentEnabled', JSON.stringify(settings.typingSpeedAdjustment));
+    try {
+      localStorage.setItem('learnerModeEnabled', JSON.stringify(settings.learnerMode));
+      localStorage.setItem('customNumberPadEnabled', JSON.stringify(settings.useCustomNumberPad));
+      localStorage.setItem('typingSpeedAdjustmentEnabled', JSON.stringify(settings.typingSpeedAdjustment));
+    } catch (error) {
+      console.error("Error saving settings to localStorage:", error);
+    }
   }, [settings.learnerMode, settings.useCustomNumberPad, settings.typingSpeedAdjustment]);
 
   const updateSettings = (newSettings: Partial<GameSettings>) => {
