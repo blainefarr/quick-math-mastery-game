@@ -57,11 +57,6 @@ const CustomNumberPad: React.FC<CustomNumberPadProps> = ({
 
   return (
     <div className="w-full mx-auto mt-4">
-      {isMobile && (
-        <div className="text-center mb-2 text-sm text-muted-foreground">
-          Use the keypad below to enter your answer
-        </div>
-      )}
       <div className={`grid grid-cols-3 gap-2 ${isMobile ? 'gap-3' : 'gap-1.5 sm:gap-2'}`}>
         {/* First row */}
         {[1, 2, 3].map((num) => (
