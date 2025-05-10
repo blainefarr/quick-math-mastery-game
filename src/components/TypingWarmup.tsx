@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -22,17 +21,39 @@ const TypingWarmup = ({ timeLimit, customNumberPadEnabled, onComplete }: TypingW
   const [userInput, setUserInput] = useState('');
   const [correctCount, setCorrectCount] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
-  const correctCountRef = useRef(0); // Add a ref to track the current correct count
+  const correctCountRef = useRef(0);
   const isCompactHeight = useCompactHeight();
   const { setGameState } = useGame();
-  const isMobile = useIsMobile(); // Add mobile detection
+  const isMobile = useIsMobile();
   const focusAttemptsMadeRef = useRef(0);
-  const maxFocusAttempts = 5;
-  
+  const maxFocusAttempts = 10;
+
   // Generate a random number between 1 and 20
   const generateRandomNumber = () => {
     const newNumber = Math.floor(Math.random() * 20) + 1;
     return String(newNumber);
+  };
+
+  // Enhanced focus mechanism with multiple attempts
+  const attemptFocus = () => {
+    if (timeLeft <= 0 || focusAttemptsMadeRef.current >= maxFocusAttempts) return;
+    
+    if (inputRef.current) {
+      console.log(`Focus attempt ${focusAttemptsMadeRef.current + 1} for TypingWarmup input`);
+      inputRef.current.focus();
+      
+      // Force scroll to input on mobile
+      if (isMobile) {
+        inputRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+      
+      focusAttemptsMadeRef.current++;
+    }
+    
+    // Continue trying to focus if not at max attempts with adaptive timing
+    if (focusAttemptsMadeRef.current < maxFocusAttempts) {
+      setTimeout(attemptFocus, isMobile ? 300 : 150);
+    }
   };
 
   // Keep correctCountRef in sync with correctCount state
@@ -40,31 +61,18 @@ const TypingWarmup = ({ timeLimit, customNumberPadEnabled, onComplete }: TypingW
     correctCountRef.current = correctCount;
   }, [correctCount]);
 
-  // Initialize the game
+  // Initialize the game with improved focus handling
   useEffect(() => {
     setCurrentNumber(generateRandomNumber());
     
     // Reset focus attempts counter
     focusAttemptsMadeRef.current = 0;
     
-    // Enhanced focus method with multiple attempts
-    const attemptFocus = () => {
-      if (timeLeft <= 0 || focusAttemptsMadeRef.current >= maxFocusAttempts) return;
-      
-      if (inputRef.current) {
-        console.log(`Focus attempt ${focusAttemptsMadeRef.current + 1} for TypingWarmup input`);
-        inputRef.current.focus();
-        focusAttemptsMadeRef.current++;
-      }
-      
-      // Continue trying to focus if not at max attempts
-      if (focusAttemptsMadeRef.current < maxFocusAttempts) {
-        setTimeout(attemptFocus, isMobile ? 500 : 200);
-      }
-    };
+    // Initial delay before starting focus attempts - increased for better reliability
+    const initialDelay = isMobile ? 1000 : 500;
     
-    // Delay initial focus attempt
-    setTimeout(attemptFocus, isMobile ? 500 : 300);
+    console.log(`Setting initial focus delay of ${initialDelay}ms`);
+    setTimeout(attemptFocus, initialDelay);
     
     // Start the timer
     const timer = setInterval(() => {
@@ -120,14 +128,13 @@ const TypingWarmup = ({ timeLimit, customNumberPadEnabled, onComplete }: TypingW
     setUserInput(prev => prev.slice(0, -1));
   };
 
+  // Enhanced focus input with better mobile support
   const focusInput = () => {
-    // Use a longer timeout on mobile
-    setTimeout(() => {
-      if (inputRef.current) {
-        console.log('Manual focus triggered on TypingWarmup input');
-        inputRef.current.focus();
-      }
-    }, isMobile ? 300 : 100);
+    // Reset the attempt counter to allow a fresh batch of focus attempts
+    focusAttemptsMadeRef.current = 0;
+    
+    console.log('Manual focus triggered on TypingWarmup input - beginning focus attempts');
+    attemptFocus();
   };
 
   // Handle restart game
@@ -135,10 +142,14 @@ const TypingWarmup = ({ timeLimit, customNumberPadEnabled, onComplete }: TypingW
     setGameState('selection');
   };
   
-  // Touch handler for container to help with focus
+  // More aggressive touch handler for container to help with focus
   const handleContainerTouch = () => {
-    if (isMobile) {
-      focusInput();
+    console.log('Container touched - attempting to focus input');
+    focusInput();
+    
+    // For iOS devices, we also click the input directly as a fallback
+    if (inputRef.current && isMobile) {
+      inputRef.current.click();
     }
   };
 
@@ -148,6 +159,7 @@ const TypingWarmup = ({ timeLimit, customNumberPadEnabled, onComplete }: TypingW
         isCompactHeight ? 'pt-0 mt-0' : 'pt-4'
       }`}
       onTouchStart={handleContainerTouch}
+      onClick={focusInput}
     >
       <div className={`w-full max-w-xl ${
         isCompactHeight ? 'mt-0' : 'mt-8'
@@ -169,7 +181,10 @@ const TypingWarmup = ({ timeLimit, customNumberPadEnabled, onComplete }: TypingW
           className={`${
             isCompactHeight ? 'mb-4 py-6' : 'mb-6 py-10'
           } px-6 shadow-lg animate-bounce-in`}
-          onClick={focusInput} // Add click handler for better accessibility
+          onClick={(e) => {
+            e.stopPropagation();
+            focusInput();
+          }}
         >
           <CardContent className="flex flex-col justify-center items-center text-center">
             <h2 className="text-xl font-bold mb-6">Type the number as fast as you can!</h2>
@@ -185,13 +200,19 @@ const TypingWarmup = ({ timeLimit, customNumberPadEnabled, onComplete }: TypingW
                 value={userInput}
                 onChange={handleInputChange}
                 className="text-4xl md:text-6xl w-24 md:w-32 h-16 text-center font-bold p-0 border-b-4 focus-visible:ring-0 focus-visible:ring-offset-0 appearance-none"
-                autoComplete="off" // Prevent autocomplete from interfering
-                autoFocus={!isMobile} // Only use autoFocus on non-mobile
+                autoComplete="off"
+                autoFocus
                 readOnly={customNumberPadEnabled}
                 style={{
                   MozAppearance: 'textfield',
                   WebkitAppearance: 'none',
                   appearance: 'none'
+                }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (isMobile) {
+                    e.currentTarget.focus();
+                  }
                 }}
               />
             </div>

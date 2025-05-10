@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -21,7 +20,7 @@ const GameCountdown = ({
   const [countdown, setCountdown] = useState<number>(3);
   const isCompactHeight = useCompactHeight();
   const { setGameState, settings, scoreHistory, isLoggedIn } = useGame();
-  const isMobile = useIsMobile(); // Add mobile detection
+  const isMobile = useIsMobile();
 
   // Get the best score for the current game settings
   const getBestScore = () => {
@@ -67,10 +66,8 @@ const GameCountdown = ({
       }, 1000);
       return () => clearTimeout(countdownTimer);
     } else {
-      // Make sure we trigger the onComplete callback after a brief delay
-      // This gives time for the next component to mount before focus is attempted
-      // Use a longer delay on mobile devices
-      const delay = isMobile ? 300 : 100;
+      // Increase the delay significantly for mobile devices to ensure proper transitions
+      const delay = isMobile ? 800 : 300;
       console.log(`GameCountdown complete, transitioning with ${delay}ms delay`);
       
       setTimeout(() => {

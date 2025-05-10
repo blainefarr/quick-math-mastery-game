@@ -29,9 +29,9 @@ const GameScreen = () => {
   const initialProblemGeneratedRef = useRef(false);
   const hasEndedRef = useRef(false);
   const focusAttemptsMadeRef = useRef(0);
-  const maxFocusAttempts = 5; // Try focusing multiple times
+  const maxFocusAttempts = 10; // Increase max attempts
   const isCompactHeight = useCompactHeight();
-  const isMobile = useIsMobile(); // Add mobile detection
+  const isMobile = useIsMobile();
   
   // Learner mode states
   const [isShowingAnswer, setIsShowingAnswer] = useState(false);
@@ -47,6 +47,28 @@ const GameScreen = () => {
       hasEndedRef.current = false;
     }
   }, [timeLeft]);
+
+  // Improved focus mechanism with multiple attempts
+  const attemptFocus = () => {
+    if (hasEndedRef.current || focusAttemptsMadeRef.current >= maxFocusAttempts) return;
+    
+    if (inputRef.current) {
+      console.log(`Focus attempt ${focusAttemptsMadeRef.current + 1} for GameScreen input`);
+      inputRef.current.focus();
+      
+      // Force scroll to input on mobile
+      if (isMobile) {
+        inputRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+      
+      focusAttemptsMadeRef.current++;
+    }
+    
+    // Continue trying to focus if not at max attempts
+    if (focusAttemptsMadeRef.current < maxFocusAttempts) {
+      setTimeout(attemptFocus, isMobile ? 300 : 150);
+    }
+  };
 
   useEffect(() => {
     console.log('GameScreen mounted with settings:', settings);
@@ -66,24 +88,11 @@ const GameScreen = () => {
     // Reset focus attempts counter when component mounts
     focusAttemptsMadeRef.current = 0;
     
-    // Enhanced focus method with multiple attempts
-    const attemptFocus = () => {
-      if (hasEndedRef.current || focusAttemptsMadeRef.current >= maxFocusAttempts) return;
-      
-      if (inputRef.current) {
-        console.log(`Focus attempt ${focusAttemptsMadeRef.current + 1} for GameScreen input`);
-        inputRef.current.focus();
-        focusAttemptsMadeRef.current++;
-      }
-      
-      // Continue trying to focus if not at max attempts
-      if (focusAttemptsMadeRef.current < maxFocusAttempts) {
-        setTimeout(attemptFocus, isMobile ? 500 : 200);
-      }
-    };
+    // Initial delay before starting focus attempts - increased for better reliability
+    const initialDelay = isMobile ? 1000 : 500;
     
-    // Delay initial focus attempt to ensure component is fully rendered
-    setTimeout(attemptFocus, isMobile ? 500 : 300);
+    console.log(`Setting initial focus delay of ${initialDelay}ms`);
+    setTimeout(attemptFocus, initialDelay);
     
     return () => {
       initialProblemGeneratedRef.current = false;
@@ -155,16 +164,15 @@ const GameScreen = () => {
     }
   };
 
+  // Enhanced focus input with better mobile support
   const focusInput = () => {
     if (hasEndedRef.current) return;
     
-    // Use a longer timeout on mobile
-    setTimeout(() => {
-      if (inputRef.current) {
-        console.log('Manual focus triggered on GameScreen input');
-        inputRef.current.focus();
-      }
-    }, isMobile ? 300 : 100);
+    // Reset the attempt counter to allow a fresh batch of focus attempts
+    focusAttemptsMadeRef.current = 0;
+    
+    console.log('Manual focus triggered on GameScreen input - beginning focus attempts');
+    attemptFocus();
   };
 
   const getOperationSymbol = () => {
@@ -281,10 +289,14 @@ const GameScreen = () => {
   const showNegativeToggle = settings.allowNegatives;
   const useCustomNumberPad = settings.useCustomNumberPad;
 
-  // Touch handler for container to help with focus
+  // More aggressive touch handler for container to help with focus
   const handleContainerTouch = () => {
-    if (isMobile) {
-      focusInput();
+    console.log('Container touched - attempting to focus input');
+    focusInput();
+    
+    // For iOS devices, we also click the input directly as a fallback
+    if (inputRef.current && isMobile) {
+      inputRef.current.click();
     }
   };
 
@@ -294,6 +306,7 @@ const GameScreen = () => {
         isCompactHeight ? 'pt-0 mt-0' : 'pt-4'
       }`}
       onTouchStart={handleContainerTouch}
+      onClick={focusInput} // Add click handler to the entire container
     >
       <div className={`w-full max-w-xl ${
         isCompactHeight ? 'mt-0' : 'mt-8'
@@ -318,7 +331,10 @@ const GameScreen = () => {
             feedback === 'correct' ? 'bg-success/10 border-success' : 
             feedback === 'incorrect' ? 'bg-destructive/10 border-destructive' : ''
           }`}
-          onClick={focusInput} // Add click handler for better accessibility
+          onClick={(e) => {
+            e.stopPropagation(); // Prevent event bubbling
+            focusInput(); 
+          }}
         >
           <CardContent className="flex justify-center items-center text-4xl md:text-6xl font-bold">
             {currentProblem && (
@@ -341,13 +357,20 @@ const GameScreen = () => {
                 className={`text-4xl md:text-6xl w-24 md:w-32 h-16 text-center font-bold p-0 border-b-4 focus-visible:ring-0 focus-visible:ring-offset-0 appearance-none ${
                   isShowingAnswer ? 'text-destructive' : ''
                 }`}
-                autoComplete="off" // Prevent autocomplete from interfering
-                autoFocus={!isMobile} // Only use autoFocus on non-mobile
+                autoComplete="off" 
+                autoFocus // Keep this but we'll rely more on our custom focus logic
                 readOnly={isShowingAnswer || useCustomNumberPad}
                 style={{
                   MozAppearance: 'textfield',
                   WebkitAppearance: 'none',
                   appearance: 'none'
+                }}
+                onClick={(e) => {
+                  e.stopPropagation(); // Prevent event bubbling
+                  // For iOS, directly focus here too
+                  if (isMobile) {
+                    e.currentTarget.focus();
+                  }
                 }}
               />
               {isNegative && (
