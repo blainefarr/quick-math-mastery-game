@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { RotateCw } from 'lucide-react';
@@ -146,7 +145,6 @@ const TypingWarmup = ({ timeLimit, customNumberPadEnabled, onComplete }: TypingW
         feedback={feedback}
         onCardInteraction={handleCardInteraction}
       >
-        <h2 className="text-xl font-bold mb-6">Type the number as fast as you can!</h2>
         <div className="text-4xl md:text-6xl font-bold mb-6">
           {currentNumber}
         </div>

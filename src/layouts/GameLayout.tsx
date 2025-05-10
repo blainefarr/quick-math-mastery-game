@@ -10,8 +10,9 @@ import useGame from '@/context/useGame';
 const ConditionalHeader = () => {
   const { gameState } = useGame();
   
-  // Hide header during gameplay and warmup
-  if (gameState === 'playing' || gameState === 'warmup') {
+  // Hide header during gameplay, warmup, and countdown states
+  if (gameState === 'playing' || gameState === 'warmup' || 
+      gameState === 'countdown' || gameState === 'warmup-countdown') {
     return null;
   }
   

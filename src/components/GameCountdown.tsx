@@ -81,12 +81,12 @@ const GameCountdown = ({
         feedback={null} // No feedback during countdown
         onCardInteraction={() => {}} // No interaction needed
       >
-        <h2 className="text-2xl font-bold mt-4">{message}</h2>
-        <div className="text-4xl font-bold mt-2 text-green-500">
+        <h2 className="text-2xl font-bold mb-4">{message}</h2>
+        <div className="text-4xl md:text-6xl font-bold mb-4 text-green-500">
           {timeLeft || "GO!"}
         </div>
         {/* Only show motivational text for game countdown, not typing warmup */}
-        {!isTypingWarmup && <p className="text-gray-600">{getMotivationalText()}</p>}
+        {!isTypingWarmup && <p className="text-gray-600 mb-2">{getMotivationalText()}</p>}
       </GameCard>
 
       {/* Restart button */}

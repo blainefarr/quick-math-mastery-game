@@ -21,14 +21,14 @@ const GameCard: React.FC<GameCardProps> = ({
   return (
     <Card 
       className={`${
-        isCompactHeight ? 'mb-4 py-6' : 'mb-6 py-10'
-      } px-6 shadow-lg animate-bounce-in ${
+        isCompactHeight ? 'mb-4' : 'mb-6'
+      } shadow-lg animate-bounce-in ${
         feedback === 'correct' ? 'bg-success/10 border-success' : 
         feedback === 'incorrect' ? 'bg-destructive/10 border-destructive' : ''
       }`}
       onClick={onCardInteraction}
     >
-      <CardContent className="flex flex-col justify-center items-center text-center">
+      <CardContent className="flex flex-col justify-center items-center text-center py-10">
         {children}
       </CardContent>
     </Card>
