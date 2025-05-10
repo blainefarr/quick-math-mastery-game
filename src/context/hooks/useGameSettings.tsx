@@ -1,6 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { GameSettings, Operation, ProblemRange } from '@/types';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const defaultSettings: GameSettings = {
   operation: 'addition',
@@ -14,6 +15,7 @@ const defaultSettings: GameSettings = {
 };
 
 export const useGameSettings = () => {
+  const isMobile = useIsMobile();
   const [settings, setSettings] = useState<GameSettings>(() => {
     // Try to load settings from localStorage
     try {
@@ -27,8 +29,12 @@ export const useGameSettings = () => {
         storedSettings.learnerMode = JSON.parse(savedLearnerMode);
       }
       
+      // For custom number pad, check if we have a stored setting
       if (savedCustomNumberPad !== null) {
         storedSettings.useCustomNumberPad = JSON.parse(savedCustomNumberPad);
+      } else {
+        // If no stored setting, default to enabled on mobile
+        storedSettings.useCustomNumberPad = isMobile;
       }
       
       if (savedTypingSpeedAdjustment !== null) {
@@ -41,7 +47,11 @@ export const useGameSettings = () => {
       };
     } catch (error) {
       console.error("Error loading settings from localStorage:", error);
-      return defaultSettings;
+      // If there was an error, still set default custom keypad on mobile
+      return {
+        ...defaultSettings,
+        useCustomNumberPad: isMobile
+      };
     }
   });
 
@@ -77,7 +87,10 @@ export const useGameSettings = () => {
   };
 
   const resetSettings = () => {
-    setSettings(defaultSettings);
+    setSettings({
+      ...defaultSettings,
+      useCustomNumberPad: isMobile // Keep custom keypad enabled on mobile when resetting
+    });
   };
 
   return { settings, updateSettings, resetSettings };
