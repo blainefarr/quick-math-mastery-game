@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { RotateCw } from 'lucide-react';
@@ -7,6 +8,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { useFocusManagement } from '@/hooks/use-focus-management';
 import { useFeedbackManagement } from '@/hooks/use-feedback-management';
 import { useTimerManagement } from '@/hooks/use-timer-management';
+import { calculateAnswerRange, generateRandomInRange } from '@/utils/answerRangeCalculator';
 import GameContainer from './game/GameContainer';
 import GameCard from './game/GameCard';
 import NumberInput from './game/NumberInput';
@@ -24,7 +26,7 @@ const TypingWarmup = ({ timeLimit, customNumberPadEnabled, onComplete }: TypingW
   const [correctCount, setCorrectCount] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const correctCountRef = useRef(0);
-  const { setGameState } = useGame();
+  const { setGameState, settings } = useGame();
   const hasEndedRef = useRef(false);
   
   // Use the feedback management hook
@@ -52,9 +54,22 @@ const TypingWarmup = ({ timeLimit, customNumberPadEnabled, onComplete }: TypingW
     hasEnded: hasEndedRef.current
   });
 
-  // Generate a random number between 1 and 20
-  const generateRandomNumber = () => {
-    const newNumber = Math.floor(Math.random() * 20) + 1;
+  // Generate a random number based on answer range from current game settings
+  const generateTargetNumber = () => {
+    // Calculate appropriate range based on game settings
+    const answerRange = calculateAnswerRange(
+      settings.operation,
+      settings.range,
+      settings.allowNegatives || false
+    );
+    
+    // Log the calculated range for debugging
+    console.log(`Generated answer range for ${settings.operation}: ${answerRange.min} to ${answerRange.max}`);
+    
+    // Generate a number within the calculated range
+    const newNumber = generateRandomInRange(answerRange.min, answerRange.max);
+    
+    // Convert to string for display and comparison
     return String(newNumber);
   };
 
@@ -65,7 +80,7 @@ const TypingWarmup = ({ timeLimit, customNumberPadEnabled, onComplete }: TypingW
 
   // Initialize the game with improved focus handling
   useEffect(() => {
-    setCurrentNumber(generateRandomNumber());
+    setCurrentNumber(generateTargetNumber());
     
     // Initial delay before starting focus attempts - increased for better reliability
     const initialDelay = 1000;
@@ -102,7 +117,7 @@ const TypingWarmup = ({ timeLimit, customNumberPadEnabled, onComplete }: TypingW
       // Clear feedback and move to next number after a brief delay
       setTimeout(() => {
         setUserInput('');
-        setCurrentNumber(generateRandomNumber());
+        setCurrentNumber(generateTargetNumber());
       }, 100);
     }, 100);
   };
