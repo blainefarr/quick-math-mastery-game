@@ -1,12 +1,15 @@
+
 import React from 'react';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Info } from 'lucide-react';
+
 interface CustomNumberPadToggleProps {
   enabled: boolean;
   onToggle: (checked: boolean) => void;
 }
+
 const CustomNumberPadToggle = ({
   enabled,
   onToggle
@@ -22,7 +25,7 @@ const CustomNumberPadToggle = ({
               <Info className="h-4 w-4 text-muted-foreground cursor-help" />
             </TooltipTrigger>
             <TooltipContent>
-              <p className="max-w-xs">Use our number pad for easier responses on devices like iPads</p>
+              <p className="max-w-xs">Use our number pad for easier responses on mobile and tablet devices</p>
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
@@ -30,4 +33,5 @@ const CustomNumberPadToggle = ({
       <Switch id="custom-number-pad" checked={enabled} onCheckedChange={onToggle} />
     </div>;
 };
+
 export default CustomNumberPadToggle;

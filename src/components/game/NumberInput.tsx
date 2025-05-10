@@ -1,7 +1,7 @@
 
 import React, { useEffect } from 'react';
 import { Input } from '@/components/ui/input';
-import { useIsMobile } from '@/hooks/use-mobile';
+import { useIsMobileOrTablet } from '@/hooks/use-mobile';
 
 interface NumberInputProps {
   inputRef: React.RefObject<HTMLInputElement>;
@@ -26,11 +26,11 @@ const NumberInput: React.FC<NumberInputProps> = ({
   onInputInteraction,
   useCustomNumberPad = false
 }) => {
-  const isMobile = useIsMobile();
+  const isMobileOrTablet = useIsMobileOrTablet();
   
-  // Only set readOnly on mobile with custom number pad
+  // Only set readOnly on mobile/tablet with custom number pad
   // Desktop should allow keyboard input even with custom number pad
-  const shouldBeReadOnly = readOnly || (useCustomNumberPad && isMobile);
+  const shouldBeReadOnly = readOnly || (useCustomNumberPad && isMobileOrTablet);
   
   // Always use numeric inputMode on desktop, regardless of custom keypad
   const effectiveInputMode = 'numeric'; // Always allow numeric input for keyboard accessibility
@@ -75,11 +75,11 @@ const NumberInput: React.FC<NumberInputProps> = ({
           MozAppearance: 'textfield',
           WebkitAppearance: 'none',
           appearance: 'none',
-          caretColor: useCustomNumberPad && isMobile ? 'transparent' : 'auto' // Only hide cursor on mobile with custom keypad
+          caretColor: useCustomNumberPad && isMobileOrTablet ? 'transparent' : 'auto' // Only hide cursor on mobile/tablet with custom keypad
         }}
         onClick={(e) => {
           e.stopPropagation();
-          if (isMobile) {
+          if (isMobileOrTablet) {
             e.currentTarget.focus();
           }
           if (onInputInteraction) {
