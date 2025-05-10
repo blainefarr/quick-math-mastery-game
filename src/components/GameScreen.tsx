@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import useGame from '@/context/useGame';
 import { Button } from '@/components/ui/button';
@@ -8,6 +7,7 @@ import { Clock, RotateCw } from 'lucide-react';
 import MathIcon from './common/MathIcon';
 import { useCompactHeight } from '@/hooks/use-compact-height';
 import CustomNumberPad from './numberpad/CustomNumberPad';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const GameScreen = () => {
   const {
@@ -28,7 +28,10 @@ const GameScreen = () => {
   const inputRef = useRef<HTMLInputElement>(null);
   const initialProblemGeneratedRef = useRef(false);
   const hasEndedRef = useRef(false);
+  const focusAttemptsMadeRef = useRef(0);
+  const maxFocusAttempts = 5; // Try focusing multiple times
   const isCompactHeight = useCompactHeight();
+  const isMobile = useIsMobile(); // Add mobile detection
   
   // Learner mode states
   const [isShowingAnswer, setIsShowingAnswer] = useState(false);
@@ -60,16 +63,33 @@ const GameScreen = () => {
       initialProblemGeneratedRef.current = true;
     }
     
-    // Automatically focus on input with a slight delay to ensure UI is ready
-    setTimeout(() => {
+    // Reset focus attempts counter when component mounts
+    focusAttemptsMadeRef.current = 0;
+    
+    // Enhanced focus method with multiple attempts
+    const attemptFocus = () => {
+      if (hasEndedRef.current || focusAttemptsMadeRef.current >= maxFocusAttempts) return;
+      
       if (inputRef.current) {
+        console.log(`Focus attempt ${focusAttemptsMadeRef.current + 1} for GameScreen input`);
         inputRef.current.focus();
+        focusAttemptsMadeRef.current++;
       }
-    }, 100);
+      
+      // Continue trying to focus if not at max attempts
+      if (focusAttemptsMadeRef.current < maxFocusAttempts) {
+        setTimeout(attemptFocus, isMobile ? 500 : 200);
+      }
+    };
+    
+    // Delay initial focus attempt to ensure component is fully rendered
+    setTimeout(attemptFocus, isMobile ? 500 : 300);
     
     return () => {
       initialProblemGeneratedRef.current = false;
       clearLearnerModeTimeouts();
+      // Reset focus attempts on unmount
+      focusAttemptsMadeRef.current = 0;
     };
   }, []);
 
@@ -136,11 +156,15 @@ const GameScreen = () => {
   };
 
   const focusInput = () => {
+    if (hasEndedRef.current) return;
+    
+    // Use a longer timeout on mobile
     setTimeout(() => {
       if (inputRef.current) {
+        console.log('Manual focus triggered on GameScreen input');
         inputRef.current.focus();
       }
-    }, 0);
+    }, isMobile ? 300 : 100);
   };
 
   const getOperationSymbol = () => {
@@ -257,10 +281,20 @@ const GameScreen = () => {
   const showNegativeToggle = settings.allowNegatives;
   const useCustomNumberPad = settings.useCustomNumberPad;
 
+  // Touch handler for container to help with focus
+  const handleContainerTouch = () => {
+    if (isMobile) {
+      focusInput();
+    }
+  };
+
   return (
-    <div className={`flex justify-center items-center min-h-screen p-4 bg-background ${
-      isCompactHeight ? 'pt-0 mt-0' : 'pt-4'
-    }`}>
+    <div 
+      className={`flex justify-center items-center min-h-screen p-4 bg-background ${
+        isCompactHeight ? 'pt-0 mt-0' : 'pt-4'
+      }`}
+      onTouchStart={handleContainerTouch}
+    >
       <div className={`w-full max-w-xl ${
         isCompactHeight ? 'mt-0' : 'mt-8'
       }`}>
@@ -277,12 +311,15 @@ const GameScreen = () => {
           </Card>
         </div>
 
-        <Card className={`${
-          isCompactHeight ? 'mb-4 py-6' : 'mb-6 py-10'
-        } px-6 shadow-lg animate-bounce-in ${
-          feedback === 'correct' ? 'bg-success/10 border-success' : 
-          feedback === 'incorrect' ? 'bg-destructive/10 border-destructive' : ''
-        }`}>
+        <Card 
+          className={`${
+            isCompactHeight ? 'mb-4 py-6' : 'mb-6 py-10'
+          } px-6 shadow-lg animate-bounce-in ${
+            feedback === 'correct' ? 'bg-success/10 border-success' : 
+            feedback === 'incorrect' ? 'bg-destructive/10 border-destructive' : ''
+          }`}
+          onClick={focusInput} // Add click handler for better accessibility
+        >
           <CardContent className="flex justify-center items-center text-4xl md:text-6xl font-bold">
             {currentProblem && (
               <>
@@ -304,7 +341,8 @@ const GameScreen = () => {
                 className={`text-4xl md:text-6xl w-24 md:w-32 h-16 text-center font-bold p-0 border-b-4 focus-visible:ring-0 focus-visible:ring-offset-0 appearance-none ${
                   isShowingAnswer ? 'text-destructive' : ''
                 }`}
-                autoFocus
+                autoComplete="off" // Prevent autocomplete from interfering
+                autoFocus={!isMobile} // Only use autoFocus on non-mobile
                 readOnly={isShowingAnswer || useCustomNumberPad}
                 style={{
                   MozAppearance: 'textfield',

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,6 +8,7 @@ import { useCompactHeight } from '@/hooks/use-compact-height';
 import CustomNumberPad from './numberpad/CustomNumberPad';
 import { toast } from 'sonner';
 import useGame from '@/context/useGame';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface TypingWarmupProps {
   timeLimit: number;
@@ -23,6 +25,9 @@ const TypingWarmup = ({ timeLimit, customNumberPadEnabled, onComplete }: TypingW
   const correctCountRef = useRef(0); // Add a ref to track the current correct count
   const isCompactHeight = useCompactHeight();
   const { setGameState } = useGame();
+  const isMobile = useIsMobile(); // Add mobile detection
+  const focusAttemptsMadeRef = useRef(0);
+  const maxFocusAttempts = 5;
   
   // Generate a random number between 1 and 20
   const generateRandomNumber = () => {
@@ -39,12 +44,27 @@ const TypingWarmup = ({ timeLimit, customNumberPadEnabled, onComplete }: TypingW
   useEffect(() => {
     setCurrentNumber(generateRandomNumber());
     
-    // Automatically focus on input with a slight delay to ensure UI is ready
-    setTimeout(() => {
+    // Reset focus attempts counter
+    focusAttemptsMadeRef.current = 0;
+    
+    // Enhanced focus method with multiple attempts
+    const attemptFocus = () => {
+      if (timeLeft <= 0 || focusAttemptsMadeRef.current >= maxFocusAttempts) return;
+      
       if (inputRef.current) {
+        console.log(`Focus attempt ${focusAttemptsMadeRef.current + 1} for TypingWarmup input`);
         inputRef.current.focus();
+        focusAttemptsMadeRef.current++;
       }
-    }, 100);
+      
+      // Continue trying to focus if not at max attempts
+      if (focusAttemptsMadeRef.current < maxFocusAttempts) {
+        setTimeout(attemptFocus, isMobile ? 500 : 200);
+      }
+    };
+    
+    // Delay initial focus attempt
+    setTimeout(attemptFocus, isMobile ? 500 : 300);
     
     // Start the timer
     const timer = setInterval(() => {
@@ -63,7 +83,11 @@ const TypingWarmup = ({ timeLimit, customNumberPadEnabled, onComplete }: TypingW
       });
     }, 1000);
     
-    return () => clearInterval(timer);
+    return () => {
+      clearInterval(timer);
+      // Reset focus attempts on unmount
+      focusAttemptsMadeRef.current = 0;
+    };
   }, []);
 
   // Handle user input
@@ -97,18 +121,34 @@ const TypingWarmup = ({ timeLimit, customNumberPadEnabled, onComplete }: TypingW
   };
 
   const focusInput = () => {
-    inputRef.current?.focus();
+    // Use a longer timeout on mobile
+    setTimeout(() => {
+      if (inputRef.current) {
+        console.log('Manual focus triggered on TypingWarmup input');
+        inputRef.current.focus();
+      }
+    }, isMobile ? 300 : 100);
   };
 
   // Handle restart game
   const handleRestartGame = () => {
     setGameState('selection');
   };
+  
+  // Touch handler for container to help with focus
+  const handleContainerTouch = () => {
+    if (isMobile) {
+      focusInput();
+    }
+  };
 
   return (
-    <div className={`flex justify-center items-center min-h-screen p-4 bg-background ${
-      isCompactHeight ? 'pt-0 mt-0' : 'pt-4'
-    }`}>
+    <div 
+      className={`flex justify-center items-center min-h-screen p-4 bg-background ${
+        isCompactHeight ? 'pt-0 mt-0' : 'pt-4'
+      }`}
+      onTouchStart={handleContainerTouch}
+    >
       <div className={`w-full max-w-xl ${
         isCompactHeight ? 'mt-0' : 'mt-8'
       }`}>
@@ -125,9 +165,12 @@ const TypingWarmup = ({ timeLimit, customNumberPadEnabled, onComplete }: TypingW
           </Card>
         </div>
 
-        <Card className={`${
-          isCompactHeight ? 'mb-4 py-6' : 'mb-6 py-10'
-        } px-6 shadow-lg animate-bounce-in`}>
+        <Card 
+          className={`${
+            isCompactHeight ? 'mb-4 py-6' : 'mb-6 py-10'
+          } px-6 shadow-lg animate-bounce-in`}
+          onClick={focusInput} // Add click handler for better accessibility
+        >
           <CardContent className="flex flex-col justify-center items-center text-center">
             <h2 className="text-xl font-bold mb-6">Type the number as fast as you can!</h2>
             <div className="text-4xl md:text-6xl font-bold mb-6">
@@ -142,7 +185,8 @@ const TypingWarmup = ({ timeLimit, customNumberPadEnabled, onComplete }: TypingW
                 value={userInput}
                 onChange={handleInputChange}
                 className="text-4xl md:text-6xl w-24 md:w-32 h-16 text-center font-bold p-0 border-b-4 focus-visible:ring-0 focus-visible:ring-offset-0 appearance-none"
-                autoFocus
+                autoComplete="off" // Prevent autocomplete from interfering
+                autoFocus={!isMobile} // Only use autoFocus on non-mobile
                 readOnly={customNumberPadEnabled}
                 style={{
                   MozAppearance: 'textfield',

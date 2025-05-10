@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { RotateCw } from 'lucide-react';
 import { useCompactHeight } from '@/hooks/use-compact-height';
 import useGame from '@/context/useGame';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface GameCountdownProps {
   onComplete: () => void;
@@ -20,6 +21,7 @@ const GameCountdown = ({
   const [countdown, setCountdown] = useState<number>(3);
   const isCompactHeight = useCompactHeight();
   const { setGameState, settings, scoreHistory, isLoggedIn } = useGame();
+  const isMobile = useIsMobile(); // Add mobile detection
 
   // Get the best score for the current game settings
   const getBestScore = () => {
@@ -67,11 +69,15 @@ const GameCountdown = ({
     } else {
       // Make sure we trigger the onComplete callback after a brief delay
       // This gives time for the next component to mount before focus is attempted
+      // Use a longer delay on mobile devices
+      const delay = isMobile ? 300 : 100;
+      console.log(`GameCountdown complete, transitioning with ${delay}ms delay`);
+      
       setTimeout(() => {
         onComplete();
-      }, 50);
+      }, delay);
     }
-  }, [countdown, onComplete]);
+  }, [countdown, onComplete, isMobile]);
 
   // Handle restart game
   const handleRestartGame = () => {
