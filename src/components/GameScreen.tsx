@@ -1,13 +1,14 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import useGame from '@/context/useGame';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent } from '@/components/ui/card';
-import { Clock, RotateCw } from 'lucide-react';
+import { RotateCw } from 'lucide-react';
 import MathIcon from './common/MathIcon';
-import { useCompactHeight } from '@/hooks/use-compact-height';
-import CustomNumberPad from './numberpad/CustomNumberPad';
-import { useIsMobile } from '@/hooks/use-mobile';
+import { useFocusManagement } from '@/hooks/use-focus-management';
+import GameContainer from './game/GameContainer';
+import GameCard from './game/GameCard';
+import NumberInput from './game/NumberInput';
+import NumberPadContainer from './game/NumberPadContainer';
 
 const GameScreen = () => {
   const {
@@ -28,10 +29,6 @@ const GameScreen = () => {
   const inputRef = useRef<HTMLInputElement>(null);
   const initialProblemGeneratedRef = useRef(false);
   const hasEndedRef = useRef(false);
-  const focusAttemptsMadeRef = useRef(0);
-  const maxFocusAttempts = 10; // Increase max attempts
-  const isCompactHeight = useCompactHeight();
-  const isMobile = useIsMobile();
   
   // Learner mode states
   const [isShowingAnswer, setIsShowingAnswer] = useState(false);
@@ -40,6 +37,12 @@ const GameScreen = () => {
   const learnerTimeoutRef = useRef<number | null>(null);
   const showAnswerTimeoutRef = useRef<number | null>(null);
 
+  // Setup focus management
+  const { focusInput, attemptFocus, cleanupFocus } = useFocusManagement({
+    inputRef,
+    hasEnded: hasEndedRef.current
+  });
+
   useEffect(() => {
     if (timeLeft <= 0) {
       hasEndedRef.current = true;
@@ -47,28 +50,6 @@ const GameScreen = () => {
       hasEndedRef.current = false;
     }
   }, [timeLeft]);
-
-  // Improved focus mechanism with multiple attempts
-  const attemptFocus = () => {
-    if (hasEndedRef.current || focusAttemptsMadeRef.current >= maxFocusAttempts) return;
-    
-    if (inputRef.current) {
-      console.log(`Focus attempt ${focusAttemptsMadeRef.current + 1} for GameScreen input`);
-      inputRef.current.focus();
-      
-      // Force scroll to input on mobile
-      if (isMobile) {
-        inputRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
-      
-      focusAttemptsMadeRef.current++;
-    }
-    
-    // Continue trying to focus if not at max attempts
-    if (focusAttemptsMadeRef.current < maxFocusAttempts) {
-      setTimeout(attemptFocus, isMobile ? 300 : 150);
-    }
-  };
 
   useEffect(() => {
     console.log('GameScreen mounted with settings:', settings);
@@ -85,11 +66,8 @@ const GameScreen = () => {
       initialProblemGeneratedRef.current = true;
     }
     
-    // Reset focus attempts counter when component mounts
-    focusAttemptsMadeRef.current = 0;
-    
     // Initial delay before starting focus attempts - increased for better reliability
-    const initialDelay = isMobile ? 1000 : 500;
+    const initialDelay = 1000;
     
     console.log(`Setting initial focus delay of ${initialDelay}ms`);
     setTimeout(attemptFocus, initialDelay);
@@ -97,8 +75,7 @@ const GameScreen = () => {
     return () => {
       initialProblemGeneratedRef.current = false;
       clearLearnerModeTimeouts();
-      // Reset focus attempts on unmount
-      focusAttemptsMadeRef.current = 0;
+      cleanupFocus();
     };
   }, []);
 
@@ -162,17 +139,6 @@ const GameScreen = () => {
         }
       }, 6000);
     }
-  };
-
-  // Enhanced focus input with better mobile support
-  const focusInput = () => {
-    if (hasEndedRef.current) return;
-    
-    // Reset the attempt counter to allow a fresh batch of focus attempts
-    focusAttemptsMadeRef.current = 0;
-    
-    console.log('Manual focus triggered on GameScreen input - beginning focus attempts');
-    attemptFocus();
   };
 
   const getOperationSymbol = () => {
@@ -274,8 +240,6 @@ const GameScreen = () => {
 
   const handleDelete = () => {
     if (isShowingAnswer || hasEndedRef.current) return;
-    
-    // Fix: Using direct string manipulation instead of function with prevAnswer parameter
     setUserAnswer(userAnswer.slice(0, -1));
   };
 
@@ -286,157 +250,93 @@ const GameScreen = () => {
     }
   };
 
+  // Card interaction handler
+  const handleCardInteraction = (e: React.MouseEvent | React.TouchEvent) => {
+    e.stopPropagation();
+    focusInput();
+  };
+
   const showNegativeToggle = settings.allowNegatives;
   const useCustomNumberPad = settings.useCustomNumberPad;
 
-  // More aggressive touch handler for container to help with focus
-  const handleContainerTouch = () => {
-    console.log('Container touched - attempting to focus input');
-    focusInput();
-    
-    // For iOS devices, we also click the input directly as a fallback
-    if (inputRef.current && isMobile) {
-      inputRef.current.click();
-    }
-  };
-
   return (
-    <div 
-      className={`flex justify-center items-center min-h-screen p-4 bg-background ${
-        isCompactHeight ? 'pt-0 mt-0' : 'pt-4'
-      }`}
-      onTouchStart={handleContainerTouch}
-      onClick={focusInput} // Add click handler to the entire container
+    <GameContainer
+      timeLeft={timeLeft}
+      score={score}
+      onContainerInteraction={focusInput}
     >
-      <div className={`w-full max-w-xl ${
-        isCompactHeight ? 'mt-0' : 'mt-8'
-      }`}>
-        <div className={`flex justify-between ${
-          isCompactHeight ? 'mb-4' : 'mb-8'
-        }`}>
-          <Card className={`p-3 flex items-center ${timeLeft < 10 ? 'animate-timer-tick text-destructive' : ''}`}>
-            <Clock className="mr-2" />
-            <span className="text-xl font-bold">{timeLeft}</span>
-          </Card>
-          <Card className="p-3">
-            <span className="font-medium">Score: </span>
-            <span className="text-xl font-bold">{score}</span>
-          </Card>
-        </div>
-
-        <Card 
-          className={`${
-            isCompactHeight ? 'mb-4 py-6' : 'mb-6 py-10'
-          } px-6 shadow-lg animate-bounce-in ${
-            feedback === 'correct' ? 'bg-success/10 border-success' : 
-            feedback === 'incorrect' ? 'bg-destructive/10 border-destructive' : ''
-          }`}
-          onClick={(e) => {
-            e.stopPropagation(); // Prevent event bubbling
-            focusInput(); 
-          }}
-        >
-          <CardContent className="flex justify-center items-center text-4xl md:text-6xl font-bold">
-            {currentProblem && (
-              <>
-                <span>{currentProblem.num1}</span>
-                <span className="mx-4">{getOperationSymbol()}</span>
-                <span>{currentProblem.num2}</span>
-                <span className={`${showNegativeToggle ? 'mx-8 md:mx-10' : 'mx-6 md:mx-8'}`}>=</span>
-              </>
-            )}
-
-            <div className="relative flex items-center">
-              <Input
-                ref={inputRef}
-                type="text"
-                inputMode={useCustomNumberPad ? "none" : "numeric"}
-                pattern="[0-9]*"
-                value={userAnswer}
-                onChange={handleInputChange}
-                className={`text-4xl md:text-6xl w-24 md:w-32 h-16 text-center font-bold p-0 border-b-4 focus-visible:ring-0 focus-visible:ring-offset-0 appearance-none ${
-                  isShowingAnswer ? 'text-destructive' : ''
-                }`}
-                autoComplete="off" 
-                autoFocus // Keep this but we'll rely more on our custom focus logic
-                readOnly={isShowingAnswer || useCustomNumberPad}
-                style={{
-                  MozAppearance: 'textfield',
-                  WebkitAppearance: 'none',
-                  appearance: 'none'
-                }}
-                onClick={(e) => {
-                  e.stopPropagation(); // Prevent event bubbling
-                  // For iOS, directly focus here too
-                  if (isMobile) {
-                    e.currentTarget.focus();
-                  }
-                }}
-              />
-              {isNegative && (
-                <span className="absolute top-1/2 transform -translate-y-1/2 -left-10 text-4xl md:text-6xl z-20 select-none">-</span>
-              )}
-              {feedback && (
-                <div
-                  className={`absolute top-0 right-0 transform translate-x-full -translate-y-1/4 rounded-full p-1 
-                    ${feedback === 'correct' ? 'bg-success text-white' : 'bg-destructive text-white'}`}
-                >
-                  {feedback === 'correct' ? '✓' : '✗'}
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Encouragement message for learner mode */}
-        {showEncouragement && settings.learnerMode && (
-          <div className="text-center mb-4 animate-fade-in">
-            <p className="text-lg font-medium text-primary">
-              You got this! Try again 💪
-            </p>
-          </div>
-        )}
-
-        {/* Custom Number Pad */}
-        {useCustomNumberPad && (
-          <div className="w-full max-w-md mx-auto md:max-w-xl">
-            <CustomNumberPad 
-              onNumberPress={handleNumberPress}
-              onDelete={handleDelete}
-              onNegativeToggle={toggleNegative}
-              isNegative={isNegative}
-              showNegativeToggle={showNegativeToggle}
-              onButtonPress={focusInput} // Add this new prop to reset focus
-            />
-          </div>
-        )}
-
-        <div className="flex justify-center mt-4">
-          <Button 
-            variant="outline" 
-            onClick={handleRestartGame} 
-            className="flex items-center gap-2"
-          >
-            <RotateCw className="h-4 w-4" /> Restart Game
-          </Button>
-        </div>
-
-        <div className="mt-8 text-center text-sm text-muted-foreground flex justify-center items-center">
-          <span>Current mode: </span>
-          <div className="ml-1 inline-flex items-center bg-primary/10 px-2 py-1 rounded-full text-primary font-medium">
-            <MathIcon operation={currentProblem?.operation || 'addition'} size={14} className="mr-1" />
-            {currentProblem?.operation === 'addition' ? 'Addition' :
-              currentProblem?.operation === 'subtraction' ? 'Subtraction' :
-                currentProblem?.operation === 'multiplication' ? 'Multiplication' : 'Division'}
-          </div>
-          {settings.learnerMode && (
-            <div className="ml-2 inline-flex items-center bg-accent/30 px-2 py-1 rounded-full text-primary font-medium">
-              Learner Mode
-            </div>
+      <GameCard
+        feedback={feedback}
+        onCardInteraction={handleCardInteraction}
+      >
+        <div className="flex justify-center items-center text-4xl md:text-6xl font-bold">
+          {currentProblem && (
+            <>
+              <span>{currentProblem.num1}</span>
+              <span className="mx-4">{getOperationSymbol()}</span>
+              <span>{currentProblem.num2}</span>
+              <span className={`${showNegativeToggle ? 'mx-8 md:mx-10' : 'mx-6 md:mx-8'}`}>=</span>
+            </>
           )}
+
+          <NumberInput
+            inputRef={inputRef}
+            value={userAnswer}
+            onChange={handleInputChange}
+            readOnly={isShowingAnswer || useCustomNumberPad}
+            isNegative={isNegative}
+            feedback={feedback}
+            inputMode={useCustomNumberPad ? "none" : "numeric"}
+            onInputInteraction={focusInput}
+          />
         </div>
+      </GameCard>
+
+      {/* Encouragement message for learner mode */}
+      {showEncouragement && settings.learnerMode && (
+        <div className="text-center mb-4 animate-fade-in">
+          <p className="text-lg font-medium text-primary">
+            You got this! Try again 💪
+          </p>
+        </div>
+      )}
+
+      {/* Custom Number Pad */}
+      <NumberPadContainer
+        enabled={useCustomNumberPad}
+        onNumberPress={handleNumberPress}
+        onDelete={handleDelete}
+        onNegativeToggle={toggleNegative}
+        isNegative={isNegative}
+        showNegativeToggle={showNegativeToggle}
+        onButtonPress={focusInput}
+      />
+
+      <div className="flex justify-center mt-4">
+        <Button 
+          variant="outline" 
+          onClick={handleRestartGame} 
+          className="flex items-center gap-2"
+        >
+          <RotateCw className="h-4 w-4" /> Restart Game
+        </Button>
       </div>
-    </div>
+
+      <div className="mt-8 text-center text-sm text-muted-foreground flex justify-center items-center">
+        <span>Current mode: </span>
+        <div className="ml-1 inline-flex items-center bg-primary/10 px-2 py-1 rounded-full text-primary font-medium">
+          <MathIcon operation={currentProblem?.operation || 'addition'} size={14} className="mr-1" />
+          {currentProblem?.operation === 'addition' ? 'Addition' :
+            currentProblem?.operation === 'subtraction' ? 'Subtraction' :
+              currentProblem?.operation === 'multiplication' ? 'Multiplication' : 'Division'}
+        </div>
+        {settings.learnerMode && (
+          <div className="ml-2 inline-flex items-center bg-accent/30 px-2 py-1 rounded-full text-primary font-medium">
+            Learner Mode
+          </div>
+        )}
+      </div>
+    </GameContainer>
   );
 };
 
