@@ -114,14 +114,13 @@ const GoalCell: React.FC<GoalCellProps> = ({ goal, operation, range }) => {
           </DialogHeader>
           
           <div className="py-4 space-y-4">
-            <div className="flex justify-center">
-              <span className="text-4xl">{getLevelEmoji(level)}</span>
-            </div>
-            
             <div className="space-y-3">
               <div className="flex justify-between items-center border-b pb-2">
                 <span className="text-muted-foreground">Level:</span>
-                <span className="font-medium">{level.charAt(0).toUpperCase() + level.slice(1)}</span>
+                <span className="font-medium flex items-center gap-2">
+                  <span className="text-xl">{getLevelEmoji(level)}</span>
+                  <span>{level.charAt(0).toUpperCase() + level.slice(1)}</span>
+                </span>
               </div>
               
               <div className="flex justify-between items-center border-b pb-2">

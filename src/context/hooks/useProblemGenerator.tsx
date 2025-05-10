@@ -90,6 +90,10 @@ export const useProblemGenerator = () => {
       };
       
       attempts++;
+      
+      // Check if this is the same problem as the previous one
+      // We only check if num1 and num2 are the same (in the same order)
+      // This allows problems with the same answer but different operands (e.g., 3+2 and 4+1)
     } while (
       attempts < MAX_ATTEMPTS && 
       previousProblem !== null && 
