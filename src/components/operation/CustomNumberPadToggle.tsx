@@ -2,7 +2,7 @@
 import React from 'react';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { TooltipProvider, TooltipWrapper } from "@/components/ui/tooltip";
 import { Info } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 
@@ -16,25 +16,42 @@ const CustomNumberPadToggle = ({
   onToggle
 }: CustomNumberPadToggleProps) => {
   const isMobile = useIsMobile();
+  const [showMobileTooltip, setShowMobileTooltip] = React.useState(false);
   
-  return <div className="flex items-center justify-between h-10 px-4 border rounded-md bg-muted/50">
+  const tooltipContent = isMobile 
+    ? "Use our custom number pad for easier input on your device" 
+    : "Use our custom number pad in addition to keyboard input";
+
+  return (
+    <div className="flex items-center justify-between h-10 px-4 border rounded-md bg-muted/50">
       <div className="flex items-center gap-2">
         <Label htmlFor="custom-number-pad" className="text-sm font-medium cursor-pointer">
           Use Custom Number Pad
         </Label>
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
+        {isMobile ? (
+          <div className="relative">
+            <Info 
+              size={16} 
+              className="text-muted-foreground flex-shrink-0 cursor-pointer"
+              onClick={() => setShowMobileTooltip(!showMobileTooltip)}
+            />
+            {showMobileTooltip && (
+              <div className="absolute z-50 top-6 left-0 bg-popover p-2 rounded-md shadow-md text-xs w-48">
+                {tooltipContent}
+              </div>
+            )}
+          </div>
+        ) : (
+          <TooltipProvider>
+            <TooltipWrapper content={<p className="max-w-xs">{tooltipContent}</p>}>
               <Info className="h-4 w-4 text-muted-foreground cursor-help" />
-            </TooltipTrigger>
-            <TooltipContent>
-              <p className="max-w-xs">{isMobile ? "Use our custom number pad for easier input on your device" : "Use our custom number pad in addition to keyboard input"}</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+            </TooltipWrapper>
+          </TooltipProvider>
+        )}
       </div>
       <Switch id="custom-number-pad" checked={enabled} onCheckedChange={onToggle} />
-    </div>;
+    </div>
+  );
 };
 
 export default CustomNumberPadToggle;

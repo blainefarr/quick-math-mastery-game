@@ -8,7 +8,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 const RootLayout = () => {
   return (
     <AuthProvider>
-      <TooltipProvider>
+      <TooltipProvider delayDuration={300}>
         <Toaster />
         <Outlet />
       </TooltipProvider>

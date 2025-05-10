@@ -1,15 +1,9 @@
-
 import React from 'react';
 import { Info } from "lucide-react";
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
-import { 
-  Tooltip, 
-  TooltipContent, 
-  TooltipProvider, 
-  TooltipTrigger 
-} from "@/components/ui/tooltip";
+import { TooltipProvider, TooltipWrapper } from "@/components/ui/tooltip";
 import { HoverCard, HoverCardTrigger, HoverCardContent } from '@/components/ui/hover-card';
 import { useIsMobile } from '@/hooks/use-mobile';
 
@@ -54,14 +48,9 @@ const FocusNumberSection = ({
             </div>
           ) : (
             <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Info size={16} className="text-muted-foreground flex-shrink-0" />
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p className="max-w-xs">{tooltipContent}</p>
-                </TooltipContent>
-              </Tooltip>
+              <TooltipWrapper content={<p className="max-w-xs">{tooltipContent}</p>}>
+                <Info size={16} className="text-muted-foreground flex-shrink-0 cursor-help" />
+              </TooltipWrapper>
             </TooltipProvider>
           )}
         </div>

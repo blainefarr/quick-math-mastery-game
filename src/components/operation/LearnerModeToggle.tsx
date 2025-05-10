@@ -3,7 +3,7 @@ import React from "react";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Info } from "lucide-react";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { TooltipProvider, TooltipWrapper } from "@/components/ui/tooltip";
 import { useIsMobile } from '@/hooks/use-mobile';
 
 interface LearnerModeToggleProps {
@@ -42,14 +42,9 @@ const LearnerModeToggle = ({
           </div>
         ) : (
           <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Info size={16} className="text-muted-foreground flex-shrink-0" />
-              </TooltipTrigger>
-              <TooltipContent>
-                <p className="max-w-xs">{tooltipContent}</p>
-              </TooltipContent>
-            </Tooltip>
+            <TooltipWrapper content={<p className="max-w-xs">{tooltipContent}</p>}>
+              <Info size={16} className="text-muted-foreground flex-shrink-0 cursor-help" />
+            </TooltipWrapper>
           </TooltipProvider>
         )}
       </div>
