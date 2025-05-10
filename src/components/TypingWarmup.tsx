@@ -20,6 +20,7 @@ const TypingWarmup = ({ timeLimit, customNumberPadEnabled, onComplete }: TypingW
   const [currentNumber, setCurrentNumber] = useState('');
   const [userInput, setUserInput] = useState('');
   const [correctCount, setCorrectCount] = useState(0);
+  const [feedback, setFeedback] = useState<'correct' | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const correctCountRef = useRef(0);
   const isCompactHeight = useCompactHeight();
@@ -98,29 +99,44 @@ const TypingWarmup = ({ timeLimit, customNumberPadEnabled, onComplete }: TypingW
     };
   }, []);
 
-  // Handle user input
+  // Handle user input for keyboard typing
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setUserInput(value);
     
     if (value === currentNumber) {
-      // Correct input
-      setCorrectCount(prevCount => prevCount + 1);
-      setUserInput('');
-      setCurrentNumber(generateRandomNumber());
+      processCorrectAnswer();
     }
   };
 
-  // Handle number pad input
+  // Process a correct answer with feedback
+  const processCorrectAnswer = () => {
+    // Show feedback
+    setFeedback('correct');
+    
+    // Use setTimeout to allow the UI to update before showing feedback
+    setTimeout(() => {
+      // Increment score
+      setCorrectCount(prevCount => prevCount + 1);
+      
+      // Clear feedback and move to next number after a brief delay
+      setTimeout(() => {
+        setUserInput('');
+        setFeedback(null);
+        setCurrentNumber(generateRandomNumber());
+      }, 100);
+    }, 250);
+  };
+
+  // Handle number pad input with improved feedback like GameScreen
   const handleNumberPress = (number: string) => {
+    // Add the pressed number to current input
     const newInput = userInput + number;
     setUserInput(newInput);
     
+    // Check if the answer is correct
     if (newInput === currentNumber) {
-      // Correct input
-      setCorrectCount(prevCount => prevCount + 1);
-      setUserInput('');
-      setCurrentNumber(generateRandomNumber());
+      processCorrectAnswer();
     }
   };
 
@@ -180,7 +196,9 @@ const TypingWarmup = ({ timeLimit, customNumberPadEnabled, onComplete }: TypingW
         <Card 
           className={`${
             isCompactHeight ? 'mb-4 py-6' : 'mb-6 py-10'
-          } px-6 shadow-lg animate-bounce-in`}
+          } px-6 shadow-lg animate-bounce-in ${
+            feedback === 'correct' ? 'bg-success/10 border-success' : ''
+          }`}
           onClick={(e) => {
             e.stopPropagation();
             focusInput();
@@ -199,7 +217,9 @@ const TypingWarmup = ({ timeLimit, customNumberPadEnabled, onComplete }: TypingW
                 pattern="[0-9]*"
                 value={userInput}
                 onChange={handleInputChange}
-                className="text-4xl md:text-6xl w-24 md:w-32 h-16 text-center font-bold p-0 border-b-4 focus-visible:ring-0 focus-visible:ring-offset-0 appearance-none"
+                className={`text-4xl md:text-6xl w-24 md:w-32 h-16 text-center font-bold p-0 border-b-4 focus-visible:ring-0 focus-visible:ring-offset-0 appearance-none ${
+                  feedback === 'correct' ? 'text-success' : ''
+                }`}
                 autoComplete="off"
                 autoFocus
                 readOnly={customNumberPadEnabled}
@@ -215,6 +235,14 @@ const TypingWarmup = ({ timeLimit, customNumberPadEnabled, onComplete }: TypingW
                   }
                 }}
               />
+              {feedback && (
+                <div
+                  className={`absolute top-0 right-0 transform translate-x-full -translate-y-1/4 rounded-full p-1 
+                    ${feedback === 'correct' ? 'bg-success text-white' : ''}`}
+                >
+                  {feedback === 'correct' ? '✓' : ''}
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -230,7 +258,7 @@ const TypingWarmup = ({ timeLimit, customNumberPadEnabled, onComplete }: TypingW
           </Button>
         </div>
 
-        {/* Custom Number Pad */}
+        {/* Custom Number Pad with improved mobile styling */}
         {customNumberPadEnabled && (
           <div className="w-full max-w-md mx-auto md:max-w-xl">
             <CustomNumberPad 
