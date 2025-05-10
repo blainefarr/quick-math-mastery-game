@@ -7,14 +7,15 @@ import { ACTIVE_PROFILE_KEY } from './profileUtils';
  * before allowing the user to proceed
  */
 export const completeSignUp = async (email: string, password: string, displayName: string) => {
-  // Step 1: Auth Sign Up
+  // Step 1: Auth Sign Up with enhanced security options
   const { data: authData, error: authError } = await supabase.auth.signUp({ 
     email, 
     password,
     options: {
       data: {
         name: displayName
-      }
+      },
+      emailRedirectTo: window.location.origin // Ensure redirects go back to our app
     }
   });
   

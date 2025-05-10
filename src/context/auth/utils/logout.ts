@@ -21,8 +21,11 @@ export const handleLogout = async (authState: AuthStateType) => {
     // Reset loading state to prevent UI issues
     setIsLoadingProfile(false);
     
-    // Sign out from Supabase
-    const { error } = await supabase.auth.signOut();
+    // Sign out from Supabase with more explicit options
+    const { error } = await supabase.auth.signOut({
+      scope: 'global' // Ensure we completely sign out from all tabs/windows
+    });
+    
     if (error) {
       throw error;
     }
@@ -43,6 +46,8 @@ export const handleLogout = async (authState: AuthStateType) => {
       localStorage.removeItem('supabase.auth.token');
       // Clear any potential session data
       localStorage.removeItem('sb-session');
+      // Clear any other auth-related items
+      sessionStorage.removeItem('PROFILE_SWITCHER_SHOWN_KEY');
     } catch (err) {
       // Ignore errors from localStorage operations
       console.warn('Error clearing localStorage items:', err);
