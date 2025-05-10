@@ -35,6 +35,8 @@ export const useGameSettings = () => {
       } else {
         // If no stored setting, default to enabled on mobile or tablet
         storedSettings.useCustomNumberPad = isMobileOrTablet;
+        // Also save this default to localStorage for future visits
+        localStorage.setItem('customNumberPadEnabled', JSON.stringify(isMobileOrTablet));
       }
       
       if (savedTypingSpeedAdjustment !== null) {
@@ -48,9 +50,13 @@ export const useGameSettings = () => {
     } catch (error) {
       console.error("Error loading settings from localStorage:", error);
       // If there was an error, still set default custom keypad on mobile or tablet
+      const useCustomPad = isMobileOrTablet;
+      // Save this default to localStorage for future visits
+      localStorage.setItem('customNumberPadEnabled', JSON.stringify(useCustomPad));
+      
       return {
         ...defaultSettings,
-        useCustomNumberPad: isMobileOrTablet
+        useCustomNumberPad: useCustomPad
       };
     }
   });

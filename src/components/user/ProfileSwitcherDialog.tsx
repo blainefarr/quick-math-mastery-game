@@ -183,8 +183,8 @@ export function ProfileSwitcherDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleDialogChange}>
-      <DialogContent className="sm:max-w-[600px] max-w-[90vw] p-0 overflow-hidden z-50">
-        <DialogHeader className="p-6 pb-0 py-[16px]">
+      <DialogContent className="sm:max-w-[600px] max-w-[90vw] p-0 overflow-hidden z-50 max-h-[90vh]">
+        <DialogHeader className="p-6 pb-0 py-4 sticky top-0 bg-background z-10">
           <DialogTitle className="text-2xl">Choose a Profile</DialogTitle>
           <DialogDescription>
             Select a profile or create a new one
@@ -204,7 +204,7 @@ export function ProfileSwitcherDialog({
             <p className="text-muted-foreground text-sm">Loading profiles...</p>
           </div>
         ) : (
-          <ScrollArea className="h-[60vh] md:h-auto px-6">
+          <ScrollArea className="max-h-[60vh] px-6">
               <div className="p-6 pt-0 px-[0px] my-[8px]">
                 <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 mb-6 px-[4px]">
                   {profiles.map(profile => (
@@ -248,7 +248,7 @@ export function ProfileSwitcherDialog({
                   </Card>
                 </div>
           
-                <div className="flex justify-end mx-[4px]">
+                <div className="flex justify-end mx-[4px] pb-4">
                   <Button variant="outline" onClick={() => {
                     onOpenChange(false);
                     setTimeout(() => {
