@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import useGame from '@/context/useGame';
 import { Button } from '@/components/ui/button';
@@ -285,11 +284,12 @@ const GameScreen = () => {
             inputRef={inputRef}
             value={userAnswer}
             onChange={handleInputChange}
-            readOnly={isShowingAnswer || useCustomNumberPad}
+            readOnly={isShowingAnswer}
             isNegative={isNegative}
             feedback={feedback}
             inputMode={useCustomNumberPad ? "none" : "numeric"}
             onInputInteraction={focusInput}
+            useCustomNumberPad={useCustomNumberPad}
           />
         </div>
       </GameCard>

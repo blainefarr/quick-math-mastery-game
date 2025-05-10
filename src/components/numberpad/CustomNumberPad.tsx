@@ -23,19 +23,26 @@ const CustomNumberPad: React.FC<CustomNumberPadProps> = ({
   const isMobile = useIsMobile();
   
   // Create a wrapper for button presses that calls both handlers
-  const handleNumberPress = useCallback((number: string) => {
+  const handleNumberPress = useCallback((number: string, e: React.PointerEvent) => {
+    // Prevent default behavior to avoid text selection
+    e.preventDefault();
+    
     onNumberPress(number);
     if (onButtonPress) onButtonPress();
   }, [onNumberPress, onButtonPress]);
 
   // Similarly for delete
-  const handleDelete = useCallback(() => {
+  const handleDelete = useCallback((e: React.PointerEvent) => {
+    e.preventDefault();
+    
     onDelete();
     if (onButtonPress) onButtonPress();
   }, [onDelete, onButtonPress]);
 
   // And for negative toggle
-  const handleNegativeToggle = useCallback(() => {
+  const handleNegativeToggle = useCallback((e: React.PointerEvent) => {
+    e.preventDefault();
+    
     onNegativeToggle();
     if (onButtonPress) onButtonPress();
   }, [onNegativeToggle, onButtonPress]);
@@ -63,7 +70,7 @@ const CustomNumberPad: React.FC<CustomNumberPadProps> = ({
           <Button
             key={num}
             variant="outline"
-            onPointerDown={() => handleNumberPress(num.toString())}
+            onPointerDown={(e) => handleNumberPress(num.toString(), e)}
             className={numberButtonClass}
             aria-label={num.toString()}
           >
@@ -76,7 +83,7 @@ const CustomNumberPad: React.FC<CustomNumberPadProps> = ({
           <Button
             key={num}
             variant="outline"
-            onPointerDown={() => handleNumberPress(num.toString())}
+            onPointerDown={(e) => handleNumberPress(num.toString(), e)}
             className={numberButtonClass}
             aria-label={num.toString()}
           >
@@ -89,7 +96,7 @@ const CustomNumberPad: React.FC<CustomNumberPadProps> = ({
           <Button
             key={num}
             variant="outline"
-            onPointerDown={() => handleNumberPress(num.toString())}
+            onPointerDown={(e) => handleNumberPress(num.toString(), e)}
             className={numberButtonClass}
             aria-label={num.toString()}
           >
@@ -113,7 +120,7 @@ const CustomNumberPad: React.FC<CustomNumberPadProps> = ({
         )}
         <Button
           variant="outline"
-          onPointerDown={() => handleNumberPress('0')}
+          onPointerDown={(e) => handleNumberPress('0', e)}
           className={numberButtonClass}
           aria-label="0"
         >

@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { useIsMobile } from '@/hooks/use-mobile';
 
@@ -12,6 +12,7 @@ interface NumberInputProps {
   feedback?: 'correct' | 'incorrect' | null;
   inputMode?: 'numeric' | 'none';
   onInputInteraction?: () => void;
+  useCustomNumberPad?: boolean;
 }
 
 const NumberInput: React.FC<NumberInputProps> = ({
@@ -22,16 +23,43 @@ const NumberInput: React.FC<NumberInputProps> = ({
   isNegative = false,
   feedback = null,
   inputMode = 'numeric',
-  onInputInteraction
+  onInputInteraction,
+  useCustomNumberPad = false
 }) => {
   const isMobile = useIsMobile();
+  
+  // Only set readOnly on mobile with custom number pad
+  const shouldBeReadOnly = readOnly || (useCustomNumberPad && isMobile);
+  
+  // Always use numeric inputMode on desktop, regardless of custom keypad
+  const effectiveInputMode = (!isMobile && useCustomNumberPad) ? 'numeric' : inputMode;
+  
+  // Prevent text selection when using custom keypad
+  useEffect(() => {
+    const currentInput = inputRef.current;
+    if (currentInput && useCustomNumberPad) {
+      // Reset selection when value changes
+      const selectionHandler = () => {
+        // Move cursor to end without selecting all text
+        currentInput.setSelectionRange(currentInput.value.length, currentInput.value.length);
+      };
+      
+      currentInput.addEventListener('focus', selectionHandler);
+      // Also handle after value updates
+      if (value) selectionHandler();
+      
+      return () => {
+        currentInput.removeEventListener('focus', selectionHandler);
+      };
+    }
+  }, [inputRef, value, useCustomNumberPad]);
 
   return (
     <div className="relative flex items-center">
       <Input
         ref={inputRef}
         type="text"
-        inputMode={inputMode}
+        inputMode={effectiveInputMode}
         pattern="[0-9]*"
         value={value}
         onChange={onChange}
@@ -41,11 +69,12 @@ const NumberInput: React.FC<NumberInputProps> = ({
         }`}
         autoComplete="off"
         autoFocus
-        readOnly={readOnly}
+        readOnly={shouldBeReadOnly}
         style={{
           MozAppearance: 'textfield',
           WebkitAppearance: 'none',
-          appearance: 'none'
+          appearance: 'none',
+          caretColor: useCustomNumberPad ? 'transparent' : 'auto' // Hide cursor with custom keypad
         }}
         onClick={(e) => {
           e.stopPropagation();
