@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { RotateCw } from 'lucide-react';
@@ -5,6 +6,8 @@ import { toast } from 'sonner';
 import useGame from '@/context/useGame';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useFocusManagement } from '@/hooks/use-focus-management';
+import { useFeedbackManagement } from '@/hooks/use-feedback-management';
+import { useTimerManagement } from '@/hooks/use-timer-management';
 import GameContainer from './game/GameContainer';
 import GameCard from './game/GameCard';
 import NumberInput from './game/NumberInput';
@@ -17,15 +20,32 @@ interface TypingWarmupProps {
 }
 
 const TypingWarmup = ({ timeLimit, customNumberPadEnabled, onComplete }: TypingWarmupProps) => {
-  const [timeLeft, setTimeLeft] = useState(timeLimit);
   const [currentNumber, setCurrentNumber] = useState('');
   const [userInput, setUserInput] = useState('');
   const [correctCount, setCorrectCount] = useState(0);
-  const [feedback, setFeedback] = useState<'correct' | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const correctCountRef = useRef(0);
   const { setGameState } = useGame();
   const hasEndedRef = useRef(false);
+  
+  // Use the feedback management hook
+  const { feedback, showFeedback, cleanupFeedback } = useFeedbackManagement({
+    feedbackDuration: 100 // Consistent with game play
+  });
+  
+  // Use the timer management hook
+  const { timeLeft } = useTimerManagement({
+    initialTime: timeLimit,
+    onTimerComplete: () => {
+      hasEndedRef.current = true;
+      // Calculate typing time per problem using the ref value to get the latest count
+      const finalCount = correctCountRef.current;
+      // Changed calculation: seconds per correct answer (with safety check for division by zero)
+      const typingTimePerProblem = finalCount > 0 ? timeLimit / finalCount : 0;
+      console.log(`Typing warmup completed with correct count: ${finalCount}, time limit: ${timeLimit}, calculated typing time per problem: ${typingTimePerProblem}`);
+      onComplete(typingTimePerProblem);
+    }
+  });
   
   // Set up focus management
   const { focusInput, attemptFocus, cleanupFocus } = useFocusManagement({
@@ -54,27 +74,9 @@ const TypingWarmup = ({ timeLimit, customNumberPadEnabled, onComplete }: TypingW
     console.log(`Setting initial focus delay of ${initialDelay}ms`);
     setTimeout(attemptFocus, initialDelay);
     
-    // Start the timer
-    const timer = setInterval(() => {
-      setTimeLeft((prevTime) => {
-        if (prevTime <= 1) {
-          clearInterval(timer);
-          hasEndedRef.current = true;
-          // Calculate typing time per problem using the ref value to get the latest count
-          const finalCount = correctCountRef.current;
-          // Changed calculation: seconds per correct answer (with safety check for division by zero)
-          const typingTimePerProblem = finalCount > 0 ? timeLimit / finalCount : 0;
-          console.log(`Typing warmup completed with correct count: ${finalCount}, time limit: ${timeLimit}, calculated typing time per problem: ${typingTimePerProblem}`);
-          onComplete(typingTimePerProblem);
-          return 0;
-        }
-        return prevTime - 1;
-      });
-    }, 1000);
-    
     return () => {
-      clearInterval(timer);
       cleanupFocus();
+      cleanupFeedback();
     };
   }, []);
 
@@ -91,7 +93,7 @@ const TypingWarmup = ({ timeLimit, customNumberPadEnabled, onComplete }: TypingW
   // Process a correct answer with feedback
   const processCorrectAnswer = () => {
     // Show feedback
-    setFeedback('correct');
+    showFeedback('correct');
     
     // Use setTimeout to allow the UI to update before showing feedback
     setTimeout(() => {
@@ -101,13 +103,12 @@ const TypingWarmup = ({ timeLimit, customNumberPadEnabled, onComplete }: TypingW
       // Clear feedback and move to next number after a brief delay
       setTimeout(() => {
         setUserInput('');
-        setFeedback(null);
         setCurrentNumber(generateRandomNumber());
       }, 100);
-    }, 250);
+    }, 100);
   };
 
-  // Handle number pad input with improved feedback like GameScreen
+  // Handle number pad input with improved feedback
   const handleNumberPress = (number: string) => {
     // Add the pressed number to current input
     const newInput = userInput + number;
@@ -160,17 +161,6 @@ const TypingWarmup = ({ timeLimit, customNumberPadEnabled, onComplete }: TypingW
         />
       </GameCard>
 
-      {/* Restart button */}
-      <div className="flex justify-center mb-4">
-        <Button 
-          variant="outline" 
-          onClick={handleRestartGame} 
-          className="flex items-center gap-2"
-        >
-          <RotateCw className="h-4 w-4" /> Restart Game
-        </Button>
-      </div>
-
       {/* Custom Number Pad with improved mobile styling */}
       <NumberPadContainer
         enabled={customNumberPadEnabled}
@@ -181,6 +171,17 @@ const TypingWarmup = ({ timeLimit, customNumberPadEnabled, onComplete }: TypingW
         showNegativeToggle={false}
         onButtonPress={focusInput}
       />
+
+      {/* Restart button moved to bottom */}
+      <div className="flex justify-center mt-4">
+        <Button 
+          variant="outline" 
+          onClick={handleRestartGame} 
+          className="flex items-center gap-2"
+        >
+          <RotateCw className="h-4 w-4" /> Restart Game
+        </Button>
+      </div>
     </GameContainer>
   );
 };

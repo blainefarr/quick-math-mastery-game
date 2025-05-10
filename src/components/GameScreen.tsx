@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { RotateCw } from 'lucide-react';
 import MathIcon from './common/MathIcon';
 import { useFocusManagement } from '@/hooks/use-focus-management';
+import { useFeedbackManagement } from '@/hooks/use-feedback-management';
 import GameContainer from './game/GameContainer';
 import GameCard from './game/GameCard';
 import NumberInput from './game/NumberInput';
@@ -24,7 +25,6 @@ const GameScreen = () => {
     setGameState
   } = useGame();
 
-  const [feedback, setFeedback] = useState<'correct' | 'incorrect' | null>(null);
   const [isNegative, setIsNegative] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const initialProblemGeneratedRef = useRef(false);
@@ -36,6 +36,9 @@ const GameScreen = () => {
   const [currentQuestionShown, setCurrentQuestionShown] = useState(false);
   const learnerTimeoutRef = useRef<number | null>(null);
   const showAnswerTimeoutRef = useRef<number | null>(null);
+
+  // Use the feedback management hook
+  const { feedback, showFeedback, clearFeedback, cleanupFeedback } = useFeedbackManagement();
 
   // Setup focus management
   const { focusInput, attemptFocus, cleanupFocus } = useFocusManagement({
@@ -76,6 +79,7 @@ const GameScreen = () => {
       initialProblemGeneratedRef.current = false;
       clearLearnerModeTimeouts();
       cleanupFocus();
+      cleanupFeedback();
     };
   }, []);
 
@@ -175,7 +179,7 @@ const GameScreen = () => {
     if (currentProblem && cleanValue.trim() !== "") {
       const numericValue = isNegative ? -Number(cleanValue) : Number(cleanValue);
       if (numericValue === currentProblem.answer) {
-        setFeedback('correct');
+        showFeedback('correct');
         
         // Always increment score when user enters correct answer, even after hint was shown
         incrementScore();
@@ -185,7 +189,6 @@ const GameScreen = () => {
         
         setTimeout(() => {
           setUserAnswer('');
-          setFeedback(null);
           setIsNegative(false);
           setShowEncouragement(false);
           setCurrentQuestionShown(false);
@@ -215,13 +218,12 @@ const GameScreen = () => {
       if (numericValue === currentProblem.answer) {
         // Use setTimeout to allow the UI to update before showing feedback
         setTimeout(() => {
-          setFeedback('correct');
+          showFeedback('correct');
           incrementScore();
           clearLearnerModeTimeouts();
           
           setTimeout(() => {
             setUserAnswer('');
-            setFeedback(null);
             setIsNegative(false);
             setShowEncouragement(false);
             setCurrentQuestionShown(false);

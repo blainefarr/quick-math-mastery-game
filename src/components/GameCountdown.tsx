@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
+
+import React from 'react';
 import { Button } from '@/components/ui/button';
 import { RotateCw } from 'lucide-react';
-import { useCompactHeight } from '@/hooks/use-compact-height';
 import useGame from '@/context/useGame';
-import { useIsMobile } from '@/hooks/use-mobile';
+import { useTimerManagement } from '@/hooks/use-timer-management';
+import GameContainer from './game/GameContainer';
+import GameCard from './game/GameCard';
 
 interface GameCountdownProps {
   onComplete: () => void;
@@ -17,10 +18,16 @@ const GameCountdown = ({
   message = "⚡ It's game time! ⚡",
   isTypingWarmup = false
 }: GameCountdownProps) => {
-  const [countdown, setCountdown] = useState<number>(3);
-  const isCompactHeight = useCompactHeight();
   const { setGameState, settings, scoreHistory, isLoggedIn } = useGame();
-  const isMobile = useIsMobile();
+
+  // Use the timer management hook for countdown
+  const { timeLeft } = useTimerManagement({
+    initialTime: 3,
+    onTimerComplete: () => {
+      // Use a timeout to allow for the "GO!" to display briefly
+      setTimeout(onComplete, 500);
+    }
+  });
 
   // Get the best score for the current game settings
   const getBestScore = () => {
@@ -58,61 +65,41 @@ const GameCountdown = ({
     return "🔥 Set a new record";
   };
 
-  // Handle the countdown
-  useEffect(() => {
-    if (countdown > 0) {
-      const countdownTimer = setTimeout(() => {
-        setCountdown(countdown - 1);
-      }, 1000);
-      return () => clearTimeout(countdownTimer);
-    } else {
-      // Increase the delay significantly for mobile devices to ensure proper transitions
-      const delay = isMobile ? 800 : 300;
-      console.log(`GameCountdown complete, transitioning with ${delay}ms delay`);
-      
-      setTimeout(() => {
-        onComplete();
-      }, delay);
-    }
-  }, [countdown, onComplete, isMobile]);
-
   // Handle restart game
   const handleRestartGame = () => {
     setGameState('selection');
   };
 
   return (
-    <div className={`flex justify-center items-center min-h-screen p-4 bg-background ${
-      isCompactHeight ? 'pt-0 mt-0' : 'pt-4'
-    }`}>
-      <div className={`w-full max-w-xl ${
-        isCompactHeight ? 'mt-0' : 'mt-8'
-      }`}>
-        <Card className={`${
-          isCompactHeight ? 'mb-4 py-6' : 'mb-6 py-10'
-        } px-6 shadow-lg animate-fade-in`}>
-          <CardContent className="flex flex-col justify-center items-center text-center gap-4">
-            <h2 className="text-2xl font-bold mt-4">{message}</h2>
-            <div className="text-4xl font-bold mt-2 text-green-500">
-              {countdown || "GO!"}
-            </div>
-            {/* Only show motivational text for game countdown, not typing warmup */}
-            {!isTypingWarmup && <p className="text-gray-600">{getMotivationalText()}</p>}
-          </CardContent>
-        </Card>
-
-        {/* Restart button */}
-        <div className="flex justify-center mb-4">
-          <Button 
-            variant="outline" 
-            onClick={handleRestartGame} 
-            className="flex items-center gap-2"
-          >
-            <RotateCw className="h-4 w-4" /> Restart Game
-          </Button>
+    <GameContainer
+      timeLeft={0} // Hide the timer
+      score={null} // Hide the score
+      onContainerInteraction={() => {}} // No input needed for countdown
+      scoreLabel="Ready:"
+    >
+      <GameCard
+        feedback={null} // No feedback during countdown
+        onCardInteraction={() => {}} // No interaction needed
+      >
+        <h2 className="text-2xl font-bold mt-4">{message}</h2>
+        <div className="text-4xl font-bold mt-2 text-green-500">
+          {timeLeft || "GO!"}
         </div>
+        {/* Only show motivational text for game countdown, not typing warmup */}
+        {!isTypingWarmup && <p className="text-gray-600">{getMotivationalText()}</p>}
+      </GameCard>
+
+      {/* Restart button */}
+      <div className="flex justify-center mt-4">
+        <Button 
+          variant="outline" 
+          onClick={handleRestartGame} 
+          className="flex items-center gap-2"
+        >
+          <RotateCw className="h-4 w-4" /> Restart Game
+        </Button>
       </div>
-    </div>
+    </GameContainer>
   );
 };
 
