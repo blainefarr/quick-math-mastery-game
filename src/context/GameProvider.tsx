@@ -38,7 +38,6 @@ const GameProvider = ({ children }: GameProviderProps) => {
   // Use the timer management hook
   const { 
     timeLeft, 
-    setTimeLeft, 
     startTimer, 
     resetTimer, 
     pauseTimer,
@@ -46,12 +45,13 @@ const GameProvider = ({ children }: GameProviderProps) => {
   } = useTimerManagement({
     initialTime: settings.timerSeconds,
     onTimerComplete: () => {
+      console.log("Timer complete callback triggered");
       // Use setTimeout to ensure state updates have completed
       setTimeout(() => endGame('timeout'), 0);
     },
     onTimerTick: (time) => {
-      // This will be called every second with the updated time
-      // No need to do anything special here as the hook manages the time
+      console.log("Timer tick:", time);
+      // This callback is important - we need it to update our UI
     },
     autoStart: false // We'll manually start the timer when needed
   });
@@ -73,6 +73,7 @@ const GameProvider = ({ children }: GameProviderProps) => {
   // Handle game state changes and timer management
   useEffect(() => {
     if (gameState === 'playing') {
+      console.log('Game state changed to playing, resetting timer to:', settings.timerSeconds);
       // Reset and start the timer when game state changes to playing
       resetTimer(settings.timerSeconds);
       startTimer();
@@ -195,7 +196,7 @@ const GameProvider = ({ children }: GameProviderProps) => {
     currentProblem,
     generateNewProblem,
     timeLeft,
-    setTimeLeft,
+    setTimeLeft: resetTimer, // Use resetTimer as setTimeLeft to ensure the hook's state is updated
     userAnswer,
     setUserAnswer,
     scoreHistory,
