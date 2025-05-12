@@ -16,29 +16,29 @@ const Plans = () => {
   const [individualInterval, setIndividualInterval] = useState<'annual' | 'monthly' | 'one_time'>('annual');
   const [familyInterval, setFamilyInterval] = useState<'annual' | 'monthly' | 'one_time'>('annual');
   
-  // Pricing data
+  // Updated pricing data to match the Stripe pricing
   const pricingData = {
     individual: {
-      monthly: 4.99,
-      annual: 49.99,
-      one_time: 149.99,
+      monthly: 2.50,
+      annual: 10.00,
+      one_time: 18.00,
       maxUsers: 1,
     },
     family: {
-      monthly: 7.99,
-      annual: 79.99,
-      one_time: 199.99,
+      monthly: 3.50,
+      annual: 10.00,
+      one_time: 25.00,
       maxUsers: 5,
     },
     teacher: {
-      price: 99.99,
+      price: 60.00,
       billing: 'per year',
-      maxUsers: 30,
+      maxUsers: 40,
     },
     school: {
-      price: 499.99,
+      price: 600.00,
       billing: 'per year',
-      maxUsers: 200,
+      maxUsers: 500,
     }
   };
 
@@ -248,7 +248,7 @@ const Plans = () => {
           )}
           <CardHeader className="text-center pb-2">
             <div className="mx-auto bg-primary/10 rounded-full p-3 mb-2">
-              <ClipboardList className="h-6 w-6 text-primary" />
+              <School className="h-6 w-6 text-primary" />
             </div>
             <h2 className="text-xl font-bold">Teacher</h2>
             <p className="text-sm text-muted-foreground">Ideal for classrooms</p>
