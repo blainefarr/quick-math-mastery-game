@@ -15,9 +15,10 @@ export function useFocusManagement({
 }: UseFocusManagementOptions) {
   const isMobile = useIsMobile();
   const focusAttemptsMadeRef = useRef(0);
-  const maxFocusAttempts = 10;
+  // Reduce max attempts and only retry on mobile
+  const maxFocusAttempts = isMobile ? 3 : 1;
 
-  // Enhanced focus mechanism with multiple attempts
+  // Simplified focus mechanism with fewer attempts
   const attemptFocus = () => {
     if (hasEnded || focusAttemptsMadeRef.current >= maxFocusAttempts) return;
     
@@ -37,9 +38,9 @@ export function useFocusManagement({
       }
     }
     
-    // Continue trying to focus if not at max attempts with adaptive timing
-    if (focusAttemptsMadeRef.current < maxFocusAttempts) {
-      setTimeout(attemptFocus, isMobile ? 300 : 150);
+    // Only retry on mobile with reduced frequency
+    if (isMobile && focusAttemptsMadeRef.current < maxFocusAttempts) {
+      setTimeout(attemptFocus, 300);
     }
   };
 
@@ -47,7 +48,7 @@ export function useFocusManagement({
     // Reset the attempt counter to allow a fresh batch of focus attempts
     focusAttemptsMadeRef.current = 0;
     
-    console.log('Manual focus triggered on input - beginning focus attempts');
+    console.log('Manual focus triggered on input');
     attemptFocus();
   };
 

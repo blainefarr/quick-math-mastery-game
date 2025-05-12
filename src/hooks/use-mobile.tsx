@@ -22,21 +22,26 @@ function isTabletUserAgent() {
 
 export function useIsMobile() {
   const [isMobile, setIsMobile] = React.useState<boolean | undefined>(
-    typeof window !== 'undefined' ? (window.innerWidth < MOBILE_BREAKPOINT || isMobileUserAgent()) : undefined
+    typeof window !== 'undefined' ? isMobileUserAgent() : undefined
   )
 
   React.useEffect(() => {
     if (typeof window === 'undefined') return;
     
     const handleResize = () => {
-      setIsMobile(window.innerWidth < MOBILE_BREAKPOINT || isMobileUserAgent())
+      // Prioritize user agent detection and only use screen width as a fallback
+      setIsMobile(isMobileUserAgent() || (window.innerWidth < MOBILE_BREAKPOINT && !window.matchMedia('(pointer: fine)').matches))
     }
     
     // Set initial value immediately
     handleResize()
     
     // Log detection for debugging
-    console.log('Mobile detection:', window.innerWidth < MOBILE_BREAKPOINT ? 'Screen width (mobile)' : 'Screen width (not mobile)', isMobileUserAgent() ? 'User agent (mobile)' : 'User agent (not mobile)')
+    console.log('Mobile detection:', 
+      isMobileUserAgent() ? 'Mobile user agent detected' : 'Desktop user agent detected',
+      window.innerWidth < MOBILE_BREAKPOINT ? 'Small screen width' : 'Large screen width',
+      window.matchMedia('(pointer: fine)').matches ? 'Fine pointer (mouse) detected' : 'No fine pointer (touch)'
+    )
     
     // Add event listener
     window.addEventListener("resize", handleResize)
@@ -52,21 +57,26 @@ export function useIsMobile() {
 // Enhanced hook for detecting mobile or tablet
 export function useIsMobileOrTablet() {
   const [isMobileOrTablet, setIsMobileOrTablet] = React.useState<boolean | undefined>(
-    typeof window !== 'undefined' ? (window.innerWidth < TABLET_BREAKPOINT || isMobileUserAgent() || isTabletUserAgent()) : undefined
+    typeof window !== 'undefined' ? (isMobileUserAgent() || isTabletUserAgent()) : undefined
   )
 
   React.useEffect(() => {
     if (typeof window === 'undefined') return;
     
     const handleResize = () => {
-      const byWidth = window.innerWidth < TABLET_BREAKPOINT;
+      // Prioritize user agent detection and use pointer detection as a secondary signal
       const byUserAgent = isMobileUserAgent() || isTabletUserAgent();
-      setIsMobileOrTablet(byWidth || byUserAgent);
+      const byPointer = !window.matchMedia('(pointer: fine)').matches;
+      const byWidth = window.innerWidth < TABLET_BREAKPOINT;
+      
+      // If user agent detects mobile/tablet OR (small screen AND no mouse), consider it mobile/tablet
+      setIsMobileOrTablet(byUserAgent || (byWidth && byPointer));
       
       // Log detection details for debugging
       console.log('Device detection:', 
-        byWidth ? 'Screen width indicates mobile/tablet' : 'Screen width indicates desktop',
-        byUserAgent ? 'User agent indicates mobile/tablet' : 'User agent indicates desktop'
+        byUserAgent ? 'Mobile/tablet user agent detected' : 'Desktop user agent detected',
+        byWidth ? 'Small/medium screen width' : 'Large screen width',
+        byPointer ? 'No fine pointer (likely touch)' : 'Fine pointer (mouse) detected'
       );
     }
     

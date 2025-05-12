@@ -39,7 +39,7 @@ const GameScreen = () => {
   // Use the feedback management hook
   const { feedback, showFeedback, clearFeedback, cleanupFeedback } = useFeedbackManagement();
 
-  // Setup focus management
+  // Setup focus management with reduced retries
   const { focusInput, attemptFocus, cleanupFocus } = useFocusManagement({
     inputRef,
     hasEnded: hasEndedRef.current
@@ -68,8 +68,8 @@ const GameScreen = () => {
       initialProblemGeneratedRef.current = true;
     }
     
-    // Initial delay before starting focus attempts - increased for better reliability
-    const initialDelay = 1000;
+    // Reduced delay and only one attempt for desktop
+    const initialDelay = 300;
     
     console.log(`Setting initial focus delay of ${initialDelay}ms`);
     setTimeout(attemptFocus, initialDelay);
@@ -163,7 +163,9 @@ const GameScreen = () => {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const rawValue = e.target.value;
-    const cleanValue = rawValue.replace(/^-/, '');
+    
+    // Only accept numeric input
+    const cleanValue = rawValue.replace(/[^0-9]/g, '');
     
     // Don't update input if we're showing the answer in learner mode
     if (!isShowingAnswer) {
@@ -250,10 +252,14 @@ const GameScreen = () => {
     }
   };
 
-  // Card interaction handler
+  // Simplified card interaction handler - always focus on click
   const handleCardInteraction = (e: React.MouseEvent | React.TouchEvent) => {
     e.stopPropagation();
-    focusInput();
+    
+    // Force input focus without multiple attempts
+    if (inputRef.current && !hasEndedRef.current) {
+      inputRef.current.focus();
+    }
   };
 
   const showNegativeToggle = settings.allowNegatives;

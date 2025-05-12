@@ -28,20 +28,29 @@ const NumberInput: React.FC<NumberInputProps> = ({
 }) => {
   const isMobileOrTablet = useIsMobileOrTablet();
   
-  // Only set readOnly on mobile/tablet with custom number pad
-  // Desktop should always allow keyboard input even with custom number pad
+  // IMPORTANT: On desktop, never set readOnly when using custom number pad
+  // This allows keyboard input to work alongside the custom number pad
   const shouldBeReadOnly = readOnly || (useCustomNumberPad && isMobileOrTablet);
   
-  // Always use numeric inputMode for keyboard accessibility, regardless of device or custom keypad
+  // Always use numeric inputMode for keyboard accessibility
   const effectiveInputMode = 'numeric';
+
+  useEffect(() => {
+    // Focus the input when component mounts or when the value changes
+    if (inputRef.current && !readOnly && !isMobileOrTablet) {
+      inputRef.current.focus();
+    }
+  }, [inputRef, readOnly, isMobileOrTablet]);
   
   useEffect(() => {
     const currentInput = inputRef.current;
     if (currentInput && useCustomNumberPad) {
       // Reset selection when value changes
       const selectionHandler = () => {
-        // Move cursor to end without selecting all text
-        currentInput.setSelectionRange(currentInput.value.length, currentInput.value.length);
+        if (isMobileOrTablet) {
+          // Move cursor to end without selecting all text on mobile/tablet
+          currentInput.setSelectionRange(currentInput.value.length, currentInput.value.length);
+        }
       };
       
       currentInput.addEventListener('focus', selectionHandler);
@@ -52,7 +61,20 @@ const NumberInput: React.FC<NumberInputProps> = ({
         currentInput.removeEventListener('focus', selectionHandler);
       };
     }
-  }, [inputRef, value, useCustomNumberPad]);
+  }, [inputRef, value, useCustomNumberPad, isMobileOrTablet]);
+
+  const handleClick = (e: React.MouseEvent<HTMLInputElement>) => {
+    e.stopPropagation();
+    
+    if (onInputInteraction) {
+      onInputInteraction();
+    }
+    
+    // Always focus on click - this is crucial for desktop
+    if (inputRef.current) {
+      inputRef.current.focus();
+    }
+  };
 
   return (
     <div className="relative flex items-center">
@@ -68,7 +90,8 @@ const NumberInput: React.FC<NumberInputProps> = ({
           feedback === 'incorrect' ? 'text-destructive' : ''
         }`}
         autoComplete="off"
-        autoFocus
+        // Only auto-focus on desktop
+        autoFocus={!isMobileOrTablet}
         readOnly={shouldBeReadOnly}
         style={{
           MozAppearance: 'textfield',
@@ -77,15 +100,7 @@ const NumberInput: React.FC<NumberInputProps> = ({
           // Only hide cursor on mobile/tablet with custom keypad
           caretColor: useCustomNumberPad && isMobileOrTablet ? 'transparent' : 'auto'
         }}
-        onClick={(e) => {
-          e.stopPropagation();
-          if (isMobileOrTablet) {
-            e.currentTarget.focus();
-          }
-          if (onInputInteraction) {
-            onInputInteraction();
-          }
-        }}
+        onClick={handleClick}
       />
       {isNegative && (
         <span className="absolute top-1/2 transform -translate-y-1/2 -left-10 text-4xl md:text-6xl z-20 select-none">-</span>
