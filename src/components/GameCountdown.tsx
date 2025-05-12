@@ -72,12 +72,20 @@ const GameCountdown = ({
     setGameState('selection');
   };
 
+  // Empty handler functions for the required props
+  const handleContainerInteraction = () => {};
+  const handleCardInteraction = () => {};
+
   return (
     <GameContainer
       timeLeft={0} // Hide the timer
       score={null} // Hide the score
+      onContainerInteraction={handleContainerInteraction} // Add the required prop
     >
-      <GameCard>
+      <GameCard
+        feedback={null} // Add the required prop
+        onCardInteraction={handleCardInteraction} // Add the required prop
+      >
         <h2 className="text-2xl font-bold mb-4">{message}</h2>
         <div className="text-4xl md:text-6xl font-bold mb-4 text-green-500">
           {timeLeft || "GO!"}
