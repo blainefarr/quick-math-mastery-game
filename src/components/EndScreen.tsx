@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import useGame from '@/context/useGame';
@@ -90,6 +91,16 @@ const EndScreen = () => {
     if (position === 3) return { position: 3, label: "Your 3rd Best!" };
     if (position <= 10) return { position: position, label: `Your ${position}th Best!` };
     return null;
+  };
+  
+  // Determine if we should display rank based on user status and score
+  const shouldDisplayRank = () => {
+    // For guest users, always show rank to encourage sign-up
+    if (!isLoggedIn) return true;
+    
+    // For logged-in users, only show rank if this is their personal best score
+    const personalBestRank = getPersonalBestRanking();
+    return personalBestRank?.position === 1;
   };
   
   // Get achievement level based on score
@@ -194,6 +205,9 @@ const EndScreen = () => {
 
   // Determine what rank to display for non-logged in users
   const displayGuestRank = guestRank || null;
+  
+  // Check if we should display the rank badge
+  const displayRankBadge = shouldDisplayRank();
 
   return (
     <main className="flex flex-col items-center w-full min-h-screen px-4 pt-6 sm:pt-10">
@@ -245,7 +259,7 @@ const EndScreen = () => {
                   )}
                   
                   {isLoggedIn ? (
-                    userRank && (
+                    displayRankBadge && userRank && (
                       <Badge 
                         variant="outline" 
                         className="cursor-pointer animate-fade-in hover:bg-muted/50" 
