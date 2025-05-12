@@ -78,7 +78,7 @@ const GameCountdown = ({
 
   return (
     <GameContainer
-      timeLeft={0} // Hide the timer
+      timeLeft={upcomingDuration || 0} // Show the upcoming duration in the timer
       score={null} // Hide the score
       onContainerInteraction={handleContainerInteraction} // Add the required prop
     >
@@ -90,12 +90,6 @@ const GameCountdown = ({
         <div className="text-4xl md:text-6xl font-bold mb-4 text-green-500">
           {timeLeft || "GO!"}
         </div>
-        {/* Display upcoming duration if provided */}
-        {upcomingDuration && (
-          <p className="text-gray-500 mb-2">
-            {upcomingDuration} seconds
-          </p>
-        )}
         {/* Only show motivational text for game countdown, not typing warmup */}
         {!isTypingWarmup && <p className="text-gray-600 mb-2">{getMotivationalText()}</p>}
       </GameCard>
