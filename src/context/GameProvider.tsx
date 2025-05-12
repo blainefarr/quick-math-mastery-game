@@ -26,6 +26,8 @@ const GameProvider = ({ children }: GameProviderProps) => {
   const gameStateRef = useRef<GameState>('selection');
   // Add a new ref to track if the game is ending
   const isEndingRef = useRef(false);
+  // Add a ref to track if timer has been initialized for the current game session
+  const timerInitializedRef = useRef(false);
 
   const { 
     scoreHistory, 
@@ -51,7 +53,6 @@ const GameProvider = ({ children }: GameProviderProps) => {
     },
     onTimerTick: (time) => {
       console.log("Timer tick:", time);
-      // This callback is important - we need it to update our UI
     },
     autoStart: false // We'll manually start the timer when needed
   });
@@ -72,20 +73,29 @@ const GameProvider = ({ children }: GameProviderProps) => {
 
   // Handle game state changes and timer management
   useEffect(() => {
-    if (gameState === 'playing') {
-      console.log('Game state changed to playing, resetting timer to:', settings.timerSeconds);
-      // Reset and start the timer when game state changes to playing
+    if (gameState === 'playing' && !timerInitializedRef.current) {
+      console.log('Initializing game timer to:', settings.timerSeconds);
+      // Reset and start the timer only when first changing to playing state
       resetTimer(settings.timerSeconds);
       startTimer();
+      
+      // Mark timer as initialized
+      timerInitializedRef.current = true;
       
       // Reset the isEnding flag when starting a new game
       isEndingRef.current = false;
     } else if (gameState === 'ended' && userId && defaultProfileId) {
+      // Reset timer initialized flag when game ends
+      timerInitializedRef.current = false;
+      
       fetchUserScores().then(scores => {
         if (scores) {
           setScoreHistory(scores);
         }
       });
+    } else if (gameState !== 'playing') {
+      // Reset timer initialized flag for non-playing states
+      timerInitializedRef.current = false;
     }
     
     // Clean up timer when component unmounts or game state changes
@@ -94,9 +104,11 @@ const GameProvider = ({ children }: GameProviderProps) => {
     };
   }, [gameState, userId, fetchUserScores, setScoreHistory, defaultProfileId, resetTimer, startTimer, settings.timerSeconds]);
 
-  // Update timer when settings change
+  // Update timer when settings change - but only if we're not already playing
   useEffect(() => {
-    if (gameState === 'playing') {
+    // Only reset timer if settings change while not in active gameplay
+    if (gameState !== 'playing') {
+      // This is a settings change outside of active gameplay, so don't start timer
       resetTimer(settings.timerSeconds);
     }
   }, [settings.timerSeconds, resetTimer, gameState]);
