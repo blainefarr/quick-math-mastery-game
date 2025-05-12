@@ -11,6 +11,9 @@ import GameCountdown from '@/components/GameCountdown';
 const Index = () => {
   const { gameState, setGameState, settings, setTypingSpeed } = useGame();
   
+  // Define the typing warmup duration
+  const TYPING_WARMUP_DURATION = 15;
+  
   const handleWarmupComplete = (speed: number) => {
     console.log('Typing warmup completed with speed:', speed);
     setTypingSpeed(speed);
@@ -33,17 +36,21 @@ const Index = () => {
           onComplete={handleWarmupCountdownComplete}
           message="Let's start with a typing warmup!"
           isTypingWarmup={true}
+          upcomingDuration={TYPING_WARMUP_DURATION}
         />
       }
       {gameState === 'warmup' && 
         <TypingWarmup 
-          timeLimit={15}
+          timeLimit={TYPING_WARMUP_DURATION}
           customNumberPadEnabled={settings.useCustomNumberPad || false}
           onComplete={handleWarmupComplete}
         />
       }
       {gameState === 'countdown' && 
-        <GameCountdown onComplete={handleCountdownComplete} />
+        <GameCountdown 
+          onComplete={handleCountdownComplete}
+          upcomingDuration={settings.timerSeconds}
+        />
       }
       {gameState === 'playing' && <GameScreen />}
       {gameState === 'ended' && <EndScreen />}

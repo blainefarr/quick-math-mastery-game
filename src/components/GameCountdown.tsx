@@ -11,12 +11,14 @@ interface GameCountdownProps {
   onComplete: () => void;
   message?: string;
   isTypingWarmup?: boolean;
+  upcomingDuration?: number;
 }
 
 const GameCountdown = ({ 
   onComplete,
   message = "⚡ It's game time! ⚡",
-  isTypingWarmup = false
+  isTypingWarmup = false,
+  upcomingDuration
 }: GameCountdownProps) => {
   const { setGameState, settings, scoreHistory, isLoggedIn } = useGame();
 
@@ -74,17 +76,18 @@ const GameCountdown = ({
     <GameContainer
       timeLeft={0} // Hide the timer
       score={null} // Hide the score
-      onContainerInteraction={() => {}} // No input needed for countdown
-      scoreLabel="Ready:"
     >
-      <GameCard
-        feedback={null} // No feedback during countdown
-        onCardInteraction={() => {}} // No interaction needed
-      >
+      <GameCard>
         <h2 className="text-2xl font-bold mb-4">{message}</h2>
         <div className="text-4xl md:text-6xl font-bold mb-4 text-green-500">
           {timeLeft || "GO!"}
         </div>
+        {/* Display upcoming duration if provided */}
+        {upcomingDuration && (
+          <p className="text-gray-500 mb-2">
+            {upcomingDuration} seconds
+          </p>
+        )}
         {/* Only show motivational text for game countdown, not typing warmup */}
         {!isTypingWarmup && <p className="text-gray-600 mb-2">{getMotivationalText()}</p>}
       </GameCard>

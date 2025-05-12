@@ -10,7 +10,7 @@ import { useAuth } from './auth/useAuth';
 import { toast } from 'sonner';
 
 const GameProvider = ({ children }: GameProviderProps) => {
-  const { settings, updateSettings, resetSettings } = useGameSettings();
+  const { settings, updateSettings } = useGameSettings();
   const { currentProblem, generateNewProblem } = useProblemGenerator();
   const { userId, defaultProfileId } = useAuth();
   
@@ -24,9 +24,9 @@ const GameProvider = ({ children }: GameProviderProps) => {
   const scoreRef = useRef(0);
   const typingSpeedRef = useRef<number | null>(null);
   const gameStateRef = useRef<GameState>('selection');
-  // Add a new ref to track if the game is ending
+  // Track if the game is ending
   const isEndingRef = useRef(false);
-  // Add a ref to track if timer has been initialized for the current game session
+  // Track if timer has been initialized for the current game session
   const timerInitializedRef = useRef(false);
 
   const { 
@@ -47,12 +47,8 @@ const GameProvider = ({ children }: GameProviderProps) => {
   } = useTimerManagement({
     initialTime: settings.timerSeconds,
     onTimerComplete: () => {
-      console.log("Timer complete callback triggered");
       // Use setTimeout to ensure state updates have completed
       setTimeout(() => endGame('timeout'), 0);
-    },
-    onTimerTick: (time) => {
-      console.log("Timer tick:", time);
     },
     autoStart: false // We'll manually start the timer when needed
   });
@@ -64,7 +60,6 @@ const GameProvider = ({ children }: GameProviderProps) => {
 
   useEffect(() => {
     typingSpeedRef.current = typingSpeed;
-    console.log('Typing speed updated in ref:', typingSpeed);
   }, [typingSpeed]);
 
   useEffect(() => {
@@ -74,7 +69,6 @@ const GameProvider = ({ children }: GameProviderProps) => {
   // Handle game state changes and timer management
   useEffect(() => {
     if (gameState === 'playing' && !timerInitializedRef.current) {
-      console.log('Initializing game timer to:', settings.timerSeconds);
       // Reset and start the timer only when first changing to playing state
       resetTimer(settings.timerSeconds);
       startTimer();
@@ -97,11 +91,6 @@ const GameProvider = ({ children }: GameProviderProps) => {
       // Reset timer initialized flag for non-playing states
       timerInitializedRef.current = false;
     }
-    
-    // Clean up timer when component unmounts or game state changes
-    return () => {
-      // Timer cleanup is handled by the hook
-    };
   }, [gameState, userId, fetchUserScores, setScoreHistory, defaultProfileId, resetTimer, startTimer, settings.timerSeconds]);
 
   // Update timer when settings change - but only if we're not already playing
@@ -116,13 +105,11 @@ const GameProvider = ({ children }: GameProviderProps) => {
   const incrementScore = () => {
     // Don't increment score if the game is ending
     if (isEndingRef.current) {
-      console.log('Game is ending, not incrementing score');
       return;
     }
     
     setScore(prev => {
       const newScore = prev + 1;
-      console.log('Score incremented:', newScore);
       scoreRef.current = newScore;
       return newScore;
     });
@@ -146,11 +133,8 @@ const GameProvider = ({ children }: GameProviderProps) => {
     const finalScore = scoreRef.current;
     const finalTypingSpeed = typingSpeedRef.current;
     
-    console.log(`Ending game with reason: ${reason}, final score: ${finalScore}, typing time per problem: ${finalTypingSpeed}`);
-    
     // Only save score on timeout (normal game end) and when user is logged in
     if (reason === 'timeout' && isLoggedIn && defaultProfileId) {
-      console.log(`Attempting to save score: ${finalScore}`);
       try {
         // Calculate metrics with updated logic and variables
         // Now assuming typing speed represents seconds per typing problem
@@ -162,7 +146,6 @@ const GameProvider = ({ children }: GameProviderProps) => {
           // Typing speed is now seconds per typing problem
           // Math time is answer time minus typing time
           math_time_per_problem = Math.max(0, answer_time_per_problem - finalTypingSpeed);
-          console.log(`Typing time per problem: ${finalTypingSpeed}, Answer time per problem: ${answer_time_per_problem}, Math time per problem: ${math_time_per_problem}`);
         }
         
         const success = await saveScore(
@@ -176,17 +159,14 @@ const GameProvider = ({ children }: GameProviderProps) => {
         );
         
         if (success) {
-          console.log("Score saved successfully");
           // Set game state to ended only after successful save
           setGameState('ended');
         } else {
-          console.error("Failed to save score");
           toast.error("Failed to save your score");
           // Still move to ended state
           setGameState('ended');
         }
       } catch (error) {
-        console.error("Failed to save score:", error);
         toast.error("Failed to save your score");
         // Still move to ended state
         setGameState('ended');
@@ -208,7 +188,7 @@ const GameProvider = ({ children }: GameProviderProps) => {
     currentProblem,
     generateNewProblem,
     timeLeft,
-    setTimeLeft: resetTimer, // Use resetTimer as setTimeLeft to ensure the hook's state is updated
+    setTimeLeft: resetTimer, 
     userAnswer,
     setUserAnswer,
     scoreHistory,
