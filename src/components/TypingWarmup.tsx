@@ -192,9 +192,9 @@ const TypingWarmup = ({ timeLimit, customNumberPadEnabled, onComplete }: TypingW
           inputRef={inputRef}
           value={userInput}
           onChange={handleInputChange}
-          readOnly={customNumberPadEnabled}
+          useCustomNumberPad={customNumberPadEnabled}
           feedback={feedback}
-          inputMode={customNumberPadEnabled ? "none" : "numeric"}
+          inputMode="numeric"
           onInputInteraction={focusInput}
         />
       </GameCard>

@@ -15,7 +15,7 @@ export function useFocusManagement({
 }: UseFocusManagementOptions) {
   const isMobile = useIsMobile();
   const focusAttemptsMadeRef = useRef(0);
-  // Reduce max attempts and only retry on mobile
+  // Reduce max attempts - one attempt for desktop, up to 3 for mobile
   const maxFocusAttempts = isMobile ? 3 : 1;
 
   // Simplified focus mechanism with fewer attempts
@@ -38,7 +38,7 @@ export function useFocusManagement({
       }
     }
     
-    // Only retry on mobile with reduced frequency
+    // Only retry on mobile with reduced frequency and max attempts
     if (isMobile && focusAttemptsMadeRef.current < maxFocusAttempts) {
       setTimeout(attemptFocus, 300);
     }
