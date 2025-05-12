@@ -87,7 +87,8 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
   };
   
   // Enhanced check and refresh subscription details with better error handling
-  const checkAndRefreshSubscription = async () => {
+  // Fixed to return void instead of boolean
+  const checkAndRefreshSubscription = async (): Promise<void> => {
     if (!authState.userId) return;
     
     try {
@@ -143,8 +144,8 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
     } catch (error) {
       console.error('Error refreshing subscription:', error);
       toast.error('Failed to verify subscription status');
-      return false;
     }
+    // No return statement or explicitly returning undefined to match Promise<void>
   };
 
   const value: AuthContextType = {
