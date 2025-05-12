@@ -1,7 +1,6 @@
-
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Check, Users, Goal, ProgressSquare, Keyboard, LineChart, ClipboardList, CircleDollarSign, CircleCheck } from 'lucide-react';
+import { ArrowLeft, Check, Users, Goal, LineChart, Keyboard, ClipboardList, CircleDollarSign, CircleCheck } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -82,7 +81,7 @@ const Plans = () => {
       case 'goals':
         return <Goal className="h-5 w-5 text-primary" />;
       case 'progress':
-        return <ProgressSquare className="h-5 w-5 text-primary" />;
+        return <LineChart className="h-5 w-5 text-primary" />;
       case 'typing':
         return <Keyboard className="h-5 w-5 text-primary" />;
       case 'reports':
