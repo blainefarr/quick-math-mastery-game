@@ -128,10 +128,9 @@ const Plans = () => {
               <p className="text-3xl font-bold">{getPriceDisplay('individual', individualInterval)}</p>
               <Select 
                 value={individualInterval} 
-                onValueChange={(value) => setIndividualInterval(value as 'monthly' | 'annual' | 'one_time')}
-                className="mt-2"
+                onValueChange={(value: string) => setIndividualInterval(value as 'monthly' | 'annual' | 'one_time')}
               >
-                <SelectTrigger className="w-full">
+                <SelectTrigger className="w-full mt-2">
                   <SelectValue placeholder="Select billing period" />
                 </SelectTrigger>
                 <SelectContent className="bg-background">
@@ -194,10 +193,9 @@ const Plans = () => {
               <p className="text-3xl font-bold">{getPriceDisplay('family', familyInterval)}</p>
               <Select 
                 value={familyInterval} 
-                onValueChange={(value) => setFamilyInterval(value as 'monthly' | 'annual' | 'one_time')}
-                className="mt-2"
+                onValueChange={(value: string) => setFamilyInterval(value as 'monthly' | 'annual' | 'one_time')}
               >
-                <SelectTrigger className="w-full">
+                <SelectTrigger className="w-full mt-2">
                   <SelectValue placeholder="Select billing period" />
                 </SelectTrigger>
                 <SelectContent className="bg-background">
