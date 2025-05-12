@@ -86,25 +86,64 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   };
   
-  // Check and refresh subscription details
+  // Enhanced check and refresh subscription details with better error handling
   const checkAndRefreshSubscription = async () => {
     if (!authState.userId) return;
     
     try {
-      // Fetch the latest account information
-      const { data: account } = await supabase
+      console.log("Checking subscription status for user:", authState.userId);
+      
+      // First try to fetch from direct database to avoid any webhook latency
+      const { data: account, error: accountError } = await supabase
         .from('accounts')
         .select('plan_type, subscription_status, plan_expires_at')
         .eq('id', authState.userId)
         .single();
       
+      if (accountError) {
+        console.error('Error fetching account data:', accountError);
+        throw new Error(accountError.message);
+      }
+      
       if (account) {
+        console.log("Account data from DB:", account);
         authState.setPlanType(account.plan_type || 'free');
         authState.setSubscriptionStatus(account.subscription_status || 'free');
         authState.setPlanExpiresAt(account.plan_expires_at);
+        
+        // If we already have a non-free plan, we can stop here
+        if (account.plan_type !== 'free' && account.subscription_status !== 'free') {
+          return;
+        }
       }
+      
+      // If we don't have a subscription yet or it's free, check directly with the API
+      try {
+        console.log("Checking subscription with edge function");
+        const { data: checkData, error: checkError } = await supabase.functions.invoke('check-subscription', {
+          body: {}
+        });
+        
+        if (checkError) {
+          console.error('Error from check-subscription function:', checkError);
+          throw new Error(checkError.message);
+        }
+        
+        if (checkData) {
+          console.log("Subscription data from API:", checkData);
+          if (checkData.plan_type) authState.setPlanType(checkData.plan_type);
+          if (checkData.subscription_status) authState.setSubscriptionStatus(checkData.subscription_status);
+          if (checkData.plan_expires_at) authState.setPlanExpiresAt(checkData.plan_expires_at);
+        }
+      } catch (apiError) {
+        console.error('Error calling check-subscription function:', apiError);
+        // Continue with the data we have from the database
+      }
+      
     } catch (error) {
       console.error('Error refreshing subscription:', error);
+      toast.error('Failed to verify subscription status');
+      return false;
     }
   };
 

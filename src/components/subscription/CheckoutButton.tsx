@@ -39,6 +39,12 @@ export const CheckoutButton = ({
     try {
       setIsLoading(true);
       
+      // Store checkout details in localStorage for verification
+      localStorage.setItem('checkout_pending', 'true');
+      localStorage.setItem('checkout_plan_type', planType);
+      localStorage.setItem('checkout_interval', interval);
+      localStorage.setItem('checkout_timestamp', new Date().toISOString());
+      
       const { data, error } = await supabase.functions.invoke('create-checkout', {
         body: { 
           planType,
@@ -52,30 +58,8 @@ export const CheckoutButton = ({
       }
 
       if (data?.url) {
-        // Open Stripe checkout in a new tab
-        window.open(data.url, '_blank');
-        
-        // Poll for subscription changes
-        let attempts = 0;
-        const maxAttempts = 10;
-        const pollInterval = 2000; // 2 seconds
-        
-        const pollForSubscriptionChange = async () => {
-          if (attempts >= maxAttempts) {
-            return;
-          }
-          
-          try {
-            await checkAndRefreshSubscription();
-            attempts++;
-            setTimeout(pollForSubscriptionChange, pollInterval);
-          } catch (e) {
-            console.error('Error polling for subscription change:', e);
-          }
-        };
-        
-        // Start polling after a short delay
-        setTimeout(pollForSubscriptionChange, 5000);
+        // Redirect in the same tab instead of opening a new one
+        window.location.href = data.url;
       }
     } catch (error) {
       console.error('Error creating checkout session:', error);
@@ -84,6 +68,11 @@ export const CheckoutButton = ({
         description: error instanceof Error ? error.message : 'Failed to create checkout session',
         variant: 'destructive'
       });
+      // Clear checkout pending state if there was an error
+      localStorage.removeItem('checkout_pending');
+      localStorage.removeItem('checkout_plan_type');
+      localStorage.removeItem('checkout_interval');
+      localStorage.removeItem('checkout_timestamp');
     } finally {
       setIsLoading(false);
     }

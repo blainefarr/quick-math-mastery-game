@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@12.0.0?target=deno";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.14.0";
@@ -44,23 +45,212 @@ serve(async (req) => {
     const stripe = new Stripe(stripeSecretKey, { apiVersion: "2023-10-16" });
     logStep("Stripe client initialized");
 
-    // Verify authentication
-    const authHeader = req.headers.get("Authorization")!;
-    const token = authHeader.replace("Bearer ", "");
-    const { data: userData, error: userError } = await supabase.auth.getUser(token);
+    // Parse the request body
+    const requestData = await req.json().catch(() => ({}));
+    const sessionId = requestData.sessionId;
     
-    if (userError || !userData.user) {
-      throw new Error("User not authenticated: " + (userError?.message || "No user found"));
+    // Verify authentication (unless checking a specific session)
+    let userId = null;
+
+    // If we have a specific session ID, we'll use that directly
+    if (sessionId) {
+      logStep("Using provided session ID for checkout verification", { sessionId });
+
+      try {
+        const session = await stripe.checkout.sessions.retrieve(sessionId);
+        logStep("Retrieved checkout session", {
+          sessionId,
+          status: session.status,
+          customerId: session.customer,
+          metadata: session.metadata
+        });
+        
+        // Get user_id from metadata
+        if (session.metadata?.user_id) {
+          userId = session.metadata.user_id;
+          logStep("Found user ID in session metadata", { userId });
+        } else {
+          // Try to find user by customer ID
+          const { data: accountData } = await supabase
+            .from("accounts")
+            .select("id")
+            .eq("stripe_customer_id", session.customer)
+            .maybeSingle();
+            
+          if (accountData?.id) {
+            userId = accountData.id;
+            logStep("Found user ID via customer ID lookup", { userId });
+          } else {
+            logStep("Could not determine user ID from session");
+          }
+        }
+        
+        // Update subscription info if we have a user ID and the session is complete
+        if (userId && session.status === 'complete') {
+          const planType = session.metadata?.plan_type || 'free';
+          const interval = session.metadata?.interval || 'monthly';
+          let subscriptionStatus = 'free';
+          let expiryDate = null;
+
+          if (interval === 'one_time') {
+            // Handle one-time payment
+            logStep("Processing one-time payment");
+            
+            // Calculate expiry date - 1 year from now for one-time purchases
+            const oneYearFromNow = new Date();
+            oneYearFromNow.setFullYear(oneYearFromNow.getFullYear() + 1);
+            expiryDate = oneYearFromNow.toISOString();
+            subscriptionStatus = 'one_time';
+            
+            // Update account with new plan
+            const { error: updateError } = await supabase
+              .from("accounts")
+              .update({
+                plan_type: planType,
+                subscription_status: subscriptionStatus,
+                plan_expires_at: expiryDate
+              })
+              .eq("id", userId);
+            
+            if (updateError) {
+              logStep("Error updating account", { error: updateError.message });
+              throw new Error(`Failed to update account: ${updateError.message}`);
+            }
+            
+            // Check if we already have a subscription history entry for this session
+            const { data: existingHistory } = await supabase
+              .from("subscription_history")
+              .select("id")
+              .eq("account_id", userId)
+              .eq("payment_session_id", sessionId)
+              .maybeSingle();
+              
+            if (!existingHistory) {
+              // Create subscription history entry
+              const { error: historyError } = await supabase
+                .from("subscription_history")
+                .insert({
+                  account_id: userId,
+                  plan_type: planType,
+                  subscription_status: 'one_time',
+                  payment_session_id: sessionId,
+                  price_paid: session.amount_total ? session.amount_total / 100 : null,
+                  payment_method: 'card',
+                  started_at: new Date().toISOString(),
+                  ended_at: expiryDate
+                });
+                
+              if (historyError) {
+                logStep("Error creating history entry", { error: historyError.message });
+              }
+            }
+            
+            logStep("One-time payment processed successfully");
+          } else if (session.subscription) {
+            // Handle subscription
+            logStep("Processing subscription", { subscriptionId: session.subscription });
+            
+            // Get subscription details
+            const subscription = await stripe.subscriptions.retrieve(session.subscription as string);
+            
+            // Calculate expiry date
+            expiryDate = new Date(subscription.current_period_end * 1000).toISOString();
+            subscriptionStatus = 'active';
+            
+            // Update account with new subscription
+            const { error: updateError } = await supabase
+              .from("accounts")
+              .update({
+                plan_type: planType,
+                subscription_status: subscriptionStatus,
+                plan_expires_at: expiryDate
+              })
+              .eq("id", userId);
+            
+            if (updateError) {
+              logStep("Error updating account", { error: updateError.message });
+              throw new Error(`Failed to update account: ${updateError.message}`);
+            }
+            
+            // Check if we already have a subscription history entry for this subscription
+            const { data: existingHistory } = await supabase
+              .from("subscription_history")
+              .select("id")
+              .eq("account_id", userId)
+              .eq("stripe_subscription_id", subscription.id)
+              .maybeSingle();
+              
+            if (!existingHistory) {
+              // Create subscription history entry
+              const { error: historyError } = await supabase
+                .from("subscription_history")
+                .insert({
+                  account_id: userId,
+                  plan_type: planType,
+                  subscription_status: subscriptionStatus,
+                  stripe_subscription_id: subscription.id,
+                  payment_session_id: sessionId,
+                  price_paid: subscription.items.data[0].price.unit_amount 
+                    ? subscription.items.data[0].price.unit_amount / 100 : null,
+                  payment_method: 'card',
+                  started_at: new Date(subscription.start_date * 1000).toISOString(),
+                  ended_at: expiryDate
+                });
+                
+              if (historyError) {
+                logStep("Error creating history entry", { error: historyError.message });
+              }
+            }
+            
+            logStep("Subscription processed successfully");
+          }
+          
+          // Return updated subscription info
+          return new Response(JSON.stringify({
+            success: true,
+            is_active: true,
+            plan_type: planType,
+            subscription_status: subscriptionStatus,
+            plan_expires_at: expiryDate,
+          }), { 
+            headers: { ...corsHeaders, "Content-Type": "application/json" }, 
+            status: 200 
+          });
+        }
+      } catch (sessionError) {
+        logStep("Error retrieving session", { error: sessionError.message });
+        // Continue to regular auth flow as fallback
+      }
     }
-    
-    const user = userData.user;
-    logStep("User authenticated", { id: user.id, email: user.email });
+
+    // Regular authentication flow for checking current user's subscription
+    if (!sessionId) {
+      const authHeader = req.headers.get("Authorization");
+      if (!authHeader) {
+        throw new Error("No authorization header provided");
+      }
+      
+      const token = authHeader.replace("Bearer ", "");
+      const { data: userData, error: userError } = await supabase.auth.getUser(token);
+      
+      if (userError || !userData.user) {
+        throw new Error("User not authenticated: " + (userError?.message || "No user found"));
+      }
+      
+      userId = userData.user.id;
+      logStep("User authenticated", { id: userId, email: userData.user.email });
+    }
+
+    // If we couldn't determine a user ID by this point, we can't proceed
+    if (!userId) {
+      throw new Error("Could not determine user ID");
+    }
 
     // Get the account data
     const { data: accountData, error: accountError } = await supabase
       .from("accounts")
       .select("stripe_customer_id, plan_type, subscription_status, plan_expires_at")
-      .eq("id", user.id)
+      .eq("id", userId)
       .single();
       
     if (accountError) {
@@ -100,7 +290,7 @@ serve(async (req) => {
       limit: 1
     });
     
-    let stripeStatus = 'free';
+    let stripeStatus = currentStatus;
     let stripePlanType = currentPlanType;
     let stripeExpiryDate = expiryDate;
     let needsUpdate = false;
@@ -112,13 +302,12 @@ serve(async (req) => {
       stripeStatus = 'active';
       stripeExpiryDate = new Date(subscription.current_period_end * 1000).toISOString();
       
-      // Extract plan type from metadata if available, or determine by price
-      // This is a simplified example - you'd need a more robust mapping mechanism
+      // Extract plan type from metadata if available
       const priceId = subscription.items.data[0].price.id;
       const { data: planData } = await supabase
         .from("plans")
         .select("plan_type")
-        .or(`stripe_price_id_monthly.eq.${priceId},stripe_price_id_annual.eq.${priceId}`)
+        .or(`stripe_price_id_monthly.eq.${priceId},stripe_price_id_annual.eq.${priceId},stripe_price_id_one_time.eq.${priceId}`)
         .maybeSingle();
         
       if (planData) {
@@ -133,18 +322,9 @@ serve(async (req) => {
       ) {
         needsUpdate = true;
       }
-    } else {
-      logStep("No active subscription found");
-      
-      // If current status is active but Stripe has no active subscription, 
-      // we need to update the account
-      if (currentStatus === 'active') {
-        stripeStatus = 'canceled';
-        needsUpdate = true;
-      }
-      
-      // If one_time purchase, we keep the status but need to check expiry
-      if (currentStatus === 'one_time' && expiryDate) {
+    } else if (currentStatus === 'one_time') {
+      // One-time purchase - check expiry
+      if (expiryDate) {
         const now = new Date();
         const expiry = new Date(expiryDate);
         if (expiry < now) {
@@ -153,6 +333,11 @@ serve(async (req) => {
           needsUpdate = true;
         }
       }
+    } else if (currentStatus === 'active') {
+      // If current status is active but Stripe has no active subscription, 
+      // we need to update the account
+      stripeStatus = 'canceled';
+      needsUpdate = true;
     }
     
     // Update account if needed
@@ -170,7 +355,7 @@ serve(async (req) => {
           subscription_status: stripeStatus,
           plan_expires_at: stripeExpiryDate
         })
-        .eq("id", user.id);
+        .eq("id", userId);
         
       if (updateError) {
         logStep("Error updating account", { error: updateError.message });
