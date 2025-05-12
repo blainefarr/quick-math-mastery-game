@@ -13,6 +13,7 @@ import Progress from "./pages/Progress";
 import Goals from "./pages/Goals";
 import ResetPassword from "./pages/ResetPassword";
 import PaymentSuccess from "./pages/PaymentSuccess";
+import Plans from "./pages/Plans";
 
 const queryClient = new QueryClient();
 
@@ -34,6 +35,7 @@ const App = () => (
             <Route element={<FormLayout />}>
               <Route path="/account" element={<MyAccount />} />
               <Route path="/payment-success" element={<PaymentSuccess />} />
+              <Route path="/plans" element={<Plans />} />
             </Route>
             <Route path="/leaderboard" element={<Leaderboard />} />
             <Route path="/progress" element={<Progress />} />

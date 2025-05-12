@@ -364,6 +364,11 @@ const MyAccount = () => {
               <ManageSubscriptionButton className="w-full" />
             </div>
           </CardContent>
+          <CardFooter className="flex flex-col space-y-2">
+            <Link to="/plans" className="w-full">
+              <Button variant="outline" className="w-full">View All Plans</Button>
+            </Link>
+          </CardFooter>
         </Card>
       )}
       
