@@ -5,6 +5,7 @@ import { GameContextType, GameState, GameProviderProps, GameEndReason } from './
 import { useGameSettings } from './hooks/useGameSettings';
 import { useProblemGenerator } from './hooks/useProblemGenerator';
 import { useScoreManagement } from './hooks/useScoreManagement';
+import { useTimerManagement } from '@/hooks/use-timer-management';
 import { useAuth } from './auth/useAuth';
 import { toast } from 'sonner';
 
@@ -15,7 +16,6 @@ const GameProvider = ({ children }: GameProviderProps) => {
   
   const [gameState, setGameState] = useState<GameState>('selection');
   const [score, setScore] = useState(0);
-  const [timeLeft, setTimeLeft] = useState(settings.timerSeconds);
   const [userAnswer, setUserAnswer] = useState('');
   const [focusNumber, setFocusNumber] = useState<number | null>(null);
   const [typingSpeed, setTypingSpeed] = useState<number | null>(null);
@@ -24,7 +24,6 @@ const GameProvider = ({ children }: GameProviderProps) => {
   const scoreRef = useRef(0);
   const typingSpeedRef = useRef<number | null>(null);
   const gameStateRef = useRef<GameState>('selection');
-  const timerRef = useRef<number | null>(null);
   // Add a new ref to track if the game is ending
   const isEndingRef = useRef(false);
 
@@ -35,6 +34,27 @@ const GameProvider = ({ children }: GameProviderProps) => {
     getIsHighScore,
     setScoreHistory 
   } = useScoreManagement(userId);
+
+  // Use the timer management hook
+  const { 
+    timeLeft, 
+    setTimeLeft, 
+    startTimer, 
+    resetTimer, 
+    pauseTimer,
+    hasCompleted 
+  } = useTimerManagement({
+    initialTime: settings.timerSeconds,
+    onTimerComplete: () => {
+      // Use setTimeout to ensure state updates have completed
+      setTimeout(() => endGame('timeout'), 0);
+    },
+    onTimerTick: (time) => {
+      // This will be called every second with the updated time
+      // No need to do anything special here as the hook manages the time
+    },
+    autoStart: false // We'll manually start the timer when needed
+  });
 
   // Sync state with refs for reliable access in async contexts
   useEffect(() => {
@@ -50,10 +70,13 @@ const GameProvider = ({ children }: GameProviderProps) => {
     gameStateRef.current = gameState;
   }, [gameState]);
 
-  // Reset timer and fetch scores when game state changes
+  // Handle game state changes and timer management
   useEffect(() => {
     if (gameState === 'playing') {
-      startGameTimer();
+      // Reset and start the timer when game state changes to playing
+      resetTimer(settings.timerSeconds);
+      startTimer();
+      
       // Reset the isEnding flag when starting a new game
       isEndingRef.current = false;
     } else if (gameState === 'ended' && userId && defaultProfileId) {
@@ -66,12 +89,16 @@ const GameProvider = ({ children }: GameProviderProps) => {
     
     // Clean up timer when component unmounts or game state changes
     return () => {
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-        timerRef.current = null;
-      }
+      // Timer cleanup is handled by the hook
     };
-  }, [gameState, userId, fetchUserScores, setScoreHistory, defaultProfileId]);
+  }, [gameState, userId, fetchUserScores, setScoreHistory, defaultProfileId, resetTimer, startTimer, settings.timerSeconds]);
+
+  // Update timer when settings change
+  useEffect(() => {
+    if (gameState === 'playing') {
+      resetTimer(settings.timerSeconds);
+    }
+  }, [settings.timerSeconds, resetTimer, gameState]);
 
   const incrementScore = () => {
     // Don't increment score if the game is ending
@@ -98,32 +125,6 @@ const GameProvider = ({ children }: GameProviderProps) => {
   // Get auth state from useAuth
   const { isLoggedIn, username } = useAuth();
   
-  const startGameTimer = () => {
-    // Clear any existing timer
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
-    }
-    
-    console.log('Starting game timer with', settings.timerSeconds, 'seconds');
-    setTimeLeft(settings.timerSeconds);
-    
-    timerRef.current = window.setInterval(() => {
-      setTimeLeft(prevTime => {
-        if (prevTime <= 1) {
-          if (timerRef.current) {
-            clearInterval(timerRef.current);
-            timerRef.current = null;
-          }
-          
-          // Use setTimeout to ensure state updates have completed
-          setTimeout(() => endGame('timeout'), 0);
-          return 0;
-        }
-        return prevTime - 1;
-      });
-    }, 1000);
-  };
-  
   const endGame = async (reason: GameEndReason) => {
     // Set the ending flag to prevent further score increments
     isEndingRef.current = true;
@@ -133,12 +134,6 @@ const GameProvider = ({ children }: GameProviderProps) => {
     const finalTypingSpeed = typingSpeedRef.current;
     
     console.log(`Ending game with reason: ${reason}, final score: ${finalScore}, typing time per problem: ${finalTypingSpeed}`);
-    
-    // Clear timer if it's running
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
-      timerRef.current = null;
-    }
     
     // Only save score on timeout (normal game end) and when user is logged in
     if (reason === 'timeout' && isLoggedIn && defaultProfileId) {
