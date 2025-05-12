@@ -180,7 +180,7 @@ const GameScreen = () => {
       if (numericValue === currentProblem.answer) {
         showFeedback('correct');
         
-        // Always increment score when user enters correct answer, even after hint was shown
+        // Always increment score when user enters correct answer
         incrementScore();
         
         // Clear learner mode timeouts
@@ -208,7 +208,6 @@ const GameScreen = () => {
   const handleNumberPress = (number: string) => {
     if (isShowingAnswer || hasEndedRef.current) return;
     
-    // Fix: Using direct string instead of function with prevAnswer parameter
     setUserAnswer(userAnswer + number);
     
     // Check if this is the correct answer
@@ -287,7 +286,7 @@ const GameScreen = () => {
             readOnly={isShowingAnswer}
             isNegative={isNegative}
             feedback={feedback}
-            inputMode={useCustomNumberPad ? "none" : "numeric"}
+            inputMode="numeric"
             onInputInteraction={focusInput}
             useCustomNumberPad={useCustomNumberPad}
           />
