@@ -1,6 +1,7 @@
+
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Check, Users, Goal, LineChart, Keyboard, ClipboardList, CircleDollarSign, CircleCheck } from 'lucide-react';
+import { ArrowLeft, Check, User, Users, Goal, LineChart, Keyboard, ClipboardList, CircleDollarSign, CircleCheck, School } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -62,22 +63,13 @@ const Plans = () => {
     }
   };
 
-  // Get billing text based on interval
-  const getBillingText = (interval: 'monthly' | 'annual' | 'one_time') => {
-    if (interval === 'monthly') {
-      return 'Billed monthly';
-    } else if (interval === 'annual') {
-      return 'Billed yearly';
-    } else {
-      return 'One-time payment';
-    }
-  };
-
   // Feature icons mapping
   const FeatureIcon = ({ name }: { name: string }) => {
     switch (name) {
       case 'users':
         return <Users className="h-5 w-5 text-primary" />;
+      case 'user':
+        return <User className="h-5 w-5 text-primary" />;
       case 'goals':
         return <Goal className="h-5 w-5 text-primary" />;
       case 'progress':
@@ -126,16 +118,18 @@ const Plans = () => {
           )}
           <CardHeader className="text-center pb-2">
             <div className="mx-auto bg-primary/10 rounded-full p-3 mb-2">
-              <Users className="h-6 w-6 text-primary" />
+              <User className="h-6 w-6 text-primary" />
             </div>
             <h2 className="text-xl font-bold">Individual</h2>
             <p className="text-sm text-muted-foreground">Perfect for personal learning</p>
           </CardHeader>
           <CardContent className="flex-grow">
             <div className="text-center mb-4">
+              <p className="text-3xl font-bold">{getPriceDisplay('individual', individualInterval)}</p>
               <Select 
                 value={individualInterval} 
                 onValueChange={(value) => setIndividualInterval(value as 'monthly' | 'annual' | 'one_time')}
+                className="mt-2"
               >
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select billing period" />
@@ -146,18 +140,22 @@ const Plans = () => {
                   <SelectItem value="one_time">Lifetime</SelectItem>
                 </SelectContent>
               </Select>
-              <div className="mt-4">
-                <p className="text-3xl font-bold">{getPriceDisplay('individual', individualInterval)}</p>
-                <p className="text-sm text-muted-foreground">{getBillingText(individualInterval)}</p>
-              </div>
             </div>
-            <ul className="space-y-2 mt-6">
+            
+            <CheckoutButton 
+              planType="premium"
+              interval={individualInterval}
+              label="Get Started"
+              className="w-full mb-6"
+            />
+            
+            <ul className="space-y-2">
               <li className="flex items-center">
                 <FeatureIcon name="saved" />
                 <span className="ml-2">Unlimited Saved Games</span>
               </li>
               <li className="flex items-center">
-                <FeatureIcon name="users" />
+                <FeatureIcon name="user" />
                 <span className="ml-2">{pricingData.individual.maxUsers} User</span>
               </li>
               <li className="flex items-center">
@@ -175,12 +173,7 @@ const Plans = () => {
             </ul>
           </CardContent>
           <CardFooter>
-            <CheckoutButton 
-              planType="premium"
-              interval={individualInterval}
-              label="Get Started"
-              className="w-full"
-            />
+            {/* Footer content (if needed) */}
           </CardFooter>
         </Card>
 
@@ -198,9 +191,11 @@ const Plans = () => {
           </CardHeader>
           <CardContent className="flex-grow">
             <div className="text-center mb-4">
+              <p className="text-3xl font-bold">{getPriceDisplay('family', familyInterval)}</p>
               <Select 
                 value={familyInterval} 
                 onValueChange={(value) => setFamilyInterval(value as 'monthly' | 'annual' | 'one_time')}
+                className="mt-2"
               >
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select billing period" />
@@ -211,12 +206,16 @@ const Plans = () => {
                   <SelectItem value="one_time">Lifetime</SelectItem>
                 </SelectContent>
               </Select>
-              <div className="mt-4">
-                <p className="text-3xl font-bold">{getPriceDisplay('family', familyInterval)}</p>
-                <p className="text-sm text-muted-foreground">{getBillingText(familyInterval)}</p>
-              </div>
             </div>
-            <ul className="space-y-2 mt-6">
+            
+            <CheckoutButton 
+              planType="family"
+              interval={familyInterval}
+              label="Get Started"
+              className="w-full mb-6"
+            />
+            
+            <ul className="space-y-2">
               <li className="flex items-center">
                 <FeatureIcon name="saved" />
                 <span className="ml-2">Unlimited Saved Games</span>
@@ -240,12 +239,7 @@ const Plans = () => {
             </ul>
           </CardContent>
           <CardFooter>
-            <CheckoutButton 
-              planType="family"
-              interval={familyInterval}
-              label="Get Started"
-              className="w-full"
-            />
+            {/* Footer content (if needed) */}
           </CardFooter>
         </Card>
 
@@ -266,7 +260,15 @@ const Plans = () => {
               <p className="text-3xl font-bold">${pricingData.teacher.price}</p>
               <p className="text-sm text-muted-foreground">{pricingData.teacher.billing}</p>
             </div>
-            <ul className="space-y-2 mt-6">
+            
+            <CheckoutButton 
+              planType="teacher"
+              interval="annual"
+              label="Get Started"
+              className="w-full mb-6"
+            />
+            
+            <ul className="space-y-2">
               <li className="flex items-center">
                 <FeatureIcon name="saved" />
                 <span className="ml-2">Unlimited Saved Games</span>
@@ -298,12 +300,7 @@ const Plans = () => {
             </ul>
           </CardContent>
           <CardFooter>
-            <CheckoutButton 
-              planType="teacher"
-              interval="annual"
-              label="Get Started"
-              className="w-full"
-            />
+            {/* Footer content (if needed) */}
           </CardFooter>
         </Card>
 
@@ -314,7 +311,7 @@ const Plans = () => {
           )}
           <CardHeader className="text-center pb-2">
             <div className="mx-auto bg-primary/10 rounded-full p-3 mb-2">
-              <Users className="h-6 w-6 text-primary" />
+              <School className="h-6 w-6 text-primary" />
             </div>
             <h2 className="text-xl font-bold">School</h2>
             <p className="text-sm text-muted-foreground">For entire schools</p>
@@ -324,7 +321,15 @@ const Plans = () => {
               <p className="text-3xl font-bold">${pricingData.school.price}</p>
               <p className="text-sm text-muted-foreground">{pricingData.school.billing}</p>
             </div>
-            <ul className="space-y-2 mt-6">
+            
+            <CheckoutButton 
+              planType="school"
+              interval="annual"
+              label="Get Started"
+              className="w-full mb-6"
+            />
+            
+            <ul className="space-y-2">
               <li className="flex items-center">
                 <FeatureIcon name="saved" />
                 <span className="ml-2">Unlimited Saved Games</span>
@@ -360,12 +365,7 @@ const Plans = () => {
             </ul>
           </CardContent>
           <CardFooter>
-            <CheckoutButton 
-              planType="school"
-              interval="annual"
-              label="Get Started"
-              className="w-full"
-            />
+            {/* Footer content (if needed) */}
           </CardFooter>
         </Card>
       </div>
