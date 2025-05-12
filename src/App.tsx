@@ -12,6 +12,7 @@ import Leaderboard from "./pages/Leaderboard";
 import Progress from "./pages/Progress";
 import Goals from "./pages/Goals";
 import ResetPassword from "./pages/ResetPassword";
+import PaymentSuccess from "./pages/PaymentSuccess";
 
 const queryClient = new QueryClient();
 
@@ -32,6 +33,7 @@ const App = () => (
           <Route element={<AppLayout />}>
             <Route element={<FormLayout />}>
               <Route path="/account" element={<MyAccount />} />
+              <Route path="/payment-success" element={<PaymentSuccess />} />
             </Route>
             <Route path="/leaderboard" element={<Leaderboard />} />
             <Route path="/progress" element={<Progress />} />

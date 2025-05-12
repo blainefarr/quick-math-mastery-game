@@ -1,27 +1,39 @@
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { AuthStateType } from '../auth-types';
 
-export const useAuthState = () => {
+export const useAuthState = (): AuthStateType => {
+  // Core auth state
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [username, setUsername] = useState('');
   const [userId, setUserId] = useState<string | null>(null);
   const [defaultProfileId, setDefaultProfileId] = useState<string | null>(null);
-  const [isLoadingProfile, setIsLoadingProfile] = useState(true);
+  const [isLoadingProfile, setIsLoadingProfile] = useState(false);
   const [hasMultipleProfiles, setHasMultipleProfiles] = useState(false);
   const [isNewSignup, setIsNewSignup] = useState(false);
   const [retryAttempts, setRetryAttempts] = useState(0);
-
-  const authState: AuthStateType = {
+  
+  // Subscription-related state
+  const [planType, setPlanType] = useState<string>('free');
+  const [subscriptionStatus, setSubscriptionStatus] = useState<string>('free');
+  const [planExpiresAt, setPlanExpiresAt] = useState<string | null>(null);
+  
+  // Computed state for convenience
+  const isAuthenticated = isLoggedIn;
+  
+  return {
     isLoggedIn,
     username,
     userId,
     defaultProfileId,
-    isAuthenticated: isLoggedIn,
+    isAuthenticated,
     isLoadingProfile,
     hasMultipleProfiles,
     isNewSignup,
     retryAttempts,
+    planType,
+    subscriptionStatus,
+    planExpiresAt,
     setIsLoggedIn,
     setUsername,
     setUserId,
@@ -29,8 +41,9 @@ export const useAuthState = () => {
     setIsLoadingProfile,
     setHasMultipleProfiles,
     setIsNewSignup,
-    setRetryAttempts
+    setRetryAttempts,
+    setPlanType,
+    setSubscriptionStatus,
+    setPlanExpiresAt
   };
-
-  return authState;
 };

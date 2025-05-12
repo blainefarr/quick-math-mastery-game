@@ -17,6 +17,12 @@ export type Database = {
           grade: string | null
           id: string
           name: string | null
+          plan_expires_at: string | null
+          plan_type: string | null
+          promo_code: string | null
+          score_save_count: number
+          stripe_customer_id: string | null
+          subscription_status: string | null
           updated_at: string
         }
         Insert: {
@@ -26,6 +32,12 @@ export type Database = {
           grade?: string | null
           id: string
           name?: string | null
+          plan_expires_at?: string | null
+          plan_type?: string | null
+          promo_code?: string | null
+          score_save_count?: number
+          stripe_customer_id?: string | null
+          subscription_status?: string | null
           updated_at?: string
         }
         Update: {
@@ -35,6 +47,12 @@ export type Database = {
           grade?: string | null
           id?: string
           name?: string | null
+          plan_expires_at?: string | null
+          plan_type?: string | null
+          promo_code?: string | null
+          score_save_count?: number
+          stripe_customer_id?: string | null
+          subscription_status?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -80,6 +98,66 @@ export type Database = {
           },
         ]
       }
+      plans: {
+        Row: {
+          can_generate_reports: boolean
+          can_save_score: boolean
+          created_at: string
+          id: string
+          max_profiles: number
+          max_saved_scores: number | null
+          plan_label: string
+          plan_type: string
+          price_annual: number | null
+          price_monthly: number | null
+          price_one_time: number | null
+          stripe_price_id_annual: string | null
+          stripe_price_id_monthly: string | null
+          stripe_price_id_one_time: string | null
+          stripe_product_id: string | null
+          typing_speed_enabled: boolean
+          updated_at: string
+        }
+        Insert: {
+          can_generate_reports?: boolean
+          can_save_score?: boolean
+          created_at?: string
+          id?: string
+          max_profiles: number
+          max_saved_scores?: number | null
+          plan_label: string
+          plan_type: string
+          price_annual?: number | null
+          price_monthly?: number | null
+          price_one_time?: number | null
+          stripe_price_id_annual?: string | null
+          stripe_price_id_monthly?: string | null
+          stripe_price_id_one_time?: string | null
+          stripe_product_id?: string | null
+          typing_speed_enabled?: boolean
+          updated_at?: string
+        }
+        Update: {
+          can_generate_reports?: boolean
+          can_save_score?: boolean
+          created_at?: string
+          id?: string
+          max_profiles?: number
+          max_saved_scores?: number | null
+          plan_label?: string
+          plan_type?: string
+          price_annual?: number | null
+          price_monthly?: number | null
+          price_one_time?: number | null
+          stripe_price_id_annual?: string | null
+          stripe_price_id_monthly?: string | null
+          stripe_price_id_one_time?: string | null
+          stripe_product_id?: string | null
+          typing_speed_enabled?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           account_id: string
@@ -123,6 +201,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      promo_codes: {
+        Row: {
+          code: string
+          created_at: string
+          created_by: string | null
+          current_uses: number
+          discount_percent: number
+          id: string
+          max_uses: number | null
+          updated_at: string
+          valid_from: string
+          valid_until: string | null
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          created_by?: string | null
+          current_uses?: number
+          discount_percent: number
+          id?: string
+          max_uses?: number | null
+          updated_at?: string
+          valid_from?: string
+          valid_until?: string | null
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          created_by?: string | null
+          current_uses?: number
+          discount_percent?: number
+          id?: string
+          max_uses?: number | null
+          updated_at?: string
+          valid_from?: string
+          valid_until?: string | null
+        }
+        Relationships: []
       }
       scores: {
         Row: {
@@ -185,6 +302,53 @@ export type Database = {
             columns: ["profile_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      subscription_history: {
+        Row: {
+          account_id: string
+          created_at: string
+          ended_at: string | null
+          id: string
+          payment_method: string | null
+          plan_type: string
+          price_paid: number | null
+          started_at: string
+          stripe_subscription_id: string | null
+          subscription_status: string
+        }
+        Insert: {
+          account_id: string
+          created_at?: string
+          ended_at?: string | null
+          id?: string
+          payment_method?: string | null
+          plan_type: string
+          price_paid?: number | null
+          started_at?: string
+          stripe_subscription_id?: string | null
+          subscription_status: string
+        }
+        Update: {
+          account_id?: string
+          created_at?: string
+          ended_at?: string | null
+          id?: string
+          payment_method?: string | null
+          plan_type?: string
+          price_paid?: number | null
+          started_at?: string
+          stripe_subscription_id?: string | null
+          subscription_status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscription_history_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
             referencedColumns: ["id"]
           },
         ]

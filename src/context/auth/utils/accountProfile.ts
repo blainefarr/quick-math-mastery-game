@@ -65,7 +65,7 @@ export const fetchAndSaveAccountProfile = async (
     // Step 1: Check if account exists first (this is critical)
     const { data: accountData, error: accountError } = await supabase
       .from('accounts')
-      .select('id, name')
+      .select('id, name, plan_type, subscription_status, plan_expires_at')
       .eq('id', userId)
       .maybeSingle();
       
@@ -86,6 +86,11 @@ export const fetchAndSaveAccountProfile = async (
     }
     
     const accountId = accountData.id;
+    
+    // Update auth state with subscription information
+    authState.setPlanType(accountData.plan_type || 'free');
+    authState.setSubscriptionStatus(accountData.subscription_status || 'free');
+    authState.setPlanExpiresAt(accountData.plan_expires_at);
     
     // Step 2: Get profiles for this account
     const { data: profiles, error: profilesError } = await supabase

@@ -1,11 +1,10 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm, FormProvider } from "react-hook-form";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, Users, User } from 'lucide-react';
+import { ArrowLeft, Users, User, CreditCard, Calendar } from 'lucide-react';
 import {
   Form,
   FormControl,
@@ -28,6 +27,9 @@ import useAuth from "@/context/auth/useAuth";
 import { ProfileSwitcherDialog } from "@/components/user/ProfileSwitcherDialog";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { format } from "date-fns";
+import { CheckoutButton } from "@/components/subscription/CheckoutButton";
+import { ManageSubscriptionButton } from "@/components/subscription/ManageSubscriptionButton";
 
 type FormData = {
   name: string;
@@ -41,6 +43,17 @@ type Profile = {
   grade?: string;
   is_owner: boolean;
   created_at: string;
+};
+
+type PlanDetails = {
+  id: string;
+  plan_type: string;
+  plan_label: string;
+  price_monthly: number | null;
+  price_annual: number | null;
+  price_one_time: number | null;
+  max_profiles: number;
+  max_saved_scores: number | null;
 };
 
 const gradeOptions = [
@@ -62,11 +75,24 @@ const ACTIVE_PROFILE_KEY = 'math_game_active_profile';
 const MyAccount = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { isLoggedIn, userId, defaultProfileId } = useAuth();
+  const { 
+    isLoggedIn, 
+    userId, 
+    defaultProfileId, 
+    planType, 
+    subscriptionStatus, 
+    planExpiresAt, 
+    checkAndRefreshSubscription, 
+    isSubscriptionActive 
+  } = useAuth();
   const [isProfileOwner, setIsProfileOwner] = useState(true);
   const [accountEmail, setAccountEmail] = useState('');
   const [showProfileSwitcher, setShowProfileSwitcher] = useState(false);
   const [allProfiles, setAllProfiles] = useState<Profile[]>([]);
+  const [plans, setPlans] = useState<PlanDetails[]>([]);
+  const [isLoadingPlans, setIsLoadingPlans] = useState(false);
+  const [activeSubscription, setActiveSubscription] = useState(false);
+  const [activePlan, setActivePlan] = useState<PlanDetails | null>(null);
   
   const form = useForm<FormData>({
     defaultValues: {
@@ -100,6 +126,36 @@ const MyAccount = () => {
     }
   };
 
+  // Fetch all plans
+  const fetchPlans = async () => {
+    setIsLoadingPlans(true);
+    try {
+      const { data, error } = await supabase
+        .from('plans')
+        .select('*')
+        .order('max_profiles', { ascending: true });
+        
+      if (error) {
+        console.error('Error fetching plans:', error);
+        return;
+      }
+      
+      if (data) {
+        setPlans(data);
+        
+        // Find current active plan
+        const currentPlan = data.find(p => p.plan_type === planType);
+        if (currentPlan) {
+          setActivePlan(currentPlan);
+        }
+      }
+    } catch (err) {
+      console.error('Error in fetchPlans:', err);
+    } finally {
+      setIsLoadingPlans(false);
+    }
+  };
+
   useEffect(() => {
     const fetchUserProfile = async () => {
       if (!userId) {
@@ -108,6 +164,10 @@ const MyAccount = () => {
       }
 
       try {
+        // Refresh subscription details first
+        await checkAndRefreshSubscription();
+        setActiveSubscription(isSubscriptionActive());
+        
         // First, get the account information
         const { data: account, error: accountError } = await supabase
           .from('accounts')
@@ -174,7 +234,8 @@ const MyAccount = () => {
     };
 
     fetchUserProfile();
-  }, [navigate, form, userId, defaultProfileId, toast]);
+    fetchPlans();
+  }, [navigate, form, userId, defaultProfileId, toast, planType, checkAndRefreshSubscription, isSubscriptionActive]);
 
   const onSubmit = async (data: FormData) => {
     try {
@@ -229,6 +290,16 @@ const MyAccount = () => {
     }
   };
 
+  // Format date for display
+  const formatExpiryDate = (dateString: string | null) => {
+    if (!dateString) return 'Never';
+    try {
+      return format(new Date(dateString), 'MMMM d, yyyy');
+    } catch (e) {
+      return 'Invalid date';
+    }
+  };
+
   return (
     <div className="container mx-auto py-8 px-4 max-w-4xl space-y-6">
       <div className="flex items-center gap-4 mb-2">
@@ -247,7 +318,56 @@ const MyAccount = () => {
         <h1 className="text-4xl font-bold text-primary mb-2">My Account</h1>
         <p className="text-muted-foreground">Manage your profile settings</p>
       </div>
+
+      {/* Subscription Info Card */}
+      {isProfileOwner && (
+        <Card className="max-w-xl mx-auto">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <CreditCard className="h-5 w-5 text-primary" />
+              Subscription
+            </CardTitle>
+            <CardDescription>
+              Your current plan and subscription details
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex justify-between items-center">
+              <div>
+                <p className="text-sm font-medium">Current Plan</p>
+                <p className="text-2xl font-bold">
+                  {activePlan?.plan_label || 'Free Plan'}
+                  {activeSubscription && (
+                    <Badge variant="outline" className="ml-2 bg-green-50 text-green-700 border-green-200">Active</Badge>
+                  )}
+                </p>
+              </div>
+              {planExpiresAt && (
+                <div className="text-right">
+                  <p className="text-sm font-medium">Expires</p>
+                  <p className="flex items-center text-sm">
+                    <Calendar className="h-3 w-3 mr-1 opacity-70" /> 
+                    {formatExpiryDate(planExpiresAt)}
+                  </p>
+                </div>
+              )}
+            </div>
+
+            <div className="text-sm">
+              <p className="mb-1"><strong>Status:</strong> {subscriptionStatus.charAt(0).toUpperCase() + subscriptionStatus.slice(1)}</p>
+              <p><strong>Max Profiles:</strong> {activePlan?.max_profiles || 1}</p>
+              <p><strong>Score Saving:</strong> {activePlan?.max_saved_scores === null ? 'Unlimited' : activePlan?.max_saved_scores || 3}</p>
+            </div>
+
+            {/* Add Manage Subscription Button */}
+            <div className="pt-2">
+              <ManageSubscriptionButton className="w-full" />
+            </div>
+          </CardContent>
+        </Card>
+      )}
       
+      {/* Profile Card */}
       <Card className="max-w-xl mx-auto">
         <CardContent className="pt-6">
           <Form {...form}>
@@ -407,6 +527,78 @@ const MyAccount = () => {
           
         </CardContent>
       </Card>
+      
+      {/* Upgrade Plan Section - Only shown for primary account owners */}
+      {isProfileOwner && (
+        <Card className="max-w-xl mx-auto">
+          <CardHeader>
+            <CardTitle>Upgrade Plan</CardTitle>
+            <CardDescription>
+              Choose a plan that suits your needs
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {plans.filter(plan => 
+                !['guest', 'free'].includes(plan.plan_type) &&
+                plan.plan_type !== planType
+              ).map(plan => (
+                <Card key={plan.id}>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-lg">{plan.plan_label}</CardTitle>
+                  </CardHeader>
+                  <CardContent className="pb-2">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                      {plan.price_monthly !== null && (
+                        <div className="border rounded-md p-3 text-center">
+                          <p className="font-medium">${plan.price_monthly}/mo</p>
+                          <CheckoutButton 
+                            planType={plan.plan_type}
+                            interval="monthly"
+                            label="Choose Monthly"
+                            variant="outline"
+                            className="w-full mt-2"
+                          />
+                        </div>
+                      )}
+                      {plan.price_annual !== null && (
+                        <div className="border rounded-md p-3 text-center bg-primary/5">
+                          <p className="font-medium">${plan.price_annual}/yr</p>
+                          <p className="text-xs text-muted-foreground mb-2">Best value</p>
+                          <CheckoutButton 
+                            planType={plan.plan_type}
+                            interval="annual"
+                            label="Choose Yearly"
+                            variant="default"
+                            className="w-full"
+                          />
+                        </div>
+                      )}
+                      {plan.price_one_time !== null && (
+                        <div className="border rounded-md p-3 text-center">
+                          <p className="font-medium">${plan.price_one_time}</p>
+                          <p className="text-xs text-muted-foreground mb-2">One-time payment</p>
+                          <CheckoutButton 
+                            planType={plan.plan_type}
+                            interval="one_time"
+                            label="Purchase"
+                            variant="outline"
+                            className="w-full"
+                          />
+                        </div>
+                      )}
+                    </div>
+                    <div className="mt-3 text-sm">
+                      <p><strong>Profiles:</strong> {plan.max_profiles}</p>
+                      <p><strong>Score Storage:</strong> {plan.max_saved_scores === null ? 'Unlimited' : plan.max_saved_scores}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
       
       <ProfileSwitcherDialog 
         open={showProfileSwitcher}
