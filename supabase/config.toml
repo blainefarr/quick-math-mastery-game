@@ -1,5 +1,30 @@
 
+# This is the project's configuration file.
+
 project_id = "dczsjvcgjxqgjdihonfj"
+[auth]
+site_url = "https://main.d9oa6mplylw67.amplifyapp.com"
+additional_redirect_urls = ["https://localhost:3000"]
+
+[api]
+# Port to use for the API URL.
+port = 54321
+
+# APIs that are enabled: "rest", "realtime", "graphql", "storage", "db"
+enabled_apis = ["rest", "realtime", "graphql", "storage", "db"]
+
+[db]
+shadow_db_schema = "shadow"
+
+[functions]
+[functions.send-contact-form]
+verify_jwt = false  # Allow unauthenticated access
+
+[functions.create-checkout]
+verify_jwt = false
+
+[functions.customer-portal]
+verify_jwt = false
 
 [functions.stripe-webhook]
 verify_jwt = false

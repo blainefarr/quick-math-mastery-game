@@ -5,6 +5,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import ReCAPTCHA from "react-google-recaptcha";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 import { 
   Dialog,
@@ -58,9 +59,16 @@ export function ContactFormModal() {
     try {
       toast.info("Sending your message...");
       
-      // Here we would typically call an edge function to send the email
-      // For now, we'll just simulate a successful submission
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Send data to our edge function to handle email delivery
+      const { error } = await supabase.functions.invoke('send-contact-form', {
+        body: {
+          name: data.name,
+          email: data.email,
+          message: data.message
+        }
+      });
+      
+      if (error) throw error;
       
       toast.success("Your message has been sent successfully!");
       form.reset();
@@ -85,7 +93,7 @@ export function ContactFormModal() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button>Contact Us for Pricing</Button>
+        <Button className="w-full">Contact Us for Pricing</Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
