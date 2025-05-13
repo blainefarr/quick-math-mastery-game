@@ -66,11 +66,17 @@ serve(async (req) => {
     
     logStep("Request parameters", { planType, interval, promo });
 
-    // Get plan details
+    // Map frontend plan type to backend plan type (if different)
+    let databasePlanType = planType;
+    if (planType === 'individual') {
+      databasePlanType = 'premium';  // Map "individual" to "premium" plan in database
+    }
+
+    // Get plan details from the database
     const { data: planData, error: planError } = await supabase
       .from("plans")
       .select("*")
-      .eq("plan_type", planType)
+      .eq("plan_type", databasePlanType)
       .single();
     
     if (planError || !planData) {
@@ -169,7 +175,7 @@ serve(async (req) => {
       cancel_url: `${req.headers.get('origin')}/account`,
       metadata: {
         user_id: user.id,
-        plan_type: planType,
+        plan_type: databasePlanType, // Make sure to use the mapped plan type here
         interval: interval
       }
     };

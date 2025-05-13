@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CheckoutButton } from "@/components/subscription/CheckoutButton";
 import useAuth from '@/context/auth/useAuth';
+
 const Plans = () => {
   const {
     planType
@@ -63,9 +64,12 @@ const Plans = () => {
     }
   };
   
-  // Format price to always show two decimal places
-  const formatPrice = (price: number) => {
-    return price.toFixed(2);
+  // Format price to display with decimal only for monthly plans
+  const formatPrice = (price: number, interval: 'monthly' | 'annual' | 'one_time' | null = null) => {
+    if (interval === 'monthly') {
+      return price.toFixed(2);
+    }
+    return Math.floor(price);
   };
 
   // Feature icons mapping
@@ -125,7 +129,7 @@ const Plans = () => {
           </CardHeader>
           <CardContent className="flex-grow">
             <div className="text-center mb-4">
-              <p className="text-3xl font-bold">${formatPrice(pricingData.individual[individualInterval])}</p>
+              <p className="text-3xl font-bold">${formatPrice(pricingData.individual[individualInterval], individualInterval)}</p>
               <Select value={individualInterval} onValueChange={(value: string) => setIndividualInterval(value as 'monthly' | 'annual' | 'one_time')}>
                 <SelectTrigger className="w-full mt-2">
                   <SelectValue placeholder={getBillingLabel(individualInterval)} />
@@ -138,7 +142,7 @@ const Plans = () => {
               </Select>
             </div>
             
-            <CheckoutButton planType="premium" interval={individualInterval} label="Get Started" className="w-full mb-6" />
+            <CheckoutButton planType="individual" interval={individualInterval} label="Get Started" className="w-full mb-6" />
             
             <ul className="space-y-2">
               <li className="flex items-center">
@@ -180,7 +184,7 @@ const Plans = () => {
           </CardHeader>
           <CardContent className="flex-grow">
             <div className="text-center mb-4">
-              <p className="text-3xl font-bold">${formatPrice(pricingData.family[familyInterval])}</p>
+              <p className="text-3xl font-bold">${formatPrice(pricingData.family[familyInterval], familyInterval)}</p>
               <Select value={familyInterval} onValueChange={(value: string) => setFamilyInterval(value as 'monthly' | 'annual' | 'one_time')}>
                 <SelectTrigger className="w-full mt-2">
                   <SelectValue placeholder={getBillingLabel(familyInterval)} />
