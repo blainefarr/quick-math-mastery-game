@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, Check, User, Users, Goal, LineChart, Keyboard, ClipboardList, CircleDollarSign, CircleCheck, School, Lock } from 'lucide-react';
@@ -8,37 +7,38 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CheckoutButton } from "@/components/subscription/CheckoutButton";
 import useAuth from '@/context/auth/useAuth';
-
 const Plans = () => {
-  const { planType } = useAuth();
-  
+  const {
+    planType
+  } = useAuth();
+
   // State for pricing options in Individual and Family plans
   const [individualInterval, setIndividualInterval] = useState<'annual' | 'monthly' | 'one_time'>('annual');
   const [familyInterval, setFamilyInterval] = useState<'annual' | 'monthly' | 'one_time'>('annual');
-  
+
   // Updated pricing data to match the Stripe pricing
   const pricingData = {
     individual: {
       monthly: 2.50,
       annual: 10.00,
       one_time: 18.00,
-      maxUsers: 1,
+      maxUsers: 1
     },
     family: {
       monthly: 3.50,
       annual: 10.00,
       one_time: 25.00,
-      maxUsers: 5,
+      maxUsers: 5
     },
     teacher: {
       price: 60.00,
       billing: 'Paid Annually',
-      maxUsers: 40,
+      maxUsers: 40
     },
     school: {
       price: 600.00,
       billing: 'Paid Annually',
-      maxUsers: 500,
+      maxUsers: 500
     }
   };
 
@@ -63,7 +63,11 @@ const Plans = () => {
   };
 
   // Feature icons mapping
-  const FeatureIcon = ({ name }: { name: string }) => {
+  const FeatureIcon = ({
+    name
+  }: {
+    name: string;
+  }) => {
     switch (name) {
       case 'users':
         return <Users className="h-5 w-5 text-primary" />;
@@ -82,23 +86,17 @@ const Plans = () => {
       case 'saved':
         return <CircleCheck className="h-5 w-5 text-primary" />;
       case 'clever':
-        return <Lock className="h-5 w-5 text-primary" />; // Changed to Lock icon for OAuth
+        return <Lock className="h-5 w-5 text-primary" />;
+      // Changed to Lock icon for OAuth
       case 'clipboard':
-        return <ClipboardList className="h-5 w-5 text-primary" />; 
+        return <ClipboardList className="h-5 w-5 text-primary" />;
       default:
         return <Check className="h-5 w-5 text-primary" />;
     }
   };
-
-  return (
-    <div className="container mx-auto py-8 px-4 max-w-7xl">
+  return <div className="container mx-auto py-8 px-4 max-w-7xl">
       <div className="flex items-center gap-4 mb-2">
-        <Button 
-          variant="outline" 
-          size="sm"
-          onClick={() => window.history.back()}
-          className="h-8 rounded-full"
-        >
+        <Button variant="outline" size="sm" onClick={() => window.history.back()} className="h-8 rounded-full">
           <ArrowLeft size={16} className="mr-1" />
           Back
         </Button>
@@ -114,23 +112,18 @@ const Plans = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
         {/* Individual Plan */}
         <Card className={`relative flex flex-col ${isCurrentPlan('individual') ? 'border-primary border-2' : ''}`}>
-          {isCurrentPlan('individual') && (
-            <Badge className="absolute -top-2 left-1/2 -translate-x-1/2 bg-primary">Your Plan</Badge>
-          )}
+          {isCurrentPlan('individual') && <Badge className="absolute -top-2 left-1/2 -translate-x-1/2 bg-primary">Your Plan</Badge>}
           <CardHeader className="text-center pb-2">
             <div className="mx-auto bg-primary/10 rounded-full p-3 mb-2">
               <User className="h-6 w-6 text-primary" />
             </div>
             <h2 className="text-xl font-bold">Individual</h2>
-            <p className="text-sm text-muted-foreground">Perfect for personal learning</p>
+            <p className="text-sm text-muted-foreground">Perfect for one learner</p>
           </CardHeader>
           <CardContent className="flex-grow">
             <div className="text-center mb-4">
               <p className="text-3xl font-bold">${pricingData.individual[individualInterval]}</p>
-              <Select 
-                value={individualInterval} 
-                onValueChange={(value: string) => setIndividualInterval(value as 'monthly' | 'annual' | 'one_time')}
-              >
+              <Select value={individualInterval} onValueChange={(value: string) => setIndividualInterval(value as 'monthly' | 'annual' | 'one_time')}>
                 <SelectTrigger className="w-full mt-2">
                   <SelectValue placeholder={getBillingLabel(individualInterval)} />
                 </SelectTrigger>
@@ -142,12 +135,7 @@ const Plans = () => {
               </Select>
             </div>
             
-            <CheckoutButton 
-              planType="premium"
-              interval={individualInterval}
-              label="Get Started"
-              className="w-full mb-6"
-            />
+            <CheckoutButton planType="premium" interval={individualInterval} label="Get Started" className="w-full mb-6" />
             
             <ul className="space-y-2">
               <li className="flex items-center">
@@ -179,9 +167,7 @@ const Plans = () => {
 
         {/* Family Plan */}
         <Card className={`relative flex flex-col ${isCurrentPlan('family') ? 'border-primary border-2' : ''}`}>
-          {isCurrentPlan('family') && (
-            <Badge className="absolute -top-2 left-1/2 -translate-x-1/2 bg-primary">Your Plan</Badge>
-          )}
+          {isCurrentPlan('family') && <Badge className="absolute -top-2 left-1/2 -translate-x-1/2 bg-primary">Your Plan</Badge>}
           <CardHeader className="text-center pb-2">
             <div className="mx-auto bg-primary/10 rounded-full p-3 mb-2">
               <Users className="h-6 w-6 text-primary" />
@@ -192,10 +178,7 @@ const Plans = () => {
           <CardContent className="flex-grow">
             <div className="text-center mb-4">
               <p className="text-3xl font-bold">${pricingData.family[familyInterval]}</p>
-              <Select 
-                value={familyInterval} 
-                onValueChange={(value: string) => setFamilyInterval(value as 'monthly' | 'annual' | 'one_time')}
-              >
+              <Select value={familyInterval} onValueChange={(value: string) => setFamilyInterval(value as 'monthly' | 'annual' | 'one_time')}>
                 <SelectTrigger className="w-full mt-2">
                   <SelectValue placeholder={getBillingLabel(familyInterval)} />
                 </SelectTrigger>
@@ -207,12 +190,7 @@ const Plans = () => {
               </Select>
             </div>
             
-            <CheckoutButton 
-              planType="family"
-              interval={familyInterval}
-              label="Get Started"
-              className="w-full mb-6"
-            />
+            <CheckoutButton planType="family" interval={familyInterval} label="Get Started" className="w-full mb-6" />
             
             <ul className="space-y-2">
               <li className="flex items-center">
@@ -244,9 +222,7 @@ const Plans = () => {
 
         {/* Teacher Plan */}
         <Card className={`relative flex flex-col ${isCurrentPlan('teacher') ? 'border-primary border-2' : ''}`}>
-          {isCurrentPlan('teacher') && (
-            <Badge className="absolute -top-2 left-1/2 -translate-x-1/2 bg-primary">Your Plan</Badge>
-          )}
+          {isCurrentPlan('teacher') && <Badge className="absolute -top-2 left-1/2 -translate-x-1/2 bg-primary">Your Plan</Badge>}
           <CardHeader className="text-center pb-2">
             <div className="mx-auto bg-primary/10 rounded-full p-3 mb-2">
               <ClipboardList className="h-6 w-6 text-primary" />
@@ -260,12 +236,7 @@ const Plans = () => {
               <p className="text-sm text-muted-foreground mt-2">{pricingData.teacher.billing}</p>
             </div>
             
-            <CheckoutButton 
-              planType="teacher"
-              interval="annual"
-              label="Get Started"
-              className="w-full mb-6"
-            />
+            <CheckoutButton planType="teacher" interval="annual" label="Get Started" className="w-full mb-6" />
             
             <ul className="space-y-2">
               <li className="flex items-center">
@@ -305,9 +276,7 @@ const Plans = () => {
 
         {/* School Plan */}
         <Card className={`relative flex flex-col ${isCurrentPlan('school') ? 'border-primary border-2' : ''}`}>
-          {isCurrentPlan('school') && (
-            <Badge className="absolute -top-2 left-1/2 -translate-x-1/2 bg-primary">Your Plan</Badge>
-          )}
+          {isCurrentPlan('school') && <Badge className="absolute -top-2 left-1/2 -translate-x-1/2 bg-primary">Your Plan</Badge>}
           <CardHeader className="text-center pb-2">
             <div className="mx-auto bg-primary/10 rounded-full p-3 mb-2">
               <School className="h-6 w-6 text-primary" />
@@ -321,12 +290,7 @@ const Plans = () => {
               <p className="text-sm text-muted-foreground mt-2">{pricingData.school.billing}</p>
             </div>
             
-            <CheckoutButton 
-              planType="school"
-              interval="annual"
-              label="Get Started"
-              className="w-full mb-6"
-            />
+            <CheckoutButton planType="school" interval="annual" label="Get Started" className="w-full mb-6" />
             
             <ul className="space-y-2">
               <li className="flex items-center">
@@ -431,8 +395,6 @@ const Plans = () => {
           </CardFooter>
         </Card>
       </div>
-    </div>
-  );
+    </div>;
 };
-
 export default Plans;
