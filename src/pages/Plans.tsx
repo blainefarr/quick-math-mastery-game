@@ -138,7 +138,7 @@ const Plans = () => {
             <ul className="space-y-2">
               <li className="flex items-center">
                 <FeatureIcon name="saved" />
-                <span className="ml-2">Unlimited Saved Games</span>
+                <span className="ml-2">Unlimited saved games</span>
               </li>
               <li className="flex items-center">
                 <FeatureIcon name="user" />
@@ -146,15 +146,15 @@ const Plans = () => {
               </li>
               <li className="flex items-center">
                 <FeatureIcon name="goals" />
-                <span className="ml-2">Goal Tracking</span>
+                <span className="ml-2">Goal tracking</span>
               </li>
               <li className="flex items-center">
                 <FeatureIcon name="progress" />
-                <span className="ml-2">Progress Reports</span>
+                <span className="ml-2">Progress reports</span>
               </li>
               <li className="flex items-center">
                 <FeatureIcon name="typing" />
-                <span className="ml-2">Typing Speed Diagnostics</span>
+                <span className="ml-2">Typing adjusted scores</span>
               </li>
             </ul>
           </CardContent>
@@ -193,7 +193,7 @@ const Plans = () => {
             <ul className="space-y-2">
               <li className="flex items-center">
                 <FeatureIcon name="saved" />
-                <span className="ml-2">Unlimited Saved Games</span>
+                <span className="ml-2">Unlimited saved games</span>
               </li>
               <li className="flex items-center">
                 <FeatureIcon name="users" />
@@ -201,15 +201,15 @@ const Plans = () => {
               </li>
               <li className="flex items-center">
                 <FeatureIcon name="goals" />
-                <span className="ml-2">Goal Tracking</span>
+                <span className="ml-2">Goal tracking</span>
               </li>
               <li className="flex items-center">
                 <FeatureIcon name="progress" />
-                <span className="ml-2">Progress Reports</span>
+                <span className="ml-2">Progress reports</span>
               </li>
               <li className="flex items-center">
                 <FeatureIcon name="typing" />
-                <span className="ml-2">Typing Speed Diagnostics</span>
+                <span className="ml-2">Typing adjusted scores</span>
               </li>
             </ul>
           </CardContent>
@@ -239,7 +239,7 @@ const Plans = () => {
             <ul className="space-y-2">
               <li className="flex items-center">
                 <FeatureIcon name="saved" />
-                <span className="ml-2">Unlimited Saved Games</span>
+                <span className="ml-2">Unlimited saved games</span>
               </li>
               <li className="flex items-center">
                 <FeatureIcon name="users" />
@@ -247,23 +247,23 @@ const Plans = () => {
               </li>
               <li className="flex items-center">
                 <FeatureIcon name="goals" />
-                <span className="ml-2">Goal Tracking</span>
+                <span className="ml-2">Goal tracking</span>
               </li>
               <li className="flex items-center">
                 <FeatureIcon name="progress" />
-                <span className="ml-2">Progress Reports</span>
+                <span className="ml-2">Progress reports</span>
               </li>
               <li className="flex items-center">
                 <FeatureIcon name="typing" />
-                <span className="ml-2">Typing Speed Diagnostics</span>
+                <span className="ml-2">Typing adjusted scores</span>
               </li>
               <li className="flex items-center">
                 <FeatureIcon name="reports" />
-                <span className="ml-2">Class Reporting</span>
+                <span className="ml-2">Class reporting</span>
               </li>
               <li className="flex items-center">
                 <FeatureIcon name="clipboard" />
-                <span className="ml-2">Roster Management</span>
+                <span className="ml-2">Roster management</span>
               </li>
             </ul>
           </CardContent>
@@ -293,7 +293,7 @@ const Plans = () => {
             <ul className="space-y-2">
               <li className="flex items-center">
                 <FeatureIcon name="saved" />
-                <span className="ml-2">Unlimited Saved Games</span>
+                <span className="ml-2">Unlimited saved games</span>
               </li>
               <li className="flex items-center">
                 <FeatureIcon name="users" />
@@ -301,27 +301,27 @@ const Plans = () => {
               </li>
               <li className="flex items-center">
                 <FeatureIcon name="goals" />
-                <span className="ml-2">Goal Tracking</span>
+                <span className="ml-2">Goal tracking</span>
               </li>
               <li className="flex items-center">
                 <FeatureIcon name="progress" />
-                <span className="ml-2">Progress Reports</span>
+                <span className="ml-2">Progress reports</span>
               </li>
               <li className="flex items-center">
                 <FeatureIcon name="typing" />
-                <span className="ml-2">Typing Speed Diagnostics</span>
+                <span className="ml-2">Typing adjusted scores</span>
               </li>
               <li className="flex items-center">
                 <FeatureIcon name="reports" />
-                <span className="ml-2">Class Reporting</span>
+                <span className="ml-2">Class reporting</span>
               </li>
               <li className="flex items-center">
                 <FeatureIcon name="clipboard" />
-                <span className="ml-2">Roster Management</span>
+                <span className="ml-2">Roster management</span>
               </li>
               <li className="flex items-center">
                 <FeatureIcon name="clever" />
-                <span className="ml-2">Clever Integration</span>
+                <span className="ml-2">Clever integration</span>
               </li>
             </ul>
           </CardContent>
