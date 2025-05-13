@@ -339,19 +339,19 @@ const Plans = () => {
             <h2 className="text-2xl font-bold">Free</h2>
           </CardHeader>
           <CardContent>
-            <p className="mb-4">Up to 5 Saved Games with leaderboard and progress tracking</p>
+            <p className="mb-4">Up to 5 saved games with basic reporting:</p>
             <ul className="space-y-2">
               <li className="flex items-center">
                 <Check className="h-5 w-5 text-primary mr-2" />
-                <span>5 Saved Games</span>
+                <span>5 saved games</span>
               </li>
               <li className="flex items-center">
                 <Check className="h-5 w-5 text-primary mr-2" />
-                <span>Leaderboard Access</span>
+                <span>Leaderboard access</span>
               </li>
               <li className="flex items-center">
                 <Check className="h-5 w-5 text-primary mr-2" />
-                <span>Basic Progress Tracking</span>
+                <span>Basic progress tracking</span>
               </li>
             </ul>
           </CardContent>
@@ -370,21 +370,18 @@ const Plans = () => {
           <CardContent>
             <p className="mb-4">Everything in school plus more:</p>
             <ul className="space-y-2">
+              
               <li className="flex items-center">
                 <Check className="h-5 w-5 text-primary mr-2" />
-                <span>All School Plan Features</span>
+                <span>Dedicated support</span>
               </li>
               <li className="flex items-center">
                 <Check className="h-5 w-5 text-primary mr-2" />
-                <span>Dedicated Support</span>
+                <span>Enterprise billing options</span>
               </li>
               <li className="flex items-center">
                 <Check className="h-5 w-5 text-primary mr-2" />
-                <span>Enterprise Billing Options</span>
-              </li>
-              <li className="flex items-center">
-                <Check className="h-5 w-5 text-primary mr-2" />
-                <span>Multi-Year Contracts</span>
+                <span>Multi-year contracts</span>
               </li>
             </ul>
           </CardContent>
