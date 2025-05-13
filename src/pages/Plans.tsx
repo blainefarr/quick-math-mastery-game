@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, Check, User, Users, Goal, LineChart, Keyboard, ClipboardList, CircleDollarSign, CircleCheck, School, Lock } from 'lucide-react';
@@ -27,7 +28,6 @@ const Plans = () => {
     family: {
       monthly: 3.50,
       annual: 15.00,
-      // Updated to $15 from $10
       one_time: 25.00,
       maxUsers: 5
     },
@@ -133,17 +133,17 @@ const Plans = () => {
                 <SelectTrigger className="w-full mt-2">
                   <SelectValue placeholder={getBillingLabel(individualInterval)} />
                 </SelectTrigger>
-                <SelectContent className="bg-background">
-                  <SelectItem value="monthly">Paid Monthly</SelectItem>
-                  <SelectItem value="annual">Paid Annually</SelectItem>
-                  <SelectItem value="one_time">Lifetime</SelectItem>
+                <SelectContent className="bg-background text-center">
+                  <SelectItem value="monthly" className="text-center justify-center">Paid Monthly</SelectItem>
+                  <SelectItem value="annual" className="text-center justify-center">Paid Annually</SelectItem>
+                  <SelectItem value="one_time" className="text-center justify-center">Lifetime</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             
             <CheckoutButton planType="individual" interval={individualInterval} label="Get Started" className="w-full mb-6" />
             
-            <ul className="space-y-2">
+            <ul className="space-y-3">
               <li className="flex items-center">
                 <FeatureIcon name="saved" />
                 <span className="ml-2">Unlimited saved games</span>
@@ -188,17 +188,17 @@ const Plans = () => {
                 <SelectTrigger className="w-full mt-2">
                   <SelectValue placeholder={getBillingLabel(familyInterval)} />
                 </SelectTrigger>
-                <SelectContent className="bg-background">
-                  <SelectItem value="monthly">Paid Monthly</SelectItem>
-                  <SelectItem value="annual">Paid Annually</SelectItem>
-                  <SelectItem value="one_time">Lifetime</SelectItem>
+                <SelectContent className="bg-background text-center">
+                  <SelectItem value="monthly" className="text-center justify-center">Paid Monthly</SelectItem>
+                  <SelectItem value="annual" className="text-center justify-center">Paid Annually</SelectItem>
+                  <SelectItem value="one_time" className="text-center justify-center">Lifetime</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             
             <CheckoutButton planType="family" interval={familyInterval} label="Get Started" className="w-full mb-6" />
             
-            <ul className="space-y-2">
+            <ul className="space-y-3">
               <li className="flex items-center">
                 <FeatureIcon name="saved" />
                 <span className="ml-2">Unlimited saved games</span>
@@ -239,12 +239,12 @@ const Plans = () => {
           <CardContent className="flex-grow">
             <div className="text-center mb-4">
               <p className="text-3xl font-bold">${formatPrice(pricingData.teacher.price)}</p>
-              <p className="text-base text-muted-foreground mt-2">{pricingData.teacher.billing}</p>
+              <p className="text-base text-muted-foreground mt-2 py-2">{pricingData.teacher.billing}</p>
             </div>
             
             <CheckoutButton planType="teacher" interval="annual" label="Get Started" className="w-full mb-6" />
             
-            <ul className="space-y-2">
+            <ul className="space-y-3">
               <li className="flex items-center">
                 <FeatureIcon name="saved" />
                 <span className="ml-2">Unlimited saved games</span>
@@ -293,12 +293,12 @@ const Plans = () => {
           <CardContent className="flex-grow">
             <div className="text-center mb-4">
               <p className="text-3xl font-bold">${formatPrice(pricingData.school.price)}</p>
-              <p className="text-base text-muted-foreground mt-2">{pricingData.school.billing}</p>
+              <p className="text-base text-muted-foreground mt-2 py-2">{pricingData.school.billing}</p>
             </div>
             
             <CheckoutButton planType="school" interval="annual" label="Get Started" className="w-full mb-6" />
             
-            <ul className="space-y-2">
+            <ul className="space-y-3">
               <li className="flex items-center">
                 <FeatureIcon name="saved" />
                 <span className="ml-2">Unlimited saved games</span>
@@ -348,7 +348,7 @@ const Plans = () => {
           </CardHeader>
           <CardContent>
             <p className="mb-4">Up to 5 saved games with basic reporting:</p>
-            <ul className="space-y-2">
+            <ul className="space-y-3">
               <li className="flex items-center">
                 <Check className="h-5 w-5 text-primary mr-2" />
                 <span>5 saved games</span>
@@ -377,7 +377,7 @@ const Plans = () => {
           </CardHeader>
           <CardContent>
             <p className="mb-4">Everything in school plus more:</p>
-            <ul className="space-y-2">
+            <ul className="space-y-3">
               <li className="flex items-center">
                 <Check className="h-5 w-5 text-primary mr-2" />
                 <span>Prioritized Support</span>
@@ -390,6 +390,10 @@ const Plans = () => {
               <li className="flex items-center">
                 <Check className="h-5 w-5 text-primary mr-2" />
                 <span>Multi-year contracts</span>
+              </li>
+              <li className="flex items-center">
+                <Check className="h-5 w-5 text-primary mr-2" />
+                <span>Prioritized Support</span>
               </li>
             </ul>
           </CardContent>
