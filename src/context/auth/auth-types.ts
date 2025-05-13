@@ -44,7 +44,7 @@ export interface AuthContextType {
   planExpiresAt: string | null;
   setIsLoggedIn: (isLoggedIn: boolean) => void;
   setUsername: (username: string) => void;
-  setDefaultProfileId: (profileId: string) => void;
+  setDefaultProfileId: (profileId: string | null) => void;
   handleLogout: () => Promise<void>;
   refreshUserProfile: () => Promise<void>;
   // Subscription helpers
