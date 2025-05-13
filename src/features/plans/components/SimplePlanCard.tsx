@@ -8,16 +8,18 @@ interface SimplePlanCardProps {
   description?: string;
   features: Array<{ icon: string; text: string }>;
   footerContent: React.ReactNode;
+  className?: string;
 }
 
 const SimplePlanCard: React.FC<SimplePlanCardProps> = ({
   title,
   description,
   features,
-  footerContent
+  footerContent,
+  className = ""
 }) => {
   return (
-    <Card>
+    <Card className={className}>
       <CardHeader>
         <h2 className="text-2xl font-bold">{title}</h2>
         {description && <p className="mb-4">{description}</p>}

@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, User, Users, ClipboardList, School } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import useAuth from '@/context/auth/useAuth';
@@ -9,9 +9,11 @@ import IntervalPlanCard from '@/features/plans/components/IntervalPlanCard';
 import FixedPlanCard from '@/features/plans/components/FixedPlanCard';
 import SimplePlanCard from '@/features/plans/components/SimplePlanCard';
 import { pricingData } from '@/features/plans/utils/pricing-utils';
+import AuthModal from '@/components/auth/AuthModal';
 
 const Plans = () => {
-  const { planType } = useAuth();
+  const { planType, isLoggedIn } = useAuth();
+  const navigate = useNavigate();
 
   // Helper to check if the plan is the user's current plan
   const isCurrentPlan = (planName: string) => {
@@ -20,6 +22,15 @@ const Plans = () => {
     if (planName === 'teacher' && planType === 'teacher') return true;
     if (planName === 'school' && planType === 'school') return true;
     return false;
+  };
+
+  // Handle free plan button click
+  const handleFreePlanClick = () => {
+    if (isLoggedIn) {
+      navigate('/account');
+    } else {
+      // Auth modal will be shown via the component
+    }
   };
 
   // Features for each plan
@@ -140,9 +151,15 @@ const Plans = () => {
           description="Up to 5 saved games with basic reporting:"
           features={freeFeatures}
           footerContent={
-            <Link to="/" className="w-full">
-              <Button variant="outline" className="w-full">Get Started for Free</Button>
-            </Link>
+            isLoggedIn ? (
+              <Link to="/account" className="w-full">
+                <Button variant="outline" className="w-full">Access Your Account</Button>
+              </Link>
+            ) : (
+              <AuthModal defaultView="register">
+                <Button variant="outline" className="w-full">Get Started for Free</Button>
+              </AuthModal>
+            )
           }
         />
 

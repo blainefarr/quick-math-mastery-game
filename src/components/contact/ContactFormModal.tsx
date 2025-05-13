@@ -5,7 +5,6 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import ReCAPTCHA from "react-google-recaptcha";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 
 import { 
   Dialog,
@@ -56,22 +55,47 @@ export function ContactFormModal() {
     }
   });
 
+  const submitContactForm = async ({ name, email, message }: {
+    name: string,
+    email: string,
+    message: string
+  }) => {
+    try {
+      const response = await fetch(
+        "https://dczsjvcgjxqgjdihonfj.functions.supabase.co/send-contact-form",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ name, email, message })
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to send message. Please try again later.");
+      }
+
+      return { success: true };
+    } catch (error) {
+      console.error("❌ Error submitting contact form:", error);
+      throw error;
+    }
+  };
+
   const onSubmit = async (data: ContactFormValues) => {
     setIsSubmitting(true);
     
     try {
       toast.info("Sending your message...");
       
-      // Send data to our edge function to handle email delivery
-      const { error } = await supabase.functions.invoke('send-contact-form', {
-        body: {
-          name: data.name,
-          email: data.email,
-          message: data.message
-        }
+      const result = await submitContactForm({
+        name: data.name,
+        email: data.email,
+        message: data.message
       });
       
-      if (error) throw error;
+      if (!result.success) throw new Error("Failed to send message");
       
       toast.success("Your message has been sent successfully!");
       form.reset();
@@ -162,7 +186,7 @@ export function ContactFormModal() {
                   <FormControl>
                     <ReCAPTCHA
                       ref={recaptchaRef}
-                      sitekey="6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI" // Test key that always validates
+                      sitekey={RECAPTCHA_SITE_KEY}
                       onChange={handleCaptchaChange}
                     />
                   </FormControl>
