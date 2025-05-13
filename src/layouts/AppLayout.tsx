@@ -8,7 +8,7 @@ import useAuth from '@/context/auth/useAuth';
 const AppLayout = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { lastRoute } = useNavigationState();
+  const { lastRoute, isPageRefresh, getNavigationSource } = useNavigationState();
   const { isLoggedIn, isLoadingProfile } = useAuth();
 
   useEffect(() => {
@@ -18,14 +18,17 @@ const AppLayout = () => {
 
   // Handle route restoration after refresh
   useEffect(() => {
+    // Only run this effect once when component mounts
+    const navigationSource = getNavigationSource();
+    const isRefresh = isPageRefresh();
+    
     // Check if we're on the homepage after a refresh
-    const isDirectNavigation = performance.navigation && 
-      performance.navigation.type === 1 && // 1 is TYPE_RELOAD
-      location.pathname === '/';
+    const isHomepage = location.pathname === '/';
+    const hasLastRoute = lastRoute && lastRoute !== '/';
     
     // If we're refreshed to homepage but actually had a previous specific route,
     // navigate back there (unless we're not logged in and it's a protected route)
-    if (isDirectNavigation && lastRoute && lastRoute !== '/') {
+    if ((isRefresh || navigationSource === 'refresh') && isHomepage && hasLastRoute) {
       // Check if it's a route that should only be accessed when logged in
       const authRequiredRoutes = ['/account', '/progress', '/goals', '/leaderboard'];
       const needsAuth = authRequiredRoutes.some(route => lastRoute.startsWith(route));
@@ -34,11 +37,12 @@ const AppLayout = () => {
       if (!needsAuth || isLoggedIn) {
         // Wait for auth check to complete
         if (!isLoadingProfile) {
-          navigate(lastRoute);
+          console.log('Restoring route after refresh:', lastRoute);
+          navigate(lastRoute, { replace: true });
         }
       }
     }
-  }, [lastRoute, navigate, location.pathname, isLoggedIn, isLoadingProfile]);
+  }, [lastRoute, navigate, location.pathname, isLoggedIn, isLoadingProfile, isPageRefresh, getNavigationSource]);
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
