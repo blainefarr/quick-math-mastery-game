@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, Check, User, Users, Goal, LineChart, Keyboard, ClipboardList, CircleDollarSign, CircleCheck, School, Lock } from 'lucide-react';
@@ -9,7 +8,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { CheckoutButton } from "@/components/subscription/CheckoutButton";
 import useAuth from '@/context/auth/useAuth';
 import ContactFormModal from '@/components/contact/ContactFormModal';
-
 const Plans = () => {
   const {
     planType
@@ -241,7 +239,7 @@ const Plans = () => {
           <CardContent className="flex-grow">
             <div className="text-center mb-4">
               <p className="text-3xl font-bold">${formatPrice(pricingData.teacher.price)}</p>
-              <p className="text-base text-muted-foreground mt-2 py-4">{pricingData.teacher.billing}</p>
+              <p className="text-base text-muted-foreground mt-2 py-2">{pricingData.teacher.billing}</p>
             </div>
             
             <CheckoutButton planType="teacher" interval="annual" label="Get Started" className="w-full mb-6" />
