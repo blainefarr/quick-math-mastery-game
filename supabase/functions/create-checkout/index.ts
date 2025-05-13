@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@12.0.0?target=deno";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.14.0";
@@ -66,12 +65,9 @@ serve(async (req) => {
     
     logStep("Request parameters", { planType, interval, promo });
 
-    // Map frontend plan type to backend plan type (if different)
-    let databasePlanType = planType;
-    if (planType === 'individual') {
-      databasePlanType = 'premium';  // Map "individual" to "premium" plan in database
-    }
-
+    // We no longer need to map "individual" to "premium" as we've updated the database
+    const databasePlanType = planType;
+    
     // Get plan details from the database
     const { data: planData, error: planError } = await supabase
       .from("plans")

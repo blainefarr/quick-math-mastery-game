@@ -38,6 +38,9 @@ const contactFormSchema = z.object({
 
 type ContactFormValues = z.infer<typeof contactFormSchema>;
 
+// Use test key as fallback for development
+const RECAPTCHA_SITE_KEY = "6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI"; // Test key that always validates
+
 export function ContactFormModal() {
   const [open, setOpen] = React.useState(false);
   const [isSubmitting, setIsSubmitting] = React.useState(false);

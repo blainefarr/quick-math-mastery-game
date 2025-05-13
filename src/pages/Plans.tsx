@@ -1,110 +1,79 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Check, User, Users, Goal, LineChart, Keyboard, ClipboardList, CircleDollarSign, CircleCheck, School, Lock } from 'lucide-react';
+import { ArrowLeft, User, Users, ClipboardList, School } from 'lucide-react';
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CheckoutButton } from "@/components/subscription/CheckoutButton";
 import useAuth from '@/context/auth/useAuth';
 import ContactFormModal from '@/components/contact/ContactFormModal';
+import IntervalPlanCard from '@/features/plans/components/IntervalPlanCard';
+import FixedPlanCard from '@/features/plans/components/FixedPlanCard';
+import SimplePlanCard from '@/features/plans/components/SimplePlanCard';
+import { pricingData } from '@/features/plans/utils/pricing-utils';
 
 const Plans = () => {
-  const {
-    planType
-  } = useAuth();
-
-  // State for pricing options in Individual and Family plans
-  const [individualInterval, setIndividualInterval] = useState<'annual' | 'monthly' | 'one_time'>('annual');
-  const [familyInterval, setFamilyInterval] = useState<'annual' | 'monthly' | 'one_time'>('annual');
-
-  // Updated pricing data to match the Stripe pricing
-  const pricingData = {
-    individual: {
-      monthly: 2.50,
-      annual: 10.00,
-      one_time: 18.00,
-      maxUsers: 1
-    },
-    family: {
-      monthly: 3.50,
-      annual: 15.00,
-      one_time: 25.00,
-      maxUsers: 5
-    },
-    teacher: {
-      price: 60.00,
-      billing: 'Paid Annually',
-      maxUsers: 40
-    },
-    school: {
-      price: 600.00,
-      billing: 'Paid Annually',
-      maxUsers: 500
-    }
-  };
+  const { planType } = useAuth();
 
   // Helper to check if the plan is the user's current plan
   const isCurrentPlan = (planName: string) => {
-    if (planName === 'individual' && planType === 'premium') return true;
+    if (planName === 'individual' && planType === 'individual') return true;
     if (planName === 'family' && planType === 'family') return true;
     if (planName === 'teacher' && planType === 'teacher') return true;
     if (planName === 'school' && planType === 'school') return true;
     return false;
   };
 
-  // Get billing label based on interval
-  const getBillingLabel = (interval: 'monthly' | 'annual' | 'one_time') => {
-    if (interval === 'monthly') {
-      return 'Paid Monthly';
-    } else if (interval === 'annual') {
-      return 'Paid Annually';
-    } else {
-      return 'Lifetime';
-    }
-  };
+  // Features for each plan
+  const individualFeatures = [
+    { icon: 'saved', text: 'Unlimited saved games' },
+    { icon: 'user', text: `${pricingData.individual.maxUsers} User` },
+    { icon: 'goals', text: 'Goal tracking' },
+    { icon: 'progress', text: 'Progress reports' },
+    { icon: 'typing', text: 'Typing adjusted scores' },
+  ];
 
-  // Format price to display with decimal only for monthly plans
-  const formatPrice = (price: number, interval: 'monthly' | 'annual' | 'one_time' | null = null) => {
-    if (interval === 'monthly') {
-      return price.toFixed(2);
-    }
-    return Math.floor(price);
-  };
+  const familyFeatures = [
+    { icon: 'saved', text: 'Unlimited saved games' },
+    { icon: 'users', text: `Up to ${pricingData.family.maxUsers} Users` },
+    { icon: 'goals', text: 'Goal tracking' },
+    { icon: 'progress', text: 'Progress reports' },
+    { icon: 'typing', text: 'Typing adjusted scores' },
+  ];
 
-  // Feature icons mapping
-  const FeatureIcon = ({
-    name
-  }: {
-    name: string;
-  }) => {
-    switch (name) {
-      case 'users':
-        return <Users className="h-5 w-5 text-primary" />;
-      case 'user':
-        return <User className="h-5 w-5 text-primary" />;
-      case 'goals':
-        return <Goal className="h-5 w-5 text-primary" />;
-      case 'progress':
-        return <LineChart className="h-5 w-5 text-primary" />;
-      case 'typing':
-        return <Keyboard className="h-5 w-5 text-primary" />;
-      case 'reports':
-        return <LineChart className="h-5 w-5 text-primary" />;
-      case 'roster':
-        return <ClipboardList className="h-5 w-5 text-primary" />;
-      case 'saved':
-        return <CircleCheck className="h-5 w-5 text-primary" />;
-      case 'clever':
-        return <Lock className="h-5 w-5 text-primary" />;
-      case 'clipboard':
-        return <ClipboardList className="h-5 w-5 text-primary" />;
-      default:
-        return <Check className="h-5 w-5 text-primary" />;
-    }
-  };
-  return <div className="container mx-auto py-8 px-4 max-w-7xl">
+  const teacherFeatures = [
+    { icon: 'saved', text: 'Unlimited saved games' },
+    { icon: 'users', text: `Up to ${pricingData.teacher.maxUsers} Students` },
+    { icon: 'goals', text: 'Goal tracking' },
+    { icon: 'progress', text: 'Progress reports' },
+    { icon: 'typing', text: 'Typing adjusted scores' },
+    { icon: 'reports', text: 'Class reporting' },
+    { icon: 'clipboard', text: 'Roster management' },
+  ];
+
+  const schoolFeatures = [
+    { icon: 'saved', text: 'Unlimited saved games' },
+    { icon: 'users', text: `Up to ${pricingData.school.maxUsers} Students` },
+    { icon: 'goals', text: 'Goal tracking' },
+    { icon: 'progress', text: 'Progress reports' },
+    { icon: 'typing', text: 'Typing adjusted scores' },
+    { icon: 'reports', text: 'Class reporting' },
+    { icon: 'clipboard', text: 'Roster management' },
+    { icon: 'clever', text: 'Clever integration' },
+  ];
+
+  const freeFeatures = [
+    { icon: 'check', text: '5 saved games' },
+    { icon: 'check', text: 'Leaderboard access' },
+    { icon: 'check', text: 'Basic progress tracking' },
+  ];
+
+  const districtFeatures = [
+    { icon: 'check', text: 'Prioritized Support' },
+    { icon: 'check', text: 'Enterprise billing options' },
+    { icon: 'check', text: 'Multi-year contracts' },
+  ];
+
+  return (
+    <div className="container mx-auto py-8 px-4 max-w-7xl">
       <div className="flex items-center gap-4 mb-2">
         <Button variant="outline" size="sm" onClick={() => window.history.back()} className="h-8 rounded-full">
           <ArrowLeft size={16} className="mr-1" />
@@ -119,286 +88,74 @@ const Plans = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
         {/* Individual Plan */}
-        <Card className={`relative flex flex-col ${isCurrentPlan('individual') ? 'border-primary border-2' : ''}`}>
-          {isCurrentPlan('individual') && <Badge className="absolute -top-2 left-1/2 -translate-x-1/2 bg-primary">Your Plan</Badge>}
-          <CardHeader className="text-center pb-2">
-            <div className="mx-auto bg-primary/10 rounded-full p-3 mb-2">
-              <User className="h-6 w-6 text-primary" />
-            </div>
-            <h2 className="text-xl font-bold">Individual</h2>
-            <p className="text-sm text-muted-foreground">Perfect for one learner</p>
-          </CardHeader>
-          <CardContent className="flex-grow">
-            <div className="text-center mb-4">
-              <p className="text-3xl font-bold">${formatPrice(pricingData.individual[individualInterval], individualInterval)}</p>
-              <Select value={individualInterval} onValueChange={(value: string) => setIndividualInterval(value as 'monthly' | 'annual' | 'one_time')}>
-                <SelectTrigger className="w-full mt-2">
-                  <SelectValue placeholder={getBillingLabel(individualInterval)} />
-                </SelectTrigger>
-                <SelectContent className="bg-background text-center">
-                  <SelectItem value="monthly" className="text-center justify-center">Paid Monthly</SelectItem>
-                  <SelectItem value="annual" className="text-center justify-center">Paid Annually</SelectItem>
-                  <SelectItem value="one_time" className="text-center justify-center">Lifetime</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <CheckoutButton planType="individual" interval={individualInterval} label="Get Started" className="w-full mb-6" />
-            
-            <ul className="space-y-6">
-              <li className="flex items-center">
-                <FeatureIcon name="saved" />
-                <span className="ml-2">Unlimited saved games</span>
-              </li>
-              <li className="flex items-center">
-                <FeatureIcon name="user" />
-                <span className="ml-2">{pricingData.individual.maxUsers} User</span>
-              </li>
-              <li className="flex items-center">
-                <FeatureIcon name="goals" />
-                <span className="ml-2">Goal tracking</span>
-              </li>
-              <li className="flex items-center">
-                <FeatureIcon name="progress" />
-                <span className="ml-2">Progress reports</span>
-              </li>
-              <li className="flex items-center">
-                <FeatureIcon name="typing" />
-                <span className="ml-2">Typing adjusted scores</span>
-              </li>
-            </ul>
-          </CardContent>
-          <CardFooter>
-            {/* Footer content (if needed) */}
-          </CardFooter>
-        </Card>
+        <IntervalPlanCard
+          title="Individual"
+          description="Perfect for one learner"
+          icon={User}
+          isCurrentPlan={isCurrentPlan('individual')}
+          planType="individual"
+          pricing={pricingData.individual}
+          features={individualFeatures}
+        />
 
         {/* Family Plan */}
-        <Card className={`relative flex flex-col ${isCurrentPlan('family') ? 'border-primary border-2' : ''}`}>
-          {isCurrentPlan('family') && <Badge className="absolute -top-2 left-1/2 -translate-x-1/2 bg-primary">Your Plan</Badge>}
-          <CardHeader className="text-center pb-2">
-            <div className="mx-auto bg-primary/10 rounded-full p-3 mb-2">
-              <Users className="h-6 w-6 text-primary" />
-            </div>
-            <h2 className="text-xl font-bold">Family</h2>
-            <p className="text-sm text-muted-foreground">Great for families</p>
-          </CardHeader>
-          <CardContent className="flex-grow">
-            <div className="text-center mb-4">
-              <p className="text-3xl font-bold">${formatPrice(pricingData.family[familyInterval], familyInterval)}</p>
-              <Select value={familyInterval} onValueChange={(value: string) => setFamilyInterval(value as 'monthly' | 'annual' | 'one_time')}>
-                <SelectTrigger className="w-full mt-2">
-                  <SelectValue placeholder={getBillingLabel(familyInterval)} />
-                </SelectTrigger>
-                <SelectContent className="bg-background text-center">
-                  <SelectItem value="monthly" className="text-center justify-center">Paid Monthly</SelectItem>
-                  <SelectItem value="annual" className="text-center justify-center">Paid Annually</SelectItem>
-                  <SelectItem value="one_time" className="text-center justify-center">Lifetime</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <CheckoutButton planType="family" interval={familyInterval} label="Get Started" className="w-full mb-6" />
-            
-            <ul className="space-y-6">
-              <li className="flex items-center">
-                <FeatureIcon name="saved" />
-                <span className="ml-2">Unlimited saved games</span>
-              </li>
-              <li className="flex items-center">
-                <FeatureIcon name="users" />
-                <span className="ml-2">Up to {pricingData.family.maxUsers} Users</span>
-              </li>
-              <li className="flex items-center">
-                <FeatureIcon name="goals" />
-                <span className="ml-2">Goal tracking</span>
-              </li>
-              <li className="flex items-center">
-                <FeatureIcon name="progress" />
-                <span className="ml-2">Progress reports</span>
-              </li>
-              <li className="flex items-center">
-                <FeatureIcon name="typing" />
-                <span className="ml-2">Typing adjusted scores</span>
-              </li>
-            </ul>
-          </CardContent>
-          <CardFooter>
-            {/* Footer content (if needed) */}
-          </CardFooter>
-        </Card>
+        <IntervalPlanCard
+          title="Family"
+          description="Great for families"
+          icon={Users}
+          isCurrentPlan={isCurrentPlan('family')}
+          planType="family"
+          pricing={pricingData.family}
+          features={familyFeatures}
+        />
 
         {/* Teacher Plan */}
-        <Card className={`relative flex flex-col ${isCurrentPlan('teacher') ? 'border-primary border-2' : ''}`}>
-          {isCurrentPlan('teacher') && <Badge className="absolute -top-2 left-1/2 -translate-x-1/2 bg-primary">Your Plan</Badge>}
-          <CardHeader className="text-center pb-2">
-            <div className="mx-auto bg-primary/10 rounded-full p-3 mb-2">
-              <ClipboardList className="h-6 w-6 text-primary" />
-            </div>
-            <h2 className="text-xl font-bold">Teacher</h2>
-            <p className="text-sm text-muted-foreground">Ideal for classrooms</p>
-          </CardHeader>
-          <CardContent className="flex-grow">
-            <div className="text-center mb-4">
-              <p className="text-3xl font-bold">${formatPrice(pricingData.teacher.price)}</p>
-              <p className="text-base text-muted-foreground mt-2 py-2">{pricingData.teacher.billing}</p>
-            </div>
-            
-            <CheckoutButton planType="teacher" interval="annual" label="Get Started" className="w-full mb-6" />
-            
-            <ul className="space-y-6">
-              <li className="flex items-center">
-                <FeatureIcon name="saved" />
-                <span className="ml-2">Unlimited saved games</span>
-              </li>
-              <li className="flex items-center">
-                <FeatureIcon name="users" />
-                <span className="ml-2">Up to {pricingData.teacher.maxUsers} Students</span>
-              </li>
-              <li className="flex items-center">
-                <FeatureIcon name="goals" />
-                <span className="ml-2">Goal tracking</span>
-              </li>
-              <li className="flex items-center">
-                <FeatureIcon name="progress" />
-                <span className="ml-2">Progress reports</span>
-              </li>
-              <li className="flex items-center">
-                <FeatureIcon name="typing" />
-                <span className="ml-2">Typing adjusted scores</span>
-              </li>
-              <li className="flex items-center">
-                <FeatureIcon name="reports" />
-                <span className="ml-2">Class reporting</span>
-              </li>
-              <li className="flex items-center">
-                <FeatureIcon name="clipboard" />
-                <span className="ml-2">Roster management</span>
-              </li>
-            </ul>
-          </CardContent>
-          <CardFooter>
-            {/* Footer content (if needed) */}
-          </CardFooter>
-        </Card>
+        <FixedPlanCard
+          title="Teacher"
+          description="Ideal for classrooms"
+          icon={ClipboardList}
+          isCurrentPlan={isCurrentPlan('teacher')}
+          planType="teacher"
+          pricing={pricingData.teacher}
+          features={teacherFeatures}
+        />
 
         {/* School Plan */}
-        <Card className={`relative flex flex-col ${isCurrentPlan('school') ? 'border-primary border-2' : ''}`}>
-          {isCurrentPlan('school') && <Badge className="absolute -top-2 left-1/2 -translate-x-1/2 bg-primary">Your Plan</Badge>}
-          <CardHeader className="text-center pb-2">
-            <div className="mx-auto bg-primary/10 rounded-full p-3 mb-2">
-              <School className="h-6 w-6 text-primary" />
-            </div>
-            <h2 className="text-xl font-bold">School</h2>
-            <p className="text-sm text-muted-foreground">For entire schools</p>
-          </CardHeader>
-          <CardContent className="flex-grow">
-            <div className="text-center mb-4">
-              <p className="text-3xl font-bold">${formatPrice(pricingData.school.price)}</p>
-              <p className="text-base text-muted-foreground mt-2 py-2">{pricingData.school.billing}</p>
-            </div>
-            
-            <CheckoutButton planType="school" interval="annual" label="Get Started" className="w-full mb-6" />
-            
-            <ul className="space-y-6">
-              <li className="flex items-center">
-                <FeatureIcon name="saved" />
-                <span className="ml-2">Unlimited saved games</span>
-              </li>
-              <li className="flex items-center">
-                <FeatureIcon name="users" />
-                <span className="ml-2">Up to {pricingData.school.maxUsers} Students</span>
-              </li>
-              <li className="flex items-center">
-                <FeatureIcon name="goals" />
-                <span className="ml-2">Goal tracking</span>
-              </li>
-              <li className="flex items-center">
-                <FeatureIcon name="progress" />
-                <span className="ml-2">Progress reports</span>
-              </li>
-              <li className="flex items-center">
-                <FeatureIcon name="typing" />
-                <span className="ml-2">Typing adjusted scores</span>
-              </li>
-              <li className="flex items-center">
-                <FeatureIcon name="reports" />
-                <span className="ml-2">Class reporting</span>
-              </li>
-              <li className="flex items-center">
-                <FeatureIcon name="clipboard" />
-                <span className="ml-2">Roster management</span>
-              </li>
-              <li className="flex items-center">
-                <FeatureIcon name="clever" />
-                <span className="ml-2">Clever integration</span>
-              </li>
-            </ul>
-          </CardContent>
-          <CardFooter>
-            {/* Footer content (if needed) */}
-          </CardFooter>
-        </Card>
+        <FixedPlanCard
+          title="School"
+          description="For entire schools"
+          icon={School}
+          isCurrentPlan={isCurrentPlan('school')}
+          planType="school"
+          pricing={pricingData.school}
+          features={schoolFeatures}
+        />
       </div>
 
       {/* Free and District Tiers */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-12">
         {/* Free Tier */}
-        <Card>
-          <CardHeader>
-            <h2 className="text-2xl font-bold">Free</h2>
-          </CardHeader>
-          <CardContent>
-            <p className="mb-4">Up to 5 saved games with basic reporting:</p>
-            <ul className="space-y-3">
-              <li className="flex items-center">
-                <Check className="h-5 w-5 text-primary mr-2" />
-                <span>5 saved games</span>
-              </li>
-              <li className="flex items-center">
-                <Check className="h-5 w-5 text-primary mr-2" />
-                <span>Leaderboard access</span>
-              </li>
-              <li className="flex items-center">
-                <Check className="h-5 w-5 text-primary mr-2" />
-                <span>Basic progress tracking</span>
-              </li>
-            </ul>
-          </CardContent>
-          <CardFooter>
+        <SimplePlanCard
+          title="Free"
+          description="Up to 5 saved games with basic reporting:"
+          features={freeFeatures}
+          footerContent={
             <Link to="/" className="w-full">
               <Button variant="outline" className="w-full">Get Started for Free</Button>
             </Link>
-          </CardFooter>
-        </Card>
+          }
+        />
 
         {/* District Tier */}
-        <Card>
-          <CardHeader>
-            <h2 className="text-2xl font-bold">District</h2>
-          </CardHeader>
-          <CardContent>
-            <p className="mb-4">Everything in school plus more:</p>
-            <ul className="space-y-3">
-              <li className="flex items-center">
-                <Check className="h-5 w-5 text-primary mr-2" />
-                <span>Prioritized Support</span>
-              </li>
-              <li className="flex items-center">
-                <Check className="h-5 w-5 text-primary mr-2" />
-                <span>Enterprise billing options</span>
-              </li>
-              <li className="flex items-center">
-                <Check className="h-5 w-5 text-primary mr-2" />
-                <span>Multi-year contracts</span>
-              </li>
-            </ul>
-          </CardContent>
-          <CardFooter>
-            <ContactFormModal />
-          </CardFooter>
-        </Card>
+        <SimplePlanCard
+          title="District"
+          description="Everything in school plus more:"
+          features={districtFeatures}
+          footerContent={<ContactFormModal />}
+        />
       </div>
-    </div>;
+    </div>
+  );
 };
+
 export default Plans;
