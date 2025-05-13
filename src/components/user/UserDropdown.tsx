@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { LogOut, Trophy, TrendingUp, Settings, Users, Target } from 'lucide-react';
-import { toast } from '@/hooks/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import { ProfileSwitcherDialog } from './ProfileSwitcherDialog';
 
 interface UserDropdownProps {
@@ -32,6 +32,7 @@ const UserDropdown = ({
   const { handleLogout } = useAuth();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [showProfileSwitcher, setShowProfileSwitcher] = useState(false);
+  const { toast } = useToast();
 
   const handleUserLogout = async () => {
     try {
@@ -108,7 +109,7 @@ const UserDropdown = ({
             className="cursor-pointer hover:bg-accent"
           >
             <Settings className="mr-2 h-4 w-4" />
-            My Account
+            Settings
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem 

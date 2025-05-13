@@ -9,7 +9,7 @@ const AppLayout = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { lastRoute } = useNavigationState();
-  const { isLoggedIn, isLoading } = useAuth();
+  const { isLoggedIn, isLoadingProfile } = useAuth();
 
   useEffect(() => {
     // Scroll to top on route change
@@ -33,12 +33,12 @@ const AppLayout = () => {
       // Only navigate to auth-required routes if logged in
       if (!needsAuth || isLoggedIn) {
         // Wait for auth check to complete
-        if (!isLoading) {
+        if (!isLoadingProfile) {
           navigate(lastRoute);
         }
       }
     }
-  }, [lastRoute, navigate, location.pathname, isLoggedIn, isLoading]);
+  }, [lastRoute, navigate, location.pathname, isLoggedIn, isLoadingProfile]);
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
