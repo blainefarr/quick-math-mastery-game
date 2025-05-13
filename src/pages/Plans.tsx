@@ -368,7 +368,7 @@ const Plans = () => {
             <h2 className="text-2xl font-bold">District</h2>
           </CardHeader>
           <CardContent>
-            <p className="mb-4">Everything in school plus support, enterprise billing, multi-year, and more.</p>
+            <p className="mb-4">Everything in school plus more:</p>
             <ul className="space-y-2">
               <li className="flex items-center">
                 <Check className="h-5 w-5 text-primary mr-2" />
