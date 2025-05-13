@@ -29,7 +29,6 @@ const PaymentSuccess = () => {
   const checkoutPending = localStorage.getItem('checkout_pending') === 'true';
   const storedPlanType = localStorage.getItem('checkout_plan_type');
   const storedInterval = localStorage.getItem('checkout_interval');
-  const sourcePath = localStorage.getItem('checkout_source_path');
   
   const verifyPaymentWithStripe = async () => {
     if (!sessionId) return false;
@@ -151,37 +150,16 @@ const PaymentSuccess = () => {
     await verifyPayment();
   };
 
-  // Handle navigation based on the stored source path
-  const handleReturnNavigation = () => {
-    // Return to the source page if available, otherwise go to account
-    if (sourcePath && sourcePath !== '/') {
-      navigate(sourcePath);
-    } else {
-      navigate('/account');
-    }
-  };
-
-  // Clean up localStorage on successful verification
-  useEffect(() => {
-    if (verificationStatus === 'success') {
-      localStorage.removeItem('checkout_pending');
-      localStorage.removeItem('checkout_plan_type');
-      localStorage.removeItem('checkout_interval');
-      localStorage.removeItem('checkout_timestamp');
-      // Keep the source path for navigation
-    }
-  }, [verificationStatus]);
-
   return (
     <div className="container mx-auto py-12 px-4 max-w-2xl">
       <Button 
         variant="outline" 
         size="sm"
-        onClick={handleReturnNavigation}
+        onClick={() => navigate('/account')}
         className="mb-8"
       >
         <ArrowLeft size={16} className="mr-1" />
-        Back
+        Back to Account
       </Button>
       
       <Card>
@@ -262,8 +240,8 @@ const PaymentSuccess = () => {
           </div>
           
           <div className="flex justify-between pt-4">
-            <Button variant="outline" onClick={handleReturnNavigation}>
-              Return
+            <Button variant="outline" onClick={() => navigate('/account')}>
+              View Account
             </Button>
             <Button variant="default" onClick={() => navigate('/')}>
               Start Playing

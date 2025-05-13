@@ -1,10 +1,10 @@
-import { useState, useEffect } from 'react';
+
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import useAuth from '@/context/auth/useAuth';
 import AuthModal from '@/components/auth/AuthModal';
-import { useLocation } from 'react-router-dom';
 
 interface CheckoutButtonProps {
   planType: string;
@@ -29,7 +29,6 @@ export const CheckoutButton = ({
   const [showAuthModal, setShowAuthModal] = useState(false);
   const { toast } = useToast();
   const { isLoggedIn, checkAndRefreshSubscription } = useAuth();
-  const location = useLocation();
 
   // Store plan selection in localStorage when auth modal is shown
   const storePlanSelection = () => {
@@ -51,9 +50,6 @@ export const CheckoutButton = ({
 
     try {
       setIsLoading(true);
-      
-      // Store current path for better back button behavior
-      localStorage.setItem('checkout_source_path', location.pathname);
       
       // Store checkout details in localStorage for verification
       localStorage.setItem('checkout_pending', 'true');
@@ -89,7 +85,6 @@ export const CheckoutButton = ({
       localStorage.removeItem('checkout_plan_type');
       localStorage.removeItem('checkout_interval');
       localStorage.removeItem('checkout_timestamp');
-      localStorage.removeItem('checkout_source_path');
     } finally {
       setIsLoading(false);
     }

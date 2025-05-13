@@ -1,37 +1,23 @@
 
 import React, { useEffect } from 'react';
-import { Outlet, useNavigate, useLocation } from 'react-router-dom';
+import { Outlet, useLocation } from 'react-router-dom';
 import Header from '@/components/Header';
-import useAuth from '@/context/auth/useAuth';
-import { useToast } from '@/hooks/use-toast';
 
 const AppLayout = () => {
-  const { isLoggedIn, isLoading, rememberCurrentRoute } = useAuth();
-  const navigate = useNavigate();
   const location = useLocation();
-  const { toast } = useToast();
-  
+
   useEffect(() => {
-    if (!isLoading) {
-      // Remember the current route for refresh purposes
-      rememberCurrentRoute();
-      
-      // Only redirect if not logged in
-      if (!isLoggedIn) {
-        toast({
-          title: "Login Required",
-          description: "Please log in to access this page",
-        });
-        navigate('/', { replace: true });
-      }
-    }
-  }, [isLoggedIn, isLoading, navigate, toast, rememberCurrentRoute, location.pathname]);
-  
+    // Scroll to top on route change
+    window.scrollTo(0, 0);
+  }, [location.pathname]);
+
   return (
-    <>
+    <div className="min-h-screen flex flex-col bg-background">
       <Header />
-      <Outlet />
-    </>
+      <main className="flex-1 relative z-10">
+        <Outlet />
+      </main>
+    </div>
   );
 };
 

@@ -1,10 +1,14 @@
 
-// This file is kept only to avoid breaking existing imports
-// All functionality is now in AuthProvider.tsx
-// Import the actual functionality from there
+import { useContext } from 'react';
+import AuthContext from './AuthContext';
+import { AuthContextType } from './auth-types';
 
-import { useAuth } from './AuthProvider';
-import AuthProvider from './AuthProvider';
+export const useAuth = (): AuthContextType => {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
 
-export { useAuth, AuthProvider };
 export default useAuth;
