@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Check, User, Users, Goal, LineChart, Keyboard, ClipboardList, CircleDollarSign, CircleCheck, School } from 'lucide-react';
+import { ArrowLeft, Check, User, Users, Goal, LineChart, Keyboard, ClipboardList, CircleDollarSign, CircleCheck, School, Lock } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -32,12 +32,12 @@ const Plans = () => {
     },
     teacher: {
       price: 60.00,
-      billing: 'per year',
+      billing: 'Paid Annually',
       maxUsers: 40,
     },
     school: {
       price: 600.00,
-      billing: 'per year',
+      billing: 'Paid Annually',
       maxUsers: 500,
     }
   };
@@ -51,15 +51,14 @@ const Plans = () => {
     return false;
   };
 
-  // Get price display based on interval
-  const getPriceDisplay = (plan: 'individual' | 'family', interval: 'monthly' | 'annual' | 'one_time') => {
-    const price = pricingData[plan][interval];
+  // Get billing label based on interval
+  const getBillingLabel = (interval: 'monthly' | 'annual' | 'one_time') => {
     if (interval === 'monthly') {
-      return `$${price}/mo`;
+      return 'Paid Monthly';
     } else if (interval === 'annual') {
-      return `$${price}/yr`;
+      return 'Paid Annually';
     } else {
-      return `$${price}`;
+      return 'Lifetime';
     }
   };
 
@@ -83,7 +82,9 @@ const Plans = () => {
       case 'saved':
         return <CircleCheck className="h-5 w-5 text-primary" />;
       case 'clever':
-        return <Users className="h-5 w-5 text-primary" />; // Updated to Users icon for OAuth
+        return <Lock className="h-5 w-5 text-primary" />; // Changed to Lock icon for OAuth
+      case 'clipboard':
+        return <ClipboardList className="h-5 w-5 text-primary" />; 
       default:
         return <Check className="h-5 w-5 text-primary" />;
     }
@@ -125,17 +126,17 @@ const Plans = () => {
           </CardHeader>
           <CardContent className="flex-grow">
             <div className="text-center mb-4">
-              <p className="text-3xl font-bold">{getPriceDisplay('individual', individualInterval)}</p>
+              <p className="text-3xl font-bold">${pricingData.individual[individualInterval]}</p>
               <Select 
                 value={individualInterval} 
                 onValueChange={(value: string) => setIndividualInterval(value as 'monthly' | 'annual' | 'one_time')}
               >
                 <SelectTrigger className="w-full mt-2">
-                  <SelectValue placeholder="Select billing period" />
+                  <SelectValue placeholder={getBillingLabel(individualInterval)} />
                 </SelectTrigger>
                 <SelectContent className="bg-background">
-                  <SelectItem value="monthly">Monthly</SelectItem>
-                  <SelectItem value="annual">Annual</SelectItem>
+                  <SelectItem value="monthly">Paid Monthly</SelectItem>
+                  <SelectItem value="annual">Paid Annually</SelectItem>
                   <SelectItem value="one_time">Lifetime</SelectItem>
                 </SelectContent>
               </Select>
@@ -190,17 +191,17 @@ const Plans = () => {
           </CardHeader>
           <CardContent className="flex-grow">
             <div className="text-center mb-4">
-              <p className="text-3xl font-bold">{getPriceDisplay('family', familyInterval)}</p>
+              <p className="text-3xl font-bold">${pricingData.family[familyInterval]}</p>
               <Select 
                 value={familyInterval} 
                 onValueChange={(value: string) => setFamilyInterval(value as 'monthly' | 'annual' | 'one_time')}
               >
                 <SelectTrigger className="w-full mt-2">
-                  <SelectValue placeholder="Select billing period" />
+                  <SelectValue placeholder={getBillingLabel(familyInterval)} />
                 </SelectTrigger>
                 <SelectContent className="bg-background">
-                  <SelectItem value="monthly">Monthly</SelectItem>
-                  <SelectItem value="annual">Annual</SelectItem>
+                  <SelectItem value="monthly">Paid Monthly</SelectItem>
+                  <SelectItem value="annual">Paid Annually</SelectItem>
                   <SelectItem value="one_time">Lifetime</SelectItem>
                 </SelectContent>
               </Select>
@@ -256,7 +257,7 @@ const Plans = () => {
           <CardContent className="flex-grow">
             <div className="text-center mb-4">
               <p className="text-3xl font-bold">${pricingData.teacher.price}</p>
-              <p className="text-sm text-muted-foreground">{pricingData.teacher.billing}</p>
+              <p className="text-sm text-muted-foreground mt-2">{pricingData.teacher.billing}</p>
             </div>
             
             <CheckoutButton 
@@ -292,7 +293,7 @@ const Plans = () => {
                 <span className="ml-2">Class Reporting</span>
               </li>
               <li className="flex items-center">
-                <FeatureIcon name="roster" />
+                <FeatureIcon name="clipboard" />
                 <span className="ml-2">Roster Management</span>
               </li>
             </ul>
@@ -317,7 +318,7 @@ const Plans = () => {
           <CardContent className="flex-grow">
             <div className="text-center mb-4">
               <p className="text-3xl font-bold">${pricingData.school.price}</p>
-              <p className="text-sm text-muted-foreground">{pricingData.school.billing}</p>
+              <p className="text-sm text-muted-foreground mt-2">{pricingData.school.billing}</p>
             </div>
             
             <CheckoutButton 
@@ -353,7 +354,7 @@ const Plans = () => {
                 <span className="ml-2">Class Reporting</span>
               </li>
               <li className="flex items-center">
-                <FeatureIcon name="roster" />
+                <FeatureIcon name="clipboard" />
                 <span className="ml-2">Roster Management</span>
               </li>
               <li className="flex items-center">
