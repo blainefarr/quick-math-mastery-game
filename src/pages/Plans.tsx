@@ -382,10 +382,7 @@ const Plans = () => {
                 <Check className="h-5 w-5 text-primary mr-2" />
                 <span>Prioritized Support</span>
               </li>
-              <li className="flex items-center">
-                <Check className="h-5 w-5 text-primary mr-2" />
-                <span>Dedicated support</span>
-              </li>
+              
               <li className="flex items-center">
                 <Check className="h-5 w-5 text-primary mr-2" />
                 <span>Enterprise billing options</span>
