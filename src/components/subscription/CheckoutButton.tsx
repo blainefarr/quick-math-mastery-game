@@ -1,5 +1,6 @@
 
 import { useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -29,11 +30,13 @@ export const CheckoutButton = ({
   const [showAuthModal, setShowAuthModal] = useState(false);
   const { toast } = useToast();
   const { isLoggedIn, checkAndRefreshSubscription } = useAuth();
+  const location = useLocation();
 
   // Store plan selection in localStorage when auth modal is shown
   const storePlanSelection = () => {
     localStorage.setItem('selected_plan_type', planType);
     localStorage.setItem('selected_plan_interval', interval);
+    localStorage.setItem('checkout_return_path', location.pathname + location.search);
     if (promoCode) {
       localStorage.setItem('selected_plan_promo', promoCode);
     }
@@ -56,6 +59,7 @@ export const CheckoutButton = ({
       localStorage.setItem('checkout_plan_type', planType);
       localStorage.setItem('checkout_interval', interval);
       localStorage.setItem('checkout_timestamp', new Date().toISOString());
+      localStorage.setItem('checkout_return_path', location.pathname + location.search);
       
       const { data, error } = await supabase.functions.invoke('create-checkout', {
         body: { 
@@ -85,6 +89,7 @@ export const CheckoutButton = ({
       localStorage.removeItem('checkout_plan_type');
       localStorage.removeItem('checkout_interval');
       localStorage.removeItem('checkout_timestamp');
+      localStorage.removeItem('checkout_return_path');
     } finally {
       setIsLoading(false);
     }

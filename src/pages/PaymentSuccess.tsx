@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -29,6 +30,7 @@ const PaymentSuccess = () => {
   const checkoutPending = localStorage.getItem('checkout_pending') === 'true';
   const storedPlanType = localStorage.getItem('checkout_plan_type');
   const storedInterval = localStorage.getItem('checkout_interval');
+  const returnPath = localStorage.getItem('checkout_return_path') || '/';
   
   const verifyPaymentWithStripe = async () => {
     if (!sessionId) return false;
@@ -150,16 +152,21 @@ const PaymentSuccess = () => {
     await verifyPayment();
   };
 
+  // Handle navigation back to the original path
+  const handleNavigateBack = () => {
+    navigate(returnPath);
+  };
+
   return (
     <div className="container mx-auto py-12 px-4 max-w-2xl">
       <Button 
         variant="outline" 
         size="sm"
-        onClick={() => navigate('/account')}
+        onClick={handleNavigateBack}
         className="mb-8"
       >
         <ArrowLeft size={16} className="mr-1" />
-        Back to Account
+        Back
       </Button>
       
       <Card>
@@ -240,8 +247,8 @@ const PaymentSuccess = () => {
           </div>
           
           <div className="flex justify-between pt-4">
-            <Button variant="outline" onClick={() => navigate('/account')}>
-              View Account
+            <Button variant="outline" onClick={handleNavigateBack}>
+              Return
             </Button>
             <Button variant="default" onClick={() => navigate('/')}>
               Start Playing
