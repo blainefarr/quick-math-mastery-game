@@ -83,7 +83,7 @@ const Plans = () => {
       case 'saved':
         return <CircleCheck className="h-5 w-5 text-primary" />;
       case 'clever':
-        return <CircleDollarSign className="h-5 w-5 text-primary" />;
+        return <Users className="h-5 w-5 text-primary" />; // Updated to Users icon for OAuth
       default:
         return <Check className="h-5 w-5 text-primary" />;
     }
@@ -248,7 +248,7 @@ const Plans = () => {
           )}
           <CardHeader className="text-center pb-2">
             <div className="mx-auto bg-primary/10 rounded-full p-3 mb-2">
-              <School className="h-6 w-6 text-primary" />
+              <ClipboardList className="h-6 w-6 text-primary" />
             </div>
             <h2 className="text-xl font-bold">Teacher</h2>
             <p className="text-sm text-muted-foreground">Ideal for classrooms</p>
@@ -345,10 +345,6 @@ const Plans = () => {
                 <span className="ml-2">Progress Reports</span>
               </li>
               <li className="flex items-center">
-                <FeatureIcon name="clever" />
-                <span className="ml-2">Clever Integration</span>
-              </li>
-              <li className="flex items-center">
                 <FeatureIcon name="typing" />
                 <span className="ml-2">Typing Speed Diagnostics</span>
               </li>
@@ -359,6 +355,10 @@ const Plans = () => {
               <li className="flex items-center">
                 <FeatureIcon name="roster" />
                 <span className="ml-2">Roster Management</span>
+              </li>
+              <li className="flex items-center">
+                <FeatureIcon name="clever" />
+                <span className="ml-2">Clever Integration</span>
               </li>
             </ul>
           </CardContent>

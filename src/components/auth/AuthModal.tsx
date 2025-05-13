@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -20,13 +21,15 @@ import { useAuth } from '@/context/auth/useAuth';
 import { completeSignUp } from '@/context/auth/utils/signup';
 
 interface AuthModalProps {
-  children: React.ReactNode;
+  children?: React.ReactNode;
   defaultView?: 'login' | 'register';
+  open?: boolean;
+  onClose?: (isAuthenticated: boolean) => void;
 }
 
-const AuthModal = ({ children, defaultView = 'register' }: AuthModalProps) => {
+const AuthModal = ({ children, defaultView = 'register', open: controlledOpen, onClose }: AuthModalProps) => {
   const { setIsLoggedIn, setUsername } = useAuth();
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(controlledOpen || false);
   const [activeTab, setActiveTab] = useState<'login' | 'register'>(defaultView);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -35,6 +38,7 @@ const AuthModal = ({ children, defaultView = 'register' }: AuthModalProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
   const [resetCooldown, setResetCooldown] = useState(60); // Default 60 seconds cooldown
+  const [userAuthenticated, setUserAuthenticated] = useState(false);
 
   useEffect(() => {
     return () => {
@@ -42,6 +46,12 @@ const AuthModal = ({ children, defaultView = 'register' }: AuthModalProps) => {
       document.body.style.pointerEvents = '';
     };
   }, [isOpen]);
+
+  useEffect(() => {
+    if (controlledOpen !== undefined) {
+      setIsOpen(controlledOpen);
+    }
+  }, [controlledOpen]);
 
   useEffect(() => {
     if (isOpen) {
@@ -57,6 +67,9 @@ const AuthModal = ({ children, defaultView = 'register' }: AuthModalProps) => {
       setError('');
       setSuccessMsg('');
       setPassword('');
+      if (onClose) {
+        onClose(userAuthenticated);
+      }
     }
   };
 
@@ -88,6 +101,7 @@ const AuthModal = ({ children, defaultView = 'register' }: AuthModalProps) => {
         setIsLoggedIn(true);
         setUsername(data.user.user_metadata?.name || data.user.email?.split('@')[0] || data.user.email || "");
         toast.success("Successfully logged in!");
+        setUserAuthenticated(true);
         handleOpenChange(false);
       }
     } catch (error) {
@@ -120,6 +134,7 @@ const AuthModal = ({ children, defaultView = 'register' }: AuthModalProps) => {
       
       console.log('Sign up completed successfully with:', result);
       toast.success("Account created successfully!");
+      setUserAuthenticated(true);
       handleOpenChange(false);
       // The auth state will be handled by the auth listener
     } catch (error) {
@@ -190,6 +205,7 @@ const AuthModal = ({ children, defaultView = 'register' }: AuthModalProps) => {
     setSuccessMsg("Password reset email sent! Check your inbox.");
   };
 
+  // Rendering the content
   const renderLoginContent = () => (
     <div className="space-y-4 py-4">
       <div className="text-center mb-6">
@@ -415,6 +431,32 @@ const AuthModal = ({ children, defaultView = 'register' }: AuthModalProps) => {
     </div>
   );
 
+  // For controlled modal without children triggers
+  if (controlledOpen !== undefined && !children) {
+    return (
+      <Dialog open={isOpen} onOpenChange={handleOpenChange}>
+        <DialogContent 
+          className="sm:max-w-md" 
+          onKeyDown={handleKeyDown}
+        >
+          <Tabs 
+            value={activeTab} 
+            onValueChange={(value) => setActiveTab(value as 'login' | 'register')}
+            className="w-full"
+          >
+            <TabsContent value="login" className="mt-0 py-2">
+              {renderLoginContent()}
+            </TabsContent>
+            <TabsContent value="register" className="mt-0 py-2">
+              {renderRegisterContent()}
+            </TabsContent>
+          </Tabs>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
+  // For regular modal with children triggers
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>

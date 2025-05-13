@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import useAuth from '@/context/auth/useAuth';
+import AuthModal from '@/components/auth/AuthModal';
 
 interface CheckoutButtonProps {
   planType: string;
@@ -23,16 +24,25 @@ export const CheckoutButton = ({
   promoCode
 }: CheckoutButtonProps) => {
   const [isLoading, setIsLoading] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
   const { toast } = useToast();
   const { isLoggedIn, checkAndRefreshSubscription } = useAuth();
 
+  // Store plan selection in localStorage when auth modal is shown
+  const storePlanSelection = () => {
+    localStorage.setItem('selected_plan_type', planType);
+    localStorage.setItem('selected_plan_interval', interval);
+    if (promoCode) {
+      localStorage.setItem('selected_plan_promo', promoCode);
+    }
+  };
+
+  // Handle checkout process
   const handleCheckout = async () => {
     if (!isLoggedIn) {
-      toast({
-        title: 'Please log in',
-        description: 'You need to be logged in to subscribe.',
-        variant: 'destructive'
-      });
+      // Store plan details and show auth modal instead of showing error toast
+      storePlanSelection();
+      setShowAuthModal(true);
       return;
     }
 
@@ -78,14 +88,33 @@ export const CheckoutButton = ({
     }
   };
 
+  // When auth modal closes, check if we should proceed with checkout
+  const handleAuthModalClose = (isAuthenticated: boolean) => {
+    setShowAuthModal(false);
+    if (isAuthenticated) {
+      // User just authenticated, proceed with checkout
+      handleCheckout();
+    }
+  };
+
   return (
-    <Button 
-      variant={variant} 
-      onClick={handleCheckout} 
-      disabled={isLoading}
-      className={className}
-    >
-      {isLoading ? 'Processing...' : label}
-    </Button>
+    <>
+      <Button 
+        variant={variant} 
+        onClick={handleCheckout} 
+        disabled={isLoading}
+        className={className}
+      >
+        {isLoading ? 'Processing...' : label}
+      </Button>
+      
+      {showAuthModal && (
+        <AuthModal 
+          defaultView="register" 
+          onClose={handleAuthModalClose}
+          open={showAuthModal}
+        />
+      )}
+    </>
   );
 };
