@@ -529,81 +529,8 @@ const MyAccount = () => {
               </div>
             </div>
           )}
-          
         </CardContent>
       </Card>
-      
-      {/* Upgrade Plan Section - Only shown for primary account owners */}
-      {isProfileOwner && (
-        <Card className="max-w-xl mx-auto">
-          <CardHeader>
-            <CardTitle>Upgrade Plan</CardTitle>
-            <CardDescription>
-              Choose a plan that suits your needs
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {plans.filter(plan => 
-                !['guest', 'free'].includes(plan.plan_type) &&
-                plan.plan_type !== planType
-              ).map(plan => (
-                <Card key={plan.id}>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-lg">{plan.plan_label}</CardTitle>
-                  </CardHeader>
-                  <CardContent className="pb-2">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-                      {plan.price_monthly !== null && (
-                        <div className="border rounded-md p-3 text-center">
-                          <p className="font-medium">${plan.price_monthly}/mo</p>
-                          <CheckoutButton 
-                            planType={plan.plan_type}
-                            interval="monthly"
-                            label="Choose Monthly"
-                            variant="outline"
-                            className="w-full mt-2"
-                          />
-                        </div>
-                      )}
-                      {plan.price_annual !== null && (
-                        <div className="border rounded-md p-3 text-center bg-primary/5">
-                          <p className="font-medium">${plan.price_annual}/yr</p>
-                          <p className="text-xs text-muted-foreground mb-2">Best value</p>
-                          <CheckoutButton 
-                            planType={plan.plan_type}
-                            interval="annual"
-                            label="Choose Yearly"
-                            variant="default"
-                            className="w-full"
-                          />
-                        </div>
-                      )}
-                      {plan.price_one_time !== null && (
-                        <div className="border rounded-md p-3 text-center">
-                          <p className="font-medium">${plan.price_one_time}</p>
-                          <p className="text-xs text-muted-foreground mb-2">One-time payment</p>
-                          <CheckoutButton 
-                            planType={plan.plan_type}
-                            interval="one_time"
-                            label="Purchase"
-                            variant="outline"
-                            className="w-full"
-                          />
-                        </div>
-                      )}
-                    </div>
-                    <div className="mt-3 text-sm">
-                      <p><strong>Profiles:</strong> {plan.max_profiles}</p>
-                      <p><strong>Score Storage:</strong> {plan.max_saved_scores === null ? 'Unlimited' : plan.max_saved_scores}</p>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
       
       <ProfileSwitcherDialog 
         open={showProfileSwitcher}

@@ -58,7 +58,13 @@ const IntervalPlanCard: React.FC<IntervalPlanCardProps> = ({
         </Select>
       </div>
       
-      <CheckoutButton planType={planType} interval={interval} label="Get Started" className="w-full mb-6" />
+      <CheckoutButton 
+        planType={planType} 
+        interval={interval} 
+        label="Get Started" 
+        className="w-full mb-6"
+        disabled={isCurrentPlan} 
+      />
     </PlanCard>
   );
 };

@@ -38,12 +38,14 @@ export const ManageSubscriptionButton = ({
       if (data?.url) {
         // Open Stripe customer portal in a new tab
         window.open(data.url, '_blank');
+      } else {
+        throw new Error("No portal URL received");
       }
     } catch (error) {
       console.error('Error creating customer portal session:', error);
       toast({
         title: 'Error',
-        description: error instanceof Error ? error.message : 'Failed to open customer portal',
+        description: "There was an issue opening the subscription management portal. Please try again later.",
         variant: 'destructive'
       });
     } finally {

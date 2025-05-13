@@ -41,7 +41,13 @@ const FixedPlanCard: React.FC<FixedPlanCardProps> = ({
         <p className="text-base text-muted-foreground mt-2 py-2">{pricing.billing}</p>
       </div>
       
-      <CheckoutButton planType={planType} interval="annual" label="Get Started" className="w-full mb-6" />
+      <CheckoutButton 
+        planType={planType} 
+        interval="annual" 
+        label="Get Started" 
+        className="w-full mb-6"
+        disabled={isCurrentPlan}
+      />
     </PlanCard>
   );
 };

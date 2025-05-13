@@ -13,6 +13,7 @@ interface CheckoutButtonProps {
   variant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link';
   className?: string;
   promoCode?: string;
+  disabled?: boolean;
 }
 
 export const CheckoutButton = ({
@@ -21,7 +22,8 @@ export const CheckoutButton = ({
   label = 'Subscribe',
   variant = 'default',
   className = '',
-  promoCode
+  promoCode,
+  disabled = false
 }: CheckoutButtonProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -102,10 +104,10 @@ export const CheckoutButton = ({
       <Button 
         variant={variant} 
         onClick={handleCheckout} 
-        disabled={isLoading}
-        className={className}
+        disabled={isLoading || disabled}
+        className={`${className} ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
       >
-        {isLoading ? 'Processing...' : label}
+        {isLoading ? 'Processing...' : disabled ? 'Current Plan' : label}
       </Button>
       
       {showAuthModal && (
