@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, Check, User, Users, Goal, LineChart, Keyboard, ClipboardList, CircleDollarSign, CircleCheck, School, Lock } from 'lucide-react';
@@ -26,7 +27,7 @@ const Plans = () => {
     },
     family: {
       monthly: 3.50,
-      annual: 10.00,
+      annual: 15.00, // Updated to $15 from $10
       one_time: 25.00,
       maxUsers: 5
     },
@@ -61,6 +62,11 @@ const Plans = () => {
       return 'Lifetime';
     }
   };
+  
+  // Format price to always show two decimal places
+  const formatPrice = (price: number) => {
+    return price.toFixed(2);
+  };
 
   // Feature icons mapping
   const FeatureIcon = ({
@@ -87,7 +93,6 @@ const Plans = () => {
         return <CircleCheck className="h-5 w-5 text-primary" />;
       case 'clever':
         return <Lock className="h-5 w-5 text-primary" />;
-      // Changed to Lock icon for OAuth
       case 'clipboard':
         return <ClipboardList className="h-5 w-5 text-primary" />;
       default:
@@ -120,7 +125,7 @@ const Plans = () => {
           </CardHeader>
           <CardContent className="flex-grow">
             <div className="text-center mb-4">
-              <p className="text-3xl font-bold">${pricingData.individual[individualInterval]}</p>
+              <p className="text-3xl font-bold">${formatPrice(pricingData.individual[individualInterval])}</p>
               <Select value={individualInterval} onValueChange={(value: string) => setIndividualInterval(value as 'monthly' | 'annual' | 'one_time')}>
                 <SelectTrigger className="w-full mt-2">
                   <SelectValue placeholder={getBillingLabel(individualInterval)} />
@@ -175,7 +180,7 @@ const Plans = () => {
           </CardHeader>
           <CardContent className="flex-grow">
             <div className="text-center mb-4">
-              <p className="text-3xl font-bold">${pricingData.family[familyInterval]}</p>
+              <p className="text-3xl font-bold">${formatPrice(pricingData.family[familyInterval])}</p>
               <Select value={familyInterval} onValueChange={(value: string) => setFamilyInterval(value as 'monthly' | 'annual' | 'one_time')}>
                 <SelectTrigger className="w-full mt-2">
                   <SelectValue placeholder={getBillingLabel(familyInterval)} />
@@ -230,7 +235,7 @@ const Plans = () => {
           </CardHeader>
           <CardContent className="flex-grow">
             <div className="text-center mb-4">
-              <p className="text-3xl font-bold">${pricingData.teacher.price}</p>
+              <p className="text-3xl font-bold">${formatPrice(pricingData.teacher.price)}</p>
               <p className="text-base text-muted-foreground mt-2">{pricingData.teacher.billing}</p>
             </div>
             
@@ -284,7 +289,7 @@ const Plans = () => {
           </CardHeader>
           <CardContent className="flex-grow">
             <div className="text-center mb-4">
-              <p className="text-3xl font-bold">${pricingData.school.price}</p>
+              <p className="text-3xl font-bold">${formatPrice(pricingData.school.price)}</p>
               <p className="text-base text-muted-foreground mt-2">{pricingData.school.billing}</p>
             </div>
             
@@ -370,7 +375,10 @@ const Plans = () => {
           <CardContent>
             <p className="mb-4">Everything in school plus more:</p>
             <ul className="space-y-2">
-              
+              <li className="flex items-center">
+                <Check className="h-5 w-5 text-primary mr-2" />
+                <span>Prioritized Support</span>
+              </li>
               <li className="flex items-center">
                 <Check className="h-5 w-5 text-primary mr-2" />
                 <span>Dedicated support</span>
