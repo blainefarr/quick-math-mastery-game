@@ -231,7 +231,7 @@ const Plans = () => {
           <CardContent className="flex-grow">
             <div className="text-center mb-4">
               <p className="text-3xl font-bold">${pricingData.teacher.price}</p>
-              <p className="text-sm text-muted-foreground mt-2">{pricingData.teacher.billing}</p>
+              <p className="text-base text-muted-foreground mt-2">{pricingData.teacher.billing}</p>
             </div>
             
             <CheckoutButton planType="teacher" interval="annual" label="Get Started" className="w-full mb-6" />
