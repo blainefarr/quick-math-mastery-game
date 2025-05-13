@@ -104,9 +104,7 @@ const Plans = () => {
 
       <div className="text-center mb-12">
         <h1 className="text-4xl font-bold text-primary">Choose Your Plan</h1>
-        <p className="text-muted-foreground mt-2 max-w-2xl mx-auto">
-          Select the perfect plan for your needs. Unlock advanced features and enhance your learning experience.
-        </p>
+        <p className="text-muted-foreground mt-2 max-w-2xl mx-auto">Unlock advanced features and enhance your learning experience.</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
