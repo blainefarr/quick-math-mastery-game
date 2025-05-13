@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Outlet } from 'react-router-dom';
-import AuthProvider from '@/context/auth/AuthProvider';
+import { AuthProvider } from '@/context/auth/useAuth';
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 

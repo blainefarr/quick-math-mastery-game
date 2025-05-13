@@ -9,7 +9,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { LeaderboardEntry } from "@/hooks/useLeaderboard";
-import { useAuth } from "@/context/auth/useAuth";
+import useAuth from "@/context/auth/useAuth";
 
 type Props = {
   entries: LeaderboardEntry[];

@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState } from 'react';
 import UserDropdown from './UserDropdown';
-import { useAuth } from '@/context/auth/useAuth';
+import useAuth from '@/context/auth/useAuth';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ProfileSwitcherDialog } from './ProfileSwitcherDialog';
 import { Loader2 } from 'lucide-react';

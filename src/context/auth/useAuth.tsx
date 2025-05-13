@@ -1,7 +1,8 @@
+
 import { useState, useEffect, useContext, createContext, useCallback } from 'react';
 import { Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
-import { User } from '@supabase/auth-helpers-react';
+import type { User } from '@supabase/supabase-js';
 
 interface AuthContextType {
   session: Session | null;
@@ -10,6 +11,9 @@ interface AuthContextType {
   isLoading: boolean;
   subscriptionStatus: string;
   planType: string;
+  planExpiresAt: string | null;
+  userId: string | null;
+  defaultProfileId: string | null;
   isSubscriptionActive: () => boolean;
   checkAndRefreshSubscription: () => Promise<void>;
   signOut: () => Promise<void>;
@@ -26,7 +30,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [subscriptionStatus, setSubscriptionStatus] = useState('inactive');
   const [planType, setPlanType] = useState('free');
+  const [planExpiresAt, setPlanExpiresAt] = useState<string | null>(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [defaultProfileId, setDefaultProfileId] = useState<string | null>(null);
 
   useEffect(() => {
     const getInitialSession = async () => {
@@ -36,6 +43,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
         setSession(session);
         setUser(session?.user || null);
+        setUserId(session?.user?.id || null);
         await checkAndRefreshSubscription();
       } catch (error) {
         console.error("Error getting initial session:", error);
@@ -49,6 +57,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     supabase.auth.onAuthStateChange(async (event, session) => {
       setSession(session);
       setUser(session?.user || null);
+      setUserId(session?.user?.id || null);
       await checkAndRefreshSubscription();
     });
   }, []);
@@ -62,8 +71,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     try {
       const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .select('subscription_status, plan_type')
+        .from('accounts')
+        .select('subscription_status, plan_type, plan_expires_at')
         .eq('id', user.id)
         .single();
 
@@ -74,10 +83,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         return;
       }
 
-      const { subscription_status, plan_type } = profileData || {};
-
-      setSubscriptionStatus(subscription_status || 'inactive');
-      setPlanType(plan_type || 'free');
+      if (profileData) {
+        const { subscription_status, plan_type, plan_expires_at } = profileData;
+        setSubscriptionStatus(subscription_status || 'inactive');
+        setPlanType(plan_type || 'free');
+        setPlanExpiresAt(plan_expires_at);
+      }
     } catch (error) {
       console.error("Error refreshing subscription:", error);
       setSubscriptionStatus('inactive');
@@ -90,6 +101,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       await supabase.auth.signOut();
       setSession(null);
       setUser(null);
+      setUserId(null);
+      setDefaultProfileId(null);
       setSubscriptionStatus('inactive');
       setPlanType('free');
     } catch (error) {
@@ -119,6 +132,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         isLoading,
         subscriptionStatus,
         planType,
+        planExpiresAt,
+        userId,
+        defaultProfileId,
         isSubscriptionActive,
         checkAndRefreshSubscription,
         signOut,
