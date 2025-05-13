@@ -8,6 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CheckoutButton } from "@/components/subscription/CheckoutButton";
 import useAuth from '@/context/auth/useAuth';
+import ContactFormModal from '@/components/contact/ContactFormModal';
+
 const Plans = () => {
   const {
     planType
@@ -134,16 +136,16 @@ const Plans = () => {
                   <SelectValue placeholder={getBillingLabel(individualInterval)} />
                 </SelectTrigger>
                 <SelectContent className="bg-background text-center">
-                  <SelectItem value="monthly" className="text-center justify-center">Paid Monthly</SelectItem>
-                  <SelectItem value="annual" className="text-center justify-center">Paid Annually</SelectItem>
-                  <SelectItem value="one_time" className="text-center justify-center">Lifetime</SelectItem>
+                  <SelectItem value="monthly" className="text-center">Paid Monthly</SelectItem>
+                  <SelectItem value="annual" className="text-center">Paid Annually</SelectItem>
+                  <SelectItem value="one_time" className="text-center">Lifetime</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             
             <CheckoutButton planType="individual" interval={individualInterval} label="Get Started" className="w-full mb-6" />
             
-            <ul className="space-y-3">
+            <ul className="space-y-4">
               <li className="flex items-center">
                 <FeatureIcon name="saved" />
                 <span className="ml-2">Unlimited saved games</span>
@@ -189,16 +191,16 @@ const Plans = () => {
                   <SelectValue placeholder={getBillingLabel(familyInterval)} />
                 </SelectTrigger>
                 <SelectContent className="bg-background text-center">
-                  <SelectItem value="monthly" className="text-center justify-center">Paid Monthly</SelectItem>
-                  <SelectItem value="annual" className="text-center justify-center">Paid Annually</SelectItem>
-                  <SelectItem value="one_time" className="text-center justify-center">Lifetime</SelectItem>
+                  <SelectItem value="monthly" className="text-center">Paid Monthly</SelectItem>
+                  <SelectItem value="annual" className="text-center">Paid Annually</SelectItem>
+                  <SelectItem value="one_time" className="text-center">Lifetime</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             
             <CheckoutButton planType="family" interval={familyInterval} label="Get Started" className="w-full mb-6" />
             
-            <ul className="space-y-3">
+            <ul className="space-y-4">
               <li className="flex items-center">
                 <FeatureIcon name="saved" />
                 <span className="ml-2">Unlimited saved games</span>
@@ -239,12 +241,12 @@ const Plans = () => {
           <CardContent className="flex-grow">
             <div className="text-center mb-4">
               <p className="text-3xl font-bold">${formatPrice(pricingData.teacher.price)}</p>
-              <p className="text-base text-muted-foreground mt-2 py-2">{pricingData.teacher.billing}</p>
+              <p className="text-base text-muted-foreground mt-2 py-4">{pricingData.teacher.billing}</p>
             </div>
             
             <CheckoutButton planType="teacher" interval="annual" label="Get Started" className="w-full mb-6" />
             
-            <ul className="space-y-3">
+            <ul className="space-y-4">
               <li className="flex items-center">
                 <FeatureIcon name="saved" />
                 <span className="ml-2">Unlimited saved games</span>
@@ -293,12 +295,12 @@ const Plans = () => {
           <CardContent className="flex-grow">
             <div className="text-center mb-4">
               <p className="text-3xl font-bold">${formatPrice(pricingData.school.price)}</p>
-              <p className="text-base text-muted-foreground mt-2 py-2">{pricingData.school.billing}</p>
+              <p className="text-base text-muted-foreground mt-2 py-4">{pricingData.school.billing}</p>
             </div>
             
             <CheckoutButton planType="school" interval="annual" label="Get Started" className="w-full mb-6" />
             
-            <ul className="space-y-3">
+            <ul className="space-y-4">
               <li className="flex items-center">
                 <FeatureIcon name="saved" />
                 <span className="ml-2">Unlimited saved games</span>
@@ -391,14 +393,11 @@ const Plans = () => {
                 <Check className="h-5 w-5 text-primary mr-2" />
                 <span>Multi-year contracts</span>
               </li>
-              <li className="flex items-center">
-                <Check className="h-5 w-5 text-primary mr-2" />
-                <span>Prioritized Support</span>
-              </li>
+              {/* Removed duplicate "Prioritized Support" bullet point */}
             </ul>
           </CardContent>
           <CardFooter>
-            <Button className="w-full">Contact Us for Pricing</Button>
+            <ContactFormModal />
           </CardFooter>
         </Card>
       </div>
