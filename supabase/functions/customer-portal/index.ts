@@ -75,22 +75,45 @@ serve(async (req) => {
     
     logStep("Found customer ID", { customerId });
 
-    // Create the portal session
-    const session = await stripe.billingPortal.sessions.create({
-      customer: customerId,
-      return_url: `${req.headers.get("origin")}/account`,
-    });
-    
-    logStep("Created customer portal session", { sessionUrl: session.url });
+    try {
+      // Create the portal session
+      const session = await stripe.billingPortal.sessions.create({
+        customer: customerId,
+        return_url: `${req.headers.get("origin")}/account`,
+      });
+      
+      logStep("Created customer portal session", { sessionUrl: session.url });
 
-    // Return the portal URL to the client
-    return new Response(
-      JSON.stringify({ success: true, url: session.url }),
-      { 
-        headers: { ...corsHeaders, "Content-Type": "application/json" }, 
-        status: 200 
+      // Return the portal URL to the client
+      return new Response(
+        JSON.stringify({ success: true, url: session.url }),
+        { 
+          headers: { ...corsHeaders, "Content-Type": "application/json" }, 
+          status: 200 
+        }
+      );
+    } catch (stripeError: any) {
+      // Handle Stripe-specific errors better
+      logStep("Stripe error", { message: stripeError.message });
+      
+      // Check if it's the portal configuration error
+      if (stripeError.message?.includes("configuration has not been created")) {
+        return new Response(
+          JSON.stringify({ 
+            success: false, 
+            error: "Your Stripe Customer Portal has not been configured. Please visit the Stripe dashboard to set it up.", 
+            isStripeConfigError: true 
+          }),
+          { 
+            headers: { ...corsHeaders, "Content-Type": "application/json" }, 
+            status: 422  // Using 422 instead of 500 for better client-side handling
+          }
+        );
       }
-    );
+      
+      // Rethrow for general handler
+      throw stripeError;
+    }
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     console.error("ERROR:", errorMessage);

@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import useAuth from '@/context/auth/useAuth';
+import { ExternalLink } from 'lucide-react';
 
 interface ManageSubscriptionButtonProps {
   variant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link';
@@ -38,6 +39,13 @@ export const ManageSubscriptionButton = ({
       if (data?.url) {
         // Open Stripe customer portal in a new tab
         window.open(data.url, '_blank');
+      } else if (data?.isStripeConfigError) {
+        // This is a specific error for unconfigured Stripe Portal
+        toast({
+          title: 'Stripe Portal Not Configured',
+          description: "The Stripe Customer Portal hasn't been set up yet. Please configure it in the Stripe dashboard.",
+          variant: 'destructive'
+        });
       } else {
         throw new Error("No portal URL received");
       }
@@ -60,7 +68,12 @@ export const ManageSubscriptionButton = ({
       disabled={isLoading}
       className={className}
     >
-      {isLoading ? 'Processing...' : 'Manage Subscription'}
+      {isLoading ? 'Processing...' : (
+        <>
+          Manage Subscription
+          <ExternalLink className="ml-2 h-4 w-4" />
+        </>
+      )}
     </Button>
   );
 };
