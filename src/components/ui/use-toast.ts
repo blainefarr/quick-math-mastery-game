@@ -1,4 +1,4 @@
 
-import { toast, useToast } from "@radix-ui/react-toast";
+import { useToast } from "@/hooks/use-toast";
 
-export { toast, useToast };
+export { useToast };
