@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, Check, User, Users, Goal, LineChart, Keyboard, ClipboardList, CircleDollarSign, CircleCheck, School, Lock } from 'lucide-react';
@@ -8,7 +7,6 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CheckoutButton } from "@/components/subscription/CheckoutButton";
 import useAuth from '@/context/auth/useAuth';
-
 const Plans = () => {
   const {
     planType
@@ -28,7 +26,8 @@ const Plans = () => {
     },
     family: {
       monthly: 3.50,
-      annual: 15.00, // Updated to $15 from $10
+      annual: 15.00,
+      // Updated to $15 from $10
       one_time: 25.00,
       maxUsers: 5
     },
@@ -63,7 +62,7 @@ const Plans = () => {
       return 'Lifetime';
     }
   };
-  
+
   // Format price to display with decimal only for monthly plans
   const formatPrice = (price: number, interval: 'monthly' | 'annual' | 'one_time' | null = null) => {
     if (interval === 'monthly') {
