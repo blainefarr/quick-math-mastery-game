@@ -6,6 +6,7 @@ import EndScreen from '@/components/EndScreen';
 import useGame from '@/context/useGame';
 import TypingWarmup from '@/components/TypingWarmup';
 import GameCountdown from '@/components/GameCountdown';
+import HomeSeoContent from '@/components/home/HomeSeoContent';
 
 // Main content that uses the game context
 const Index = () => {
@@ -30,7 +31,12 @@ const Index = () => {
 
   return (
     <>
-      {gameState === 'selection' && <OperationSelection />}
+      {gameState === 'selection' && (
+        <>
+          <OperationSelection />
+          <HomeSeoContent />
+        </>
+      )}
       {gameState === 'warmup-countdown' && 
         <GameCountdown 
           onComplete={handleWarmupCountdownComplete}
