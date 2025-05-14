@@ -4,12 +4,12 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import AuthModal from './auth/AuthModal';
 import UserProfile from './user/UserProfile';
-import { Clock, Trophy, TrendingUp } from 'lucide-react';
+import { Clock, Trophy, TrendingUp, LayoutTemplate } from 'lucide-react';
 import useAuth from '@/context/auth/useAuth';
 import useGame from '@/context/useGame';
 
 const Header = () => {
-  const { isLoggedIn } = useAuth();
+  const { isLoggedIn, planType } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   
@@ -25,9 +25,11 @@ const Header = () => {
       navigate('/');
     }
   };
+
+  const isFreeTier = planType === 'free' || planType === 'guest';
   
   return (
-    <header className="w-full py-4 px-6 flex justify-between items-center bg-white/50 backdrop-blur-sm shadow-sm">
+    <header className="w-full py-4 px-6 flex justify-between items-center bg-white/50 backdrop-blur-sm shadow-sm sticky top-0 z-50">
       <div 
         className="flex items-center cursor-pointer" 
         onClick={handleLogoClick}
@@ -47,26 +49,33 @@ const Header = () => {
               variant="ghost"
               size="sm"
               className="hidden sm:flex items-center gap-2"
-              onClick={() => navigate('/progress')}
-            >
-              <TrendingUp size={18} />
-              My Progress
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="hidden sm:flex items-center gap-2"
               onClick={() => navigate('/leaderboard')}
             >
               <Trophy size={18} />
               Leaderboard
             </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="hidden sm:flex items-center gap-2"
+              onClick={() => navigate('/plans')}
+            >
+              <LayoutTemplate size={18} />
+              Plans
+            </Button>
           </>
         )}
-
-        <div className="mr-2 text-xs bg-accent/10 rounded-full px-3 py-1 text-accent-foreground hidden sm:block">
-          Math practice for kids!
-        </div>
+        
+        {isLoggedIn && isFreeTier && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="hidden sm:flex items-center gap-2 text-primary border-primary hover:bg-primary/10"
+            onClick={() => navigate('/plans')}
+          >
+            Upgrade
+          </Button>
+        )}
         
         {isLoggedIn ? (
           <UserProfile />

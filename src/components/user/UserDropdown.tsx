@@ -11,7 +11,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { LogOut, Trophy, TrendingUp, Settings, Users, Target } from 'lucide-react';
+import { LogOut, Trophy, TrendingUp, Settings, Users, Target, ChevronDown } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { ProfileSwitcherDialog } from './ProfileSwitcherDialog';
 
@@ -64,8 +64,9 @@ const UserDropdown = ({
     <div className="relative">
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" className="h-8 px-3 rounded-full border">
+          <Button variant="ghost" className="h-8 px-3 rounded-full border flex items-center gap-1">
             {username}
+            <ChevronDown className="h-3 w-3 ml-1 opacity-70" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-[200px] pointer-events-auto">
