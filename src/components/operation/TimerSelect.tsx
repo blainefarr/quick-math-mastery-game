@@ -40,11 +40,12 @@ const TimerSelect = ({
               <SelectValue placeholder="Select time" />
             </div>
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent align="start"> 
             {timerOptions.map(option => (
               <SelectItem 
                 key={option.value} 
                 value={option.value.toString()}
+                className="justify-start"
               >
                 {option.label}
               </SelectItem>

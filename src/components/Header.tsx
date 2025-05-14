@@ -4,7 +4,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import AuthModal from './auth/AuthModal';
 import UserProfile from './user/UserProfile';
-import { Clock, Trophy, TrendingUp, LayoutTemplate } from 'lucide-react';
+import { Clock, Trophy, LayoutTemplate } from 'lucide-react';
 import useAuth from '@/context/auth/useAuth';
 import useGame from '@/context/useGame';
 
@@ -28,8 +28,13 @@ const Header = () => {
 
   const isFreeTier = planType === 'free' || planType === 'guest';
   
+  // Only make header sticky when NOT on the home page
+  const headerClasses = isGameRoute 
+    ? "w-full py-4 px-6 flex justify-between items-center bg-white/50 backdrop-blur-sm shadow-sm z-50"
+    : "w-full py-4 px-6 flex justify-between items-center bg-white/50 backdrop-blur-sm shadow-sm sticky top-0 z-50";
+  
   return (
-    <header className="w-full py-4 px-6 flex justify-between items-center bg-white/50 backdrop-blur-sm shadow-sm sticky top-0 z-50">
+    <header className={headerClasses}>
       <div 
         className="flex items-center cursor-pointer" 
         onClick={handleLogoClick}
@@ -43,28 +48,25 @@ const Header = () => {
       </div>
       
       <div className="flex items-center gap-4">
-        {isLoggedIn && (
-          <>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="hidden sm:flex items-center gap-2"
-              onClick={() => navigate('/leaderboard')}
-            >
-              <Trophy size={18} />
-              Leaderboard
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="hidden sm:flex items-center gap-2"
-              onClick={() => navigate('/plans')}
-            >
-              <LayoutTemplate size={18} />
-              Plans
-            </Button>
-          </>
-        )}
+        {/* Show these buttons to everyone, logged in or not */}
+        <Button
+          variant="ghost"
+          size="sm"
+          className="hidden sm:flex items-center gap-2"
+          onClick={() => navigate('/leaderboard')}
+        >
+          <Trophy size={18} />
+          Leaderboard
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="hidden sm:flex items-center gap-2"
+          onClick={() => navigate('/plans')}
+        >
+          <LayoutTemplate size={18} />
+          Plans
+        </Button>
         
         {isLoggedIn && isFreeTier && (
           <Button
