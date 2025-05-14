@@ -1,9 +1,10 @@
+
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import AuthModal from './auth/AuthModal';
 import UserProfile from './user/UserProfile';
-import { Clock, Trophy, LayoutTemplate } from 'lucide-react';
+import { Trophy, LayoutTemplate } from 'lucide-react';
 import useAuth from '@/context/auth/useAuth';
 import useGame from '@/context/useGame';
 
@@ -36,11 +37,14 @@ const Header = () => {
         className="flex items-center cursor-pointer" 
         onClick={handleLogoClick}
       >
-        <div className="bg-primary text-white rounded-full w-10 h-10 flex items-center justify-center mr-3 shadow-md">
-          <Clock size={20} />
-        </div>
+        {/* Updated logo to use the new image */}
+        <img 
+          src="/lovable-uploads/bde173f2-96b8-4d53-b2e1-e352b314f98b.png" 
+          alt="Mental Math Logo" 
+          className="w-10 h-10 mr-3 shadow-md" 
+        />
         <h1 className="text-2xl font-bold text-primary math-font">
-          <span className="text-accent">Minute</span> Math
+          <span className="text-accent">Practice</span> Mental Math
         </h1>
       </div>
       
