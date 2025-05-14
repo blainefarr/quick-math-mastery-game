@@ -28,10 +28,8 @@ const Header = () => {
 
   const isFreeTier = planType === 'free' || planType === 'guest';
   
-  // Only make header sticky when NOT on the home page
-  const headerClasses = isGameRoute 
-    ? "w-full py-4 px-6 flex justify-between items-center bg-white/50 backdrop-blur-sm shadow-sm z-50"
-    : "w-full py-4 px-6 flex justify-between items-center bg-white/50 backdrop-blur-sm shadow-sm sticky top-0 z-50";
+  // Make header sticky on all pages including home page
+  const headerClasses = "w-full py-4 px-6 flex justify-between items-center bg-white/50 backdrop-blur-sm shadow-sm sticky top-0 z-50";
   
   return (
     <header className={headerClasses}>

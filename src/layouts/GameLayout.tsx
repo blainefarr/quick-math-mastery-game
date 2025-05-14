@@ -3,6 +3,7 @@ import React, { useEffect } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import GameProvider from '@/context/GameProvider';
 import Header from '@/components/Header';
+import Footer from '@/components/common/Footer';
 import MathBackground from '@/components/common/MathBackground';
 import useGame from '@/context/useGame';
 
@@ -17,6 +18,19 @@ const ConditionalHeader = () => {
   }
   
   return <Header />;
+};
+
+// Component to conditionally render footer based on game state
+const ConditionalFooter = () => {
+  const { gameState } = useGame();
+  
+  // Hide footer during gameplay, warmup, and countdown states
+  if (gameState === 'playing' || gameState === 'warmup' || 
+      gameState === 'countdown' || gameState === 'warmup-countdown') {
+    return null;
+  }
+  
+  return <Footer />;
 };
 
 const GameLayout = () => {
@@ -35,6 +49,7 @@ const GameLayout = () => {
         <main className="flex-1 relative z-10">
           <Outlet />
         </main>
+        <ConditionalFooter />
       </div>
     </GameProvider>
   );

@@ -2,6 +2,7 @@
 import React, { useEffect } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import Header from '@/components/Header';
+import Footer from '@/components/common/Footer';
 import { useNavigationState } from '@/hooks/use-navigation-state';
 import useAuth from '@/context/auth/useAuth';
 
@@ -58,6 +59,7 @@ const AppLayout = () => {
       <main className="flex-1 relative">
         <Outlet />
       </main>
+      <Footer />
     </div>
   );
 };
