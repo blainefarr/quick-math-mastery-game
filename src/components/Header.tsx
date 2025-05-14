@@ -37,11 +37,11 @@ const Header = () => {
         className="flex items-center cursor-pointer" 
         onClick={handleLogoClick}
       >
-        {/* Updated logo to use the new image */}
+        {/* Updated logo with transparent background and no shadow */}
         <img 
           src="/lovable-uploads/bde173f2-96b8-4d53-b2e1-e352b314f98b.png" 
           alt="Mental Math Logo" 
-          className="w-10 h-10 mr-3 shadow-md" 
+          className="w-10 h-10 mr-3" 
         />
         <h1 className="text-2xl font-bold text-primary math-font">
           <span className="text-accent">Practice</span> Mental Math
