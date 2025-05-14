@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
@@ -5,8 +6,8 @@ import { Card } from "@/components/ui/card";
 import { Sparkles, Check, Users, Award, BarChart } from 'lucide-react';
 const HomeSeoContent = () => {
   return <div className="w-full bg-background py-16">
-      {/* Hook / Intro Section */}
-      <section className="container mx-auto px-4 mb-16">
+      {/* Hook / Intro Section - Now with a distinct background */}
+      <section className="container mx-auto px-4 mb-16 py-12 bg-primary/5 rounded-xl">
         <h2 className="text-3xl md:text-4xl font-bold mb-6 text-center">
           The ultimate app for mastering mental math—fast.
         </h2>
