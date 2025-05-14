@@ -1,13 +1,10 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Sparkles, Check, Users, Award, BarChart } from 'lucide-react';
-
 const HomeSeoContent = () => {
-  return (
-    <div className="w-full bg-background py-16">
+  return <div className="w-full bg-background py-16">
       {/* Hook / Intro Section */}
       <section className="container mx-auto px-4 mb-16">
         <h2 className="text-3xl md:text-4xl font-bold mb-6 text-center">
@@ -43,7 +40,7 @@ const HomeSeoContent = () => {
                 <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mr-3">
                   <Check className="h-5 w-5 text-primary" />
                 </div>
-                <h3 className="font-bold text-lg">Master all core skills</h3>
+                <h3 className="font-bold text-lg">Master core skills</h3>
               </div>
               <p className="text-muted-foreground">
                 Practice mental math in addition, subtraction, multiplication, and division.
@@ -67,7 +64,7 @@ const HomeSeoContent = () => {
                 <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mr-3">
                   <BarChart className="h-5 w-5 text-primary" />
                 </div>
-                <h3 className="font-bold text-lg">Engaging and distraction-free</h3>
+                <h3 className="font-bold text-lg">Distraction-free</h3>
               </div>
               <p className="text-muted-foreground">
                 This minimal, fast-paced app helps kids focus purely on mental math.
@@ -298,8 +295,6 @@ const HomeSeoContent = () => {
           </p>
         </div>
       </section>
-    </div>
-  );
+    </div>;
 };
-
 export default HomeSeoContent;
