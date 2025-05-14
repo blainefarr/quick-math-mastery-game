@@ -6,7 +6,7 @@ import { useLocation } from 'react-router-dom';
 const LAST_ROUTE_KEY = 'app_last_route';
 const PREVIOUS_ROUTE_KEY = 'app_previous_route';
 const NAVIGATION_SOURCE_KEY = 'app_navigation_source';
-const REFRESH_TIMESTAMP_KEY = 'app_refresh_timestamp';
+const PAGE_REFRESH_KEY = 'app_page_refresh';
 
 /**
  * Hook to track and manage navigation state, allowing for restoring previous routes
@@ -32,16 +32,24 @@ export function useNavigationState() {
     
     // Update the last route
     localStorage.setItem(LAST_ROUTE_KEY, routePath);
-    
-    // Store a timestamp to detect page refreshes
-    localStorage.setItem(REFRESH_TIMESTAMP_KEY, Date.now().toString());
   };
 
   // Check if current navigation is a page refresh
   const isPageRefresh = (): boolean => {
-    // Check if this is a direct navigation via URL bar or refresh
-    return performance.navigation && 
-      performance.navigation.type === 1; // 1 is TYPE_RELOAD
+    // Use sessionStorage to detect page refreshes more reliably
+    // than the deprecated performance.navigation API
+    const wasRefreshed = sessionStorage.getItem(PAGE_REFRESH_KEY) === 'true';
+    sessionStorage.removeItem(PAGE_REFRESH_KEY);
+    
+    // Before unload, we'll set a flag in sessionStorage
+    if (typeof window !== 'undefined' && !window.onbeforeunload) {
+      window.onbeforeunload = () => {
+        sessionStorage.setItem(PAGE_REFRESH_KEY, 'true');
+        return undefined;
+      };
+    }
+    
+    return wasRefreshed;
   };
 
   // Get previous route
@@ -66,7 +74,7 @@ export function useNavigationState() {
   
   // Store current route on each navigation
   useEffect(() => {
-    // Check if this is a refresh
+    // Mark the navigation source
     if (isPageRefresh()) {
       markNavigationSource('refresh');
     } else {

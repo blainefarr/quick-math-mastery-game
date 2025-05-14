@@ -20,15 +20,23 @@ const AppLayout = () => {
   useEffect(() => {
     // Only run this effect once when component mounts
     const navigationSource = getNavigationSource();
-    const isRefresh = isPageRefresh();
+    const isRefreshed = isPageRefresh();
     
-    // Check if we're on the homepage after a refresh
-    const isHomepage = location.pathname === '/';
-    const hasLastRoute = lastRoute && lastRoute !== '/';
+    console.log('Navigation check:', {
+      currentPath: location.pathname, 
+      lastRoute, 
+      navigationSource, 
+      isRefreshed
+    });
     
-    // If we're refreshed to homepage but actually had a previous specific route,
-    // navigate back there (unless we're not logged in and it's a protected route)
-    if ((isRefresh || navigationSource === 'refresh') && isHomepage && hasLastRoute) {
+    // Determine if we should restore a route
+    // Either we're at the homepage after a refresh OR we've directly hit the base URL after refresh
+    const shouldRestoreRoute = 
+      (isRefreshed || navigationSource === 'refresh') && 
+      (location.pathname === '/' || location.pathname === '') && 
+      lastRoute && lastRoute !== '/';
+    
+    if (shouldRestoreRoute) {
       // Check if it's a route that should only be accessed when logged in
       const authRequiredRoutes = ['/account', '/progress', '/goals', '/leaderboard'];
       const needsAuth = authRequiredRoutes.some(route => lastRoute.startsWith(route));

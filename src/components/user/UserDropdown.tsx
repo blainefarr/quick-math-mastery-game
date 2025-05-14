@@ -109,7 +109,7 @@ const UserDropdown = ({
             className="cursor-pointer hover:bg-accent"
           >
             <Settings className="mr-2 h-4 w-4" />
-            Settings
+            My Account
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem 

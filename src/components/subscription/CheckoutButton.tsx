@@ -62,7 +62,9 @@ export const CheckoutButton = ({
       
       // Always store the current path for return navigation
       // This is critical for the back button functionality
-      localStorage.setItem('checkout_return_path', location.pathname + location.search);
+      const returnPath = location.pathname + location.search;
+      localStorage.setItem('checkout_return_path', returnPath);
+      console.log('Storing checkout return path:', returnPath);
       
       const { data, error } = await supabase.functions.invoke('create-checkout', {
         body: { 
