@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import useGame from '@/context/useGame';
@@ -11,7 +10,6 @@ import NumberRangeSection from './operation/NumberRangeSection';
 import TimerSelect from './operation/TimerSelect';
 import AdvancedSettings from './operation/AdvancedSettings';
 import { useIsMobile } from '@/hooks/use-mobile';
-
 const OperationSelection = () => {
   const isMobile = useIsMobile();
   const [searchParams] = useSearchParams();
@@ -24,7 +22,7 @@ const OperationSelection = () => {
     setFocusNumber,
     resetScore
   } = useGame();
-  
+
   // Local state for form values
   const [selectedOperation, setSelectedOperation] = useState<Operation>(settings.operation);
   const [negativeNumbersEnabled, setNegativeNumbersEnabled] = useState(settings.allowNegatives || false);
@@ -37,27 +35,28 @@ const OperationSelection = () => {
   const [range2Max, setRange2Max] = useState(settings.range.max2);
   const [useFocusNumber, setUseFocusNumber] = useState(focusNumber !== null);
   const [focusNumberValue, setFocusNumberValue] = useState(focusNumber || 1);
-  
+
   // Process URL parameters on initial load
   useEffect(() => {
     const urlOperation = searchParams.get('operation');
     const urlFocusNumber = searchParams.get('focusNumber');
     const urlRangeMin = searchParams.get('rangeMin');
     const urlRangeMax = searchParams.get('rangeMax');
-    
+
     // Only apply URL parameters if they exist
-    if (urlOperation || urlFocusNumber || (urlRangeMin && urlRangeMax)) {
+    if (urlOperation || urlFocusNumber || urlRangeMin && urlRangeMax) {
       console.log('Applying URL parameters to game settings');
-      
-      const updatedSettings = { ...settings };
-      
+      const updatedSettings = {
+        ...settings
+      };
+
       // Handle operation parameter
       if (urlOperation && ['addition', 'subtraction', 'multiplication', 'division'].includes(urlOperation)) {
         const typedOperation = urlOperation as Operation;
         setSelectedOperation(typedOperation);
         updatedSettings.operation = typedOperation;
       }
-      
+
       // Handle focus number parameter
       if (urlFocusNumber) {
         const parsedFocusNumber = parseInt(urlFocusNumber, 10);
@@ -67,7 +66,6 @@ const OperationSelection = () => {
           setFocusNumber(parsedFocusNumber);
           setRange1Min(parsedFocusNumber);
           setRange1Max(parsedFocusNumber);
-          
           updatedSettings.focusNumber = parsedFocusNumber;
           updatedSettings.range = {
             ...updatedSettings.range,
@@ -80,13 +78,11 @@ const OperationSelection = () => {
       else if (urlRangeMin && urlRangeMax) {
         const parsedMin = parseInt(urlRangeMin, 10);
         const parsedMax = parseInt(urlRangeMax, 10);
-        
         if (!isNaN(parsedMin) && !isNaN(parsedMax)) {
           setUseFocusNumber(false);
           setFocusNumber(null);
           setRange1Min(parsedMin);
           setRange1Max(parsedMax);
-          
           updatedSettings.focusNumber = null;
           updatedSettings.range = {
             ...updatedSettings.range,
@@ -95,10 +91,10 @@ const OperationSelection = () => {
           };
         }
       }
-      
+
       // Apply the updated settings
       updateSettings(updatedSettings);
-      
+
       // Clear the URL parameters after applying them
       // This prevents them from being applied again on refresh
       // We use replaceState to avoid adding a new entry to the browser history
@@ -108,7 +104,7 @@ const OperationSelection = () => {
       }
     }
   }, [searchParams, updateSettings, setFocusNumber, settings]);
-  
+
   // Synchronize local state with global settings whenever settings change
   useEffect(() => {
     setSelectedOperation(settings.operation);
@@ -121,19 +117,16 @@ const OperationSelection = () => {
     setCustomNumberPadEnabled(settings.useCustomNumberPad || false);
     setTypingSpeedEnabled(settings.typingSpeedAdjustment || false);
   }, [settings]);
-  
   useEffect(() => {
     if (useFocusNumber && focusNumberValue !== null) {
       setRange1Min(focusNumberValue);
       setRange1Max(focusNumberValue);
     }
   }, [useFocusNumber, focusNumberValue]);
-  
   const parseOrDefault = (str: string, def: number) => {
     const val = parseInt(str);
     return !isNaN(val) ? val : def;
   };
-  
   const handleOperationSelect = (operation: Operation) => {
     setSelectedOperation(operation);
     // Update global settings when operation changes
@@ -141,7 +134,6 @@ const OperationSelection = () => {
       operation
     });
   };
-  
   const handleFocusNumberToggle = (checked: boolean) => {
     setUseFocusNumber(checked);
     if (!checked) {
@@ -172,7 +164,6 @@ const OperationSelection = () => {
       });
     }
   };
-  
   const handleFocusNumberChange = (value: string) => {
     const numValue = parseOrDefault(value, focusNumberValue);
     setFocusNumberValue(numValue);
@@ -191,7 +182,6 @@ const OperationSelection = () => {
       });
     }
   };
-  
   const handleNegativeToggle = (checked: boolean) => {
     setNegativeNumbersEnabled(checked);
     // Update global settings when negative toggle changes
@@ -199,7 +189,6 @@ const OperationSelection = () => {
       allowNegatives: checked
     });
   };
-  
   const handleLearnerModeToggle = (checked: boolean) => {
     setLearnerModeEnabled(checked);
     // Update global settings when learner mode changes
@@ -207,7 +196,6 @@ const OperationSelection = () => {
       learnerMode: checked
     });
   };
-  
   const handleCustomNumberPadToggle = (checked: boolean) => {
     setCustomNumberPadEnabled(checked);
     // Update global settings
@@ -215,7 +203,6 @@ const OperationSelection = () => {
       useCustomNumberPad: checked
     });
   };
-
   const handleTypingSpeedToggle = (checked: boolean) => {
     setTypingSpeedEnabled(checked);
     // Update global settings
@@ -223,14 +210,14 @@ const OperationSelection = () => {
       typingSpeedAdjustment: checked
     });
   };
-  
+
   // Update only the timer setting without altering other settings
   const handleTimerChange = (seconds: number) => {
     updateSettings({
       timerSeconds: seconds
     });
   };
-  
+
   // Handle range changes
   const handleRange1MinChange = (value: string) => {
     const numValue = parseOrDefault(value, range1Min);
@@ -242,7 +229,6 @@ const OperationSelection = () => {
       }
     });
   };
-  
   const handleRange1MaxChange = (value: string) => {
     const numValue = parseOrDefault(value, range1Max);
     setRange1Max(numValue);
@@ -253,7 +239,6 @@ const OperationSelection = () => {
       }
     });
   };
-  
   const handleRange2MinChange = (value: string) => {
     const numValue = parseOrDefault(value, range2Min);
     setRange2Min(numValue);
@@ -264,7 +249,6 @@ const OperationSelection = () => {
       }
     });
   };
-  
   const handleRange2MaxChange = (value: string) => {
     const numValue = parseOrDefault(value, range2Max);
     setRange2Max(numValue);
@@ -275,7 +259,6 @@ const OperationSelection = () => {
       }
     });
   };
-  
   const handleStartGame = () => {
     if (range1Max < range1Min || range2Max < range2Min) {
       alert('Maximum value must be greater than or equal to minimum value');
@@ -299,7 +282,7 @@ const OperationSelection = () => {
     });
     if (useFocusNumber) setFocusNumber(focusNumberValue);else setFocusNumber(null);
     setTimeLeft(settings.timerSeconds);
-    
+
     // Go to warmup-countdown first if typing speed adjustment is enabled
     if (typingSpeedEnabled) {
       setGameState('warmup-countdown');
@@ -308,11 +291,10 @@ const OperationSelection = () => {
       setGameState('countdown');
     }
   };
-  
   return <div className="container mx-auto px-4 py-8">
       <Card className="shadow-lg animate-fade-in mx-auto max-w-[535px] min-w-[300px]">
         <CardHeader>
-          <CardTitle className="text-2xl font-bold text-center">Minute Math Settings</CardTitle>
+          <CardTitle className="text-2xl font-bold text-center">Timed Mental Math Game</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="mx-auto space-y-6 px-0">
@@ -323,40 +305,17 @@ const OperationSelection = () => {
               </div>
             </div>
 
-            <NumberRangeSection 
-              focusNumberEnabled={useFocusNumber} 
-              focusNumber={focusNumberValue} 
-              negativeNumbersEnabled={negativeNumbersEnabled} 
-              range1={{
-                min: range1Min,
-                max: range1Max
-              }} 
-              range2={{
-                min: range2Min,
-                max: range2Max
-              }} 
-              setRange1Min={handleRange1MinChange}
-              setRange1Max={handleRange1MaxChange}
-              setRange2Min={handleRange2MinChange}
-              setRange2Max={handleRange2MaxChange}
-            />
+            <NumberRangeSection focusNumberEnabled={useFocusNumber} focusNumber={focusNumberValue} negativeNumbersEnabled={negativeNumbersEnabled} range1={{
+            min: range1Min,
+            max: range1Max
+          }} range2={{
+            min: range2Min,
+            max: range2Max
+          }} setRange1Min={handleRange1MinChange} setRange1Max={handleRange1MaxChange} setRange2Min={handleRange2MinChange} setRange2Max={handleRange2MaxChange} />
 
             <TimerSelect value={settings.timerSeconds} onChange={handleTimerChange} />
 
-            <AdvancedSettings 
-              useFocusNumber={useFocusNumber} 
-              focusNumberValue={focusNumberValue} 
-              negativeNumbersEnabled={negativeNumbersEnabled}
-              learnerModeEnabled={learnerModeEnabled}
-              customNumberPadEnabled={customNumberPadEnabled}
-              typingSpeedEnabled={typingSpeedEnabled}
-              onFocusNumberToggle={handleFocusNumberToggle} 
-              onFocusNumberChange={handleFocusNumberChange} 
-              onNegativeToggle={handleNegativeToggle}
-              onLearnerModeToggle={handleLearnerModeToggle}
-              onCustomNumberPadToggle={handleCustomNumberPadToggle}
-              onTypingSpeedToggle={handleTypingSpeedToggle}
-            />
+            <AdvancedSettings useFocusNumber={useFocusNumber} focusNumberValue={focusNumberValue} negativeNumbersEnabled={negativeNumbersEnabled} learnerModeEnabled={learnerModeEnabled} customNumberPadEnabled={customNumberPadEnabled} typingSpeedEnabled={typingSpeedEnabled} onFocusNumberToggle={handleFocusNumberToggle} onFocusNumberChange={handleFocusNumberChange} onNegativeToggle={handleNegativeToggle} onLearnerModeToggle={handleLearnerModeToggle} onCustomNumberPadToggle={handleCustomNumberPadToggle} onTypingSpeedToggle={handleTypingSpeedToggle} />
           </div>
         </CardContent>
         <CardFooter className="px-4">
