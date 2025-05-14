@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -28,8 +27,8 @@ const Header = () => {
 
   const isFreeTier = planType === 'free' || planType === 'guest';
   
-  // Make header sticky on all pages including home page
-  const headerClasses = "w-full py-4 px-6 flex justify-between items-center bg-white/50 backdrop-blur-sm shadow-sm sticky top-0 z-50";
+  // Ensure consistent header styling across all layouts
+  const headerClasses = "w-full py-4 px-6 flex justify-between items-center bg-white/50 backdrop-blur-sm shadow-sm z-50";
   
   return (
     <header className={headerClasses}>

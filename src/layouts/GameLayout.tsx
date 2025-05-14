@@ -43,9 +43,13 @@ const GameLayout = () => {
 
   return (
     <GameProvider>
-      <div className="min-h-screen flex flex-col bg-background relative overflow-hidden">
+      {/* Removed overflow-hidden to allow sticky header to work properly */}
+      <div className="min-h-screen flex flex-col bg-background relative">
         <MathBackground />
-        <ConditionalHeader />
+        {/* Added z-50 to ensure proper stacking context */}
+        <div className="sticky top-0 z-50">
+          <ConditionalHeader />
+        </div>
         <main className="flex-1 relative z-10">
           <Outlet />
         </main>

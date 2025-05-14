@@ -55,7 +55,10 @@ const AppLayout = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      <Header />
+      {/* Added sticky positioning to header container */}
+      <div className="sticky top-0 z-50">
+        <Header />
+      </div>
       <main className="flex-1 relative">
         <Outlet />
       </main>
