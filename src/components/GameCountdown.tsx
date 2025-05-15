@@ -31,13 +31,13 @@ const GameCountdown = ({
     }
   });
 
-  // Get the best score for the current game settings
+  // Get the best score for the current game settings, including duration
   const getBestScore = () => {
     if (!isLoggedIn || !scoreHistory || scoreHistory.length === 0) {
       return null;
     }
 
-    // Filter scores that match current game settings
+    // Filter scores that match current game settings, INCLUDING duration
     const matchingScores = scoreHistory.filter(s => 
       s.operation === settings.operation &&
       s.range.min1 === settings.range.min1 &&
@@ -45,7 +45,8 @@ const GameCountdown = ({
       s.range.min2 === settings.range.min2 &&
       s.range.max2 === settings.range.max2 &&
       s.allowNegatives === (settings.allowNegatives || false) &&
-      s.focusNumber === (settings.focusNumber || null)
+      s.focusNumber === (settings.focusNumber || null) &&
+      s.duration === settings.timerSeconds // Added this filter for duration
     );
 
     if (matchingScores.length === 0) {

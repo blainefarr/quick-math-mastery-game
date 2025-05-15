@@ -29,7 +29,7 @@ const UserDropdown = ({
   hasMultipleProfiles = false
 }: UserDropdownProps) => {
   const navigate = useNavigate();
-  const { handleLogout } = useAuth();
+  const { handleLogout, planType } = useAuth();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [showProfileSwitcher, setShowProfileSwitcher] = useState(false);
   const { toast } = useToast();
@@ -60,6 +60,23 @@ const UserDropdown = ({
     }
   };
 
+  // Format plan name for display
+  const getPlanDisplay = () => {
+    if (!planType || planType === 'free' || planType === 'guest') {
+      return (
+        <span className="text-xs">
+          <span className="text-blue-500 font-medium cursor-pointer" onClick={() => navigate('/plans')}>
+            Free - Upgrade
+          </span>
+        </span>
+      );
+    }
+    
+    // Capitalize first letter of plan name
+    const formattedPlan = planType.charAt(0).toUpperCase() + planType.slice(1);
+    return <span className="text-xs text-muted-foreground">{formattedPlan} Plan</span>;
+  };
+
   return (
     <div className="relative">
       <DropdownMenu>
@@ -73,7 +90,7 @@ const UserDropdown = ({
           <DropdownMenuLabel>
             <div className="flex flex-col">
               <span>Hi, {username}!</span>
-              <span className="text-xs text-muted-foreground">Logged in</span>
+              {getPlanDisplay()}
             </div>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
@@ -112,6 +129,15 @@ const UserDropdown = ({
             <Settings className="mr-2 h-4 w-4" />
             My Account
           </DropdownMenuItem>
+          {(planType === 'free' || planType === 'guest') && (
+            <DropdownMenuItem 
+              onClick={() => navigate('/plans')}
+              className="cursor-pointer hover:bg-accent text-blue-500"
+            >
+              <span className="mr-2">⭐</span>
+              Upgrade
+            </DropdownMenuItem>
+          )}
           <DropdownMenuSeparator />
           <DropdownMenuItem 
             onClick={handleUserLogout} 
