@@ -233,7 +233,7 @@ export function ProfileSwitcherDialog({
                     </Card>
                   ))}
           
-                  {/* Add New Profile Card - Fixed to show CreateProfileForm on click */}
+                  {/* Add New Profile Card */}
                   <Card 
                     onClick={() => setShowCreateForm(true)} 
                     className="p-3 sm:p-4 flex flex-col items-center cursor-pointer transition-all border-dashed hover:border-primary"
@@ -261,17 +261,6 @@ export function ProfileSwitcherDialog({
                 </div>
               </div>
             </ScrollArea>
-        )}
-
-        {/* Show create form as a modal within the dialog when Add Profile is clicked */}
-        {showCreateForm && (
-          <div className="p-6 border-t">
-            <h3 className="text-lg font-semibold mb-4">Create New Profile</h3>
-            <CreateProfileForm
-              onSuccess={handleProfileCreated}
-              onCancel={() => setShowCreateForm(false)}
-            />
-          </div>
         )}
       </DialogContent>
     </Dialog>

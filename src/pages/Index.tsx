@@ -7,6 +7,7 @@ import useGame from '@/context/useGame';
 import TypingWarmup from '@/components/TypingWarmup';
 import GameCountdown from '@/components/GameCountdown';
 import HomeSeoContent from '@/components/home/HomeSeoContent';
+import Footer from '@/components/common/Footer';
 
 // Main content that uses the game context
 const Index = () => {
@@ -35,7 +36,8 @@ const Index = () => {
         <>
           <OperationSelection />
           <HomeSeoContent />
-          {/* Footer is already included in AppLayout, so removing it from here */}
+          {/* Add Footer explicitly for the Index page */}
+          <Footer className="mt-16" />
         </>
       )}
       {gameState === 'warmup-countdown' && 
