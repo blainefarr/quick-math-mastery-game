@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Card } from '@/components/ui/card';
@@ -351,7 +350,7 @@ export function ProfileSwitcherDialog({
         </DialogContent>
       </Dialog>
       
-      {/* Profile Limit Paywall Modal */}
+      {/* Profile Limit Paywall Modal - Add the missing onCancel prop */}
       <PaywallModal
         open={showPaywallModal}
         onOpenChange={setShowPaywallModal}
@@ -360,6 +359,7 @@ export function ProfileSwitcherDialog({
         continueText="No thanks"
         cancelText="Upgrade"
         onContinue={handleContinueWithoutUpgrade}
+        onCancel={() => navigate('/plans')}
       />
     </>
   );

@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import useGame from '@/context/useGame';
@@ -10,6 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import useGoalProgress, { getGoalLevel, getLevelEmoji } from '@/hooks/useGoalProgress';
 import { useLeaderboard } from '@/hooks/useLeaderboard';
 import AuthModal from './auth/AuthModal';
+import { useAuth } from '@/context/auth/useAuth';
 
 const EndScreen = () => {
   const navigate = useNavigate();
@@ -26,6 +28,9 @@ const EndScreen = () => {
     hasSaveScoreLimitReached,
     setShowScoreSavePaywall
   } = useGame();
+  
+  // Get auth context to access planType
+  const { planType } = useAuth();
   
   // Add state for calculated guest rank and loading state
   const [guestRank, setGuestRank] = useState<number | null>(null);
