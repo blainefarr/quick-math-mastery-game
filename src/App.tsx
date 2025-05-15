@@ -14,8 +14,6 @@ import Goals from "./pages/Goals";
 import ResetPassword from "./pages/ResetPassword";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import Plans from "./pages/Plans";
-import Privacy from "./pages/Privacy";
-import Terms from "./pages/Terms";
 
 const queryClient = new QueryClient();
 
@@ -38,8 +36,6 @@ const App = () => (
               <Route path="/account" element={<MyAccount />} />
               <Route path="/payment-success" element={<PaymentSuccess />} />
               <Route path="/plans" element={<Plans />} />
-              <Route path="/privacy" element={<Privacy />} />
-              <Route path="/terms" element={<Terms />} />
             </Route>
             <Route path="/leaderboard" element={<Leaderboard />} />
             <Route path="/progress" element={<Progress />} />
