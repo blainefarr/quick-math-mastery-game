@@ -6,6 +6,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/common/Footer';
 import MathBackground from '@/components/common/MathBackground';
 import useGame from '@/context/useGame';
+import { GamePaywallManager } from '@/components/paywalls/GamePaywallManager';
 
 // Component to conditionally render header based on game state
 const ConditionalHeader = () => {
@@ -56,6 +57,8 @@ const GameLayout = () => {
         <div className="relative z-10">
           <ConditionalFooter />
         </div>
+        {/* Add GamePaywallManager to handle saved score limits */}
+        <GamePaywallManager />
       </div>
     </GameProvider>
   );

@@ -16,11 +16,19 @@ export function SavedScoresPaywallModal({
   scoreSaveLimit
 }: SavedScoresPaywallModalProps) {
   const { setGameState } = useGame();
+  const navigate = useNavigate();
   
   // Handle continuing without saving
   const handleContinueWithoutSaving = () => {
     // Continue with the game but don't save the score
     setGameState('playing');
+    onOpenChange(false);
+  };
+  
+  // Handle upgrading the account
+  const handleUpgrade = () => {
+    navigate('/plans');
+    onOpenChange(false);
   };
   
   return (
@@ -32,6 +40,7 @@ export function SavedScoresPaywallModal({
       continueText="Continue without saving"
       cancelText="Upgrade"
       onContinue={handleContinueWithoutSaving}
+      onCancel={handleUpgrade}
     />
   );
 }

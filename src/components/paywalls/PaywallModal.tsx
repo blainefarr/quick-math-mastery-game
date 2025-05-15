@@ -21,6 +21,7 @@ export interface PaywallModalProps {
   continueText: string;
   onContinue: () => void;
   cancelText: string;
+  onCancel?: () => void;
 }
 
 export function PaywallModal({
@@ -30,13 +31,18 @@ export function PaywallModal({
   description,
   continueText,
   onContinue,
-  cancelText
+  cancelText,
+  onCancel
 }: PaywallModalProps) {
   const navigate = useNavigate();
 
   const handleUpgrade = () => {
-    navigate('/plans');
-    onOpenChange(false);
+    if (onCancel) {
+      onCancel();
+    } else {
+      navigate('/plans');
+      onOpenChange(false);
+    }
   };
 
   const handleContinue = () => {
@@ -65,7 +71,7 @@ export function PaywallModal({
             onClick={handleUpgrade}
             className="bg-primary text-primary-foreground hover:bg-primary/90"
           >
-            Upgrade
+            {cancelText}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

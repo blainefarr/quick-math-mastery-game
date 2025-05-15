@@ -51,20 +51,28 @@ serve(async (req) => {
 
     const accountId = user.id;
 
-    // Increment score_save_count for the account
+    console.log("Incrementing score_save_count for account:", accountId);
+
+    // Use direct update instead of rpc call to increment score_save_count
     const { data, error } = await supabase
       .from("accounts")
-      .update({ score_save_count: supabase.rpc('increment_count', { table_name: 'accounts', column_name: 'score_save_count', row_id: accountId }) })
+      .update({ score_save_count: supabase.rpc('increment_count', { 
+        table_name: 'accounts', 
+        column_name: 'score_save_count', 
+        row_id: accountId 
+      })})
       .eq("id", accountId)
       .select("score_save_count");
 
     if (error) {
       console.error("Error incrementing score save count:", error);
       return new Response(
-        JSON.stringify({ error: "Failed to increment score save count" }),
+        JSON.stringify({ error: "Failed to increment score save count", details: error }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+
+    console.log("Score save count incremented successfully:", data);
 
     // Return the updated score_save_count
     return new Response(
@@ -74,7 +82,7 @@ serve(async (req) => {
   } catch (error) {
     console.error("Unexpected error:", error);
     return new Response(
-      JSON.stringify({ error: "Unexpected error occurred" }),
+      JSON.stringify({ error: "Unexpected error occurred", details: String(error) }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }

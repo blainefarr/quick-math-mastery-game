@@ -410,6 +410,10 @@ export type Database = {
         }
         Returns: number
       }
+      increment_count: {
+        Args: { table_name: string; column_name: string; row_id: string }
+        Returns: number
+      }
     }
     Enums: {
       [_ in never]: never
