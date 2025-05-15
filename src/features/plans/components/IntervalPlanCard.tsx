@@ -50,7 +50,7 @@ const IntervalPlanCard: React.FC<IntervalPlanCardProps> = ({
           <SelectTrigger className="w-full mt-2">
             <SelectValue placeholder={getBillingLabel(interval)} />
           </SelectTrigger>
-          <SelectContent className="bg-background">
+          <SelectContent className="bg-background text-left">
             <SelectItem value="monthly" className="text-left">Paid Monthly</SelectItem>
             <SelectItem value="annual" className="text-left">Paid Annually</SelectItem>
             <SelectItem value="one_time" className="text-left">Lifetime</SelectItem>

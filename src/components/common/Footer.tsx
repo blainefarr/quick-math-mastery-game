@@ -11,7 +11,7 @@ const Footer = ({ className }: { className?: string }) => {
       <div className="container mx-auto">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <h3 className="text-lg font-semibold mb-3">Minute Math</h3>
+            <h3 className="text-lg font-semibold mb-3">Mental Math</h3>
             <p className="text-sm text-muted-foreground max-w-sm">
               Improve your math skills with our engaging practice app designed for learners of all ages.
             </p>

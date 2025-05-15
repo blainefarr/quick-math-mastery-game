@@ -21,7 +21,7 @@ const Terms = () => {
         <section className="space-y-4">
           <h2 className="text-2xl font-semibold">1. Acceptance of Terms</h2>
           <p>
-            By accessing or using Practice Mental Math, you agree to be bound by these Terms of Service. If you 
+            By accessing or using Mental Math, you agree to be bound by these Terms of Service. If you 
             do not agree to all the terms and conditions, then you may not access the service.
           </p>
         </section>
@@ -63,7 +63,7 @@ const Terms = () => {
         <section className="space-y-4">
           <h2 className="text-2xl font-semibold">5. Intellectual Property</h2>
           <p>
-            The Service and its original content, features, and functionality are owned by Practice Mental Math 
+            The Service and its original content, features, and functionality are owned by Mental Math 
             and are protected by international copyright, trademark, and other intellectual property laws.
           </p>
         </section>
@@ -79,8 +79,8 @@ const Terms = () => {
         <div className="border-t pt-6 mt-10">
           <p className="text-sm text-muted-foreground">
             For questions about these terms, please contact us at 
-            <a href="mailto:support@practicementalmath.com" className="text-primary hover:underline ml-1">
-              support@practicementalmath.com
+            <a href="mailto:support@mentalmath.com" className="text-primary hover:underline ml-1">
+              support@mentalmath.com
             </a>. Also see our <Link to="/privacy" className="text-primary hover:underline">Privacy Policy</Link>.
           </p>
         </div>

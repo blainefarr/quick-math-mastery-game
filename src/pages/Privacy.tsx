@@ -21,7 +21,7 @@ const Privacy = () => {
         <section className="space-y-4">
           <h2 className="text-2xl font-semibold">Introduction</h2>
           <p>
-            This Privacy Policy describes how Practice Mental Math ("we", "us", or "our") collects, uses, and discloses your 
+            This Privacy Policy describes how Mental Math ("we", "us", or "our") collects, uses, and discloses your 
             information when you use our service. We are committed to protecting your personal information and your 
             right to privacy.
           </p>
@@ -68,8 +68,8 @@ const Privacy = () => {
           <p>
             If you have any questions about this Privacy Policy, please contact us at:
             <br />
-            <a href="mailto:privacy@practicementalmath.com" className="text-primary hover:underline">
-              privacy@practicementalmath.com
+            <a href="mailto:privacy@mentalmath.com" className="text-primary hover:underline">
+              privacy@mentalmath.com
             </a>
           </p>
         </section>

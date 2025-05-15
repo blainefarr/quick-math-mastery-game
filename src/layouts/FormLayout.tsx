@@ -1,22 +1,15 @@
 
 import React from 'react';
 import { Outlet } from 'react-router-dom';
-import { FormProvider, useForm } from "react-hook-form";
-import Footer from '@/components/common/Footer';
 
 const FormLayout = () => {
-  // Create a default form instance that will be used by any form components
-  const methods = useForm();
-
   return (
-    <FormProvider {...methods}>
-      <div className="flex flex-col min-h-screen">
-        <div className="flex-1">
-          <Outlet />
-        </div>
-        <Footer />
+    <div className="flex flex-col min-h-screen">
+      <div className="flex-grow flex items-center justify-center py-8">
+        <Outlet />
       </div>
-    </FormProvider>
+      {/* Footer has been removed from here since it's already included in AppLayout */}
+    </div>
   );
 };
 
