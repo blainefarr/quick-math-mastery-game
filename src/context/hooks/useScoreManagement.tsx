@@ -264,8 +264,8 @@ export const useScoreManagement = (userId: string | null) => {
         }
       }
       
-      // Use the new secure submit_score function
-      const { data, error } = await supabase.rpc('submit_score', {
+      // Use the new secure submit_score function with a type assertion to fix TypeScript error
+      const { data, error } = await supabase.rpc('submit_score' as any, {
         p_profile_id: profileId,
         p_score: score,
         p_operation: operation,
