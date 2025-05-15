@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/auth/useAuth';
@@ -13,6 +14,7 @@ import { Button } from '@/components/ui/button';
 import { LogOut, Trophy, TrendingUp, Settings, Users, Target, ChevronDown } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { ProfileSwitcherDialog } from './ProfileSwitcherDialog';
+import logger from '@/utils/logger';
 
 interface UserDropdownProps {
   username: string;
@@ -42,6 +44,7 @@ const UserDropdown = ({
       
       // Close the dropdown first to prevent UI issues
       setTimeout(async () => {
+        logger.info("User initiated logout");
         await handleLogout();
         toast({
           title: "Logged out successfully"
@@ -49,7 +52,7 @@ const UserDropdown = ({
         // No need to navigate here as handleLogout already does window.location.href = '/'
       }, 100);
     } catch (error) {
-      console.error("Error during logout:", error);
+      logger.error("Error during logout:", error);
       toast({
         title: "Error during logout",
         description: "Please try again",

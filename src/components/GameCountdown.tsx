@@ -6,6 +6,7 @@ import useGame from '@/context/useGame';
 import { useTimerManagement } from '@/hooks/use-timer-management';
 import GameContainer from './game/GameContainer';
 import GameCard from './game/GameCard';
+import logger from '@/utils/logger';
 
 interface GameCountdownProps {
   onComplete: () => void;
@@ -50,6 +51,7 @@ const GameCountdown = ({
     );
 
     if (matchingScores.length === 0) {
+      logger.debug('No matching scores found for current settings');
       return null;
     }
 

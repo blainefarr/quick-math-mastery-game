@@ -5,6 +5,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/common/Footer';
 import { useNavigationState } from '@/hooks/use-navigation-state';
 import useAuth from '@/context/auth/useAuth';
+import logger from '@/utils/logger';
 
 const AppLayout = () => {
   const location = useLocation();
@@ -23,7 +24,7 @@ const AppLayout = () => {
     const navigationSource = getNavigationSource();
     const isRefreshed = isPageRefresh();
     
-    console.log('Navigation check:', {
+    logger.debug('Navigation check:', {
       currentPath: location.pathname, 
       lastRoute, 
       navigationSource, 
@@ -46,7 +47,7 @@ const AppLayout = () => {
       if (!needsAuth || isLoggedIn) {
         // Wait for auth check to complete
         if (!isLoadingProfile) {
-          console.log('Restoring route after refresh:', lastRoute);
+          logger.info('Restoring route after refresh:', lastRoute);
           navigate(lastRoute, { replace: true });
         }
       }

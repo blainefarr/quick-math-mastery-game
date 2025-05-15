@@ -1,8 +1,13 @@
 
 import * as React from "react"
+import logger from "@/utils/logger"
 
 const MOBILE_BREAKPOINT = 768
 const TABLET_BREAKPOINT = 1024
+
+// Storage keys for caching detection results
+const MOBILE_DETECTION_CACHE_KEY = 'math_game_mobile_detection';
+const TABLET_DETECTION_CACHE_KEY = 'math_game_tablet_detection';
 
 // Helper function to check if device is mobile based on user agent
 function isMobileUserAgent() {
@@ -20,45 +25,80 @@ function isTabletUserAgent() {
   return /(ipad|tablet|(android(?!.*mobile))|(windows(?!.*phone)(.*touch))|kindle|playbook|silk|(puffin(?!.*(IP|AP|WP))))/.test(ua.toLowerCase());
 }
 
+// Try to get cached detection first, if available
+const getCachedDetection = (key: string): boolean | null => {
+  try {
+    const cached = sessionStorage.getItem(key);
+    return cached ? JSON.parse(cached) : null;
+  } catch (e) {
+    return null;
+  }
+};
+
+// Save detection to session storage to avoid redundant checks
+const cacheDetection = (key: string, value: boolean): void => {
+  try {
+    sessionStorage.setItem(key, JSON.stringify(value));
+  } catch (e) {
+    // Silently fail if sessionStorage is not available
+  }
+};
+
 export function useIsMobile() {
-  const [isMobile, setIsMobile] = React.useState<boolean | undefined>(
-    typeof window !== 'undefined' ? isMobileUserAgent() : undefined
-  )
+  const [isMobile, setIsMobile] = React.useState<boolean | undefined>(() => {
+    // Check cache first
+    const cached = getCachedDetection(MOBILE_DETECTION_CACHE_KEY);
+    if (cached !== null) return cached;
+    
+    // Fall back to initial detection
+    return typeof window !== 'undefined' ? isMobileUserAgent() : undefined;
+  });
 
   React.useEffect(() => {
     if (typeof window === 'undefined') return;
     
     const handleResize = () => {
       // Prioritize user agent detection and only use screen width as a fallback
-      setIsMobile(isMobileUserAgent() || (window.innerWidth < MOBILE_BREAKPOINT && !window.matchMedia('(pointer: fine)').matches))
+      const detected = isMobileUserAgent() || 
+                      (window.innerWidth < MOBILE_BREAKPOINT && !window.matchMedia('(pointer: fine)').matches);
+      
+      setIsMobile(detected);
+      cacheDetection(MOBILE_DETECTION_CACHE_KEY, detected);
+    };
+    
+    // Set initial value if it wasn't set from cache
+    if (isMobile === undefined) {
+      handleResize();
     }
     
-    // Set initial value immediately
-    handleResize()
-    
-    // Log detection for debugging
-    console.log('Mobile detection:', 
-      isMobileUserAgent() ? 'Mobile user agent detected' : 'Desktop user agent detected',
-      window.innerWidth < MOBILE_BREAKPOINT ? 'Small screen width' : 'Large screen width',
-      window.matchMedia('(pointer: fine)').matches ? 'Fine pointer (mouse) detected' : 'No fine pointer (touch)'
-    )
+    // Log detection once for debugging - only in development
+    logger.debug('Mobile detection:', {
+      userAgent: isMobileUserAgent() ? 'Mobile user agent detected' : 'Desktop user agent detected',
+      screenSize: window.innerWidth < MOBILE_BREAKPOINT ? 'Small screen width' : 'Large screen width',
+      pointer: window.matchMedia('(pointer: fine)').matches ? 'Fine pointer (mouse) detected' : 'No fine pointer (touch)'
+    });
     
     // Add event listener
-    window.addEventListener("resize", handleResize)
+    window.addEventListener("resize", handleResize);
     
     // Cleanup
-    return () => window.removeEventListener("resize", handleResize)
-  }, [])
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   // Default to false if SSR
-  return isMobile === undefined ? false : isMobile
+  return isMobile === undefined ? false : isMobile;
 }
 
 // Enhanced hook for detecting mobile or tablet
 export function useIsMobileOrTablet() {
-  const [isMobileOrTablet, setIsMobileOrTablet] = React.useState<boolean | undefined>(
-    typeof window !== 'undefined' ? (isMobileUserAgent() || isTabletUserAgent()) : undefined
-  )
+  const [isMobileOrTablet, setIsMobileOrTablet] = React.useState<boolean | undefined>(() => {
+    // Check cache first
+    const cached = getCachedDetection(TABLET_DETECTION_CACHE_KEY);
+    if (cached !== null) return cached;
+    
+    // Fall back to initial detection
+    return typeof window !== 'undefined' ? (isMobileUserAgent() || isTabletUserAgent()) : undefined;
+  });
 
   React.useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -70,26 +110,30 @@ export function useIsMobileOrTablet() {
       const byWidth = window.innerWidth < TABLET_BREAKPOINT;
       
       // If user agent detects mobile/tablet OR (small screen AND no mouse), consider it mobile/tablet
-      setIsMobileOrTablet(byUserAgent || (byWidth && byPointer));
+      const detected = byUserAgent || (byWidth && byPointer);
+      setIsMobileOrTablet(detected);
+      cacheDetection(TABLET_DETECTION_CACHE_KEY, detected);
       
-      // Log detection details for debugging
-      console.log('Device detection:', 
-        byUserAgent ? 'Mobile/tablet user agent detected' : 'Desktop user agent detected',
-        byWidth ? 'Small/medium screen width' : 'Large screen width',
-        byPointer ? 'No fine pointer (likely touch)' : 'Fine pointer (mouse) detected'
-      );
+      // Log detection details once - only in development
+      logger.debug('Device detection:', {
+        userAgent: byUserAgent ? 'Mobile/tablet user agent detected' : 'Desktop user agent detected',
+        screenSize: byWidth ? 'Small/medium screen width' : 'Large screen width',
+        pointer: byPointer ? 'No fine pointer (likely touch)' : 'Fine pointer (mouse) detected'
+      });
+    };
+    
+    // Set initial value if it wasn't set from cache
+    if (isMobileOrTablet === undefined) {
+      handleResize();
     }
     
-    // Set initial value immediately
-    handleResize()
-    
     // Add event listener
-    window.addEventListener("resize", handleResize)
+    window.addEventListener("resize", handleResize);
     
     // Cleanup
-    return () => window.removeEventListener("resize", handleResize)
-  }, [])
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   // Default to false if SSR
-  return isMobileOrTablet === undefined ? false : isMobileOrTablet
+  return isMobileOrTablet === undefined ? false : isMobileOrTablet;
 }
