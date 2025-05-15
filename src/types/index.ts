@@ -15,14 +15,24 @@ export interface Problem {
   answer: number;
 }
 
+// Add MathProblem type that was missing
+export interface MathProblem {
+  num1: number;
+  num2: number;
+  operation: Operation;
+  answer: number;
+}
+
 export type GameSettings = {
   operation: Operation;
   range: ProblemRange;
   timerSeconds: number;
   allowNegatives?: boolean;
   focusNumber?: number | null;
-  learnerMode?: boolean;
+  // Rename learnerMode to useLearnerMode for consistency
+  useLearnerMode?: boolean;
   useCustomNumberPad?: boolean;
+  // Add typingSpeedAdjustment to GameSettings
   typingSpeedAdjustment?: boolean;
 };
 

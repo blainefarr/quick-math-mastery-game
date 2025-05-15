@@ -21,6 +21,7 @@ export interface GameContextType {
     focusNumber: number | null;
     useLearnerMode: boolean;
     useCustomNumberPad: boolean;
+    typingSpeedAdjustment?: boolean;
   };
   updateSettings: (settings: Partial<GameContextType['settings']>) => void;
   score: number;

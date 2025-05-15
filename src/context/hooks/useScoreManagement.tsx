@@ -252,13 +252,18 @@ export const useScoreManagement = (userId: string | null) => {
         return false;
       }
 
-      // Increment score_save_count in the accounts table
-      console.log('Incrementing score_save_count for user:', userId);
-      const { error: updateError } = await supabase
-        .rpc('increment_score_save_count', { user_id: userId });
+      // Increment score_save_count directly in the database using Edge Function
+      try {
+        // Call the edge function to increment the score count
+        const { error: incrementError } = await supabase.functions.invoke('increment_score_save_count', {
+          body: { user_id: userId }
+        });
 
-      if (updateError) {
-        console.error('Error incrementing score count:', updateError);
+        if (incrementError) {
+          console.error('Error incrementing score count via edge function:', incrementError);
+        }
+      } catch (incrementError) {
+        console.error('Error calling increment_score_save_count function:', incrementError);
         // Don't fail the save operation if just the counter update fails
       }
 

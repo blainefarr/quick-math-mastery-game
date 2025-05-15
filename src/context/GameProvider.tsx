@@ -233,13 +233,22 @@ const GameProvider = ({ children }: GameProviderProps) => {
         setGameState(state);
       }
     },
-    settings,
+    settings: {
+      operation: settings.operation,
+      range: settings.range,
+      timerSeconds: settings.timerSeconds,
+      allowNegatives: settings.allowNegatives || false,
+      focusNumber: settings.focusNumber || null,
+      useLearnerMode: settings.useLearnerMode || false,
+      useCustomNumberPad: settings.useCustomNumberPad || false,
+      typingSpeedAdjustment: settings.typingSpeedAdjustment || false
+    },
     updateSettings,
     score,
     incrementScore,
     resetScore,
     currentProblem,
-    generateNewProblem,
+    generateNewProblem: () => generateNewProblem(),
     timeLeft,
     setTimeLeft: resetTimer, 
     userAnswer,

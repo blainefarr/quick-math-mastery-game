@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import useGame from '@/context/useGame';
 import { Button } from '@/components/ui/button';
@@ -59,12 +60,7 @@ const GameScreen = () => {
     setUserAnswer('');
     
     if (!initialProblemGeneratedRef.current) {
-      generateNewProblem(
-        settings.operation, 
-        settings.range,
-        settings.allowNegatives || false,
-        settings.focusNumber || null
-      );
+      generateNewProblem();
       initialProblemGeneratedRef.current = true;
     }
     
@@ -90,7 +86,7 @@ const GameScreen = () => {
     clearLearnerModeTimeouts();
     
     // Set up learner mode timer for the new problem
-    if (settings.learnerMode && currentProblem) {
+    if (settings.useLearnerMode && currentProblem) {
       startLearnerModeTimer();
     }
   }, [currentProblem]);
@@ -114,7 +110,7 @@ const GameScreen = () => {
   };
   
   const startLearnerModeTimer = () => {
-    if (settings.learnerMode && !hasEndedRef.current) {
+    if (settings.useLearnerMode && !hasEndedRef.current) {
       // Clear any existing timeouts
       clearLearnerModeTimeouts();
       
@@ -194,12 +190,7 @@ const GameScreen = () => {
           setShowEncouragement(false);
           setCurrentQuestionShown(false);
           
-          generateNewProblem(
-            settings.operation, 
-            settings.range,
-            settings.allowNegatives || false,
-            settings.focusNumber || null
-          );
+          generateNewProblem();
           
           inputRef.current?.focus();
         }, 100);
@@ -228,12 +219,7 @@ const GameScreen = () => {
             setShowEncouragement(false);
             setCurrentQuestionShown(false);
             
-            generateNewProblem(
-              settings.operation, 
-              settings.range,
-              settings.allowNegatives || false,
-              settings.focusNumber || null
-            );
+            generateNewProblem();
           }, 100);
         }, 10);
       }
@@ -300,7 +286,7 @@ const GameScreen = () => {
       </GameCard>
 
       {/* Encouragement message for learner mode */}
-      {showEncouragement && settings.learnerMode && (
+      {showEncouragement && settings.useLearnerMode && (
         <div className="text-center mb-4 animate-fade-in">
           <p className="text-lg font-medium text-primary">
             You got this! Try again 💪
@@ -337,7 +323,7 @@ const GameScreen = () => {
             currentProblem?.operation === 'subtraction' ? 'Subtraction' :
               currentProblem?.operation === 'multiplication' ? 'Multiplication' : 'Division'}
         </div>
-        {settings.learnerMode && (
+        {settings.useLearnerMode && (
           <div className="ml-2 inline-flex items-center bg-accent/30 px-2 py-1 rounded-full text-primary font-medium">
             Learner Mode
           </div>

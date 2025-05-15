@@ -11,7 +11,7 @@ import {
   AlertDialogTitle
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
-import { useRouter } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 interface PaywallModalProps {
   open: boolean;
@@ -34,11 +34,11 @@ export function PaywallModal({
   actionText,
   onAction
 }: PaywallModalProps) {
-  const router = useRouter();
+  const navigate = useNavigate();
   
   const handleUpgrade = () => {
     onAction();
-    router.push('/plans');
+    navigate('/plans');
   };
   
   const handleCancel = () => {
