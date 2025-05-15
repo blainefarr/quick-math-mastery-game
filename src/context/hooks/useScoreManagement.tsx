@@ -120,7 +120,8 @@ export const useScoreManagement = (userId: string | null) => {
       
       // Safely transform the data with null checks
       const transformedData: UserScore[] = fetchedData.map(item => {
-        if (!item) return {
+        // Default score for safety
+        const defaultScore: UserScore = {
           score: 0,
           operation: 'addition' as Operation,
           range: {
@@ -134,6 +135,8 @@ export const useScoreManagement = (userId: string | null) => {
           focusNumber: null,
           allowNegatives: false
         };
+        
+        if (!item || typeof item !== 'object') return defaultScore;
         
         return {
           score: item.score || 0,

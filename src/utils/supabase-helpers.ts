@@ -5,6 +5,7 @@ import {
   SafeUpdateType, 
   SafeRowType,
   LeaderboardEntryArray,
+  LeaderboardEntry,
   UserRankResult,
   LeaderboardCountResult 
 } from '@/types/supabase-extensions';
@@ -155,7 +156,7 @@ export async function safeRPCGetLeaderboard(
     p_page?: number;
     p_page_size?: number;
   }
-): Promise<LeaderboardEntryArray | null> {
+): Promise<LeaderboardEntry[] | null> {
   try {
     const { data, error } = await supabase.rpc('get_leaderboard', params);
     
@@ -164,7 +165,7 @@ export async function safeRPCGetLeaderboard(
       return null;
     }
     
-    return Array.isArray(data) ? data as LeaderboardEntryArray : [];
+    return Array.isArray(data) ? data as LeaderboardEntry[] : [];
   } catch (err) {
     logger.error({ message: 'Error in leaderboard RPC call', error: err });
     return null;

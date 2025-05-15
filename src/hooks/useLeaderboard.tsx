@@ -1,4 +1,3 @@
-
 import { useCallback, useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Operation } from '@/types';
@@ -6,8 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useAuth } from '@/context/auth/useAuth';
 import { 
-  LeaderboardEntryArray, 
-  LeaderboardEntry 
+  LeaderboardEntryArray 
 } from '@/types/supabase-extensions';
 import { 
   safeRPCGetLeaderboard, 
@@ -15,6 +13,21 @@ import {
   safeRPCGetUserRank 
 } from '@/utils/supabase-helpers';
 import logger from '@/utils/logger';
+
+// Export the type so it can be used by LeaderboardTable
+export type LeaderboardEntry = {
+  rank: number;
+  user_id: string;
+  profile_id: string;
+  name: string;
+  grade: string | null;
+  best_score: number;
+  operation: string;
+  min1: number;
+  max1: number;
+  min2: number;
+  max2: number;
+};
 
 export type LeaderboardFilters = {
   operation: Operation;
@@ -137,9 +150,12 @@ export const useLeaderboard = () => {
         p_grade: currentFilters.grade === "all" ? null : currentFilters.grade,
       });
       
-      // Update state with fetched data
-      setEntries(leaderboardData || []);
-      setTotalPages(Math.max(1, Math.ceil(countData / 25)));
+      // Update state with fetched data - ensure proper casting
+      setEntries(leaderboardData || [] as LeaderboardEntry[]);
+      
+      // Safely convert countData to number for pagination
+      const totalCount = typeof countData === 'number' ? countData : 0;
+      setTotalPages(Math.max(1, Math.ceil(totalCount / 25)));
       
       // Fetch user rank if profile ID is available
       if (defaultProfileId) {
@@ -179,7 +195,10 @@ export const useLeaderboard = () => {
         p_page_size: 1000 // Get a large number of scores to ensure we have enough for ranking
       });
 
-      if (!leaderboardData || leaderboardData.length === 0) {
+      // Ensure we have an array even if null is returned
+      const entries = leaderboardData || [] as LeaderboardEntry[];
+      
+      if (entries.length === 0) {
         logger.debug('No leaderboard entries found, guest would be ranked #1');
         return 1;
       }
@@ -187,7 +206,7 @@ export const useLeaderboard = () => {
       // Find where this score would be positioned
       let guestRank = 1; // Default to 1 if higher than all scores
       
-      for (const entry of leaderboardData) {
+      for (const entry of entries) {
         if (entry.best_score >= score) {
           guestRank++;
         } else {
@@ -195,7 +214,7 @@ export const useLeaderboard = () => {
         }
       }
       
-      logger.debug('Guest rank calculation result:', { score, rank: guestRank, totalEntries: leaderboardData.length });
+      logger.debug('Guest rank calculation result:', { score, rank: guestRank, totalEntries: entries.length });
       return guestRank;
     } catch (err) {
       logger.error('Error calculating guest rank:', err);

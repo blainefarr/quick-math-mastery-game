@@ -5,7 +5,8 @@ import { useAuth } from '@/context/auth/useAuth';
 import { GoalProgress, Operation, GoalLevel } from '@/types';
 import { toast } from 'sonner';
 import logger from '@/utils/logger';
-import { extractData, safeInsert, SafeInsertType } from '@/utils/supabase-helpers';
+import { extractData } from '@/utils/supabase-helpers';
+import { SafeInsertType } from '@/types/supabase-extensions';
 import { Database } from '@/integrations/supabase/types';
 
 export const useGoalProgress = () => {
@@ -28,7 +29,7 @@ export const useGoalProgress = () => {
       const response = await supabase
         .from('goal_progress')
         .select('*')
-        .eq('profile_id', defaultProfileId as any);
+        .eq('profile_id', defaultProfileId);
       
       // Use our helper function to safely extract data
       const data = extractData(response, []);
@@ -42,8 +43,8 @@ export const useGoalProgress = () => {
       
       // Properly type-cast the operations from the database to match our Operation type
       const typedGoals: GoalProgress[] = data.map(item => {
-        // Ensure item is not null before accessing properties
-        if (!item) return {
+        // Create a default goal object for null safety
+        const defaultGoal: GoalProgress = {
           operation: 'addition' as Operation,
           level: 'learning' as GoalLevel,
           profile_id: defaultProfileId,
@@ -53,6 +54,9 @@ export const useGoalProgress = () => {
           last_attempt: null,
           last_level_up: null
         };
+        
+        // Ensure item is not null before accessing properties
+        if (!item) return defaultGoal;
         
         return {
           operation: (item.operation || 'addition') as Operation,
@@ -105,10 +109,10 @@ export const useGoalProgress = () => {
       // Create properly typed goal data for database insert/update
       const goalData: SafeInsertType<'goal_progress'> = {
         profile_id: defaultProfileId,
-        operation: operation as string,
+        operation: operation,
         range,
         best_score: bestScore,
-        level: getGoalLevel(bestScore) as string,
+        level: getGoalLevel(bestScore),
         attempts: existingGoal ? existingGoal.attempts + 1 : 1,
         last_attempt: new Date().toISOString(),
         last_level_up: leveledUp ? new Date().toISOString() : existingGoal?.last_level_up || null
@@ -116,7 +120,7 @@ export const useGoalProgress = () => {
       
       const response = await supabase
         .from('goal_progress')
-        .upsert(goalData as any, {
+        .upsert(goalData, {
           onConflict: 'profile_id,operation,range'
         });
         

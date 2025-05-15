@@ -26,14 +26,11 @@ export const supabase = createClient<Database>(
       debug: import.meta.env.DEV,
     },
     global: {
-      // Add retry mechanism for network failures
+      // Add headers for better traceability
       headers: {
         'X-Client-Info': 'math-game-web',
       },
-    },
-    // Configure automatic retries for transient errors
-    retryAttempts: 3,
-    retryInterval: 1000,
+    }
   }
 );
 
