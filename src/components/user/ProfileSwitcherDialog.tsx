@@ -101,7 +101,7 @@ export function ProfileSwitcherDialog({
         return;
       }
       
-      if (data) {
+      if (data && 'max_profiles' in data) {
         setProfileLimit(data.max_profiles);
       }
     } catch (err) {
@@ -137,12 +137,18 @@ export function ProfileSwitcherDialog({
       const activeProfileId = localStorage.getItem(ACTIVE_PROFILE_KEY) || defaultProfileId;
       
       console.log(`Found ${data?.length} profiles, activeProfileId:`, activeProfileId);
-      const processedProfiles = data?.map(profile => ({
-        ...profile,
-        // Mark as active if it matches the active profile ID
-        active: profile.id === activeProfileId
-      })) || [];
-      setProfiles(processedProfiles as Profile[]);
+      
+      // Make sure data is an array before mapping
+      if (Array.isArray(data)) {
+        const processedProfiles = data.map(profile => ({
+          ...profile,
+          // Mark as active if it matches the active profile ID
+          active: profile.id === activeProfileId
+        }));
+        setProfiles(processedProfiles as Profile[]);
+      } else {
+        setProfiles([]);
+      }
       
       // Check if profile limit needs to be fetched
       if (profileLimit === null) {

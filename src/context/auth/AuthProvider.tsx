@@ -54,18 +54,18 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
     
     try {
       // Get the current plan details
-      const { data: planData, error: planError } = await supabase
+      const { data, error } = await supabase
         .from('plans')
         .select('can_save_score, max_saved_scores')
         .eq('plan_type', authState.planType as any)
         .single();
       
-      if (planError || !planData) return false;
+      if (error || !data) return false;
       
       // If the plan allows saving scores
-      if (planData.can_save_score) {
+      if (data && 'can_save_score' in data && data.can_save_score) {
         // If there's no limit (null means unlimited)
-        if (planData.max_saved_scores === null) return true;
+        if ('max_saved_scores' in data && data.max_saved_scores === null) return true;
         
         // If there is a limit, check against current save count
         const { data: accountData, error: accountError } = await supabase
@@ -76,7 +76,10 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
         
         if (accountError || !accountData) return false;
         
-        return accountData.score_save_count < planData.max_saved_scores;
+        // Make sure both properties exist before comparing
+        if ('score_save_count' in accountData && 'max_saved_scores' in data) {
+          return accountData.score_save_count < data.max_saved_scores;
+        }
       }
       
       return false;
@@ -106,11 +109,13 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
         throw new Error(accountError.message);
       }
       
-      if (account) {
+      if (account && 'plan_type' in account && 'subscription_status' in account) {
         console.log("Account data from DB:", account);
         authState.setPlanType(account.plan_type || 'free');
         authState.setSubscriptionStatus(account.subscription_status || 'free');
-        authState.setPlanExpiresAt(account.plan_expires_at);
+        if ('plan_expires_at' in account) {
+          authState.setPlanExpiresAt(account.plan_expires_at);
+        }
         
         // If we already have a non-free plan, we can stop here
         if (account.plan_type !== 'free' && account.subscription_status !== 'free') {
@@ -130,11 +135,11 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
           throw new Error(checkError.message);
         }
         
-        if (checkData) {
+        if (checkData && typeof checkData === 'object') {
           console.log("Subscription data from API:", checkData);
-          if (checkData.plan_type) authState.setPlanType(checkData.plan_type);
-          if (checkData.subscription_status) authState.setSubscriptionStatus(checkData.subscription_status);
-          if (checkData.plan_expires_at) authState.setPlanExpiresAt(checkData.plan_expires_at);
+          if ('plan_type' in checkData) authState.setPlanType(checkData.plan_type);
+          if ('subscription_status' in checkData) authState.setSubscriptionStatus(checkData.subscription_status);
+          if ('plan_expires_at' in checkData) authState.setPlanExpiresAt(checkData.plan_expires_at);
         }
       } catch (apiError) {
         console.error('Error calling check-subscription function:', apiError);

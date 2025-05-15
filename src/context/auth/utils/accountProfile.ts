@@ -66,7 +66,7 @@ export const fetchAndSaveAccountProfile = async (
     const { data: accountData, error: accountError } = await supabase
       .from('accounts')
       .select('id, name, plan_type, subscription_status, plan_expires_at')
-      .eq('id', userId)
+      .eq('id', userId as any)
       .maybeSingle();
       
     if (accountError) {
@@ -85,18 +85,30 @@ export const fetchAndSaveAccountProfile = async (
       return false;
     }
     
+    // Make sure id exists before using it
+    if (!('id' in accountData)) {
+      console.warn('Invalid account data format for user ID:', userId);
+      return false;
+    }
+    
     const accountId = accountData.id;
     
     // Update auth state with subscription information
-    authState.setPlanType(accountData.plan_type || 'free');
-    authState.setSubscriptionStatus(accountData.subscription_status || 'free');
-    authState.setPlanExpiresAt(accountData.plan_expires_at);
+    if ('plan_type' in accountData) {
+      authState.setPlanType(accountData.plan_type || 'free');
+    }
+    if ('subscription_status' in accountData) {
+      authState.setSubscriptionStatus(accountData.subscription_status || 'free');
+    }
+    if ('plan_expires_at' in accountData) {
+      authState.setPlanExpiresAt(accountData.plan_expires_at);
+    }
     
     // Step 2: Get profiles for this account
     const { data: profiles, error: profilesError } = await supabase
       .from('profiles')
       .select('id, name, is_active, is_owner, grade')
-      .eq('account_id', accountId)
+      .eq('account_id', accountId as any)
       .order('created_at', { ascending: false });
     
     if (profilesError) {
@@ -107,7 +119,7 @@ export const fetchAndSaveAccountProfile = async (
       return false;
     }
     
-    if (!profiles || profiles.length === 0) {
+    if (!profiles || !Array.isArray(profiles) || profiles.length === 0) {
       console.warn('No profiles found for account:', accountId);
       if (showToasts && !isRetry) {
         toast.error('No profiles found for your account');
@@ -122,7 +134,7 @@ export const fetchAndSaveAccountProfile = async (
     let selectedProfile = null;
     
     if (storedProfileId) {
-      selectedProfile = profiles.find(p => p.id === storedProfileId);
+      selectedProfile = profiles.find(p => 'id' in p && p.id === storedProfileId);
     }
     
     if (!selectedProfile) {
@@ -131,7 +143,7 @@ export const fetchAndSaveAccountProfile = async (
         selectedProfile = profiles[0];
       } else {
         // Try to get owner profile
-        selectedProfile = profiles.find(p => p.is_owner === true);
+        selectedProfile = profiles.find(p => 'is_owner' in p && p.is_owner === true);
         if (!selectedProfile) {
           // Use first profile
           selectedProfile = profiles[0];
@@ -139,15 +151,15 @@ export const fetchAndSaveAccountProfile = async (
       }
       
       // Store selected profile
-      if (selectedProfile) {
+      if (selectedProfile && 'id' in selectedProfile) {
         localStorage.setItem(ACTIVE_PROFILE_KEY, selectedProfile.id);
       }
     }
     
-    if (selectedProfile) {
+    if (selectedProfile && 'id' in selectedProfile) {
       // Use profile name as requested by the user
       authState.setDefaultProfileId(selectedProfile.id);
-      authState.setUsername(selectedProfile.name);
+      authState.setUsername(selectedProfile.name || '');
       authState.setIsLoadingProfile(false);
       
       // If this was a new signup and it's a retry, show success message

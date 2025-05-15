@@ -1,3 +1,4 @@
+
 import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { AuthStateType } from '../auth-types';
@@ -6,6 +7,20 @@ import { AuthChangeEvent, Session } from '@supabase/supabase-js';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import logger from '@/utils/logger';
+
+// Extend the logger type to include warn method that we're using
+declare module '@/utils/logger' {
+  interface Logger {
+    auth: {
+      debug: (message: string, ...args: any[]) => void;
+      info: (message: string, ...args: any[]) => void;
+      warn: (message: string, ...args: any[]) => void;
+      error: (message: string, ...args: any[]) => void;
+    };
+    warn: (message: string, ...args: any[]) => void;
+    error: (message: string, ...args: any[]) => void;
+  }
+}
 
 // Optimized timing constants
 const AUTH_TIMEOUT_MS = 5000; // 5s timeout for auth operations
@@ -84,17 +99,17 @@ export const useAuthEvents = (authState: AuthStateType) => {
     
     // Don't fetch if already fetching same user
     if (isCurrentlyFetching && lastFetchedUserId === user_id) {
-      logger.auth.debug('Skipping duplicate profile fetch for user', user_id);
+      logger.auth?.debug('Skipping duplicate profile fetch for user', user_id);
       return;
     }
     
     fetchTimeout = setTimeout(async () => {
       if (isCurrentlyFetching) {
-        logger.auth.debug('Another fetch already in progress, skipping');
+        logger.auth?.debug('Another fetch already in progress, skipping');
         return;
       }
       
-      logger.auth.debug('Fetching profile for user', user_id);
+      logger.auth?.debug('Fetching profile for user', user_id);
       isCurrentlyFetching = true;
       lastFetchedUserId = user_id;
       
@@ -124,7 +139,7 @@ export const useAuthEvents = (authState: AuthStateType) => {
   useEffect(() => {
     if (isNewSignup && userId && retryAttempts < MAX_PROFILE_RETRY_ATTEMPTS) {
       const timer = setTimeout(async () => {
-        logger.auth.info(`Profile retry attempt ${retryAttempts + 1}/${MAX_PROFILE_RETRY_ATTEMPTS} for new signup...`);
+        logger.auth?.info(`Profile retry attempt ${retryAttempts + 1}/${MAX_PROFILE_RETRY_ATTEMPTS} for new signup...`);
         
         // Prevent duplicate fetches
         if (isCurrentlyFetching) return;
@@ -135,7 +150,7 @@ export const useAuthEvents = (authState: AuthStateType) => {
           const success = await fetchAndSaveAccountProfile(userId, authState);
           
           if (success) {
-            logger.auth.info('Successfully retrieved profile after retry!');
+            logger.auth?.info('Successfully retrieved profile after retry!');
             setRetryAttempts(0);
             setIsNewSignup(false);
           } else {
@@ -160,7 +175,22 @@ export const useAuthEvents = (authState: AuthStateType) => {
 
   // Auth initialization and event handling - optimized
   useEffect(() => {
-    logger.auth.debug('Initializing auth event listener');
+    if (!logger.auth) {
+      // If logger.auth doesn't exist, create a simple substitute to prevent errors
+      (logger as any).auth = {
+        debug: logger.debug || console.debug,
+        info: logger.info || console.info,
+        warn: console.warn,
+        error: logger.error || console.error
+      };
+    }
+    
+    if (!logger.warn) {
+      // Add missing warn method
+      (logger as any).warn = console.warn;
+    }
+    
+    logger.auth?.debug('Initializing auth event listener');
     let authTimeoutId: NodeJS.Timeout | null = null;
     let initialSessionChecked = false;
     
@@ -187,7 +217,7 @@ export const useAuthEvents = (authState: AuthStateType) => {
     // Handle auth state changes from Supabase with improved error handling
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event: AuthChangeEvent, session: Session | null) => {
-        logger.auth.debug('Auth state changed:', event, session?.user?.id || 'no-user');
+        logger.auth?.debug('Auth state changed:', event, session?.user?.id || 'no-user');
         
         // Reset timeout whenever auth state changes
         startAuthTimeout();
@@ -195,14 +225,14 @@ export const useAuthEvents = (authState: AuthStateType) => {
         try {
           // Handle PASSWORD_RECOVERY event
           if (event === 'PASSWORD_RECOVERY') {
-            logger.auth.info('PASSWORD_RECOVERY event detected in auth context');
+            logger.auth?.info('PASSWORD_RECOVERY event detected in auth context');
             // Navigate to reset password page
             navigate('/reset-password');
             return;
           }
           
           if (event === 'SIGNED_OUT') {
-            logger.auth.info('User signed out');
+            logger.auth?.info('User signed out');
             setIsLoggedIn(false);
             setUserId(null);
             setUsername('');
@@ -219,14 +249,14 @@ export const useAuthEvents = (authState: AuthStateType) => {
           // Handle all sign-in related events
           if (['SIGNED_IN', 'TOKEN_REFRESHED', 'USER_UPDATED'].includes(event)) {
             if (session?.user) {
-              logger.auth.debug('User authenticated with event:', event, 'user:', session.user.id);
+              logger.auth?.debug('User authenticated with event:', event, 'user:', session.user.id);
               setIsLoggedIn(true);
               setUserId(session.user.id);
               
               // Debounce the fetch to avoid duplicate calls
               debounceFetchProfile(session.user.id);
             } else {
-              logger.auth.debug('No user in session after auth event:', event);
+              logger.auth?.debug('No user in session after auth event:', event);
               setIsLoadingProfile(false);
               
               // Clear timeout as we're done loading
@@ -236,7 +266,7 @@ export const useAuthEvents = (authState: AuthStateType) => {
           // Skip INITIAL_SESSION handling in the auth event listener as we handle it separately
           else if (['SIGNED_UP'].includes(event)) {
             if (session?.user) {
-              logger.auth.info('New user signup detected! Setting up retry mechanism...');
+              logger.auth?.info('New user signup detected! Setting up retry mechanism...');
               setIsLoggedIn(true);
               setUserId(session.user.id);
               setIsNewSignup(true);
@@ -256,7 +286,7 @@ export const useAuthEvents = (authState: AuthStateType) => {
     // Check for existing session on initial load with enhanced error handling
     const checkExistingSession = async () => {
       try {
-        logger.auth.debug('Checking for existing session');
+        logger.auth?.debug('Checking for existing session');
         
         // Use safe auth operation helper
         const { data: { session } } = await safeAuthOperation(() => 
@@ -266,14 +296,14 @@ export const useAuthEvents = (authState: AuthStateType) => {
         initialSessionChecked = true;
         
         if (session?.user) {
-          logger.auth.debug('Existing session found, user:', session.user.id);
+          logger.auth?.debug('Existing session found, user:', session.user.id);
           setIsLoggedIn(true);
           setUserId(session.user.id);
           
           // Debounce the fetch to avoid duplicate calls
           debounceFetchProfile(session.user.id);
         } else {
-          logger.auth.debug('No existing session found');
+          logger.auth?.debug('No existing session found');
           setIsLoggedIn(false);
           setUserId(null);
           setUsername('');
@@ -296,13 +326,13 @@ export const useAuthEvents = (authState: AuthStateType) => {
 
     // Add network status monitoring to detect connectivity issues
     const handleOnline = () => {
-      logger.auth.info('Network connection restored, refreshing auth state');
+      logger.auth?.info('Network connection restored, refreshing auth state');
       // Refresh auth state when connection is restored
       checkExistingSession();
     };
 
     const handleOffline = () => {
-      logger.auth.warn('Network connection lost');
+      logger.auth?.warn('Network connection lost');
       // Notify user about connection issues
       toast.error('Network connection lost. Authentication may be affected.');
     };
@@ -317,7 +347,7 @@ export const useAuthEvents = (authState: AuthStateType) => {
       if (fetchTimeout) clearTimeout(fetchTimeout);
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
-      logger.auth.debug('Auth event listener cleaned up');
+      logger.auth?.debug('Auth event listener cleaned up');
     };
   }, []);
 };

@@ -103,7 +103,7 @@ export function CreateProfileForm({
             grade: values.grade || null,
             is_active: false,
             is_owner: false
-          }] as any)
+          } as any])
           .select();
 
         if (error) throw error;

@@ -54,10 +54,10 @@ export const completeSignUp = async (email: string, password: string, displayNam
     const { data: accountData, error: accountError } = await supabase
       .from('accounts')
       .select('id')
-      .eq('id', userId)  // In your schema, account.id = user.id
+      .eq('id', userId as any)  // In your schema, account.id = user.id
       .maybeSingle();
     
-    if (!accountError && accountData) {
+    if (!accountError && accountData && 'id' in accountData) {
       accountId = accountData.id;
       break;
     }
@@ -84,10 +84,10 @@ export const completeSignUp = async (email: string, password: string, displayNam
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('id, name')
-        .eq('account_id', userId)
+        .eq('account_id', userId as any)
         .maybeSingle();
       
-      if (!profileError && profileData) {
+      if (!profileError && profileData && 'id' in profileData) {
         profileCreated = true;
         profileId = profileData.id;
         
@@ -96,11 +96,11 @@ export const completeSignUp = async (email: string, password: string, displayNam
         
         // IMPORTANT: Update the profile name if it doesn't match the display name
         // This ensures the profile name matches what the user entered during signup
-        if (profileData.name !== displayName) {
+        if ('name' in profileData && profileData.name !== displayName) {
           const { error: updateError } = await supabase
             .from('profiles')
             .update({ name: displayName })
-            .eq('id', profileData.id);
+            .eq('id', profileData.id as any);
             
           if (updateError) {
             console.error('Failed to update profile name:', updateError);
