@@ -4,21 +4,22 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import AuthModal from './auth/AuthModal';
 import UserProfile from './user/UserProfile';
-import { Trophy, LayoutTemplate, Menu } from 'lucide-react';
+import { Trophy, LayoutTemplate, Menu, X } from 'lucide-react';
 import useAuth from '@/context/auth/useAuth';
 import useGame from '@/context/useGame';
 import {
-  Drawer,
-  DrawerContent,
-  DrawerTrigger,
-  DrawerClose
-} from '@/components/ui/drawer';
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+  SheetClose
+} from '@/components/ui/sheet';
 
 const Header = () => {
   const { isLoggedIn, planType } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
   const isGameRoute = location.pathname === '/';
   const gameState = isGameRoute ? useGame()?.gameState : null;
@@ -104,17 +105,19 @@ const Header = () => {
           </div>
         )}
         
-        {/* Mobile hamburger menu */}
-        <Drawer>
-          <DrawerTrigger asChild>
+        {/* Mobile hamburger menu - updated to use Sheet for side menu */}
+        <Sheet>
+          <SheetTrigger asChild>
             <Button variant="ghost" size="icon" className="md:hidden">
               <Menu size={24} />
               <span className="sr-only">Toggle menu</span>
             </Button>
-          </DrawerTrigger>
-          <DrawerContent>
+          </SheetTrigger>
+          <SheetContent side="right" className="w-[250px] sm:w-[300px] p-0">
+            <SheetHeader className="p-4 border-b">
+              <SheetTitle>Menu</SheetTitle>
+            </SheetHeader>
             <div className="p-4 space-y-3">
-              <h3 className="text-lg font-semibold mb-2">Menu</h3>
               <Button
                 variant="ghost"
                 size="sm"
@@ -143,12 +146,12 @@ const Header = () => {
                   Upgrade
                 </Button>
               )}
-              <DrawerClose asChild>
+              <SheetClose asChild>
                 <Button variant="outline" size="sm" className="w-full mt-4">Close</Button>
-              </DrawerClose>
+              </SheetClose>
             </div>
-          </DrawerContent>
-        </Drawer>
+          </SheetContent>
+        </Sheet>
       </div>
     </header>
   );
