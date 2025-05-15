@@ -45,16 +45,16 @@ export function PaywallModal({
         <DialogFooter className="flex flex-col sm:flex-row gap-2 sm:gap-0 mt-2">
           <Button 
             type="button" 
-            variant="default"
-            className={`w-full hover:bg-transparent hover:text-primary ${continueButtonClassName}`}
+            variant="ghost"
+            className={`w-full text-primary hover:bg-transparent ${continueButtonClassName}`}
             onClick={onContinue}
           >
             {continueText}
           </Button>
           <Button 
             type="button" 
-            variant="outline"
-            className="w-full border-primary text-primary hover:bg-primary/10"
+            variant="default"
+            className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
             onClick={onCancel}
           >
             {cancelText}

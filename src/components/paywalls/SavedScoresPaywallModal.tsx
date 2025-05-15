@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PaywallModal } from './PaywallModal';
@@ -20,7 +19,11 @@ export function SavedScoresPaywallModal({
     setGameState, 
     currentScoreSaveCount,
     gameState, 
-    setCanSaveCurrentScore
+    setCanSaveCurrentScore,
+    resetScore,
+    settings,
+    setTimeLeft,
+    setUserAnswer
   } = useGame();
   const navigate = useNavigate();
   
@@ -31,14 +34,30 @@ export function SavedScoresPaywallModal({
     
     // If we're showing this before the game starts, we need to start the game now
     if (gameState === 'selection') {
-      toast.info(`You'll be able to play, but your score won't be saved (${currentScoreSaveCount}/${scoreSaveLimit} saves used)`);
+      toast.info(`You'll be able to play, but your score won't be saved`);
       
       // Go to countdown before playing
       setGameState('countdown');
+    } else if (gameState === 'ended') {
+      // We're at the end of a game and the user clicked "Play Again"
+      // Reset game state for a new game
+      resetScore();
+      setTimeLeft(settings.timerSeconds);
+      setUserAnswer(''); // Clear any previous answer
+      
+      if (settings.typingSpeedAdjustment) {
+        // If typing speed adjustment is enabled, start with warmup-countdown
+        setGameState('warmup-countdown');
+      } else {
+        // Otherwise go directly to countdown
+        setGameState('countdown');
+      }
+      
+      toast.info(`Score not saved due to free plan limits`);
     } else {
-      // We're at the end of a game, just continue without saving
+      // Any other state, just continue without saving
       setGameState('ended');
-      toast.info(`Score not saved due to free plan limits (${currentScoreSaveCount}/${scoreSaveLimit} saves used)`);
+      toast.info(`Score not saved due to free plan limits`);
     }
     
     onOpenChange(false);
@@ -60,7 +79,6 @@ export function SavedScoresPaywallModal({
       cancelText="Upgrade"
       onContinue={handleContinueWithoutSaving}
       onCancel={handleUpgrade}
-      continueButtonClassName="hover:bg-none" // Remove hover effect
     />
   );
 }
