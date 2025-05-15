@@ -75,6 +75,10 @@ export interface GameContextType {
   scoreSaveLimit: number | null;
   currentScoreSaveCount: number;
   hasSaveScoreLimitReached: () => boolean;
+  
+  // New property: Can save current score
+  canSaveCurrentScore: boolean;
+  setCanSaveCurrentScore: (canSave: boolean) => void;
 }
 
 export interface GameProviderProps {

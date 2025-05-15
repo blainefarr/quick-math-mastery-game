@@ -9,7 +9,8 @@ const defaultValue: Partial<GameContextType> = {
   gameState: 'selection',
   score: 0,
   timeLeft: 60,
-  typingSpeed: null
+  typingSpeed: null,
+  canSaveCurrentScore: true
   // We don't include required function properties to ensure proper error handling
 };
 

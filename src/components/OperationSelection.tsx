@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import useGame from '@/context/useGame';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,7 +10,10 @@ import NumberRangeSection from './operation/NumberRangeSection';
 import TimerSelect from './operation/TimerSelect';
 import AdvancedSettings from './operation/AdvancedSettings';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useAuth } from '@/context/auth/useAuth';
+
 const OperationSelection = () => {
+  const navigate = useNavigate();
   const isMobile = useIsMobile();
   const [searchParams] = useSearchParams();
   const {
@@ -20,8 +23,13 @@ const OperationSelection = () => {
     setTimeLeft,
     focusNumber,
     setFocusNumber,
-    resetScore
+    resetScore,
+    hasSaveScoreLimitReached,
+    setShowScoreSavePaywall,
+    setCanSaveCurrentScore
   } = useGame();
+  
+  const { planType, isLoggedIn } = useAuth();
 
   // Local state for form values
   const [selectedOperation, setSelectedOperation] = useState<Operation>(settings.operation);
@@ -264,6 +272,30 @@ const OperationSelection = () => {
       alert('Maximum value must be greater than or equal to minimum value');
       return;
     }
+    
+    // Check if the user has reached their score save limit before starting the game
+    if (isLoggedIn && planType === 'free' && hasSaveScoreLimitReached && hasSaveScoreLimitReached()) {
+      console.log('User has reached score save limit, showing pre-game paywall');
+      
+      // Set this flag to false as we know the score can't be saved
+      setCanSaveCurrentScore(false);
+      
+      // Show the paywall before starting the game
+      setShowScoreSavePaywall(true);
+      return;
+    }
+    
+    // If we got here, we can save the score (either the user is not logged in, 
+    // or they haven't reached their limit, or they have a premium plan)
+    setCanSaveCurrentScore(true);
+    
+    // Continue with starting the game
+    startGameProcess();
+  };
+  
+  // Extract the game start process to a separate function so it can be called
+  // after the paywall is dismissed or when starting normally
+  const startGameProcess = () => {
     resetScore();
     updateSettings({
       operation: selectedOperation,
@@ -280,7 +312,13 @@ const OperationSelection = () => {
       typingSpeedAdjustment: typingSpeedEnabled,
       focusNumber: useFocusNumber ? focusNumberValue : null
     });
-    if (useFocusNumber) setFocusNumber(focusNumberValue);else setFocusNumber(null);
+    
+    if (useFocusNumber) {
+      setFocusNumber(focusNumberValue);
+    } else {
+      setFocusNumber(null);
+    }
+    
     setTimeLeft(settings.timerSeconds);
 
     // Go to warmup-countdown first if typing speed adjustment is enabled
@@ -291,6 +329,7 @@ const OperationSelection = () => {
       setGameState('countdown');
     }
   };
+  
   return <div className="container mx-auto px-4 py-8">
       <Card className="shadow-lg animate-fade-in mx-auto max-w-[535px] min-w-[300px]">
         <CardHeader>

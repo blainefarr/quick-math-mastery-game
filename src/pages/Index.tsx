@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import OperationSelection from '@/components/OperationSelection';
 import GameScreen from '@/components/GameScreen';
 import EndScreen from '@/components/EndScreen';
@@ -10,10 +10,24 @@ import HomeSeoContent from '@/components/home/HomeSeoContent';
 
 // Main content that uses the game context
 const Index = () => {
-  const { gameState, setGameState, settings, setTypingSpeed } = useGame();
+  const { 
+    gameState, 
+    setGameState, 
+    settings, 
+    setTypingSpeed, 
+    hasSaveScoreLimitReached,
+    setCanSaveCurrentScore 
+  } = useGame();
   
   // Define the typing warmup duration
   const TYPING_WARMUP_DURATION = 15;
+  
+  // Reset canSaveCurrentScore when returning to selection screen
+  useEffect(() => {
+    if (gameState === 'selection') {
+      setCanSaveCurrentScore(true);
+    }
+  }, [gameState, setCanSaveCurrentScore]);
   
   const handleWarmupComplete = (speed: number) => {
     console.log('Typing warmup completed with speed:', speed);

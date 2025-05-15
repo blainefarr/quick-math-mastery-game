@@ -20,6 +20,8 @@ const GameProvider = ({ children }: GameProviderProps) => {
   const [focusNumber, setFocusNumber] = useState<number | null>(null);
   const [typingSpeed, setTypingSpeed] = useState<number | null>(null);
   const [showScoreSavePaywall, setShowScoreSavePaywall] = useState(false);
+  // New state to track if the current game's score can be saved
+  const [canSaveCurrentScore, setCanSaveCurrentScore] = useState(true);
   
   // Use refs to reliably track the current score, typing speed and game state
   const scoreRef = useRef(0);
@@ -81,13 +83,7 @@ const GameProvider = ({ children }: GameProviderProps) => {
 
   // Handle game state changes and timer management
   useEffect(() => {
-    if (gameState === 'playing' && !timerInitializedRef.current) {
-      // Check if the user has reached their score save limit before starting
-      if (planType === 'free' && hasSaveScoreLimitReached && hasSaveScoreLimitReached()) {
-        console.log('User has reached score save limit, showing paywall');
-        setShowSaveScorePaywall(true);
-      }
-      
+    if (gameState === 'playing' && !timerInitializedRef.current) {      
       // Reset and start the timer only when first changing to playing state
       resetTimer(settings.timerSeconds);
       startTimer();
@@ -146,18 +142,10 @@ const GameProvider = ({ children }: GameProviderProps) => {
     const finalScore = scoreRef.current;
     const finalTypingSpeed = typingSpeedRef.current;
     
-    // Only save score on timeout (normal game end) and when user is logged in
-    if (reason === 'timeout' && isLoggedIn && defaultProfileId) {
+    // Only save score on timeout (normal game end), when user is logged in, and when the score can be saved
+    if (reason === 'timeout' && isLoggedIn && defaultProfileId && canSaveCurrentScore) {
       try {
-        // Check if free user has reached save limit
-        if (planType === 'free' && hasSaveScoreLimitReached && hasSaveScoreLimitReached()) {
-          // Show paywall modal
-          console.log('Score save limit reached at end of game, showing paywall');
-          setShowSaveScorePaywall(true);
-          // Still set game state to ended
-          setGameState('ended');
-          return;
-        }
+        console.log('Attempting to save score. canSaveCurrentScore:', canSaveCurrentScore);
         
         // Calculate metrics with updated logic and variables
         // Now assuming typing speed represents seconds per typing problem
@@ -196,6 +184,9 @@ const GameProvider = ({ children }: GameProviderProps) => {
       }
     } else {
       // If not saving score, just set game state to ended
+      if (reason === 'timeout' && !canSaveCurrentScore && isLoggedIn) {
+        toast.info("Score not saved (free plan limit reached)");
+      }
       setGameState('ended');
     }
   };
@@ -229,7 +220,9 @@ const GameProvider = ({ children }: GameProviderProps) => {
     setShowScoreSavePaywall,
     scoreSaveLimit,
     currentScoreSaveCount,
-    hasSaveScoreLimitReached
+    hasSaveScoreLimitReached,
+    canSaveCurrentScore,
+    setCanSaveCurrentScore
   };
 
   return (

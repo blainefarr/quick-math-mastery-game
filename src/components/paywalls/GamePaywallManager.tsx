@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useGame } from '@/context/useGame';
 import { SavedScoresPaywallModal } from './SavedScoresPaywallModal';
 import { useAuth } from '@/context/auth/useAuth';
@@ -10,29 +10,28 @@ export function GamePaywallManager() {
     setShowScoreSavePaywall,
     scoreSaveLimit,
     currentScoreSaveCount,
-    hasSaveScoreLimitReached
+    hasSaveScoreLimitReached,
+    gameState,
+    setGameState,
+    setCanSaveCurrentScore
   } = useGame();
 
   const { planType } = useAuth();
   
-  // Debug effect to log paywall status
-  useEffect(() => {
-    if (planType === 'free' && currentScoreSaveCount > 0) {
-      console.log('Game Paywall Manager Status:', {
-        planType,
-        scoreSaveLimit,
-        currentScoreSaveCount,
-        showScoreSavePaywall,
-        limitReached: hasSaveScoreLimitReached ? hasSaveScoreLimitReached() : 'function not available'
-      });
-    }
-  }, [planType, scoreSaveLimit, currentScoreSaveCount, showScoreSavePaywall, hasSaveScoreLimitReached]);
-
   return (
     <>
       <SavedScoresPaywallModal
         open={showScoreSavePaywall}
-        onOpenChange={setShowScoreSavePaywall}
+        onOpenChange={(open) => {
+          setShowScoreSavePaywall(open);
+          
+          // If user is closing the modal without making a choice,
+          // we'll assume they're not proceeding with the game
+          if (!open && gameState === 'selection') {
+            // Do nothing - let them stay on the selection screen
+            console.log('User closed the paywall modal without making a choice');
+          }
+        }}
         scoreSaveLimit={scoreSaveLimit}
       />
     </>

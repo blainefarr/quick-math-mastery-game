@@ -25,7 +25,8 @@ export const useGame = (): GameContextType => {
       !('setFocusNumber' in context) || 
       !('getIsHighScore' in context) ||
       !('endGame' in context) ||
-      !('setTypingSpeed' in context)) {
+      !('setTypingSpeed' in context) ||
+      !('setCanSaveCurrentScore' in context)) {
     throw new Error('useGame must be used within a GameProvider with all required context properties');
   }
   

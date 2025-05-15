@@ -16,14 +16,31 @@ export function SavedScoresPaywallModal({
   onOpenChange,
   scoreSaveLimit
 }: SavedScoresPaywallModalProps) {
-  const { setGameState, currentScoreSaveCount } = useGame();
+  const { 
+    setGameState, 
+    currentScoreSaveCount,
+    gameState, 
+    setCanSaveCurrentScore
+  } = useGame();
   const navigate = useNavigate();
   
   // Handle continuing without saving
   const handleContinueWithoutSaving = () => {
-    // Continue with the game but don't save the score
-    setGameState('ended');
-    toast.info(`Score not saved due to free plan limits (${currentScoreSaveCount}/${scoreSaveLimit} saves used)`);
+    // Set flag that indicates this game's score cannot be saved
+    setCanSaveCurrentScore(false);
+    
+    // If we're showing this before the game starts, we need to start the game now
+    if (gameState === 'selection') {
+      toast.info(`You'll be able to play, but your score won't be saved (${currentScoreSaveCount}/${scoreSaveLimit} saves used)`);
+      
+      // Go to countdown before playing
+      setGameState('countdown');
+    } else {
+      // We're at the end of a game, just continue without saving
+      setGameState('ended');
+      toast.info(`Score not saved due to free plan limits (${currentScoreSaveCount}/${scoreSaveLimit} saves used)`);
+    }
+    
     onOpenChange(false);
   };
   
