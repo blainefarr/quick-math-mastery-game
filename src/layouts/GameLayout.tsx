@@ -30,7 +30,7 @@ const ConditionalFooter = () => {
     return null;
   }
   
-  // Include the Footer component directly here
+  // Return the Footer component directly - not wrapping in a div that might interfere with links
   return <Footer />;
 };
 
@@ -52,7 +52,10 @@ const GameLayout = () => {
         <main className="flex-1 relative z-10">
           <Outlet />
         </main>
-        <ConditionalFooter />
+        {/* Ensure Footer has proper z-index and isn't being obstructed */}
+        <div className="relative z-10">
+          <ConditionalFooter />
+        </div>
       </div>
     </GameProvider>
   );
