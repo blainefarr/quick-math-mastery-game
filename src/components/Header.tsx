@@ -1,17 +1,24 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import AuthModal from './auth/AuthModal';
 import UserProfile from './user/UserProfile';
-import { Trophy, LayoutTemplate } from 'lucide-react';
+import { Trophy, LayoutTemplate, Menu } from 'lucide-react';
 import useAuth from '@/context/auth/useAuth';
 import useGame from '@/context/useGame';
+import {
+  Drawer,
+  DrawerContent,
+  DrawerTrigger,
+  DrawerClose
+} from '@/components/ui/drawer';
 
 const Header = () => {
   const { isLoggedIn, planType } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
   const isGameRoute = location.pathname === '/';
   const gameState = isGameRoute ? useGame()?.gameState : null;
@@ -37,23 +44,23 @@ const Header = () => {
         className="flex items-center cursor-pointer" 
         onClick={handleLogoClick}
       >
-        {/* Updated logo with transparent background and no shadow */}
+        {/* Updated logo with new image */}
         <img 
-          src="/lovable-uploads/bde173f2-96b8-4d53-b2e1-e352b314f98b.png" 
+          src="/lovable-uploads/4463cbd4-7351-4295-8e2c-325db82c4e6c.png" 
           alt="Mental Math Logo" 
           className="w-10 h-10 mr-3" 
         />
         <h1 className="text-2xl font-bold text-primary math-font">
-          <span className="text-accent">Mental</span> Math
+          Mental Math
         </h1>
       </div>
       
       <div className="flex items-center gap-4">
-        {/* Show these buttons to everyone, logged in or not */}
+        {/* Show these buttons to everyone, logged in or not - only on larger screens */}
         <Button
           variant="ghost"
           size="sm"
-          className="hidden sm:flex items-center gap-2"
+          className="hidden md:flex items-center gap-2"
           onClick={() => navigate('/leaderboard')}
         >
           <Trophy size={18} />
@@ -62,7 +69,7 @@ const Header = () => {
         <Button
           variant="ghost"
           size="sm"
-          className="hidden sm:flex items-center gap-2"
+          className="hidden md:flex items-center gap-2"
           onClick={() => navigate('/plans')}
         >
           <LayoutTemplate size={18} />
@@ -96,6 +103,52 @@ const Header = () => {
             </AuthModal>
           </div>
         )}
+        
+        {/* Mobile hamburger menu */}
+        <Drawer>
+          <DrawerTrigger asChild>
+            <Button variant="ghost" size="icon" className="md:hidden">
+              <Menu size={24} />
+              <span className="sr-only">Toggle menu</span>
+            </Button>
+          </DrawerTrigger>
+          <DrawerContent>
+            <div className="p-4 space-y-3">
+              <h3 className="text-lg font-semibold mb-2">Menu</h3>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="w-full justify-start"
+                onClick={() => navigate('/leaderboard')}
+              >
+                <Trophy size={18} className="mr-2" />
+                Leaderboard
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="w-full justify-start"
+                onClick={() => navigate('/plans')}
+              >
+                <LayoutTemplate size={18} className="mr-2" />
+                Plans
+              </Button>
+              {isLoggedIn && isFreeTier && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full justify-start text-primary border-primary hover:bg-primary/10"
+                  onClick={() => navigate('/plans')}
+                >
+                  Upgrade
+                </Button>
+              )}
+              <DrawerClose asChild>
+                <Button variant="outline" size="sm" className="w-full mt-4">Close</Button>
+              </DrawerClose>
+            </div>
+          </DrawerContent>
+        </Drawer>
       </div>
     </header>
   );

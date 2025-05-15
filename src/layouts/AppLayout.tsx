@@ -62,6 +62,7 @@ const AppLayout = () => {
       <main className="flex-1 relative">
         <Outlet />
       </main>
+      {/* Only render Footer in AppLayout */}
       <Footer />
     </div>
   );
