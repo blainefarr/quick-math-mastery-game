@@ -12,7 +12,58 @@ const ACTIVE_PROFILE_KEY = 'math_game_active_profile';
 export const useScoreManagement = (userId: string | null) => {
   const [scoreHistory, setScoreHistory] = useState<UserScore[]>([]);
   const [savingScore, setSavingScore] = useState(false);
-  const { defaultProfileId, isLoadingProfile } = useAuth();
+  const [showSaveScorePaywall, setShowSaveScorePaywall] = useState(false);
+  const [scoreSaveLimit, setScoreSaveLimit] = useState<number | null>(null);
+  const [currentScoreSaveCount, setCurrentScoreSaveCount] = useState<number>(0);
+  const { defaultProfileId, isLoadingProfile, planType } = useAuth();
+
+  // Fetch score save limit based on plan type
+  const fetchScoreSaveLimit = useCallback(async () => {
+    if (!userId || !planType) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('plans')
+        .select('max_saved_scores, can_save_score')
+        .eq('plan_type', planType)
+        .single();
+      
+      if (error) {
+        console.error('Error fetching score save limit:', error);
+        return;
+      }
+      
+      if (data) {
+        setScoreSaveLimit(data.max_saved_scores);
+      }
+    } catch (err) {
+      console.error('Error fetching score save limit:', err);
+    }
+  }, [userId, planType]);
+
+  // Fetch current score save count
+  const fetchCurrentScoreSaveCount = useCallback(async () => {
+    if (!userId) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('accounts')
+        .select('score_save_count')
+        .eq('id', userId)
+        .single();
+      
+      if (error) {
+        console.error('Error fetching score save count:', error);
+        return;
+      }
+      
+      if (data) {
+        setCurrentScoreSaveCount(data.score_save_count);
+      }
+    } catch (err) {
+      console.error('Error fetching score save count:', err);
+    }
+  }, [userId]);
 
   // Fetch the user scores based on profile ID
   const fetchUserScores = useCallback(async () => {
@@ -77,6 +128,75 @@ export const useScoreManagement = (userId: string | null) => {
     }
   }, [defaultProfileId, fetchUserScores, isLoadingProfile]);
 
+  // Effect to fetch score save limit and current count
+  useEffect(() => {
+    if (userId && planType) {
+      fetchScoreSaveLimit();
+      fetchCurrentScoreSaveCount();
+    }
+  }, [userId, planType, fetchScoreSaveLimit, fetchCurrentScoreSaveCount]);
+
+  // Increment the score_save_count for the account
+  const incrementScoreSaveCount = useCallback(async () => {
+    if (!userId) return false;
+    
+    try {
+      // Call the edge function to increment the score_save_count
+      const { error } = await supabase.functions.invoke('increment-score-save-count', {
+        method: 'POST',
+      });
+      
+      if (error) {
+        console.error('Error incrementing score save count:', error);
+        return false;
+      }
+      
+      // Update local state
+      setCurrentScoreSaveCount(prev => prev + 1);
+      return true;
+    } catch (err) {
+      console.error('Error incrementing score save count:', err);
+      return false;
+    }
+  }, [userId]);
+
+  // Check if the user can save the score based on their plan limits
+  const canSaveScore = useCallback(async () => {
+    // If not logged in, cannot save scores
+    if (!userId) return { allowed: false, limitReached: false };
+    
+    try {
+      // Get the current plan details
+      const { data: planData } = await supabase
+        .from('plans')
+        .select('can_save_score, max_saved_scores')
+        .eq('plan_type', planType)
+        .single();
+      
+      if (!planData) return { allowed: false, limitReached: false };
+      
+      // If the plan allows saving scores
+      if (planData.can_save_score) {
+        // If there's no limit (null means unlimited)
+        if (planData.max_saved_scores === null) return { allowed: true, limitReached: false };
+        
+        // Update current score save count
+        await fetchCurrentScoreSaveCount();
+        
+        // If there is a limit, check against current save count
+        return {
+          allowed: currentScoreSaveCount < planData.max_saved_scores,
+          limitReached: currentScoreSaveCount >= planData.max_saved_scores
+        };
+      }
+      
+      return { allowed: false, limitReached: false };
+    } catch (error) {
+      console.error('Error checking if user can save scores:', error);
+      return { allowed: false, limitReached: false };
+    }
+  }, [userId, planType, currentScoreSaveCount, fetchCurrentScoreSaveCount]);
+
   const saveScore = useCallback(async (
     score: number, 
     operation: Operation, 
@@ -112,6 +232,19 @@ export const useScoreManagement = (userId: string | null) => {
       return false;
     }
 
+    // Check if user can save score based on their plan
+    const saveScoreCheck = await canSaveScore();
+    if (!saveScoreCheck.allowed) {
+      if (saveScoreCheck.limitReached) {
+        // Show paywall modal if limit reached
+        console.log('Score save limit reached');
+        setShowSaveScorePaywall(true);
+        return false;
+      }
+      console.log('User plan does not allow score saving');
+      return false;
+    }
+
     // Get the profile ID from context or localStorage
     const profileId = defaultProfileId || localStorage.getItem(ACTIVE_PROFILE_KEY);
     
@@ -131,7 +264,7 @@ export const useScoreManagement = (userId: string | null) => {
       allowNegatives,
       typingSpeed
     );
-  }, [userId, savingScore, defaultProfileId, isLoadingProfile]);
+  }, [userId, savingScore, defaultProfileId, isLoadingProfile, canSaveScore]);
 
   // Helper function to save score with a known profile ID
   const saveScoreWithProfileId = async (
@@ -198,6 +331,9 @@ export const useScoreManagement = (userId: string | null) => {
         setSavingScore(false);
         return false;
       }
+
+      // Increment the score save count
+      await incrementScoreSaveCount();
 
       console.log('Score saved successfully:', score);
       toast.success('Score saved!');
@@ -320,12 +456,23 @@ export const useScoreManagement = (userId: string | null) => {
     return newScore > highestScore;
   }, [scoreHistory]);
 
+  // Check if save score limit has been reached
+  const hasSaveScoreLimitReached = useCallback(() => {
+    if (scoreSaveLimit === null) return false;
+    return currentScoreSaveCount >= scoreSaveLimit;
+  }, [scoreSaveLimit, currentScoreSaveCount]);
+
   return { 
     scoreHistory, 
     setScoreHistory, 
     fetchUserScores, 
     saveScore, 
     getIsHighScore,
-    savingScore
+    savingScore,
+    showSaveScorePaywall,
+    setShowSaveScorePaywall,
+    scoreSaveLimit,
+    currentScoreSaveCount,
+    hasSaveScoreLimitReached
   };
 };

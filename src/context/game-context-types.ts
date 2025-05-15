@@ -45,7 +45,7 @@ export interface GameContextType {
     timerSeconds: number,
     focusNumber?: number | null,
     allowNegatives?: boolean,
-    typingSpeed?: number
+    typingSpeed?: number | null
   ) => Promise<boolean>;
   
   // Auth state (now pulled from AuthContext)
@@ -68,6 +68,13 @@ export interface GameContextType {
   // Typing speed
   typingSpeed: number | null;
   setTypingSpeed: (speed: number) => void;
+  
+  // Score save paywall
+  showScoreSavePaywall: boolean;
+  setShowScoreSavePaywall: (show: boolean) => void;
+  scoreSaveLimit: number | null;
+  currentScoreSaveCount: number;
+  hasSaveScoreLimitReached: () => boolean;
 }
 
 export interface GameProviderProps {

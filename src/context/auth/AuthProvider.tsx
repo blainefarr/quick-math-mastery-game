@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import AuthContext from './AuthContext';
 import { AuthContextType, AuthProviderProps } from './auth-types';
 import { useAuthState } from './hooks/useAuthState';
@@ -147,6 +147,13 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
     }
     // No return statement or explicitly returning undefined to match Promise<void>
   };
+
+  // Check and refresh subscription on mount and when userId changes
+  useEffect(() => {
+    if (authState.userId) {
+      checkAndRefreshSubscription();
+    }
+  }, [authState.userId]);
 
   const value: AuthContextType = {
     isLoggedIn: authState.isLoggedIn,

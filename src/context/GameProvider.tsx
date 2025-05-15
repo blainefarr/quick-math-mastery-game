@@ -12,13 +12,14 @@ import { toast } from 'sonner';
 const GameProvider = ({ children }: GameProviderProps) => {
   const { settings, updateSettings } = useGameSettings();
   const { currentProblem, generateNewProblem } = useProblemGenerator();
-  const { userId, defaultProfileId } = useAuth();
+  const { userId, defaultProfileId, planType } = useAuth();
   
   const [gameState, setGameState] = useState<GameState>('selection');
   const [score, setScore] = useState(0);
   const [userAnswer, setUserAnswer] = useState('');
   const [focusNumber, setFocusNumber] = useState<number | null>(null);
   const [typingSpeed, setTypingSpeed] = useState<number | null>(null);
+  const [showScoreSavePaywall, setShowScoreSavePaywall] = useState(false);
   
   // Use refs to reliably track the current score, typing speed and game state
   const scoreRef = useRef(0);
@@ -34,7 +35,12 @@ const GameProvider = ({ children }: GameProviderProps) => {
     fetchUserScores, 
     saveScore, 
     getIsHighScore,
-    setScoreHistory 
+    setScoreHistory,
+    hasSaveScoreLimitReached,
+    scoreSaveLimit,
+    currentScoreSaveCount,
+    setShowSaveScorePaywall,
+    showSaveScorePaywall
   } = useScoreManagement(userId);
 
   // Use the timer management hook
@@ -69,6 +75,11 @@ const GameProvider = ({ children }: GameProviderProps) => {
   // Handle game state changes and timer management
   useEffect(() => {
     if (gameState === 'playing' && !timerInitializedRef.current) {
+      // Check if the user has reached their score save limit before starting
+      if (planType === 'free' && hasSaveScoreLimitReached()) {
+        setShowScoreSavePaywall(true);
+      }
+      
       // Reset and start the timer only when first changing to playing state
       resetTimer(settings.timerSeconds);
       startTimer();
@@ -91,7 +102,7 @@ const GameProvider = ({ children }: GameProviderProps) => {
       // Reset timer initialized flag for non-playing states
       timerInitializedRef.current = false;
     }
-  }, [gameState, userId, fetchUserScores, setScoreHistory, defaultProfileId, resetTimer, startTimer, settings.timerSeconds]);
+  }, [gameState, userId, fetchUserScores, setScoreHistory, defaultProfileId, resetTimer, startTimer, settings.timerSeconds, planType, hasSaveScoreLimitReached, setShowScoreSavePaywall]);
 
   // Update timer when settings change - but only if we're not already playing
   useEffect(() => {
@@ -136,6 +147,15 @@ const GameProvider = ({ children }: GameProviderProps) => {
     // Only save score on timeout (normal game end) and when user is logged in
     if (reason === 'timeout' && isLoggedIn && defaultProfileId) {
       try {
+        // Check if free user has reached save limit
+        if (planType === 'free' && hasSaveScoreLimitReached()) {
+          // Show paywall modal
+          setShowScoreSavePaywall(true);
+          // Still set game state to ended
+          setGameState('ended');
+          return;
+        }
+        
         // Calculate metrics with updated logic and variables
         // Now assuming typing speed represents seconds per typing problem
         let answer_time_per_problem = finalScore > 0 ? settings.timerSeconds / finalScore : 0;
@@ -201,7 +221,12 @@ const GameProvider = ({ children }: GameProviderProps) => {
     userId,
     endGame,
     typingSpeed,
-    setTypingSpeed
+    setTypingSpeed,
+    showScoreSavePaywall,
+    setShowScoreSavePaywall,
+    scoreSaveLimit,
+    currentScoreSaveCount,
+    hasSaveScoreLimitReached
   };
 
   return (
