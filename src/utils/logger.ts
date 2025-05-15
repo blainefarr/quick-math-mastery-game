@@ -63,10 +63,25 @@ const logger = {
     }
   },
   
-  debug: (message: string, module?: string, ...args: any[]): void => {
-    // Debug logs only in development and only if the module is set to verbose
-    if (isDevelopment() && isVerbose(module)) {
-      console.debug(`[DEBUG]${module ? `[${module}]` : ''} ${message}`, ...args);
+  // Updated to accept either a message string or an object as first parameter
+  debug: (messageOrData: string | Record<string, any>, moduleOrData?: string | any, ...args: any[]): void => {
+    // Skip logging in production altogether
+    if (!isDevelopment()) return;
+    
+    // Handle different parameter patterns
+    if (typeof messageOrData === 'string') {
+      // Standard pattern: debug(message, module?, ...args)
+      const message = messageOrData;
+      const module = typeof moduleOrData === 'string' ? moduleOrData : undefined;
+      
+      // Only log if module is verbose or not specified
+      if (isVerbose(module)) {
+        const modulePrefix = module ? `[${module}]` : '';
+        console.debug(`[DEBUG]${modulePrefix} ${message}`, ...(typeof moduleOrData === 'string' ? args : [moduleOrData, ...args]));
+      }
+    } else {
+      // Object pattern: debug(dataObject)
+      console.debug('[DEBUG]', messageOrData);
     }
   },
   

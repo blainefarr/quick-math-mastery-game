@@ -24,7 +24,8 @@ const AppLayout = () => {
     const navigationSource = getNavigationSource();
     const isRefreshed = isPageRefresh();
     
-    logger.debug('Navigation check:', {
+    // Pass navigation data as an object to logger.debug
+    logger.debug({
       currentPath: location.pathname, 
       lastRoute, 
       navigationSource, 

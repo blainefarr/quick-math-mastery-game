@@ -72,11 +72,14 @@ export function useIsMobile() {
     }
     
     // Log detection once for debugging - only in development
-    logger.debug('Mobile detection:', {
+    const detectionData = {
       userAgent: isMobileUserAgent() ? 'Mobile user agent detected' : 'Desktop user agent detected',
       screenSize: window.innerWidth < MOBILE_BREAKPOINT ? 'Small screen width' : 'Large screen width',
       pointer: window.matchMedia('(pointer: fine)').matches ? 'Fine pointer (mouse) detected' : 'No fine pointer (touch)'
-    });
+    };
+    
+    // Pass this object directly to logger.debug - it now accepts objects
+    logger.debug(detectionData);
     
     // Add event listener
     window.addEventListener("resize", handleResize);
@@ -115,11 +118,14 @@ export function useIsMobileOrTablet() {
       cacheDetection(TABLET_DETECTION_CACHE_KEY, detected);
       
       // Log detection details once - only in development
-      logger.debug('Device detection:', {
+      const detectionData = {
         userAgent: byUserAgent ? 'Mobile/tablet user agent detected' : 'Desktop user agent detected',
         screenSize: byWidth ? 'Small/medium screen width' : 'Large screen width',
         pointer: byPointer ? 'No fine pointer (likely touch)' : 'Fine pointer (mouse) detected'
-      });
+      };
+      
+      // Pass object directly to logger.debug
+      logger.debug(detectionData);
     };
     
     // Set initial value if it wasn't set from cache
