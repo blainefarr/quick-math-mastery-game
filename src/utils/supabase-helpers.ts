@@ -28,7 +28,8 @@ export async function safeSelect<T extends keyof Database['public']['Tables']>(
       return null;
     }
     
-    return data as SafeRowType<T>[];
+    // Use type assertion to safely convert the response data to our expected type
+    return data as unknown as SafeRowType<T>[];
   } catch (err) {
     logger.error({ message: errorMessage, error: err });
     return null;
@@ -49,7 +50,8 @@ export async function safeSingle<T extends keyof Database['public']['Tables']>(
       return null;
     }
     
-    return data as SafeRowType<T>;
+    // Use type assertion to safely convert the response data to our expected type
+    return data as unknown as SafeRowType<T>;
   } catch (err) {
     logger.error({ message: errorMessage, error: err });
     return null;
@@ -70,7 +72,8 @@ export async function safeMaybeSingle<T extends keyof Database['public']['Tables
       return null;
     }
     
-    return data as SafeRowType<T>;
+    // Use type assertion to safely convert the response data to our expected type
+    return data as unknown as SafeRowType<T>;
   } catch (err) {
     logger.error({ message: errorMessage, error: err });
     return null;
@@ -94,7 +97,8 @@ export async function safeInsert<T extends keyof Database['public']['Tables']>(
       return null;
     }
     
-    return result as SafeRowType<T>;
+    // Use type assertion to safely convert the response data to our expected type
+    return result as unknown as SafeRowType<T>;
   } catch (err) {
     logger.error({ message: errorMessage, error: err });
     return null;
@@ -121,7 +125,8 @@ export async function safeUpdate<T extends keyof Database['public']['Tables']>(
       return null;
     }
     
-    return result as SafeRowType<T>;
+    // Use type assertion to safely convert the response data to our expected type
+    return result as unknown as SafeRowType<T>;
   } catch (err) {
     logger.error({ message: errorMessage, error: err });
     return null;

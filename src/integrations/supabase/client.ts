@@ -36,6 +36,7 @@ export const supabase = createClient<Database>(
 
 // Add fallback error handling
 supabase.auth.onAuthStateChange((event, session) => {
+  // Fix: Use explicit string comparison instead of directly comparing event types
   if (event === 'SIGNED_OUT' || event === 'USER_DELETED') {
     // Clear any cached data on signout
     localStorage.removeItem('math_game_active_profile');

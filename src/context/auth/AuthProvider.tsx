@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import AuthContext from './AuthContext';
 import { AuthContextType, AuthProviderProps } from './auth-types';
@@ -8,7 +9,6 @@ import { refreshUserProfile } from './utils/accountProfile';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import logger from '@/utils/logger';
-import { ensureData } from '@/types/supabase-extensions';
 
 const AuthProvider = ({ children }: AuthProviderProps) => {
   const authState = useAuthState();
@@ -23,7 +23,7 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
   
   // Modified refreshProfileHandler to match the AuthContextType
   const refreshProfileHandler = async () => {
-    // Call refreshUserProfile and ignore the return value
+    // Call refreshUserProfile and pass the authState
     await refreshUserProfile(authState);
     // Return void as expected by the type definition
     return;

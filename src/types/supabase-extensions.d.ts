@@ -1,7 +1,7 @@
 
 // Type declarations to extend and fix Supabase types
 import { Database } from '@/integrations/supabase/types';
-import { PostgrestError } from '@supabase/supabase-js';
+import { PostgrestError, PostgrestSingleResponse } from '@supabase/supabase-js';
 
 // Helper type to safely access Supabase query responses
 export type SafeResponse<T> = {
@@ -26,9 +26,6 @@ declare module '@/utils/logger' {
     warn(message: string | object, ...args: any[]): void;
     error(message: string | object, ...args: any[]): void;
   }
-
-  const logger: Logger;
-  export default logger;
 }
 
 // Utility types for safer database access
