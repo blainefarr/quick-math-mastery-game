@@ -3,6 +3,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PaywallModal } from './PaywallModal';
 import { useGame } from '@/context/useGame';
+import { toast } from 'sonner';
 
 interface SavedScoresPaywallModalProps {
   open: boolean;
@@ -21,7 +22,8 @@ export function SavedScoresPaywallModal({
   // Handle continuing without saving
   const handleContinueWithoutSaving = () => {
     // Continue with the game but don't save the score
-    setGameState('playing');
+    setGameState('ended');
+    toast.info("Score not saved due to free plan limits");
     onOpenChange(false);
   };
   

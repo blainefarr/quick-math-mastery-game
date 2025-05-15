@@ -53,16 +53,13 @@ serve(async (req) => {
 
     console.log("Incrementing score_save_count for account:", accountId);
 
-    // Use direct update instead of rpc call to increment score_save_count
+    // Use the database function to increment score_save_count
     const { data, error } = await supabase
-      .from("accounts")
-      .update({ score_save_count: supabase.rpc('increment_count', { 
+      .rpc('increment_count', { 
         table_name: 'accounts', 
         column_name: 'score_save_count', 
         row_id: accountId 
-      })})
-      .eq("id", accountId)
-      .select("score_save_count");
+      });
 
     if (error) {
       console.error("Error incrementing score save count:", error);

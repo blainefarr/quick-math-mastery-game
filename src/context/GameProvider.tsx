@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import GameContext from './GameContext';
 import { GameContextType, GameState, GameProviderProps, GameEndReason } from './game-context-types';
@@ -76,8 +75,9 @@ const GameProvider = ({ children }: GameProviderProps) => {
   useEffect(() => {
     if (gameState === 'playing' && !timerInitializedRef.current) {
       // Check if the user has reached their score save limit before starting
-      if (planType === 'free' && hasSaveScoreLimitReached()) {
-        setShowScoreSavePaywall(true);
+      if (planType === 'free' && hasSaveScoreLimitReached && hasSaveScoreLimitReached()) {
+        console.log('User has reached score save limit, showing paywall');
+        setShowSaveScorePaywall(true);
       }
       
       // Reset and start the timer only when first changing to playing state
@@ -102,7 +102,7 @@ const GameProvider = ({ children }: GameProviderProps) => {
       // Reset timer initialized flag for non-playing states
       timerInitializedRef.current = false;
     }
-  }, [gameState, userId, fetchUserScores, setScoreHistory, defaultProfileId, resetTimer, startTimer, settings.timerSeconds, planType, hasSaveScoreLimitReached, setShowScoreSavePaywall]);
+  }, [gameState, userId, fetchUserScores, setScoreHistory, defaultProfileId, resetTimer, startTimer, settings.timerSeconds, planType, hasSaveScoreLimitReached, setShowSaveScorePaywall]);
 
   // Update timer when settings change - but only if we're not already playing
   useEffect(() => {
@@ -148,9 +148,10 @@ const GameProvider = ({ children }: GameProviderProps) => {
     if (reason === 'timeout' && isLoggedIn && defaultProfileId) {
       try {
         // Check if free user has reached save limit
-        if (planType === 'free' && hasSaveScoreLimitReached()) {
+        if (planType === 'free' && hasSaveScoreLimitReached && hasSaveScoreLimitReached()) {
           // Show paywall modal
-          setShowScoreSavePaywall(true);
+          console.log('Score save limit reached at end of game, showing paywall');
+          setShowSaveScorePaywall(true);
           // Still set game state to ended
           setGameState('ended');
           return;

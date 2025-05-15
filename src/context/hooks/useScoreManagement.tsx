@@ -35,6 +35,7 @@ export const useScoreManagement = (userId: string | null) => {
       
       if (data) {
         setScoreSaveLimit(data.max_saved_scores);
+        console.log(`Score save limit for ${planType} plan:`, data.max_saved_scores);
       }
     } catch (err) {
       console.error('Error fetching score save limit:', err);
@@ -59,6 +60,7 @@ export const useScoreManagement = (userId: string | null) => {
       
       if (data) {
         setCurrentScoreSaveCount(data.score_save_count);
+        console.log('Current score save count:', data.score_save_count);
       }
     } catch (err) {
       console.error('Error fetching score save count:', err);
@@ -141,8 +143,9 @@ export const useScoreManagement = (userId: string | null) => {
     if (!userId) return false;
     
     try {
+      console.log("Calling increment-score-save-count function for user:", userId);
       // Call the edge function to increment the score_save_count
-      const { error } = await supabase.functions.invoke('increment-score-save-count', {
+      const { data, error } = await supabase.functions.invoke('increment-score-save-count', {
         method: 'POST',
       });
       
@@ -152,13 +155,14 @@ export const useScoreManagement = (userId: string | null) => {
       }
       
       // Update local state
-      setCurrentScoreSaveCount(prev => prev + 1);
+      await fetchCurrentScoreSaveCount(); // Refetch the current count
+      console.log('Score save count incremented successfully');
       return true;
     } catch (err) {
       console.error('Error incrementing score save count:', err);
       return false;
     }
-  }, [userId]);
+  }, [userId, fetchCurrentScoreSaveCount]);
 
   // Check if the user can save the score based on their plan limits
   const canSaveScore = useCallback(async () => {
@@ -182,6 +186,11 @@ export const useScoreManagement = (userId: string | null) => {
         
         // Update current score save count
         await fetchCurrentScoreSaveCount();
+        
+        console.log("Score limit check:", {
+          currentCount: currentScoreSaveCount,
+          limit: planData.max_saved_scores
+        });
         
         // If there is a limit, check against current save count
         return {
@@ -237,7 +246,7 @@ export const useScoreManagement = (userId: string | null) => {
     if (!saveScoreCheck.allowed) {
       if (saveScoreCheck.limitReached) {
         // Show paywall modal if limit reached
-        console.log('Score save limit reached');
+        console.log('Score save limit reached, showing paywall');
         setShowSaveScorePaywall(true);
         return false;
       }
@@ -333,7 +342,10 @@ export const useScoreManagement = (userId: string | null) => {
       }
 
       // Increment the score save count
-      await incrementScoreSaveCount();
+      const incrementResult = await incrementScoreSaveCount();
+      if (!incrementResult) {
+        console.warn('Failed to increment score save count, but score was saved');
+      }
 
       console.log('Score saved successfully:', score);
       toast.success('Score saved!');
@@ -459,7 +471,13 @@ export const useScoreManagement = (userId: string | null) => {
   // Check if save score limit has been reached
   const hasSaveScoreLimitReached = useCallback(() => {
     if (scoreSaveLimit === null) return false;
-    return currentScoreSaveCount >= scoreSaveLimit;
+    const limitReached = currentScoreSaveCount >= scoreSaveLimit;
+    console.log("Score save limit check:", {
+      currentCount: currentScoreSaveCount,
+      limit: scoreSaveLimit,
+      limitReached
+    });
+    return limitReached;
   }, [scoreSaveLimit, currentScoreSaveCount]);
 
   return { 
