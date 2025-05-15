@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import GameContext from './GameContext';
 import { GameContextType, GameState, GameProviderProps, GameEndReason } from './game-context-types';
@@ -39,7 +40,8 @@ const GameProvider = ({ children }: GameProviderProps) => {
     scoreSaveLimit,
     currentScoreSaveCount,
     setShowSaveScorePaywall,
-    showSaveScorePaywall
+    showSaveScorePaywall,
+    resetFetchedFlag
   } = useScoreManagement(userId);
 
   // Use the timer management hook
@@ -69,7 +71,13 @@ const GameProvider = ({ children }: GameProviderProps) => {
 
   useEffect(() => {
     gameStateRef.current = gameState;
-  }, [gameState]);
+    
+    // When game state changes, reset the fetched flag to allow
+    // a fresh fetch of scores
+    if (gameState === 'selection') {
+      resetFetchedFlag();
+    }
+  }, [gameState, resetFetchedFlag]);
 
   // Handle game state changes and timer management
   useEffect(() => {
@@ -89,20 +97,14 @@ const GameProvider = ({ children }: GameProviderProps) => {
       
       // Reset the isEnding flag when starting a new game
       isEndingRef.current = false;
-    } else if (gameState === 'ended' && userId && defaultProfileId) {
+    } else if (gameState === 'ended') {
       // Reset timer initialized flag when game ends
       timerInitializedRef.current = false;
-      
-      fetchUserScores().then(scores => {
-        if (scores) {
-          setScoreHistory(scores);
-        }
-      });
     } else if (gameState !== 'playing') {
       // Reset timer initialized flag for non-playing states
       timerInitializedRef.current = false;
     }
-  }, [gameState, userId, fetchUserScores, setScoreHistory, defaultProfileId, resetTimer, startTimer, settings.timerSeconds, planType, hasSaveScoreLimitReached, setShowSaveScorePaywall]);
+  }, [gameState, userId, fetchUserScores, setScoreHistory, defaultProfileId, resetTimer, startTimer, settings.timerSeconds, planType, hasSaveScoreLimitReached, setShowSaveScorePaywall, resetFetchedFlag]);
 
   // Update timer when settings change - but only if we're not already playing
   useEffect(() => {

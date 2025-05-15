@@ -15,6 +15,7 @@ export const useScoreManagement = (userId: string | null) => {
   const [showSaveScorePaywall, setShowSaveScorePaywall] = useState(false);
   const [scoreSaveLimit, setScoreSaveLimit] = useState<number | null>(null);
   const [currentScoreSaveCount, setCurrentScoreSaveCount] = useState<number>(0);
+  const [scoresAlreadyFetched, setScoresAlreadyFetched] = useState(false);
   const { defaultProfileId, isLoadingProfile, planType } = useAuth();
 
   // Fetch score save limit based on plan type
@@ -67,6 +68,49 @@ export const useScoreManagement = (userId: string | null) => {
     }
   }, [userId]);
 
+  // Function to directly increment score save count in the database
+  const incrementScoreSaveCount = useCallback(async () => {
+    if (!userId) return false;
+    
+    try {
+      console.log("Directly incrementing score_save_count for user:", userId);
+      
+      // Get current count first
+      const { data: currentData, error: fetchError } = await supabase
+        .from('accounts')
+        .select('score_save_count')
+        .eq('id', userId)
+        .single();
+      
+      if (fetchError) {
+        console.error('Error fetching current score save count:', fetchError);
+        return false;
+      }
+      
+      // Increment the count
+      const newCount = (currentData?.score_save_count || 0) + 1;
+      
+      // Update the count in the database
+      const { error: updateError } = await supabase
+        .from('accounts')
+        .update({ score_save_count: newCount })
+        .eq('id', userId);
+      
+      if (updateError) {
+        console.error('Error updating score save count:', updateError);
+        return false;
+      }
+      
+      // Update local state
+      setCurrentScoreSaveCount(newCount);
+      console.log('Score save count incremented to:', newCount);
+      return true;
+    } catch (err) {
+      console.error('Error incrementing score save count:', err);
+      return false;
+    }
+  }, [userId]);
+
   // Fetch the user scores based on profile ID
   const fetchUserScores = useCallback(async () => {
     if (isLoadingProfile) {
@@ -113,6 +157,7 @@ export const useScoreManagement = (userId: string | null) => {
       }));
 
       setScoreHistory(transformedData);
+      setScoresAlreadyFetched(true); // Mark scores as fetched to prevent loops
       return transformedData;
     } catch (error) {
       console.error('Error fetching scores:', error);
@@ -121,14 +166,19 @@ export const useScoreManagement = (userId: string | null) => {
     }
   }, [userId, defaultProfileId, isLoadingProfile]);
 
+  // Reset the fetched flag when profile or game state changes
+  const resetFetchedFlag = useCallback(() => {
+    setScoresAlreadyFetched(false);
+  }, []);
+
   // Effect to fetch scores when profile ID changes or loading completes
   useEffect(() => {
     const profileId = defaultProfileId || localStorage.getItem(ACTIVE_PROFILE_KEY);
-    if (profileId && !isLoadingProfile) {
+    if (profileId && !isLoadingProfile && !scoresAlreadyFetched) {
       console.log('Profile ID available and loading complete, fetching scores', profileId);
       fetchUserScores();
     }
-  }, [defaultProfileId, fetchUserScores, isLoadingProfile]);
+  }, [defaultProfileId, fetchUserScores, isLoadingProfile, scoresAlreadyFetched]);
 
   // Effect to fetch score save limit and current count
   useEffect(() => {
@@ -138,33 +188,7 @@ export const useScoreManagement = (userId: string | null) => {
     }
   }, [userId, planType, fetchScoreSaveLimit, fetchCurrentScoreSaveCount]);
 
-  // Increment the score_save_count for the account
-  const incrementScoreSaveCount = useCallback(async () => {
-    if (!userId) return false;
-    
-    try {
-      console.log("Calling increment-score-save-count function for user:", userId);
-      // Call the edge function to increment the score_save_count
-      const { data, error } = await supabase.functions.invoke('increment-score-save-count', {
-        method: 'POST',
-      });
-      
-      if (error) {
-        console.error('Error incrementing score save count:', error);
-        return false;
-      }
-      
-      // Update local state
-      await fetchCurrentScoreSaveCount(); // Refetch the current count
-      console.log('Score save count incremented successfully');
-      return true;
-    } catch (err) {
-      console.error('Error incrementing score save count:', err);
-      return false;
-    }
-  }, [userId, fetchCurrentScoreSaveCount]);
-
-  // Check if the user can save the score based on their plan limits
+  // Check if the user can save score based on their plan limits
   const canSaveScore = useCallback(async () => {
     // If not logged in, cannot save scores
     if (!userId) return { allowed: false, limitReached: false };
@@ -341,7 +365,7 @@ export const useScoreManagement = (userId: string | null) => {
         return false;
       }
 
-      // Increment the score save count
+      // Increment the score save count directly
       const incrementResult = await incrementScoreSaveCount();
       if (!incrementResult) {
         console.warn('Failed to increment score save count, but score was saved');
@@ -352,6 +376,9 @@ export const useScoreManagement = (userId: string | null) => {
       
       // Update goal progress
       await updateGoalProgress(profileId, operation, range, focusNumber, score);
+      
+      // Reset scoresAlreadyFetched flag to allow fetching updated scores
+      setScoresAlreadyFetched(false); 
       
       const updatedScores = await fetchUserScores();
       setScoreHistory(updatedScores);
@@ -491,6 +518,8 @@ export const useScoreManagement = (userId: string | null) => {
     setShowSaveScorePaywall,
     scoreSaveLimit,
     currentScoreSaveCount,
-    hasSaveScoreLimitReached
+    hasSaveScoreLimitReached,
+    resetFetchedFlag
   };
 };
+

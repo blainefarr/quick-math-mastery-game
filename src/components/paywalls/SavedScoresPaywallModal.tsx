@@ -16,14 +16,14 @@ export function SavedScoresPaywallModal({
   onOpenChange,
   scoreSaveLimit
 }: SavedScoresPaywallModalProps) {
-  const { setGameState } = useGame();
+  const { setGameState, currentScoreSaveCount } = useGame();
   const navigate = useNavigate();
   
   // Handle continuing without saving
   const handleContinueWithoutSaving = () => {
     // Continue with the game but don't save the score
     setGameState('ended');
-    toast.info("Score not saved due to free plan limits");
+    toast.info(`Score not saved due to free plan limits (${currentScoreSaveCount}/${scoreSaveLimit} saves used)`);
     onOpenChange(false);
   };
   
@@ -38,7 +38,7 @@ export function SavedScoresPaywallModal({
       open={open}
       onOpenChange={onOpenChange}
       title="Score Save Limit Reached"
-      description={`Your current plan allows up to ${scoreSaveLimit} saved scores. Upgrade your account to save more scores.`}
+      description={`Your current plan allows up to ${scoreSaveLimit} saved scores. You've used ${currentScoreSaveCount} saves. Upgrade your account to save more scores.`}
       continueText="Continue without saving"
       cancelText="Upgrade"
       onContinue={handleContinueWithoutSaving}

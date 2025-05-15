@@ -17,7 +17,7 @@ export function GamePaywallManager() {
   
   // Debug effect to log paywall status
   useEffect(() => {
-    if (planType === 'free') {
+    if (planType === 'free' && currentScoreSaveCount > 0) {
       console.log('Game Paywall Manager Status:', {
         planType,
         scoreSaveLimit,
