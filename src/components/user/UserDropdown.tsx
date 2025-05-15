@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/auth/useAuth';
@@ -66,7 +65,7 @@ const UserDropdown = ({
       return (
         <span className="text-xs">
           <span className="text-blue-500 font-medium cursor-pointer" onClick={() => navigate('/plans')}>
-            Free - Upgrade
+            Free plan - Upgrade
           </span>
         </span>
       );
@@ -74,7 +73,7 @@ const UserDropdown = ({
     
     // Capitalize first letter of plan name
     const formattedPlan = planType.charAt(0).toUpperCase() + planType.slice(1);
-    return <span className="text-xs text-muted-foreground">{formattedPlan} Plan</span>;
+    return <span className="text-xs text-muted-foreground">{formattedPlan} plan</span>;
   };
 
   return (
@@ -129,15 +128,6 @@ const UserDropdown = ({
             <Settings className="mr-2 h-4 w-4" />
             My Account
           </DropdownMenuItem>
-          {(planType === 'free' || planType === 'guest') && (
-            <DropdownMenuItem 
-              onClick={() => navigate('/plans')}
-              className="cursor-pointer hover:bg-accent text-blue-500"
-            >
-              <span className="mr-2">⭐</span>
-              Upgrade
-            </DropdownMenuItem>
-          )}
           <DropdownMenuSeparator />
           <DropdownMenuItem 
             onClick={handleUserLogout} 
