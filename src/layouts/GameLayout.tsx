@@ -30,6 +30,7 @@ const ConditionalFooter = () => {
     return null;
   }
   
+  // Include the Footer component directly here
   return <Footer />;
 };
 
@@ -43,10 +44,8 @@ const GameLayout = () => {
 
   return (
     <GameProvider>
-      {/* Removed overflow-hidden to allow sticky header to work properly */}
       <div className="min-h-screen flex flex-col bg-background relative">
         <MathBackground />
-        {/* Added z-50 to ensure proper stacking context */}
         <div className="sticky top-0 z-50">
           <ConditionalHeader />
         </div>

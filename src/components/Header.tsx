@@ -1,24 +1,23 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import AuthModal from './auth/AuthModal';
 import UserProfile from './user/UserProfile';
-import { Trophy, LayoutTemplate, Menu } from 'lucide-react';
+import { Trophy, LayoutTemplate, Menu, X } from 'lucide-react';
 import useAuth from '@/context/auth/useAuth';
 import useGame from '@/context/useGame';
 import {
-  Drawer,
-  DrawerContent,
-  DrawerTrigger,
-  DrawerClose
-} from '@/components/ui/drawer';
+  Sheet,
+  SheetContent,
+  SheetTrigger,
+  SheetClose
+} from '@/components/ui/sheet';
 
 const Header = () => {
   const { isLoggedIn, planType } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
   const isGameRoute = location.pathname === '/';
   const gameState = isGameRoute ? useGame()?.gameState : null;
@@ -104,51 +103,43 @@ const Header = () => {
           </div>
         )}
         
-        {/* Mobile hamburger menu */}
-        <Drawer>
-          <DrawerTrigger asChild>
-            <Button variant="ghost" size="icon" className="md:hidden">
-              <Menu size={24} />
-              <span className="sr-only">Toggle menu</span>
-            </Button>
-          </DrawerTrigger>
-          <DrawerContent>
-            <div className="p-4 space-y-3">
-              <h3 className="text-lg font-semibold mb-2">Menu</h3>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="w-full justify-start"
-                onClick={() => navigate('/leaderboard')}
-              >
-                <Trophy size={18} className="mr-2" />
-                Leaderboard
+        {/* Mobile hamburger menu - only show for guests */}
+        {!isLoggedIn && (
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon" className="md:hidden">
+                <Menu size={24} />
+                <span className="sr-only">Toggle menu</span>
               </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="w-full justify-start"
-                onClick={() => navigate('/plans')}
-              >
-                <LayoutTemplate size={18} className="mr-2" />
-                Plans
-              </Button>
-              {isLoggedIn && isFreeTier && (
+            </SheetTrigger>
+            <SheetContent side="right" className="w-[250px] sm:w-[300px] p-4">
+              <div className="space-y-4 pt-8">
+                <h3 className="text-lg font-semibold mb-4">Menu</h3>
                 <Button
-                  variant="outline"
+                  variant="ghost"
                   size="sm"
-                  className="w-full justify-start text-primary border-primary hover:bg-primary/10"
+                  className="w-full justify-start"
+                  onClick={() => navigate('/leaderboard')}
+                >
+                  <Trophy size={18} className="mr-2" />
+                  Leaderboard
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="w-full justify-start"
                   onClick={() => navigate('/plans')}
                 >
-                  Upgrade
+                  <LayoutTemplate size={18} className="mr-2" />
+                  Plans
                 </Button>
-              )}
-              <DrawerClose asChild>
-                <Button variant="outline" size="sm" className="w-full mt-4">Close</Button>
-              </DrawerClose>
-            </div>
-          </DrawerContent>
-        </Drawer>
+                <SheetClose asChild>
+                  <Button variant="outline" size="sm" className="w-full mt-4">Close</Button>
+                </SheetClose>
+              </div>
+            </SheetContent>
+          </Sheet>
+        )}
       </div>
     </header>
   );
