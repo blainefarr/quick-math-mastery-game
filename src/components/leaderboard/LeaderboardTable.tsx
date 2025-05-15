@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/table";
 import { LeaderboardEntry } from "@/hooks/useLeaderboard";
 import { useAuth } from "@/context/auth/useAuth";
+import { memo } from "react";
 
 type Props = {
   entries: LeaderboardEntry[];
@@ -24,7 +25,8 @@ const getRankIcon = (rank: number) => {
   return null;
 };
 
-export const LeaderboardTable = ({ entries, className = '' }: Props) => {
+// Using memo to prevent unnecessary re-renders
+export const LeaderboardTable = memo(({ entries, className = '' }: Props) => {
   const { defaultProfileId } = useAuth();
   
   if (entries.length === 0) {
@@ -81,4 +83,6 @@ export const LeaderboardTable = ({ entries, className = '' }: Props) => {
       </Table>
     </div>
   );
-};
+});
+
+LeaderboardTable.displayName = "LeaderboardTable";

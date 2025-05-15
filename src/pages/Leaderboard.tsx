@@ -1,3 +1,4 @@
+
 import { useEffect } from 'react';
 import { useLeaderboard } from '@/hooks/useLeaderboard';
 import { LeaderboardFilters } from '@/components/leaderboard/LeaderboardFilters';
@@ -9,6 +10,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Trophy, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
+
 const Leaderboard = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -18,6 +20,7 @@ const Leaderboard = () => {
     isLoadingProfile,
     defaultProfileId
   } = useAuth();
+  
   const {
     filters,
     entries,
@@ -28,6 +31,7 @@ const Leaderboard = () => {
     updateFilters,
     fetchLeaderboard
   } = useLeaderboard();
+  
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const operation = params.get('operation');
@@ -44,7 +48,7 @@ const Leaderboard = () => {
         max2: parseInt(max2)
       });
     }
-  }, []);
+  }, [location.search, updateFilters]);
 
   // Trigger a leaderboard refresh when the profile is loaded
   useEffect(() => {
@@ -53,7 +57,9 @@ const Leaderboard = () => {
       fetchLeaderboard();
     }
   }, [isLoadingProfile, defaultProfileId, fetchLeaderboard]);
+  
   const hasNoEntries = !isLoading && entries.length === 0;
+  
   return <div className="container mx-auto py-8 max-w-3xl space-y-6 px-[8px]">
       <div className="flex items-center gap-4 mb-2">
         <Button variant="outline" size="sm" onClick={() => navigate('/')} className="h-8 rounded-full">
@@ -117,14 +123,32 @@ const Leaderboard = () => {
                   <Pagination>
                     <PaginationContent>
                       <PaginationItem>
-                        <PaginationPrevious onClick={() => updateFilters({
-                  page: Math.max(1, filters.page - 1)
-                })} aria-disabled={filters.page === 1} className={filters.page === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"} />
+                        <PaginationPrevious 
+                          onClick={(e) => {
+                            e.preventDefault();
+                            if (filters.page > 1) {
+                              updateFilters({
+                                page: Math.max(1, filters.page - 1)
+                              });
+                            }
+                          }} 
+                          aria-disabled={filters.page === 1} 
+                          className={filters.page === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"} 
+                        />
                       </PaginationItem>
                       <PaginationItem>
-                        <PaginationNext onClick={() => updateFilters({
-                  page: Math.min(totalPages, filters.page + 1)
-                })} aria-disabled={filters.page === totalPages} className={filters.page === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"} />
+                        <PaginationNext 
+                          onClick={(e) => {
+                            e.preventDefault();
+                            if (filters.page < totalPages) {
+                              updateFilters({
+                                page: Math.min(totalPages, filters.page + 1)
+                              });
+                            }
+                          }} 
+                          aria-disabled={filters.page === totalPages} 
+                          className={filters.page === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"} 
+                        />
                       </PaginationItem>
                     </PaginationContent>
                   </Pagination>
@@ -133,4 +157,5 @@ const Leaderboard = () => {
         </Card>}
     </div>;
 };
+
 export default Leaderboard;

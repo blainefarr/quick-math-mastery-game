@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -170,7 +171,12 @@ const Progress = () => {
             <div className="flex items-center gap-2">
               <Label className="mr-2 font-medium whitespace-nowrap">Filter:</Label>
               <div className="flex flex-wrap gap-2">
-              <Select value={selectedOperation} onValueChange={setSelectedOperation}>
+              <Select 
+                value={selectedOperation} 
+                onValueChange={(value) => {
+                  setSelectedOperation(value);
+                }}
+              >
                   <SelectTrigger className="w-[160px] h-8">
                     <SelectValue placeholder="All Operations" />
                   </SelectTrigger>
@@ -183,13 +189,20 @@ const Progress = () => {
                   </SelectContent>
                 </Select>
 
-                <Select value={selectedRange} onValueChange={setSelectedRange}>
+                <Select 
+                  value={selectedRange} 
+                  onValueChange={(value) => {
+                    setSelectedRange(value);
+                  }}
+                >
                   <SelectTrigger className="w-[140px] h-8">
                     <SelectValue placeholder="All Ranges" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Ranges</SelectItem>
-                    {uniqueRanges.map((range, index) => <SelectItem key={index} value={range}>{range}</SelectItem>)}
+                    {uniqueRanges.map((range, index) => (
+                      <SelectItem key={index} value={range}>{range}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
                 

@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { UserScore, Operation, ProblemRange } from '@/types';
@@ -218,6 +217,7 @@ export const useScoreManagement = (userId: string | null) => {
     }
   }, [userId, planType, currentScoreSaveCount, fetchCurrentScoreSaveCount]);
 
+  // Fix the saveScore function which is likely causing issues
   const saveScore = useCallback(async (
     score: number, 
     operation: Operation, 
