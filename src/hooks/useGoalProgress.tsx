@@ -6,7 +6,6 @@ import { GoalProgress, Operation, GoalLevel } from '@/types';
 import { toast } from 'sonner';
 import logger from '@/utils/logger';
 import { extractData } from '@/utils/supabase-helpers';
-import { SafeInsertType } from '@/types/supabase-extensions';
 import { Database } from '@/integrations/supabase/types';
 
 export const useGoalProgress = () => {
@@ -107,7 +106,7 @@ export const useGoalProgress = () => {
       const leveledUp = previousLevel !== level && level !== 'learning';
       
       // Create properly typed goal data for database insert/update
-      const goalData: SafeInsertType<'goal_progress'> = {
+      const goalData = {
         profile_id: defaultProfileId,
         operation: operation,
         range,
@@ -120,7 +119,7 @@ export const useGoalProgress = () => {
       
       const response = await supabase
         .from('goal_progress')
-        .upsert(goalData, {
+        .upsert(goalData as any, {
           onConflict: 'profile_id,operation,range'
         });
         

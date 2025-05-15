@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Card } from '@/components/ui/card';
@@ -187,7 +188,7 @@ export function ProfileSwitcherDialog({
     }
   }, [open, userId]);
 
-  // Fix null checking in handleSwitchProfile
+  // Add proper null checking in handleSwitchProfile
   const handleSwitchProfile = async (profile: Profile | null) => {
     try {
       // Add null check to prevent TypeScript errors

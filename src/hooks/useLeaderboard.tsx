@@ -1,3 +1,4 @@
+
 import { useCallback, useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Operation } from '@/types';
@@ -5,7 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useAuth } from '@/context/auth/useAuth';
 import { 
-  LeaderboardEntryArray 
+  LeaderboardEntry as LeaderboardEntryType
 } from '@/types/supabase-extensions';
 import { 
   safeRPCGetLeaderboard, 
@@ -151,7 +152,7 @@ export const useLeaderboard = () => {
       });
       
       // Update state with fetched data - ensure proper casting
-      setEntries(leaderboardData || [] as LeaderboardEntry[]);
+      setEntries(leaderboardData || []);
       
       // Safely convert countData to number for pagination
       const totalCount = typeof countData === 'number' ? countData : 0;
@@ -196,7 +197,7 @@ export const useLeaderboard = () => {
       });
 
       // Ensure we have an array even if null is returned
-      const entries = leaderboardData || [] as LeaderboardEntry[];
+      const entries = leaderboardData || [];
       
       if (entries.length === 0) {
         logger.debug('No leaderboard entries found, guest would be ranked #1');

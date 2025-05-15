@@ -10,18 +10,18 @@ import {
   LeaderboardCountResult 
 } from '@/types/supabase-extensions';
 import logger from '@/utils/logger';
-import { PostgrestFilterBuilder } from '@supabase/supabase-js';
+import { PostgrestSingleResponse, PostgrestResponse } from '@supabase/supabase-js';
 import { Database } from '@/integrations/supabase/types';
 
 // Type-safe query helper functions
 export async function safeSelect<T extends keyof Database['public']['Tables']>(
   table: T,
-  queryBuilder: (query: PostgrestFilterBuilder<Database['public']['Tables'][T]>) => any,
+  queryBuilder: (query: any) => any,
   errorMessage = 'Database query failed'
 ): Promise<SafeRowType<T>[] | null> {
   try {
     const query = supabase.from(table);
-    const { data, error } = await queryBuilder(query as any);
+    const { data, error } = await queryBuilder(query);
     
     if (error) {
       logger.error({ message: errorMessage, error });
@@ -37,12 +37,12 @@ export async function safeSelect<T extends keyof Database['public']['Tables']>(
 
 export async function safeSingle<T extends keyof Database['public']['Tables']>(
   table: T,
-  queryBuilder: (query: PostgrestFilterBuilder<Database['public']['Tables'][T]>) => any,
+  queryBuilder: (query: any) => any,
   errorMessage = 'Database query failed'
 ): Promise<SafeRowType<T> | null> {
   try {
     const query = supabase.from(table);
-    const { data, error } = await queryBuilder(query as any).single();
+    const { data, error } = await queryBuilder(query).single();
     
     if (error) {
       logger.error({ message: errorMessage, error });
@@ -58,12 +58,12 @@ export async function safeSingle<T extends keyof Database['public']['Tables']>(
 
 export async function safeMaybeSingle<T extends keyof Database['public']['Tables']>(
   table: T,
-  queryBuilder: (query: PostgrestFilterBuilder<Database['public']['Tables'][T]>) => any,
+  queryBuilder: (query: any) => any,
   errorMessage = 'Database query failed'
 ): Promise<SafeRowType<T> | null> {
   try {
     const query = supabase.from(table);
-    const { data, error } = await queryBuilder(query as any).maybeSingle();
+    const { data, error } = await queryBuilder(query).maybeSingle();
     
     if (error) {
       logger.error({ message: errorMessage, error });

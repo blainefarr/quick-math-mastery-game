@@ -1,7 +1,7 @@
 
 // Type declarations to extend and fix Supabase types
 import { Database } from '@/integrations/supabase/types';
-import { PostgrestError, PostgrestSingleResponse, PostgrestMaybeSingleResponse } from '@supabase/supabase-js';
+import { PostgrestError } from '@supabase/supabase-js';
 
 // Helper type to safely access Supabase query responses
 export type SafeResponse<T> = {
@@ -98,3 +98,22 @@ export type LeaderboardEntryArray = LeaderboardEntry[];
 
 export type UserRankResult = number;
 export type LeaderboardCountResult = number;
+
+// RPC function interface for TypeScript reflection
+export interface SupabaseCustomFunctions {
+  submit_score(args: {
+    p_profile_id: string;
+    p_score: number;
+    p_operation: string;
+    p_min1: number;
+    p_max1: number;
+    p_min2: number;
+    p_max2: number;
+    p_duration: number;
+    p_focus_number: number | null;
+    p_allow_negatives: boolean;
+    p_typing_speed: number | null;
+    p_total_speed: number | null;
+    p_adjusted_math_speed: number | null;
+  }): Promise<{ data: string; error: null } | { data: null; error: any }>;
+}
