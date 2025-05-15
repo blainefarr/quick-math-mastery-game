@@ -7,6 +7,7 @@ import useGame from '@/context/useGame';
 import TypingWarmup from '@/components/TypingWarmup';
 import GameCountdown from '@/components/GameCountdown';
 import HomeSeoContent from '@/components/home/HomeSeoContent';
+import logger from '@/utils/logger';
 
 // Main content that uses the game context
 const Index = () => {
@@ -25,12 +26,24 @@ const Index = () => {
   // Reset canSaveCurrentScore when returning to selection screen
   useEffect(() => {
     if (gameState === 'selection') {
-      setCanSaveCurrentScore(true);
+      // Check if user can save scores based on their plan limit
+      const limitReached = hasSaveScoreLimitReached();
+      setCanSaveCurrentScore(!limitReached);
+      
+      logger.debug({
+        message: 'Reset game state and score saving capability',
+        gameState,
+        canSave: !limitReached,
+        limitReached
+      });
     }
-  }, [gameState, setCanSaveCurrentScore]);
+  }, [gameState, setCanSaveCurrentScore, hasSaveScoreLimitReached]);
   
   const handleWarmupComplete = (speed: number) => {
-    console.log('Typing warmup completed with speed:', speed);
+    logger.debug({
+      message: 'Typing warmup completed',
+      speed
+    });
     setTypingSpeed(speed);
     setGameState('countdown');
   };

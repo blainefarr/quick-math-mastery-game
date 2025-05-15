@@ -8,6 +8,7 @@ import { useScoreManagement } from './hooks/useScoreManagement';
 import { useTimerManagement } from '@/hooks/use-timer-management';
 import { useAuth } from './auth/useAuth';
 import { toast } from 'sonner';
+import logger from '@/utils/logger';
 
 const GameProvider = ({ children }: GameProviderProps) => {
   const { settings, updateSettings } = useGameSettings();
@@ -145,19 +146,12 @@ const GameProvider = ({ children }: GameProviderProps) => {
     // Only save score on timeout (normal game end), when user is logged in, and when the score can be saved
     if (reason === 'timeout' && isLoggedIn && defaultProfileId && canSaveCurrentScore) {
       try {
-        console.log('Attempting to save score. canSaveCurrentScore:', canSaveCurrentScore);
-        
-        // Calculate metrics with updated logic and variables
-        // Now assuming typing speed represents seconds per typing problem
-        let answer_time_per_problem = finalScore > 0 ? settings.timerSeconds / finalScore : 0;
-        let math_time_per_problem = answer_time_per_problem;
-        
-        // Adjust math time if typing speed is available
-        if (finalTypingSpeed !== null) {
-          // Typing speed is now seconds per typing problem
-          // Math time is answer time minus typing time
-          math_time_per_problem = Math.max(0, answer_time_per_problem - finalTypingSpeed);
-        }
+        logger.debug({ 
+          message: 'Attempting to save score', 
+          canSaveCurrentScore, 
+          finalScore, 
+          finalTypingSpeed 
+        });
         
         const success = await saveScore(
           finalScore,
@@ -178,6 +172,7 @@ const GameProvider = ({ children }: GameProviderProps) => {
           setGameState('ended');
         }
       } catch (error) {
+        logger.error("Failed to save score:", error);
         toast.error("Failed to save your score");
         // Still move to ended state
         setGameState('ended');
