@@ -19,6 +19,7 @@ const RootLayout = () => {
     <AuthProvider>
       <TooltipProvider delayDuration={300}>
         <Outlet />
+        <Toaster /> {/* Added Toaster here instead of in main.tsx to avoid duplication */}
       </TooltipProvider>
     </AuthProvider>
   );

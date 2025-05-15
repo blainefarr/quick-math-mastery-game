@@ -4,7 +4,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import AuthModal from './auth/AuthModal';
 import UserProfile from './user/UserProfile';
-import { Trophy, LayoutTemplate, Menu, X } from 'lucide-react';
+import { Trophy, LayoutTemplate, Menu } from 'lucide-react';
 import useAuth from '@/context/auth/useAuth';
 import useGame from '@/context/useGame';
 import {
@@ -13,6 +13,7 @@ import {
   SheetTrigger,
   SheetClose
 } from '@/components/ui/sheet';
+import logger from '@/utils/logger';
 
 const Header = () => {
   const { isLoggedIn, planType } = useAuth();
@@ -20,13 +21,20 @@ const Header = () => {
   const location = useLocation();
   
   const isGameRoute = location.pathname === '/';
-  const gameState = isGameRoute ? useGame()?.gameState : null;
+  // Safely access gameState by first checking if useGame() returns a value
+  const gameContext = isGameRoute ? useGame() : null;
+  const gameState = gameContext?.gameState;
   
   if (isGameRoute && gameState === 'playing') return null;
   
   const handleLogoClick = () => {
-    if (isGameRoute && gameState) {
-      useGame().setGameState('selection');
+    if (isGameRoute && gameContext) {
+      try {
+        gameContext.setGameState('selection');
+      } catch (error) {
+        logger.error('Error setting game state:', error);
+        navigate('/');
+      }
     } else {
       navigate('/');
     }

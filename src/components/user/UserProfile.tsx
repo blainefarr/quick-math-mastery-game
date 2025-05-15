@@ -32,7 +32,7 @@ const UserProfile = () => {
   useEffect(() => {
     // Don't show anything during initial load or for new signups that are being processed
     if (!isAuthenticated || isLoadingProfile || isNewSignup) {
-      logger.debug('UserProfile: Not showing profile switcher yet: still loading or new signup');
+      logger.debug('Not showing profile switcher yet: still loading or new signup', 'profiles');
       return;
     }
     
@@ -41,12 +41,12 @@ const UserProfile = () => {
       const hasShownSwitcherForSession = sessionStorage.getItem(PROFILE_SWITCHER_SHOWN_KEY) === 'true';
       
       if (!hasShownSwitcherForSession) {
-        logger.debug('UserProfile: Multiple profiles detected, showing picker once after login');
+        logger.debug('Multiple profiles detected, showing picker once after login', 'profiles');
         setShowProfileSwitcher(true);
         // Mark that we've shown the switcher for this session
         sessionStorage.setItem(PROFILE_SWITCHER_SHOWN_KEY, 'true');
       } else {
-        logger.debug('UserProfile: Multiple profiles detected, but already shown for this session');
+        logger.debug('Multiple profiles detected, but already shown for this session', 'profiles');
       }
       
       setProfilesChecked(true);
@@ -66,13 +66,13 @@ const UserProfile = () => {
 
     // Only setup the timer if we've completed authentication and loading state
     if (isAuthenticated && !isLoadingProfile && !defaultProfileId && !isNewSignup && !isForceLogout) {
-      logger.warn('UserProfile: No profile loaded, will wait 8 seconds before logging out');
+      logger.warn('No profile loaded, will wait 8 seconds before logging out');
       
       // Set a timer to wait before logging out
       const timer = setTimeout(() => {
         // Check again if profile loaded during the delay
         if (!defaultProfileId) {
-          logger.error('UserProfile: No profile loaded after delay, forcing logout');
+          logger.error('No profile loaded after delay, forcing logout');
           setIsForceLogout(true);
           
           // Show a message and force logout
@@ -106,33 +106,13 @@ const UserProfile = () => {
     }
   }, [isAuthenticated]);
   
-  // Debug user state - only in development
-  useEffect(() => {
-    if (isAuthenticated) {
-      logger.debug('UserProfile: Current state:', {
-        userId,
-        username,
-        defaultProfileId,
-        isLoadingProfile,
-        hasMultipleProfiles,
-        isNewSignup,
-        showProfileSwitcher,
-        profilesChecked,
-        renderDecision: isNewSignup ? "showing setup message" :
-                       isLoadingProfile ? "showing skeleton" :
-                       !defaultProfileId ? "showing loading message" :
-                       "showing dropdown"
-      });
-    }
-  }, [isAuthenticated, userId, username, defaultProfileId, isLoadingProfile, hasMultipleProfiles, isNewSignup, showProfileSwitcher, profilesChecked]);
-  
   if (!isAuthenticated) {
-    logger.debug('UserProfile: Not authenticated, returning null');
+    logger.debug('Not authenticated, returning null', 'profiles');
     return null;
   }
   
   if (isNewSignup) {
-    logger.debug('UserProfile: New signup in progress, showing setup message');
+    logger.debug('New signup in progress, showing setup message', 'profiles');
     return (
       <div className="flex items-center gap-2">
         <div className="text-sm text-muted-foreground flex items-center gap-2 border px-3 py-1 rounded-full">
@@ -144,7 +124,7 @@ const UserProfile = () => {
   }
   
   if (isLoadingProfile) {
-    logger.debug('UserProfile: Profile loading, showing skeleton');
+    logger.debug('Profile loading, showing skeleton', 'profiles');
     return (
       <div className="flex items-center gap-2">
         <Skeleton className="h-8 w-28 rounded-full" />
@@ -154,7 +134,7 @@ const UserProfile = () => {
   
   // Extra validation - only render dropdown if we have a valid profile
   if (!defaultProfileId) {
-    logger.debug('UserProfile: No default profile ID, showing loading message');
+    logger.debug('No default profile ID, showing loading message', 'profiles');
     return (
       <div className="flex items-center gap-2">
         <div className="text-sm text-muted-foreground flex items-center gap-2 border px-3 py-1 rounded-full">
@@ -165,7 +145,7 @@ const UserProfile = () => {
     );
   }
   
-  logger.debug('UserProfile: Rendering dropdown with username:', username);
+  logger.debug('Rendering dropdown with username: ' + username, 'profiles');
   return (
     <div className="flex items-center gap-2">
       <UserDropdown 

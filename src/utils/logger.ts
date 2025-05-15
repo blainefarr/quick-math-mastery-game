@@ -12,20 +12,39 @@ const isDevelopment = (): boolean => {
 };
 
 // Log levels for filtering
-type LogLevel = 'info' | 'warn' | 'error' | 'debug';
+export type LogLevel = 'info' | 'warn' | 'error' | 'debug';
+
+// Define which log levels should be shown in production (only errors by default)
+const PRODUCTION_LOG_LEVELS: LogLevel[] = ['error'];
+
+// Control verbose logging of specific modules (even in dev mode)
+const VERBOSE_MODULES: Record<string, boolean> = {
+  auth: false,      // Set to true to enable detailed auth logs
+  scores: false,    // Set to true to enable detailed score fetching logs
+  profiles: false,  // Set to true to enable detailed profile logs
+};
+
+// Check if a specific module should log verbosely
+const isVerbose = (module?: string): boolean => {
+  if (!module) return true; // Default to verbose if no module specified
+  return !!VERBOSE_MODULES[module];
+};
 
 // The actual logger implementation
 const logger = {
   info: (message: string, ...args: any[]): void => {
     if (isDevelopment()) {
       console.info(`[INFO] ${message}`, ...args);
+    } else if (PRODUCTION_LOG_LEVELS.includes('info')) {
+      // In production, log with less detail
+      console.info(`[INFO] ${message}`);
     }
   },
   
   warn: (message: string, ...args: any[]): void => {
     if (isDevelopment()) {
       console.warn(`[WARN] ${message}`, ...args);
-    } else if (args.some(arg => arg instanceof Error)) {
+    } else if (PRODUCTION_LOG_LEVELS.includes('warn') || args.some(arg => arg instanceof Error)) {
       // Always log warnings with errors in production, but without details
       console.warn(`[WARN] An operation failed`);
     }
@@ -44,10 +63,33 @@ const logger = {
     }
   },
   
-  debug: (message: string, ...args: any[]): void => {
-    // Debug logs only in development
-    if (isDevelopment()) {
-      console.debug(`[DEBUG] ${message}`, ...args);
+  debug: (message: string, module?: string, ...args: any[]): void => {
+    // Debug logs only in development and only if the module is set to verbose
+    if (isDevelopment() && isVerbose(module)) {
+      console.debug(`[DEBUG]${module ? `[${module}]` : ''} ${message}`, ...args);
+    }
+  },
+  
+  // Module-specific logging with automatic verbosity filtering
+  auth: {
+    debug: (message: string, ...args: any[]): void => {
+      logger.debug(message, 'auth', ...args);
+    },
+    info: (message: string, ...args: any[]): void => {
+      if (isVerbose('auth')) {
+        logger.info(`[auth] ${message}`, ...args);
+      }
+    }
+  },
+  
+  scores: {
+    debug: (message: string, ...args: any[]): void => {
+      logger.debug(message, 'scores', ...args);
+    },
+    info: (message: string, ...args: any[]): void => {
+      if (isVerbose('scores')) {
+        logger.info(`[scores] ${message}`, ...args);
+      }
     }
   }
 };
