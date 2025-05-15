@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { UserScore, Operation, ProblemRange } from '@/types';
@@ -9,6 +8,25 @@ import logger from '@/utils/logger';
 
 // Local storage key for active profile
 const ACTIVE_PROFILE_KEY = 'math_game_active_profile';
+
+// Type definition for the submit_score function that doesn't exist in the types.ts file
+interface SupabaseCustomFunctions {
+  submit_score(args: {
+    p_profile_id: string;
+    p_score: number;
+    p_operation: string;
+    p_min1: number;
+    p_max1: number;
+    p_min2: number;
+    p_max2: number;
+    p_duration: number;
+    p_focus_number: number | null;
+    p_allow_negatives: boolean;
+    p_typing_speed: number | null;
+    p_total_speed: number | null;
+    p_adjusted_math_speed: number | null;
+  }): Promise<{ data: string; error: null } | { data: null; error: any }>;
+}
 
 export const useScoreManagement = (userId: string | null) => {
   const [scoreHistory, setScoreHistory] = useState<UserScore[]>([]);
@@ -187,7 +205,7 @@ export const useScoreManagement = (userId: string | null) => {
     }
   }, [userId, planType, currentScoreSaveCount, fetchCurrentScoreSaveCount]);
 
-  // Updated to use the secure submit_score function
+  // Updated to use the secure submit_score function with proper typing
   const saveScore = useCallback(async (
     score: number, 
     operation: Operation, 
@@ -264,8 +282,8 @@ export const useScoreManagement = (userId: string | null) => {
         }
       }
       
-      // Use the new secure submit_score function with a type assertion to fix TypeScript error
-      const { data, error } = await supabase.rpc('submit_score' as any, {
+      // Use the secure submit_score function with proper typing
+      const { data, error } = await (supabase.rpc as unknown as SupabaseCustomFunctions).submit_score({
         p_profile_id: profileId,
         p_score: score,
         p_operation: operation,
