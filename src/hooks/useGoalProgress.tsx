@@ -5,6 +5,7 @@ import { useAuth } from '@/context/auth/useAuth';
 import { GoalProgress, Operation, GoalLevel } from '@/types';
 import { toast } from 'sonner';
 import logger from '@/utils/logger';
+import { extractData } from '@/utils/supabase-helpers';
 
 export const useGoalProgress = () => {
   const [goals, setGoals] = useState<GoalProgress[]>([]);
@@ -23,16 +24,15 @@ export const useGoalProgress = () => {
     setError(null);
     
     try {
-      const { data, error } = await supabase
+      const response = await supabase
         .from('goal_progress')
         .select('*')
         .eq('profile_id', defaultProfileId as any);
       
-      if (error) {
-        throw error;
-      }
+      // Use our helper function to safely extract data
+      const data = extractData(response, []);
       
-      if (!data) {
+      if (!data || !Array.isArray(data)) {
         logger.warn('No goal data returned from database');
         setGoals([]);
         setIsLoading(false);
@@ -88,7 +88,7 @@ export const useGoalProgress = () => {
       const leveledUp = previousLevel !== level && level !== 'learning';
       
       // Explicitly type the goal data for insert/update
-      const goalData: Record<string, any> = {
+      const goalData = {
         profile_id: defaultProfileId,
         operation,
         range,
@@ -99,14 +99,14 @@ export const useGoalProgress = () => {
         last_level_up: leveledUp ? new Date().toISOString() : existingGoal?.last_level_up || null
       };
       
-      const { data, error } = await supabase
+      const response = await supabase
         .from('goal_progress')
         .upsert(goalData, {
           onConflict: 'profile_id,operation,range'
         });
         
-      if (error) {
-        throw error;
+      if (response.error) {
+        throw response.error;
       }
       
       // Refresh goals after update

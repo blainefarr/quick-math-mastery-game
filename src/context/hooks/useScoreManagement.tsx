@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import { useAuth } from '@/context/auth/useAuth';
 import { getGoalLevel } from '@/hooks/useGoalProgress';
 import logger from '@/utils/logger';
+import { extractData } from '@/utils/supabase-helpers';
 
 // Local storage key for active profile
 const ACTIVE_PROFILE_KEY = 'math_game_active_profile';
@@ -42,20 +43,17 @@ export const useScoreManagement = (userId: string | null) => {
     if (!userId || !planType) return;
     
     try {
-      const { data, error } = await supabase
+      const response = await supabase
         .from('plans')
         .select('max_saved_scores, can_save_score')
         .eq('plan_type', planType as any)
         .single();
       
-      if (error) {
-        logger.error('Error fetching score save limit:', error);
-        return;
-      }
+      const planData = extractData(response);
       
-      if (data) {
+      if (planData && typeof planData === 'object') {
         // Use safe property access with optional chaining
-        const maxSavedScores = data.max_saved_scores;
+        const maxSavedScores = 'max_saved_scores' in planData ? planData.max_saved_scores : null;
         setScoreSaveLimit(maxSavedScores);
         logger.debug(`Score save limit for ${planType} plan: ${maxSavedScores}`);
       }
@@ -69,20 +67,17 @@ export const useScoreManagement = (userId: string | null) => {
     if (!userId) return;
     
     try {
-      const { data, error } = await supabase
+      const response = await supabase
         .from('accounts')
         .select('score_save_count')
         .eq('id', userId as any)
         .single();
       
-      if (error) {
-        logger.error('Error fetching score save count:', error);
-        return;
-      }
+      const accountData = extractData(response);
       
-      if (data && data.score_save_count !== undefined) {
-        setCurrentScoreSaveCount(data.score_save_count);
-        logger.debug({ message: 'Current score save count', count: data.score_save_count });
+      if (accountData && typeof accountData === 'object' && 'score_save_count' in accountData) {
+        setCurrentScoreSaveCount(accountData.score_save_count);
+        logger.debug({ message: 'Current score save count', count: accountData.score_save_count });
       }
     } catch (err) {
       logger.error('Error fetching score save count:', err);
@@ -106,17 +101,13 @@ export const useScoreManagement = (userId: string | null) => {
 
     try {
       logger.debug(`Fetching scores for profile ID: ${profileId}`);
-      const { data, error } = await supabase
+      const response = await supabase
         .from('scores')
         .select('*')
         .eq('profile_id', profileId as any)
         .order('date', { ascending: false });
 
-      if (error) {
-        logger.error('Error fetching scores:', error);
-        toast.error('Failed to load your scores');
-        return [];
-      }
+      const data = extractData(response, []);
 
       if (!Array.isArray(data)) {
         logger.error('Unexpected response format:', data);
@@ -179,21 +170,25 @@ export const useScoreManagement = (userId: string | null) => {
     
     try {
       // Get the current plan details
-      const { data: planData, error: planError } = await supabase
+      const planResponse = await supabase
         .from('plans')
         .select('can_save_score, max_saved_scores')
         .eq('plan_type', planType as any)
         .single();
       
-      if (planError || !planData) {
-        logger.error('Error fetching plan details:', planError);
+      const planData = extractData(planResponse);
+      
+      if (!planData) {
+        logger.error('Error fetching plan details: No plan data returned');
         return { allowed: false, limitReached: false };
       }
       
       // If the plan allows saving scores
-      if (planData.can_save_score) {
+      if ('can_save_score' in planData && planData.can_save_score) {
         // If there's no limit (null means unlimited)
-        if (planData.max_saved_scores === null) return { allowed: true, limitReached: false };
+        if ('max_saved_scores' in planData && planData.max_saved_scores === null) {
+          return { allowed: true, limitReached: false };
+        }
         
         // Update current score save count
         await fetchCurrentScoreSaveCount();
@@ -207,8 +202,8 @@ export const useScoreManagement = (userId: string | null) => {
         
         // If there is a limit, check against current save count
         return {
-          allowed: currentScoreSaveCount < planData.max_saved_scores,
-          limitReached: currentScoreSaveCount >= planData.max_saved_scores
+          allowed: currentScoreSaveCount < (planData.max_saved_scores || 0),
+          limitReached: currentScoreSaveCount >= (planData.max_saved_scores || 0)
         };
       }
       

@@ -2,6 +2,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { ACTIVE_PROFILE_KEY } from './profileUtils';
 import logger from '@/utils/logger';
+import { extractData } from '@/utils/supabase-helpers';
 
 /**
  * Complete signup process that ensures account and profile creation
@@ -52,14 +53,15 @@ export const completeSignUp = async (email: string, password: string, displayNam
     }
     
     // Check if the account was created
-    const { data: accountData, error: accountError } = await supabase
+    const accountResponse = await supabase
       .from('accounts')
       .select('id')
       .eq('id', userId as any)  // In your schema, account.id = user.id
       .maybeSingle();
     
-    if (!accountError && accountData) {
-      // Type-safe access with proper error handling
+    const accountData = extractData(accountResponse);
+    
+    if (accountData && 'id' in accountData) {
       accountId = accountData.id;
       break;
     }
@@ -83,17 +85,19 @@ export const completeSignUp = async (email: string, password: string, displayNam
       }
       
       // Check if profile exists
-      const { data: profileData, error: profileError } = await supabase
+      const profileResponse = await supabase
         .from('profiles')
         .select('id, name')
         .eq('account_id', userId as any)
         .maybeSingle();
       
-      if (!profileError && profileData) {
+      const profileData = extractData(profileResponse);
+      
+      if (profileData) {
         profileCreated = true;
         
         // Type-safe access with proper error handling
-        if (profileData && typeof profileData === 'object' && 'id' in profileData) {
+        if ('id' in profileData) {
           profileId = profileData.id;
           
           // Store the profile ID in localStorage

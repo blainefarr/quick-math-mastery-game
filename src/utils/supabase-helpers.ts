@@ -119,3 +119,19 @@ export async function safeUpdate<T extends keyof Database['public']['Tables']>(
     return null;
   }
 }
+
+// New helper function to safely check if a response has data
+export function isValidResponse<T>(response: { data: T | null, error: any }): response is { data: T, error: null } {
+  return response.data !== null && response.error === null;
+}
+
+// New helper function to extract data safely from any Supabase response
+export function extractData<T>(response: { data: T | null, error: any }, defaultValue: T | null = null): T | null {
+  if (isValidResponse(response)) {
+    return response.data;
+  }
+  if (response.error) {
+    logger.error({ message: 'Error in database response', error: response.error });
+  }
+  return defaultValue;
+}

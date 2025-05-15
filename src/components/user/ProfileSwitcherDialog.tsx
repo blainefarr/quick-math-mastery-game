@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Card } from '@/components/ui/card';
@@ -13,6 +14,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { PaywallModal } from '../paywalls/PaywallModal';
 import { useNavigate } from 'react-router-dom';
 import logger from '@/utils/logger';
+import { extractData } from '@/utils/supabase-helpers';
 
 interface Profile {
   id: string;
@@ -90,19 +92,16 @@ export function ProfileSwitcherDialog({
     if (!userId || !planType) return;
     
     try {
-      const { data, error } = await supabase
+      const response = await supabase
         .from('plans')
         .select('max_profiles')
         .eq('plan_type', planType as any)
         .single();
       
-      if (error) {
-        logger.error('Error fetching profile limit:', error);
-        return;
-      }
+      const planData = extractData(response);
       
-      if (data && typeof data === 'object' && 'max_profiles' in data) {
-        setProfileLimit(data.max_profiles);
+      if (planData && typeof planData === 'object' && 'max_profiles' in planData) {
+        setProfileLimit(planData.max_profiles);
       }
     } catch (err) {
       logger.error('Error fetching profile limit:', err);
@@ -190,8 +189,19 @@ export function ProfileSwitcherDialog({
   }, [open, userId]);
 
   // Switch to a different profile
-  const handleSwitchProfile = async (profile: Profile) => {
+  const handleSwitchProfile = async (profile: Profile | null) => {
     try {
+      // Add null check to prevent TypeScript errors
+      if (!profile) {
+        logger.error('Cannot switch to null profile');
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Invalid profile selected"
+        });
+        return;
+      }
+      
       logger.debug('Switching to profile:', profile.id, profile.name);
 
       // Update the local state

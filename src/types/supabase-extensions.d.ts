@@ -21,6 +21,8 @@ export function hasData<T>(response: SafeResponse<T>): response is { data: T; er
 // Extended logger interface to add missing methods
 declare module '@/utils/logger' {
   interface Logger {
+    debug(message: string | object, ...args: any[]): void;
+    info(message: string | object, ...args: any[]): void;
     warn(message: string | object, ...args: any[]): void;
     error(message: string | object, ...args: any[]): void;
   }
@@ -63,3 +65,16 @@ export function ensureData<T>(response: { data: T | null, error: PostgrestError 
   }
   return response.data;
 }
+
+// New function types to ensure type safety
+export type SafeSelectFn = <T extends keyof Database['public']['Tables']>(
+  table: T,
+  queryBuilder: (query: any) => any,
+  errorMessage?: string
+) => Promise<SafeRowType<T>[] | null>;
+
+export type SafeSingleFn = <T extends keyof Database['public']['Tables']>(
+  table: T,
+  queryBuilder: (query: any) => any,
+  errorMessage?: string
+) => Promise<SafeRowType<T> | null>;
