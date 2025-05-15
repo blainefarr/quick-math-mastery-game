@@ -54,13 +54,13 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
     
     try {
       // Get the current plan details
-      const { data: planData } = await supabase
+      const { data: planData, error: planError } = await supabase
         .from('plans')
         .select('can_save_score, max_saved_scores')
-        .eq('plan_type', authState.planType)
+        .eq('plan_type', authState.planType as any)
         .single();
       
-      if (!planData) return false;
+      if (planError || !planData) return false;
       
       // If the plan allows saving scores
       if (planData.can_save_score) {
@@ -68,13 +68,13 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
         if (planData.max_saved_scores === null) return true;
         
         // If there is a limit, check against current save count
-        const { data: accountData } = await supabase
+        const { data: accountData, error: accountError } = await supabase
           .from('accounts')
           .select('score_save_count')
-          .eq('id', authState.userId)
+          .eq('id', authState.userId as any)
           .single();
         
-        if (!accountData) return false;
+        if (accountError || !accountData) return false;
         
         return accountData.score_save_count < planData.max_saved_scores;
       }
@@ -98,7 +98,7 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
       const { data: account, error: accountError } = await supabase
         .from('accounts')
         .select('plan_type, subscription_status, plan_expires_at')
-        .eq('id', authState.userId)
+        .eq('id', authState.userId as any)
         .single();
       
       if (accountError) {

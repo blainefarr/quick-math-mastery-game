@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Card } from '@/components/ui/card';
@@ -86,13 +87,13 @@ export function ProfileSwitcherDialog({
 
   // Fetch profile limit based on plan type
   const fetchProfileLimit = async () => {
-    if (!userId) return;
+    if (!userId || !planType) return;
     
     try {
       const { data, error } = await supabase
         .from('plans')
         .select('max_profiles')
-        .eq('plan_type', planType)
+        .eq('plan_type', planType as any)
         .single();
       
       if (error) {
@@ -123,9 +124,14 @@ export function ProfileSwitcherDialog({
       const {
         data,
         error
-      } = await supabase.from('profiles').select('*').eq('account_id', userId).order('created_at', {
+      } = await supabase.from('profiles').select('*').eq('account_id', userId as any).order('created_at', {
         ascending: true
       });
+
+      if (error) {
+        console.error('Error fetching profiles:', error);
+        return false;
+      }
 
       // Get the active profile ID from localStorage
       const activeProfileId = localStorage.getItem(ACTIVE_PROFILE_KEY) || defaultProfileId;
@@ -136,7 +142,7 @@ export function ProfileSwitcherDialog({
         // Mark as active if it matches the active profile ID
         active: profile.id === activeProfileId
       })) || [];
-      setProfiles(processedProfiles);
+      setProfiles(processedProfiles as Profile[]);
       
       // Check if profile limit needs to be fetched
       if (profileLimit === null) {

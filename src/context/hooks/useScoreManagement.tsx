@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { UserScore, Operation, ProblemRange } from '@/types';
@@ -45,7 +46,7 @@ export const useScoreManagement = (userId: string | null) => {
       const { data, error } = await supabase
         .from('plans')
         .select('max_saved_scores, can_save_score')
-        .eq('plan_type', planType)
+        .eq('plan_type', planType as any)
         .single();
       
       if (error) {
@@ -70,7 +71,7 @@ export const useScoreManagement = (userId: string | null) => {
       const { data, error } = await supabase
         .from('accounts')
         .select('score_save_count')
-        .eq('id', userId)
+        .eq('id', userId as any)
         .single();
       
       if (error) {
@@ -109,7 +110,7 @@ export const useScoreManagement = (userId: string | null) => {
       const { data, error } = await supabase
         .from('scores')
         .select('*')
-        .eq('profile_id', profileId)
+        .eq('profile_id', profileId as any)
         .order('date', { ascending: false });
 
       if (error) {
@@ -173,13 +174,13 @@ export const useScoreManagement = (userId: string | null) => {
     
     try {
       // Get the current plan details
-      const { data: planData } = await supabase
+      const { data: planData, error: planError } = await supabase
         .from('plans')
         .select('can_save_score, max_saved_scores')
-        .eq('plan_type', planType)
+        .eq('plan_type', planType as any)
         .single();
       
-      if (!planData) return { allowed: false, limitReached: false };
+      if (planError || !planData) return { allowed: false, limitReached: false };
       
       // If the plan allows saving scores
       if (planData.can_save_score) {
@@ -189,7 +190,11 @@ export const useScoreManagement = (userId: string | null) => {
         // Update current score save count
         await fetchCurrentScoreSaveCount();
         
-        logger.debug({ message: "Score limit check", currentCount: currentScoreSaveCount, limit: planData.max_saved_scores });
+        logger.debug({ 
+          message: "Score limit check", 
+          currentCount: currentScoreSaveCount, 
+          limit: planData.max_saved_scores 
+        });
         
         // If there is a limit, check against current save count
         return {
@@ -282,8 +287,8 @@ export const useScoreManagement = (userId: string | null) => {
         }
       }
       
-      // Use the secure submit_score function with proper typing
-      const { data, error } = await (supabase.rpc as unknown as SupabaseCustomFunctions).submit_score({
+      // Use the rpc method with the appropriate type
+      const { data, error } = await supabase.rpc('submit_score', {
         p_profile_id: profileId,
         p_score: score,
         p_operation: operation,

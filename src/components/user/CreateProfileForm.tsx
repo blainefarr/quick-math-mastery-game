@@ -24,6 +24,7 @@ import {
 import { useAuth } from '@/context/auth/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { Database } from '@/integrations/supabase/types';
 
 const formSchema = z.object({
   name: z.string().min(2, {
@@ -84,8 +85,8 @@ export function CreateProfileForm({
           .update({
             name: values.name,
             grade: values.grade || null,
-          })
-          .eq('id', profileId)
+          } as any)
+          .eq('id', profileId as any)
           .select();
 
         if (error) throw error;
@@ -96,15 +97,13 @@ export function CreateProfileForm({
         // Create new profile - removed is_default field which doesn't exist
         const { data, error } = await supabase
           .from('profiles')
-          .insert([
-            {
-              account_id: userId,
-              name: values.name,
-              grade: values.grade || null,
-              is_active: false, // New profiles are not active by default
-              is_owner: false   // New profiles are not owner by default
-            },
-          ])
+          .insert([{
+            account_id: userId,
+            name: values.name,
+            grade: values.grade || null,
+            is_active: false,
+            is_owner: false
+          }] as any)
           .select();
 
         if (error) throw error;
