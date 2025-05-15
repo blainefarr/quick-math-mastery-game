@@ -12,7 +12,9 @@ const ACTIVE_PROFILE_KEY = 'math_game_active_profile';
 export const useScoreManagement = (userId: string | null) => {
   const [scoreHistory, setScoreHistory] = useState<UserScore[]>([]);
   const [savingScore, setSavingScore] = useState(false);
-  const { defaultProfileId, isLoadingProfile } = useAuth();
+  const [scoreLimit, setScoreLimit] = useState<number | null>(null);
+  const [scoreCount, setScoreCount] = useState<number>(0);
+  const { defaultProfileId, isLoadingProfile, canSaveScores, planType } = useAuth();
 
   // Fetch the user scores based on profile ID
   const fetchUserScores = useCallback(async () => {
@@ -68,6 +70,43 @@ export const useScoreManagement = (userId: string | null) => {
     }
   }, [userId, defaultProfileId, isLoadingProfile]);
 
+  // Fetch user's score limit and count
+  const fetchScoreLimitInfo = useCallback(async () => {
+    if (!userId) return;
+    
+    try {
+      // Get the plan details for the user
+      const { data: planData, error: planError } = await supabase
+        .from('plans')
+        .select('max_saved_scores')
+        .eq('plan_type', planType)
+        .single();
+      
+      if (planError) {
+        console.error('Error fetching plan data:', planError);
+        return;
+      }
+      
+      // Get current score save count from account
+      const { data: accountData, error: accountError } = await supabase
+        .from('accounts')
+        .select('score_save_count')
+        .eq('id', userId)
+        .single();
+        
+      if (accountError) {
+        console.error('Error fetching account data:', accountError);
+        return;
+      }
+      
+      // Set the state with fetched data
+      setScoreLimit(planData.max_saved_scores);
+      setScoreCount(accountData.score_save_count || 0);
+    } catch (error) {
+      console.error('Error fetching score limit info:', error);
+    }
+  }, [userId, planType]);
+
   // Effect to fetch scores when profile ID changes or loading completes
   useEffect(() => {
     const profileId = defaultProfileId || localStorage.getItem(ACTIVE_PROFILE_KEY);
@@ -76,6 +115,13 @@ export const useScoreManagement = (userId: string | null) => {
       fetchUserScores();
     }
   }, [defaultProfileId, fetchUserScores, isLoadingProfile]);
+
+  // Effect to fetch score limit info when user ID or plan type changes
+  useEffect(() => {
+    if (userId && planType) {
+      fetchScoreLimitInfo();
+    }
+  }, [userId, planType, fetchScoreLimitInfo]);
 
   const saveScore = useCallback(async (
     score: number, 
@@ -112,6 +158,13 @@ export const useScoreManagement = (userId: string | null) => {
       return false;
     }
 
+    // Check if user can save scores
+    const canSave = await canSaveScores();
+    if (!canSave) {
+      console.log('User hit score save limit or cannot save scores');
+      return false;
+    }
+
     // Get the profile ID from context or localStorage
     const profileId = defaultProfileId || localStorage.getItem(ACTIVE_PROFILE_KEY);
     
@@ -131,7 +184,7 @@ export const useScoreManagement = (userId: string | null) => {
       allowNegatives,
       typingSpeed
     );
-  }, [userId, savingScore, defaultProfileId, isLoadingProfile]);
+  }, [userId, savingScore, defaultProfileId, isLoadingProfile, canSaveScores]);
 
   // Helper function to save score with a known profile ID
   const saveScoreWithProfileId = async (
@@ -199,14 +252,26 @@ export const useScoreManagement = (userId: string | null) => {
         return false;
       }
 
+      // Increment score_save_count in the accounts table
+      console.log('Incrementing score_save_count for user:', userId);
+      const { error: updateError } = await supabase
+        .rpc('increment_score_save_count', { user_id: userId });
+
+      if (updateError) {
+        console.error('Error incrementing score count:', updateError);
+        // Don't fail the save operation if just the counter update fails
+      }
+
       console.log('Score saved successfully:', score);
       toast.success('Score saved!');
       
       // Update goal progress
       await updateGoalProgress(profileId, operation, range, focusNumber, score);
       
+      // Refresh score history and score limit info
       const updatedScores = await fetchUserScores();
       setScoreHistory(updatedScores);
+      fetchScoreLimitInfo(); // Update the score count
       setSavingScore(false);
       return true;
     } catch (error) {
@@ -326,6 +391,9 @@ export const useScoreManagement = (userId: string | null) => {
     fetchUserScores, 
     saveScore, 
     getIsHighScore,
-    savingScore
+    savingScore,
+    scoreLimit,
+    scoreCount,
+    fetchScoreLimitInfo
   };
 };
