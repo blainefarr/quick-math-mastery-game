@@ -78,3 +78,23 @@ export type SafeSingleFn = <T extends keyof Database['public']['Tables']>(
   queryBuilder: (query: any) => any,
   errorMessage?: string
 ) => Promise<SafeRowType<T> | null>;
+
+// Special types for RPC function returns
+export type LeaderboardEntry = {
+  rank: number;
+  user_id: string;
+  profile_id: string;
+  name: string;
+  grade: string | null;
+  best_score: number;
+  operation: string;
+  min1: number;
+  max1: number;
+  min2: number;
+  max2: number;
+};
+
+export type LeaderboardEntryArray = LeaderboardEntry[];
+
+export type UserRankResult = number;
+export type LeaderboardCountResult = number;

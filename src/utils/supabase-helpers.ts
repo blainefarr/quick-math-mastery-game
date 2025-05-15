@@ -1,6 +1,13 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { SafeInsertType, SafeUpdateType, SafeRowType } from '@/types/supabase-extensions';
+import { 
+  SafeInsertType, 
+  SafeUpdateType, 
+  SafeRowType,
+  LeaderboardEntryArray,
+  UserRankResult,
+  LeaderboardCountResult 
+} from '@/types/supabase-extensions';
 import logger from '@/utils/logger';
 import { PostgrestFilterBuilder } from '@supabase/supabase-js';
 import { Database } from '@/integrations/supabase/types';
@@ -134,4 +141,83 @@ export function extractData<T>(response: { data: T | null, error: any }, default
     logger.error({ message: 'Error in database response', error: response.error });
   }
   return defaultValue;
+}
+
+// Helper functions for RPC calls
+export async function safeRPCGetLeaderboard(
+  params: {
+    p_operation?: string;
+    p_min1?: number;
+    p_max1?: number;
+    p_min2?: number;
+    p_max2?: number;
+    p_grade?: string | null;
+    p_page?: number;
+    p_page_size?: number;
+  }
+): Promise<LeaderboardEntryArray | null> {
+  try {
+    const { data, error } = await supabase.rpc('get_leaderboard', params);
+    
+    if (error) {
+      logger.error({ message: 'Failed to get leaderboard', error });
+      return null;
+    }
+    
+    return Array.isArray(data) ? data as LeaderboardEntryArray : [];
+  } catch (err) {
+    logger.error({ message: 'Error in leaderboard RPC call', error: err });
+    return null;
+  }
+}
+
+export async function safeRPCGetLeaderboardCount(
+  params: {
+    p_operation?: string;
+    p_min1?: number;
+    p_max1?: number;
+    p_min2?: number;
+    p_max2?: number;
+    p_grade?: string | null;
+  }
+): Promise<number> {
+  try {
+    const { data, error } = await supabase.rpc('get_leaderboard_count', params);
+    
+    if (error) {
+      logger.error({ message: 'Failed to get leaderboard count', error });
+      return 0;
+    }
+    
+    return typeof data === 'number' ? data : 0;
+  } catch (err) {
+    logger.error({ message: 'Error in leaderboard count RPC call', error: err });
+    return 0;
+  }
+}
+
+export async function safeRPCGetUserRank(
+  params: {
+    p_profile_id: string;
+    p_operation?: string;
+    p_min1?: number;
+    p_max1?: number;
+    p_min2?: number;
+    p_max2?: number;
+    p_grade?: string | null;
+  }
+): Promise<number | null> {
+  try {
+    const { data, error } = await supabase.rpc('get_user_rank', params);
+    
+    if (error) {
+      logger.error({ message: 'Failed to get user rank', error });
+      return null;
+    }
+    
+    return typeof data === 'number' ? data : null;
+  } catch (err) {
+    logger.error({ message: 'Error in user rank RPC call', error: err });
+    return null;
+  }
 }

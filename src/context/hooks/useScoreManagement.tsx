@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { UserScore, Operation, ProblemRange } from '@/types';
@@ -107,29 +108,48 @@ export const useScoreManagement = (userId: string | null) => {
         .eq('profile_id', profileId as any)
         .order('date', { ascending: false });
 
-      const data = extractData(response, []);
+      const fetchedData = extractData(response, []);
 
-      if (!Array.isArray(data)) {
-        logger.error('Unexpected response format:', data);
+      if (!fetchedData || !Array.isArray(fetchedData)) {
+        logger.error('Unexpected response format:', fetchedData);
         toast.error('Failed to load scores: unexpected data format');
         return [];
       }
 
-      logger.debug({ message: 'Retrieved scores data', count: data.length });
-      const transformedData: UserScore[] = data.map(item => ({
-        score: item.score,
-        operation: item.operation as Operation,
-        range: {
-          min1: item.min1 ?? 0,
-          max1: item.max1 ?? 0,
-          min2: item.min2 ?? 0,
-          max2: item.max2 ?? 0,
-        },
-        date: item.date,
-        duration: item.duration ?? 60,
-        focusNumber: item.focus_number ?? null,
-        allowNegatives: item.allow_negatives ?? false
-      }));
+      logger.debug({ message: 'Retrieved scores data', count: fetchedData.length });
+      
+      // Safely transform the data with null checks
+      const transformedData: UserScore[] = fetchedData.map(item => {
+        if (!item) return {
+          score: 0,
+          operation: 'addition' as Operation,
+          range: {
+            min1: 0,
+            max1: 0,
+            min2: 0,
+            max2: 0,
+          },
+          date: new Date().toISOString(),
+          duration: 60,
+          focusNumber: null,
+          allowNegatives: false
+        };
+        
+        return {
+          score: item.score || 0,
+          operation: (item.operation || 'addition') as Operation,
+          range: {
+            min1: item.min1 ?? 0,
+            max1: item.max1 ?? 0,
+            min2: item.min2 ?? 0,
+            max2: item.max2 ?? 0,
+          },
+          date: item.date || new Date().toISOString(),
+          duration: item.duration ?? 60,
+          focusNumber: item.focus_number ?? null,
+          allowNegatives: item.allow_negatives ?? false
+        };
+      });
 
       setScoreHistory(transformedData);
       setScoresAlreadyFetched(true); // Mark scores as fetched to prevent loops
