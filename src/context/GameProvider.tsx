@@ -8,19 +8,17 @@ import { useScoreManagement } from './hooks/useScoreManagement';
 import { useTimerManagement } from '@/hooks/use-timer-management';
 import { useAuth } from './auth/useAuth';
 import { toast } from 'sonner';
-import { PaywallModal } from '@/components/paywalls/PaywallModal';
 
 const GameProvider = ({ children }: GameProviderProps) => {
   const { settings, updateSettings } = useGameSettings();
   const { currentProblem, generateNewProblem } = useProblemGenerator();
-  const { userId, defaultProfileId, canSaveScores, planType } = useAuth();
+  const { userId, defaultProfileId } = useAuth();
   
   const [gameState, setGameState] = useState<GameState>('selection');
   const [score, setScore] = useState(0);
   const [userAnswer, setUserAnswer] = useState('');
   const [focusNumber, setFocusNumber] = useState<number | null>(null);
   const [typingSpeed, setTypingSpeed] = useState<number | null>(null);
-  const [showScoreLimitModal, setShowScoreLimitModal] = useState(false);
   
   // Use refs to reliably track the current score, typing speed and game state
   const scoreRef = useRef(0);
@@ -30,18 +28,13 @@ const GameProvider = ({ children }: GameProviderProps) => {
   const isEndingRef = useRef(false);
   // Track if timer has been initialized for the current game session
   const timerInitializedRef = useRef(false);
-  // Track if this game session will save score
-  const willSaveScoreRef = useRef(true);
 
   const { 
     scoreHistory, 
     fetchUserScores, 
     saveScore, 
     getIsHighScore,
-    setScoreHistory,
-    scoreLimit,
-    scoreCount,
-    fetchScoreLimitInfo
+    setScoreHistory 
   } = useScoreManagement(userId);
 
   // Use the timer management hook
@@ -73,45 +66,6 @@ const GameProvider = ({ children }: GameProviderProps) => {
     gameStateRef.current = gameState;
   }, [gameState]);
 
-  // Check if user has hit score limit before starting game
-  const checkScoreLimit = async () => {
-    if (planType === 'free' && userId) {
-      const canSave = await canSaveScores();
-      if (!canSave) {
-        // User has hit their limit, show the paywall modal
-        setShowScoreLimitModal(true);
-        return false;
-      }
-    }
-    return true;
-  };
-
-  // Handle starting game with and without saving
-  const handleStartGameWithSaving = async () => {
-    setShowScoreLimitModal(false);
-    willSaveScoreRef.current = true;
-    setGameState('warmup-countdown');
-  };
-
-  const handleStartGameWithoutSaving = () => {
-    setShowScoreLimitModal(false);
-    willSaveScoreRef.current = false;
-    setGameState('warmup-countdown');
-    toast("This game won't be saved to your history", { 
-      duration: 5000,
-      position: 'bottom-center'
-    });
-  };
-
-  // Handle transition from selection to warmup-countdown
-  const transitionToWarmup = async () => {
-    const canProceed = await checkScoreLimit();
-    if (canProceed) {
-      willSaveScoreRef.current = true;
-      setGameState('warmup-countdown');
-    }
-  };
-
   // Handle game state changes and timer management
   useEffect(() => {
     if (gameState === 'playing' && !timerInitializedRef.current) {
@@ -133,12 +87,11 @@ const GameProvider = ({ children }: GameProviderProps) => {
           setScoreHistory(scores);
         }
       });
-      fetchScoreLimitInfo(); // Refresh score limit info
     } else if (gameState !== 'playing') {
       // Reset timer initialized flag for non-playing states
       timerInitializedRef.current = false;
     }
-  }, [gameState, userId, fetchUserScores, setScoreHistory, defaultProfileId, resetTimer, startTimer, settings.timerSeconds, fetchScoreLimitInfo]);
+  }, [gameState, userId, fetchUserScores, setScoreHistory, defaultProfileId, resetTimer, startTimer, settings.timerSeconds]);
 
   // Update timer when settings change - but only if we're not already playing
   useEffect(() => {
@@ -181,7 +134,7 @@ const GameProvider = ({ children }: GameProviderProps) => {
     const finalTypingSpeed = typingSpeedRef.current;
     
     // Only save score on timeout (normal game end) and when user is logged in
-    if (reason === 'timeout' && isLoggedIn && defaultProfileId && willSaveScoreRef.current) {
+    if (reason === 'timeout' && isLoggedIn && defaultProfileId) {
       try {
         // Calculate metrics with updated logic and variables
         // Now assuming typing speed represents seconds per typing problem
@@ -226,29 +179,14 @@ const GameProvider = ({ children }: GameProviderProps) => {
 
   const value: GameContextType = {
     gameState,
-    setGameState: (state) => {
-      if (state === 'warmup-countdown') {
-        transitionToWarmup();
-      } else {
-        setGameState(state);
-      }
-    },
-    settings: {
-      operation: settings.operation,
-      range: settings.range,
-      timerSeconds: settings.timerSeconds,
-      allowNegatives: settings.allowNegatives || false,
-      focusNumber: settings.focusNumber || null,
-      useLearnerMode: settings.useLearnerMode || false,
-      useCustomNumberPad: settings.useCustomNumberPad || false,
-      typingSpeedAdjustment: settings.typingSpeedAdjustment || false
-    },
+    setGameState,
+    settings,
     updateSettings,
     score,
     incrementScore,
     resetScore,
     currentProblem,
-    generateNewProblem: () => generateNewProblem(),
+    generateNewProblem,
     timeLeft,
     setTimeLeft: resetTimer, 
     userAnswer,
@@ -263,24 +201,11 @@ const GameProvider = ({ children }: GameProviderProps) => {
     userId,
     endGame,
     typingSpeed,
-    setTypingSpeed,
-    willSaveScore: willSaveScoreRef.current
+    setTypingSpeed
   };
 
   return (
     <GameContext.Provider value={value}>
-      {showScoreLimitModal && (
-        <PaywallModal
-          open={showScoreLimitModal}
-          onOpenChange={setShowScoreLimitModal}
-          title="Score Limit Reached"
-          description={`You've reached the limit of ${scoreLimit} saved scores for your free account. Upgrade to save unlimited scores!`}
-          cancelText="Continue without saving"
-          onCancel={handleStartGameWithoutSaving}
-          actionText="Upgrade"
-          onAction={handleStartGameWithSaving}
-        />
-      )}
       {children}
     </GameContext.Provider>
   );

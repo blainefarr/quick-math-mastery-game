@@ -1,38 +1,42 @@
 
-import { ReactNode } from 'react';
-import { UserScore, Operation, ProblemRange, MathProblem } from '@/types';
+import { ReactNode } from "react";
+import { GameSettings, Operation, Problem, ProblemRange, UserScore } from "@/types";
 
 export type GameState = 'selection' | 'warmup-countdown' | 'warmup' | 'countdown' | 'playing' | 'ended';
-
-export type GameEndReason = 'timeout' | 'manual' | 'error';
-
-export interface GameProviderProps {
-  children: ReactNode;
-}
+export type GameEndReason = 'timeout' | 'manual';
 
 export interface GameContextType {
+  // Game state
   gameState: GameState;
   setGameState: (state: GameState) => void;
-  settings: {
-    operation: Operation;
-    range: ProblemRange;
-    timerSeconds: number;
-    allowNegatives: boolean;
-    focusNumber: number | null;
-    useLearnerMode: boolean;
-    useCustomNumberPad: boolean;
-    typingSpeedAdjustment?: boolean;
-  };
-  updateSettings: (settings: Partial<GameContextType['settings']>) => void;
+  
+  // Game settings
+  settings: GameSettings;
+  updateSettings: (settings: Partial<GameSettings>) => void;
+  
+  // Game data
   score: number;
   incrementScore: () => void;
   resetScore: () => void;
-  currentProblem: MathProblem;
-  generateNewProblem: () => MathProblem;
+  
+  // Problem management
+  currentProblem: Problem | null;
+  generateNewProblem: (
+    operation: Operation, 
+    range: ProblemRange, 
+    allowNegatives?: boolean, 
+    focusNumber?: number | null
+  ) => Problem;
+  
+  // Timer
   timeLeft: number;
-  setTimeLeft: (seconds: number) => void;
+  setTimeLeft: (time: number | ((prev: number) => number)) => void;
+  
+  // User answer
   userAnswer: string;
   setUserAnswer: (answer: string) => void;
+  
+  // Score history
   scoreHistory: UserScore[];
   saveScore: (
     score: number, 
@@ -41,24 +45,31 @@ export interface GameContextType {
     timerSeconds: number,
     focusNumber?: number | null,
     allowNegatives?: boolean,
-    typingSpeed?: number | null
+    typingSpeed?: number
   ) => Promise<boolean>;
+  
+  // Auth state (now pulled from AuthContext)
   isLoggedIn: boolean;
   username: string;
+  
+  // Focus number
   focusNumber: number | null;
   setFocusNumber: (num: number | null) => void;
-  getIsHighScore: (
-    score: number, 
-    operation: Operation, 
-    range: ProblemRange
-  ) => boolean;
+  
+  // Check for high score
+  getIsHighScore: (newScore: number, operation: Operation, range: ProblemRange) => boolean;
+  
+  // User ID (from AuthContext)
   userId: string | null;
+  
+  // Game end handler
   endGame: (reason: GameEndReason) => Promise<void>;
+
+  // Typing speed
   typingSpeed: number | null;
-  setTypingSpeed: (speed: number | null) => void;
-  willSaveScore: boolean;
+  setTypingSpeed: (speed: number) => void;
 }
 
-export interface GameCardProps {
-  game: UserScore;
+export interface GameProviderProps {
+  children: ReactNode;
 }

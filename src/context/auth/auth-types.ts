@@ -51,10 +51,6 @@ export interface AuthContextType {
   isSubscriptionActive: () => boolean;
   canSaveScores: () => Promise<boolean>;
   checkAndRefreshSubscription: () => Promise<void>;
-  // Profile limit methods
-  canCreateProfile: () => Promise<boolean>;
-  profileCount: number;
-  maxProfiles: number | null;
 }
 
 export interface AuthProviderProps {

@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import AuthContext from './AuthContext';
 import { AuthContextType, AuthProviderProps } from './auth-types';
 import { useAuthState } from './hooks/useAuthState';
@@ -11,8 +11,6 @@ import { supabase } from '@/integrations/supabase/client';
 
 const AuthProvider = ({ children }: AuthProviderProps) => {
   const authState = useAuthState();
-  const [profileCount, setProfileCount] = useState(0);
-  const [maxProfiles, setMaxProfiles] = useState<number | null>(null);
   
   // Initialize auth events and session handling
   useAuthEvents(authState);
@@ -26,68 +24,8 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
   const refreshProfileHandler = async () => {
     // Call refreshUserProfile and ignore the return value
     await refreshUserProfile(authState);
-    
-    // Also refresh profile limits
-    if (authState.userId) {
-      fetchProfileLimits(authState.userId, authState.planType);
-    }
-    
     // Return void as expected by the type definition
     return;
-  };
-
-  // Fetch profile limits based on plan
-  const fetchProfileLimits = async (userId: string, planType: string) => {
-    try {
-      // Get max profiles from plan
-      const { data: planData } = await supabase
-        .from('plans')
-        .select('max_profiles')
-        .eq('plan_type', planType)
-        .maybeSingle();
-      
-      // Get current profile count
-      const { count } = await supabase
-        .from('profiles')
-        .select('*', { count: 'exact', head: true })
-        .eq('account_id', userId);
-      
-      setMaxProfiles(planData?.max_profiles || null);
-      setProfileCount(count || 0);
-      
-    } catch (error) {
-      console.error('Error fetching profile limits:', error);
-    }
-  };
-
-  // Check if the user can create more profiles
-  const canCreateProfile = async () => {
-    if (!authState.userId) return false;
-    
-    try {
-      // Get the current plan details
-      const { data: planData } = await supabase
-        .from('plans')
-        .select('max_profiles')
-        .eq('plan_type', authState.planType)
-        .single();
-      
-      if (!planData) return false;
-      
-      // If there's no limit (null means unlimited)
-      if (planData.max_profiles === null) return true;
-      
-      // Get current profile count
-      const { count } = await supabase
-        .from('profiles')
-        .select('*', { count: 'exact', head: true })
-        .eq('account_id', authState.userId);
-        
-      return count < planData.max_profiles;
-    } catch (error) {
-      console.error('Error checking if user can create profile:', error);
-      return false;
-    }
   };
 
   // Check if subscription is active
@@ -174,9 +112,6 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
         authState.setSubscriptionStatus(account.subscription_status || 'free');
         authState.setPlanExpiresAt(account.plan_expires_at);
         
-        // Also update profile limits
-        fetchProfileLimits(authState.userId, account.plan_type || 'free');
-        
         // If we already have a non-free plan, we can stop here
         if (account.plan_type !== 'free' && account.subscription_status !== 'free') {
           return;
@@ -200,11 +135,6 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
           if (checkData.plan_type) authState.setPlanType(checkData.plan_type);
           if (checkData.subscription_status) authState.setSubscriptionStatus(checkData.subscription_status);
           if (checkData.plan_expires_at) authState.setPlanExpiresAt(checkData.plan_expires_at);
-          
-          // Update profile limits with the new plan type
-          if (authState.userId && checkData.plan_type) {
-            fetchProfileLimits(authState.userId, checkData.plan_type);
-          }
         }
       } catch (apiError) {
         console.error('Error calling check-subscription function:', apiError);
@@ -239,11 +169,7 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
     // Subscription methods
     isSubscriptionActive,
     canSaveScores,
-    checkAndRefreshSubscription,
-    // Profile limit methods
-    canCreateProfile,
-    profileCount,
-    maxProfiles
+    checkAndRefreshSubscription
   };
 
   return (
