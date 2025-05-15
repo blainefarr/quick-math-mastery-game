@@ -1,353 +1,143 @@
-
-import { useEffect } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { AuthStateType } from '../auth-types';
 import { fetchAndSaveAccountProfile } from '../utils/accountProfile';
-import { AuthChangeEvent, Session } from '@supabase/supabase-js';
-import { toast } from 'sonner';
-import { useNavigate } from 'react-router-dom';
+import { AuthStateType } from '../auth-types';
+import { Session } from '@supabase/supabase-js';
 import logger from '@/utils/logger';
 
-// Extend the logger type to include warn method that we're using
-declare module '@/utils/logger' {
-  interface Logger {
-    auth: {
-      debug: (message: string, ...args: any[]) => void;
-      info: (message: string, ...args: any[]) => void;
-      warn: (message: string, ...args: any[]) => void;
-      error: (message: string, ...args: any[]) => void;
-    };
-    warn: (message: string, ...args: any[]) => void;
-    error: (message: string, ...args: any[]) => void;
-  }
-}
-
-// Optimized timing constants
-const AUTH_TIMEOUT_MS = 5000; // 5s timeout for auth operations
-const MAX_PROFILE_RETRY_ATTEMPTS = 3;
-const PROFILE_RETRY_DELAY_MS = 1000;
-const INITIAL_FETCH_DELAY_MS = 300;
-const NETWORK_RETRY_DELAY_MS = 2000;
-const MAX_AUTH_RETRIES = 3;
-
-// Add debounce and deduplication control
-let isCurrentlyFetching = false;
-let lastFetchedUserId: string | null = null;
-let fetchTimeout: NodeJS.Timeout | null = null;
-let authRetryCount = 0;
-
+// This hook handles authentication events and session state
 export const useAuthEvents = (authState: AuthStateType) => {
-  const { 
-    userId,
-    isNewSignup,
-    retryAttempts,
-    setIsLoggedIn,
-    setUserId,
-    setUsername,
-    setDefaultProfileId,
-    setHasMultipleProfiles,
-    setIsLoadingProfile,
-    setIsNewSignup,
-    setRetryAttempts
-  } = authState;
+  // Keep track of auth subscription for cleanup
+  const authSubscription = useRef<{ data: { subscription: { unsubscribe: () => void } } } | null>(null);
+  // Track if we're initializing
+  const isInitializing = useRef(true);
+  // Track session to avoid processing the same session multiple times
+  const [currentSession, setCurrentSession] = useState<Session | null>(null);
+  
+  // Set up auth event listeners and retrieve initial session
+  useEffect(() => {
+    // Track if the component is still mounted
+    let isMounted = true;
 
-  const navigate = useNavigate();
-
-  // Helper function for safe authentication operations with error handling and retries
-  const safeAuthOperation = async (operation: () => Promise<any>) => {
-    try {
-      return await operation();
-    } catch (error) {
-      logger.error('Network error during authentication operation:', error);
-      
-      // Increment retry count for this operation
-      authRetryCount++;
-      
-      if (authRetryCount <= MAX_AUTH_RETRIES) {
-        logger.info(`Retrying auth operation (${authRetryCount}/${MAX_AUTH_RETRIES})...`);
-        
-        // Schedule retry after delay
-        setTimeout(async () => {
-          try {
-            await operation();
-            // Reset retry count on success
-            authRetryCount = 0;
-          } catch (retryError) {
-            logger.error('Failed auth retry:', retryError);
-            if (authRetryCount >= MAX_AUTH_RETRIES) {
-              toast.error('Network error. Please check your connection and try again.');
-              setIsLoadingProfile(false);
-            }
-          }
-        }, NETWORK_RETRY_DELAY_MS * authRetryCount);
-      } else {
-        // Reset for future operations
-        authRetryCount = 0;
-        setIsLoadingProfile(false);
-        toast.error('Authentication error. Please refresh the page and try again.');
-      }
-      
-      return null;
-    }
-  };
-
-  // Helper function to debounce profile fetching with error handling
-  const debounceFetchProfile = (user_id: string) => {
-    if (fetchTimeout) {
-      clearTimeout(fetchTimeout);
-    }
-    
-    // Don't fetch if already fetching same user
-    if (isCurrentlyFetching && lastFetchedUserId === user_id) {
-      logger.auth?.debug('Skipping duplicate profile fetch for user', user_id);
-      return;
-    }
-    
-    fetchTimeout = setTimeout(async () => {
-      if (isCurrentlyFetching) {
-        logger.auth?.debug('Another fetch already in progress, skipping');
-        return;
-      }
-      
-      logger.auth?.debug('Fetching profile for user', user_id);
-      isCurrentlyFetching = true;
-      lastFetchedUserId = user_id;
-      
+    // Initialize auth state and event listeners
+    const initializeAuth = async () => {
       try {
-        await fetchAndSaveAccountProfile(user_id, authState);
-      } catch (error) {
-        logger.error('Error fetching profile:', error);
-        // If network error, automatically retry once
-        setTimeout(async () => {
-          try {
-            await fetchAndSaveAccountProfile(user_id, authState);
-          } catch (retryError) {
-            logger.error('Error on profile fetch retry:', retryError);
-            toast.error('Failed to load your profile. Please check your connection.');
-          } finally {
-            isCurrentlyFetching = false;
-          }
-        }, NETWORK_RETRY_DELAY_MS);
-      } finally {
-        isCurrentlyFetching = false;
-        fetchTimeout = null;
-      }
-    }, INITIAL_FETCH_DELAY_MS);
-  };
-
-  // Retry profile fetch for new signups - optimized
-  useEffect(() => {
-    if (isNewSignup && userId && retryAttempts < MAX_PROFILE_RETRY_ATTEMPTS) {
-      const timer = setTimeout(async () => {
-        logger.auth?.info(`Profile retry attempt ${retryAttempts + 1}/${MAX_PROFILE_RETRY_ATTEMPTS} for new signup...`);
+        logger.debug('Initializing auth events');
         
-        // Prevent duplicate fetches
-        if (isCurrentlyFetching) return;
-        isCurrentlyFetching = true;
-        
-        try {
-          // Use the enhanced function to fetch account and profile
-          const success = await fetchAndSaveAccountProfile(userId, authState);
+        // Step 1: Subscribe to auth changes FIRST (important for event order)
+        const { data } = supabase.auth.onAuthStateChange(async (event, session) => {
+          // Keep all synchronous state updates here at the top
+          if (!isMounted) return;
           
-          if (success) {
-            logger.auth?.info('Successfully retrieved profile after retry!');
-            setRetryAttempts(0);
-            setIsNewSignup(false);
-          } else {
-            setRetryAttempts(prev => prev + 1);
-            if (retryAttempts + 1 >= MAX_PROFILE_RETRY_ATTEMPTS) {
-              logger.error('Failed to retrieve profile after maximum retries');
-              toast.error('Failed to load profile. Please try refreshing the page.');
-              setIsNewSignup(false);
-              setRetryAttempts(0);
-            }
-          }
-        } catch (error) {
-          logger.error('Error during profile retry:', error);
-        } finally {
-          isCurrentlyFetching = false;
-        }
-      }, PROFILE_RETRY_DELAY_MS * (retryAttempts + 1)); // Increase delay with each retry
-      
-      return () => clearTimeout(timer);
-    }
-  }, [isNewSignup, userId, retryAttempts]);
-
-  // Auth initialization and event handling - optimized
-  useEffect(() => {
-    if (!logger.auth) {
-      // If logger.auth doesn't exist, create a simple substitute to prevent errors
-      (logger as any).auth = {
-        debug: logger.debug || console.debug,
-        info: logger.info || console.info,
-        warn: console.warn,
-        error: logger.error || console.error
-      };
-    }
-    
-    if (!logger.warn) {
-      // Add missing warn method
-      (logger as any).warn = console.warn;
-    }
-    
-    logger.auth?.debug('Initializing auth event listener');
-    let authTimeoutId: NodeJS.Timeout | null = null;
-    let initialSessionChecked = false;
-    
-    // Mark as loading profile when initializing
-    setIsLoadingProfile(true);
-    
-    // Set up auth timeout to prevent infinite loading state
-    const startAuthTimeout = () => {
-      // Clear any existing timeout
-      if (authTimeoutId) clearTimeout(authTimeoutId);
-      
-      // Set a new timeout
-      authTimeoutId = setTimeout(() => {
-        if (authState.isLoadingProfile) {
-          logger.warn('Auth operation timed out - resetting loading state');
-          setIsLoadingProfile(false);
-        }
-      }, AUTH_TIMEOUT_MS);
-    };
-    
-    // Start initial timeout
-    startAuthTimeout();
-    
-    // Handle auth state changes from Supabase with improved error handling
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event: AuthChangeEvent, session: Session | null) => {
-        logger.auth?.debug('Auth state changed:', event, session?.user?.id || 'no-user');
-        
-        // Reset timeout whenever auth state changes
-        startAuthTimeout();
-        
-        try {
-          // Handle PASSWORD_RECOVERY event
-          if (event === 'PASSWORD_RECOVERY') {
-            logger.auth?.info('PASSWORD_RECOVERY event detected in auth context');
-            // Navigate to reset password page
-            navigate('/reset-password');
+          // Log auth events for debugging
+          logger.debug(`Auth event: ${event}, user: ${session?.user?.id || 'none'}`);
+          
+          // Skip if this is the same session we already processed
+          if (session?.access_token === currentSession?.access_token) {
+            logger.debug('Skipping auth event for already processed session');
             return;
           }
           
-          if (event === 'SIGNED_OUT') {
-            logger.auth?.info('User signed out');
-            setIsLoggedIn(false);
-            setUserId(null);
-            setUsername('');
-            setDefaultProfileId(null);
-            setHasMultipleProfiles(false);
-            localStorage.removeItem('math_game_active_profile');
-            setIsLoadingProfile(false);
+          // Update the authentication state with new session
+          if (session?.user) {
+            // User is logged in
+            authState.setUserId(session.user.id);
+            authState.setIsLoggedIn(true);
             
-            // Clear timeout as we're done loading
-            if (authTimeoutId) clearTimeout(authTimeoutId);
-            return;
-          }
-          
-          // Handle all sign-in related events
-          if (['SIGNED_IN', 'TOKEN_REFRESHED', 'USER_UPDATED'].includes(event)) {
-            if (session?.user) {
-              logger.auth?.debug('User authenticated with event:', event, 'user:', session.user.id);
-              setIsLoggedIn(true);
-              setUserId(session.user.id);
+            // Save current session to avoid duplicate processing
+            setCurrentSession(session);
+            
+            // Additional user info fetching with setTimeout to avoid auth deadlock
+            setTimeout(async () => {
+              if (!isMounted) return;
               
-              // Debounce the fetch to avoid duplicate calls
-              debounceFetchProfile(session.user.id);
-            } else {
-              logger.auth?.debug('No user in session after auth event:', event);
-              setIsLoadingProfile(false);
-              
-              // Clear timeout as we're done loading
-              if (authTimeoutId) clearTimeout(authTimeoutId);
-            }
+              try {
+                // Get user profile data if authentication state changed
+                const success = await fetchAndSaveAccountProfile(
+                  session.user.id,
+                  authState,
+                  false,
+                  false
+                );
+                
+                // Handle failure to fetch profile
+                if (!success) {
+                  // Increment retry count
+                  authState.setRetryAttempts(prev => prev + 1);
+                  
+                  // If we've retried too many times, show an error or retry
+                  if (authState.retryAttempts >= 3) {
+                    logger.warn('Failed to fetch profile after multiple attempts');
+                  }
+                }
+              } catch (error) {
+                logger.error('Error during profile fetch after auth event:', error);
+              }
+            }, 0);
+            
+          } else {
+            // User is not logged in
+            authState.setUserId(null);
+            authState.setIsLoggedIn(false);
+            authState.setUsername('');
+            authState.setDefaultProfileId(null);
+            authState.setRetryAttempts(0);
+            setCurrentSession(null);
           }
-          // Skip INITIAL_SESSION handling in the auth event listener as we handle it separately
-          else if (['SIGNED_UP'].includes(event)) {
-            if (session?.user) {
-              logger.auth?.info('New user signup detected! Setting up retry mechanism...');
-              setIsLoggedIn(true);
-              setUserId(session.user.id);
-              setIsNewSignup(true);
-              setRetryAttempts(0);
-              // For new signups, we'll let the retry effect handle profile fetching
-              toast.success('Account created! Setting up your profile...');
-            }
-          }
-        } catch (error) {
-          logger.error('Error in auth state change handler:', error);
-          // Don't leave user in loading state on error
-          setIsLoadingProfile(false);
-        }
-      }
-    );
+        });
 
-    // Check for existing session on initial load with enhanced error handling
-    const checkExistingSession = async () => {
-      try {
-        logger.auth?.debug('Checking for existing session');
+        // Store subscription for cleanup
+        authSubscription.current = data;
         
-        // Use safe auth operation helper
-        const { data: { session } } = await safeAuthOperation(() => 
-          supabase.auth.getSession()
-        );
-        
-        initialSessionChecked = true;
+        // Step 2: Check initial session
+        const { data: { session } } = await supabase.auth.getSession();
         
         if (session?.user) {
-          logger.auth?.debug('Existing session found, user:', session.user.id);
-          setIsLoggedIn(true);
-          setUserId(session.user.id);
+          logger.debug(`Found existing session for user: ${session.user.id}`);
           
-          // Debounce the fetch to avoid duplicate calls
-          debounceFetchProfile(session.user.id);
+          // Update auth state for existing session
+          authState.setUserId(session.user.id);
+          authState.setIsLoggedIn(true);
+          setCurrentSession(session);
+          
+          // Get user profile data
+          setTimeout(async () => {
+            if (!isMounted) return;
+            
+            try {
+              // Fetch profile information
+              await fetchAndSaveAccountProfile(session.user.id, authState, false, false);
+            } catch (error) {
+              logger.error('Error fetching initial profile:', error);
+            } finally {
+              // Mark initialization as complete
+              isInitializing.current = false;
+            }
+          }, 0);
         } else {
-          logger.auth?.debug('No existing session found');
-          setIsLoggedIn(false);
-          setUserId(null);
-          setUsername('');
-          setDefaultProfileId(null);
-          setIsLoadingProfile(false);
-          
-          // Clear timeout as we're done loading
-          if (authTimeoutId) clearTimeout(authTimeoutId);
+          // No session found
+          logger.debug('No active session found');
+          authState.setIsLoggedIn(false);
+          isInitializing.current = false;
         }
       } catch (error) {
-        logger.error('Error checking session:', error);
-        setIsLoadingProfile(false);
-        
-        // Clear timeout as we're done loading
-        if (authTimeoutId) clearTimeout(authTimeoutId);
+        logger.error('Auth initialization error:', error);
+        isInitializing.current = false;
       }
     };
-    
-    checkExistingSession();
 
-    // Add network status monitoring to detect connectivity issues
-    const handleOnline = () => {
-      logger.auth?.info('Network connection restored, refreshing auth state');
-      // Refresh auth state when connection is restored
-      checkExistingSession();
-    };
+    // Run initialization
+    initializeAuth();
 
-    const handleOffline = () => {
-      logger.auth?.warn('Network connection lost');
-      // Notify user about connection issues
-      toast.error('Network connection lost. Authentication may be affected.');
-    };
-
-    // Add network status event listeners
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-
+    // Cleanup on unmount
     return () => {
-      subscription.unsubscribe();
-      if (authTimeoutId) clearTimeout(authTimeoutId);
-      if (fetchTimeout) clearTimeout(fetchTimeout);
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
-      logger.auth?.debug('Auth event listener cleaned up');
+      isMounted = false;
+      
+      // Unsubscribe from auth events
+      if (authSubscription.current?.data?.subscription) {
+        authSubscription.current.data.subscription.unsubscribe();
+        logger.debug('Unsubscribed from auth events');
+      }
     };
-  }, []);
+  }, []); // Only run on initial mount
 };

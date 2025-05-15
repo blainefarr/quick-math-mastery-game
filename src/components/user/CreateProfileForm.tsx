@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
@@ -24,7 +23,6 @@ import {
 import { useAuth } from '@/context/auth/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Database } from '@/integrations/supabase/types';
 
 const formSchema = z.object({
   name: z.string().min(2, {
@@ -79,37 +77,45 @@ export function CreateProfileForm({
 
     try {
       if (isEditing && profileId) {
-        // Update existing profile
+        // Update existing profile - fix type errors with explicit typing
+        const updateData: { name: string; grade: string | null } = {
+          name: values.name,
+          grade: values.grade || null,
+        };
+
         const { data, error } = await supabase
           .from('profiles')
-          .update({
-            name: values.name,
-            grade: values.grade || null,
-          } as any)
+          .update(updateData as any)
           .eq('id', profileId as any)
           .select();
 
         if (error) throw error;
         
         toast.success("Profile updated successfully");
-        onSuccess(data?.[0]);
+        if (data && data.length > 0) {
+          onSuccess(data[0]);
+        }
       } else {
-        // Create new profile - removed is_default field which doesn't exist
+        // Create new profile - fix type errors with explicit typing
+        const insertData = {
+          account_id: userId,
+          name: values.name,
+          grade: values.grade || null,
+          is_active: false,
+          is_owner: false
+        };
+
         const { data, error } = await supabase
           .from('profiles')
-          .insert([{
-            account_id: userId,
-            name: values.name,
-            grade: values.grade || null,
-            is_active: false,
-            is_owner: false
-          } as any])
+          .insert([insertData as any])
           .select();
 
         if (error) throw error;
         
         toast.success("Profile created successfully");
-        onSuccess(data?.[0]);
+        if (data && data.length > 0) {
+          onSuccess(data[0]);
+        }
       }
     } catch (error) {
       console.error('Error saving profile:', error);

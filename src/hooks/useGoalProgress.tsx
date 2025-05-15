@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/auth/useAuth';
 import { GoalProgress, Operation, GoalLevel } from '@/types';
 import { toast } from 'sonner';
+import logger from '@/utils/logger';
 
 export const useGoalProgress = () => {
   const [goals, setGoals] = useState<GoalProgress[]>([]);
@@ -25,22 +26,34 @@ export const useGoalProgress = () => {
       const { data, error } = await supabase
         .from('goal_progress')
         .select('*')
-        .eq('profile_id', defaultProfileId);
+        .eq('profile_id', defaultProfileId as any);
       
       if (error) {
         throw error;
       }
       
+      if (!data) {
+        logger.warn('No goal data returned from database');
+        setGoals([]);
+        setIsLoading(false);
+        return;
+      }
+      
       // Properly type-cast the operations from the database to match our Operation type
-      const typedGoals: GoalProgress[] = (data || []).map(item => ({
-        ...item,
+      const typedGoals: GoalProgress[] = data.map(item => ({
         operation: item.operation as Operation,
-        level: item.level as GoalLevel
+        level: item.level as GoalLevel,
+        profile_id: item.profile_id,
+        range: item.range,
+        best_score: item.best_score,
+        attempts: item.attempts,
+        last_attempt: item.last_attempt,
+        last_level_up: item.last_level_up
       }));
       
       setGoals(typedGoals);
     } catch (err) {
-      console.error('Error fetching goals:', err);
+      logger.error('Error fetching goals:', err);
       setError('Failed to load goals data');
       toast.error('Failed to load goals data');
     } finally {
@@ -74,7 +87,8 @@ export const useGoalProgress = () => {
       const previousLevel = existingGoal?.level || 'learning';
       const leveledUp = previousLevel !== level && level !== 'learning';
       
-      const goalData = {
+      // Explicitly type the goal data for insert/update
+      const goalData: Record<string, any> = {
         profile_id: defaultProfileId,
         operation,
         range,
@@ -100,7 +114,7 @@ export const useGoalProgress = () => {
       
       return { updated: true, leveledUp, newLevel: level };
     } catch (err) {
-      console.error('Error updating goal progress:', err);
+      logger.error('Error updating goal progress:', err);
       toast.error('Failed to update goal progress');
       return null;
     }

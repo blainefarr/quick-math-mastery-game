@@ -1,6 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { ACTIVE_PROFILE_KEY } from './profileUtils';
+import logger from '@/utils/logger';
 
 /**
  * Complete signup process that ensures account and profile creation
@@ -57,7 +58,7 @@ export const completeSignUp = async (email: string, password: string, displayNam
       .eq('id', userId as any)  // In your schema, account.id = user.id
       .maybeSingle();
     
-    if (!accountError && accountData && 'id' in accountData) {
+    if (!accountError && accountData) {
       accountId = accountData.id;
       break;
     }
@@ -87,7 +88,7 @@ export const completeSignUp = async (email: string, password: string, displayNam
         .eq('account_id', userId as any)
         .maybeSingle();
       
-      if (!profileError && profileData && 'id' in profileData) {
+      if (!profileError && profileData) {
         profileCreated = true;
         profileId = profileData.id;
         
@@ -96,14 +97,17 @@ export const completeSignUp = async (email: string, password: string, displayNam
         
         // IMPORTANT: Update the profile name if it doesn't match the display name
         // This ensures the profile name matches what the user entered during signup
-        if ('name' in profileData && profileData.name !== displayName) {
+        if (profileData.name !== displayName) {
+          // Use explicit typing for updates
+          const updateData = { name: displayName };
+          
           const { error: updateError } = await supabase
             .from('profiles')
-            .update({ name: displayName })
-            .eq('id', profileData.id as any);
+            .update(updateData as any)
+            .eq('id', profileData.id);
             
           if (updateError) {
-            console.error('Failed to update profile name:', updateError);
+            logger.error('Failed to update profile name:', updateError);
           }
         }
         
@@ -113,6 +117,7 @@ export const completeSignUp = async (email: string, password: string, displayNam
       retryCount++;
     } catch (error) {
       retryCount++;
+      logger.error('Error checking for profile:', error);
     }
   }
   

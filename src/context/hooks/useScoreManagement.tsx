@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { UserScore, Operation, ProblemRange } from '@/types';
@@ -55,8 +54,10 @@ export const useScoreManagement = (userId: string | null) => {
       }
       
       if (data) {
-        setScoreSaveLimit(data.max_saved_scores);
-        logger.debug(`Score save limit for ${planType} plan: ${data.max_saved_scores}`);
+        // Use safe property access with optional chaining
+        const maxSavedScores = data.max_saved_scores;
+        setScoreSaveLimit(maxSavedScores);
+        logger.debug(`Score save limit for ${planType} plan: ${maxSavedScores}`);
       }
     } catch (err) {
       logger.error('Error fetching score save limit:', err);
@@ -79,7 +80,7 @@ export const useScoreManagement = (userId: string | null) => {
         return;
       }
       
-      if (data) {
+      if (data && data.score_save_count !== undefined) {
         setCurrentScoreSaveCount(data.score_save_count);
         logger.debug({ message: 'Current score save count', count: data.score_save_count });
       }
@@ -87,8 +88,6 @@ export const useScoreManagement = (userId: string | null) => {
       logger.error('Error fetching score save count:', err);
     }
   }, [userId]);
-
-  // Function to increment score save count is no longer needed as it's handled by the database function
 
   // Fetch the user scores based on profile ID
   const fetchUserScores = useCallback(async () => {
@@ -119,20 +118,26 @@ export const useScoreManagement = (userId: string | null) => {
         return [];
       }
 
-      logger.debug({ message: 'Retrieved scores data', count: data?.length || 0 });
-      const transformedData: UserScore[] = (data || []).map(item => ({
+      if (!Array.isArray(data)) {
+        logger.error('Unexpected response format:', data);
+        toast.error('Failed to load scores: unexpected data format');
+        return [];
+      }
+
+      logger.debug({ message: 'Retrieved scores data', count: data.length });
+      const transformedData: UserScore[] = data.map(item => ({
         score: item.score,
         operation: item.operation as Operation,
         range: {
-          min1: item.min1,
-          max1: item.max1,
-          min2: item.min2,
-          max2: item.max2,
+          min1: item.min1 ?? 0,
+          max1: item.max1 ?? 0,
+          min2: item.min2 ?? 0,
+          max2: item.max2 ?? 0,
         },
         date: item.date,
-        duration: item.duration,
-        focusNumber: item.focus_number,
-        allowNegatives: item.allow_negatives
+        duration: item.duration ?? 60,
+        focusNumber: item.focus_number ?? null,
+        allowNegatives: item.allow_negatives ?? false
       }));
 
       setScoreHistory(transformedData);
@@ -180,7 +185,10 @@ export const useScoreManagement = (userId: string | null) => {
         .eq('plan_type', planType as any)
         .single();
       
-      if (planError || !planData) return { allowed: false, limitReached: false };
+      if (planError || !planData) {
+        logger.error('Error fetching plan details:', planError);
+        return { allowed: false, limitReached: false };
+      }
       
       // If the plan allows saving scores
       if (planData.can_save_score) {
@@ -190,6 +198,7 @@ export const useScoreManagement = (userId: string | null) => {
         // Update current score save count
         await fetchCurrentScoreSaveCount();
         
+        // Log the current count and limit
         logger.debug({ 
           message: "Score limit check", 
           currentCount: currentScoreSaveCount, 
@@ -210,7 +219,6 @@ export const useScoreManagement = (userId: string | null) => {
     }
   }, [userId, planType, currentScoreSaveCount, fetchCurrentScoreSaveCount]);
 
-  // Updated to use the secure submit_score function with proper typing
   const saveScore = useCallback(async (
     score: number, 
     operation: Operation, 

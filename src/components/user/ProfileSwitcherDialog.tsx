@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Card } from '@/components/ui/card';
@@ -101,7 +100,7 @@ export function ProfileSwitcherDialog({
         return;
       }
       
-      if (data && 'max_profiles' in data) {
+      if (data && data.max_profiles !== undefined) {
         setProfileLimit(data.max_profiles);
       }
     } catch (err) {
@@ -140,12 +139,17 @@ export function ProfileSwitcherDialog({
       
       // Make sure data is an array before mapping
       if (Array.isArray(data)) {
-        const processedProfiles = data.map(profile => ({
-          ...profile,
+        const processedProfiles: Profile[] = data.map(profile => ({
+          id: profile.id,
+          name: profile.name || '',
+          grade: profile.grade || undefined,
+          is_active: Boolean(profile.is_active),
+          created_at: profile.created_at,
+          is_owner: Boolean(profile.is_owner),
           // Mark as active if it matches the active profile ID
           active: profile.id === activeProfileId
         }));
-        setProfiles(processedProfiles as Profile[]);
+        setProfiles(processedProfiles);
       } else {
         setProfiles([]);
       }
@@ -191,7 +195,7 @@ export function ProfileSwitcherDialog({
       // Refresh user profile in the auth context
       await refreshUserProfile();
 
-      // Close the dialog and ensure cleanup - fix for issue #1
+      // Close the dialog and ensure cleanup
       onOpenChange(false);
 
       // Extra cleanup to ensure no modal backdrop issues
@@ -362,7 +366,7 @@ export function ProfileSwitcherDialog({
         </DialogContent>
       </Dialog>
       
-      {/* Profile Limit Paywall Modal - Add the missing onCancel prop */}
+      {/* Profile Limit Paywall Modal */}
       <PaywallModal
         open={showPaywallModal}
         onOpenChange={setShowPaywallModal}
