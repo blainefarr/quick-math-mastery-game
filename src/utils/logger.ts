@@ -29,7 +29,7 @@ const formatLog = (level: LogLevel, message: string | object, ...args: any[]) =>
 };
 
 // Logger object with methods for each log level
-const logger = {
+export default {
   debug: (message: string | object, ...args: any[]) => {
     if (SHOW_DEBUG) {
       formatLog('debug', message, ...args);
@@ -45,5 +45,3 @@ const logger = {
     formatLog('error', message, ...args);
   }
 };
-
-export default logger;
