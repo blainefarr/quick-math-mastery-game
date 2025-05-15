@@ -48,10 +48,13 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
     return false;
   };
   
-  // Check if the user can save scores
+  // Check if the user can save scores with improved error handling
   const canSaveScores = async () => {
     // If not logged in, cannot save scores
-    if (!authState.isLoggedIn) return false;
+    if (!authState.isLoggedIn || !authState.userId) {
+      logger.debug('canSaveScores: Not logged in');
+      return false;
+    }
     
     try {
       // Get the current plan details
@@ -102,6 +105,7 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
             
             // Make sure both properties exist before comparing
             if (scoreSaveCount !== undefined && maxSavedScores !== undefined) {
+              logger.debug(`Score save check: ${scoreSaveCount}/${maxSavedScores}`);
               return scoreSaveCount < maxSavedScores;
             }
           }
@@ -118,7 +122,10 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
   // Enhanced check and refresh subscription details with better error handling
   // Fixed to return void instead of boolean
   const checkAndRefreshSubscription = async (): Promise<void> => {
-    if (!authState.userId) return;
+    if (!authState.userId) {
+      logger.debug('checkAndRefreshSubscription: No user ID');
+      return;
+    }
     
     try {
       logger.debug("Checking subscription status for user: " + authState.userId);

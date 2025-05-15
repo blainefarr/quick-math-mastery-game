@@ -4,6 +4,7 @@ import { Label } from "@/components/ui/label";
 import { LeaderboardFilters as LeaderboardFiltersType } from "@/hooks/useLeaderboard";
 import { Operation } from "@/types";
 import { useCallback } from "react";
+import logger from "@/utils/logger";
 
 type Props = {
   filters: LeaderboardFiltersType;
@@ -37,11 +38,13 @@ const RANGES = [
 export const LeaderboardFilters = ({ filters, onFilterChange, className = '' }: Props) => {
   // Memoized operation change handler
   const handleOperationChange = useCallback((value: Operation) => {
+    logger.debug(`Changing operation filter to: ${value}`);
     onFilterChange({ operation: value });
   }, [onFilterChange]);
 
   // Memoized range change handler
   const handleRangeChange = useCallback((label: string) => {
+    logger.debug(`Changing range filter to: ${label}`);
     const selectedRange = RANGES.find(r => r.label === label);
     if (selectedRange) {
       onFilterChange({ 
@@ -55,6 +58,7 @@ export const LeaderboardFilters = ({ filters, onFilterChange, className = '' }: 
 
   // Memoized grade change handler
   const handleGradeChange = useCallback((value: string) => {
+    logger.debug(`Changing grade filter to: ${value}`);
     onFilterChange({ grade: value === "all" ? null : value });
   }, [onFilterChange]);
   

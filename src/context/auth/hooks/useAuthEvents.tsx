@@ -19,19 +19,24 @@ export const useAuthEvents = (authState: AuthStateType) => {
   useEffect(() => {
     // Track if the component is still mounted
     let isMounted = true;
+    let profileFetchTimeout: NodeJS.Timeout | null = null;
 
     // Initialize auth state and event listeners
     const initializeAuth = async () => {
       try {
         logger.debug('Initializing auth events');
         
-        // Step 1: Subscribe to auth changes FIRST (important for event order)
+        // Step 1: Create a stable identity for this auth session to deduplicate events
+        const clientId = `client_${Math.random().toString(36).substring(2, 15)}`;
+        logger.debug(`Auth client initialized with ID: ${clientId}`);
+        
+        // Step 2: Subscribe to auth changes FIRST (important for event order)
         const { data } = supabase.auth.onAuthStateChange(async (event, session) => {
           // Keep all synchronous state updates here at the top
           if (!isMounted) return;
           
           // Log auth events for debugging
-          logger.debug(`Auth event: ${event}, user: ${session?.user?.id || 'none'}`);
+          logger.debug(`Auth event: ${event}, user: ${session?.user?.id || 'none'}, client: ${clientId}`);
           
           // Skip if this is the same session we already processed
           if (session?.access_token === currentSession?.access_token) {
@@ -48,11 +53,17 @@ export const useAuthEvents = (authState: AuthStateType) => {
             // Save current session to avoid duplicate processing
             setCurrentSession(session);
             
+            // Cancel any existing profile fetch timeout
+            if (profileFetchTimeout) {
+              clearTimeout(profileFetchTimeout);
+            }
+            
             // Additional user info fetching with setTimeout to avoid auth deadlock
-            setTimeout(async () => {
+            profileFetchTimeout = setTimeout(async () => {
               if (!isMounted) return;
               
               try {
+                logger.debug(`Fetching profile for user: ${session.user.id}, client: ${clientId}`);
                 // Get user profile data if authentication state changed
                 const success = await fetchAndSaveAccountProfile(
                   session.user.id,
@@ -74,7 +85,7 @@ export const useAuthEvents = (authState: AuthStateType) => {
               } catch (error) {
                 logger.error('Error during profile fetch after auth event:', error);
               }
-            }, 0);
+            }, 50); // Small delay to avoid auth deadlocks
             
           } else {
             // User is not logged in
@@ -90,11 +101,11 @@ export const useAuthEvents = (authState: AuthStateType) => {
         // Store subscription for cleanup - fixed type issue
         authSubscription.current = { data: { subscription: data.subscription } };
         
-        // Step 2: Check initial session
+        // Step 3: Check initial session
         const { data: { session } } = await supabase.auth.getSession();
         
         if (session?.user) {
-          logger.debug(`Found existing session for user: ${session.user.id}`);
+          logger.debug(`Found existing session for user: ${session.user.id}, client: ${clientId}`);
           
           // Update auth state for existing session
           authState.setUserId(session.user.id);
@@ -102,10 +113,15 @@ export const useAuthEvents = (authState: AuthStateType) => {
           setCurrentSession(session);
           
           // Get user profile data
-          setTimeout(async () => {
+          if (profileFetchTimeout) {
+            clearTimeout(profileFetchTimeout);
+          }
+          
+          profileFetchTimeout = setTimeout(async () => {
             if (!isMounted) return;
             
             try {
+              logger.debug(`Fetching initial profile for user: ${session.user.id}, client: ${clientId}`);
               // Fetch profile information
               await fetchAndSaveAccountProfile(session.user.id, authState, false, false);
             } catch (error) {
@@ -114,10 +130,10 @@ export const useAuthEvents = (authState: AuthStateType) => {
               // Mark initialization as complete
               isInitializing.current = false;
             }
-          }, 0);
+          }, 100); // Slightly longer delay for initial load
         } else {
           // No session found
-          logger.debug('No active session found');
+          logger.debug(`No active session found, client: ${clientId}`);
           authState.setIsLoggedIn(false);
           isInitializing.current = false;
         }
@@ -133,6 +149,11 @@ export const useAuthEvents = (authState: AuthStateType) => {
     // Cleanup on unmount
     return () => {
       isMounted = false;
+      
+      // Clear any pending timeouts
+      if (profileFetchTimeout) {
+        clearTimeout(profileFetchTimeout);
+      }
       
       // Unsubscribe from auth events
       if (authSubscription.current?.data?.subscription) {

@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { AuthStateType } from '../auth-types';
 import { ACTIVE_PROFILE_KEY } from './profileUtils';
 import { toast } from 'sonner';
+import logger from '@/utils/logger';
 
 // Track ongoing fetch operations to prevent duplicates
 let isFetchingProfile = false;
@@ -22,175 +23,211 @@ export const fetchAndSaveAccountProfile = async (
   isRetry = false
 ): Promise<boolean> => {
   if (!userId) {
+    logger.warn('fetchAndSaveAccountProfile called with no userId');
     return false;
   }
   
   // Prevent duplicate concurrent fetches
   if (isFetchingProfile) {
-    console.log('Already fetching profile, skipping this request');
+    logger.debug('Already fetching profile, skipping this request');
     return false;
   }
   
-  try {
-    isFetchingProfile = true;
-    
-    if (!isRetry) {
-      authState.setIsLoadingProfile(true);
-    }
-    
-    console.log('Fetching account and profile data for user:', userId);
-    
-    // Check current auth session before query
-    const { data: sessionData } = await supabase.auth.getSession();
-    
-    // Verify the session has our target user ID before proceeding
-    if (!sessionData.session || sessionData.session.user.id !== userId) {
-      // Try to refresh the session - optimized to avoid multiple refreshes
-      const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
-      if (refreshError) {
-        console.warn('Session refresh failed:', refreshError.message);
-        if (showToasts) {
-          toast.error('Session refresh failed');
+  // Use timeout to prevent hanging operations
+  const fetchPromise = new Promise<boolean>(async (resolve) => {
+    try {
+      isFetchingProfile = true;
+      
+      if (!isRetry) {
+        authState.setIsLoadingProfile(true);
+      }
+      
+      logger.debug(`Fetching account and profile data for user: ${userId}`);
+      
+      // Check current auth session before query
+      const { data: sessionData } = await supabase.auth.getSession();
+      
+      // Verify the session has our target user ID before proceeding
+      if (!sessionData.session || sessionData.session.user.id !== userId) {
+        // Try to refresh the session
+        logger.debug('Session mismatch, attempting refresh');
+        const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+        
+        if (refreshError) {
+          logger.warn(`Session refresh failed: ${refreshError.message}`);
+          if (showToasts) {
+            toast.error('Session refresh failed');
+          }
+          resolve(false);
+          return;
         }
-        return false;
+        
+        // If still no valid session, return false
+        if (!refreshData.session || refreshData.session.user.id !== userId) {
+          logger.warn(`Unable to get valid session for user: ${userId}`);
+          resolve(false);
+          return;
+        }
+        
+        logger.debug('Session refreshed successfully');
       }
       
-      // If still no valid session, return false
-      if (!refreshData.session || refreshData.session.user.id !== userId) {
-        console.warn('Unable to get valid session for user:', userId);
-        return false;
+      // Step 1: Check if account exists first (this is critical)
+      const { data: accountData, error: accountError } = await supabase
+        .from('accounts')
+        .select('id, name, plan_type, subscription_status, plan_expires_at')
+        .eq('id', userId as any)
+        .maybeSingle();
+        
+      if (accountError) {
+        logger.error(`Error fetching account: ${accountError.message}`);
+        if (showToasts && !isRetry) {
+          toast.error('Account not found');
+        }
+        resolve(false);
+        return;
       }
-    }
-    
-    // Step 1: Check if account exists first (this is critical)
-    const { data: accountData, error: accountError } = await supabase
-      .from('accounts')
-      .select('id, name, plan_type, subscription_status, plan_expires_at')
-      .eq('id', userId as any)
-      .maybeSingle();
       
-    if (accountError) {
-      console.error('Error fetching account:', accountError);
-      if (showToasts && !isRetry) {
-        toast.error('Account not found');
+      if (!accountData) {
+        logger.warn(`No account found for user ID: ${userId}`);
+        if (showToasts && !isRetry) {
+          toast.error('Account not found');
+        }
+        resolve(false);
+        return;
       }
-      return false;
-    }
-    
-    if (!accountData) {
-      console.warn('No account found for user ID:', userId);
-      if (showToasts && !isRetry) {
-        toast.error('Account not found');
+      
+      // Make sure id exists before using it
+      if (!('id' in accountData)) {
+        logger.warn(`Invalid account data format for user ID: ${userId}`);
+        resolve(false);
+        return;
       }
-      return false;
-    }
-    
-    // Make sure id exists before using it
-    if (!('id' in accountData)) {
-      console.warn('Invalid account data format for user ID:', userId);
-      return false;
-    }
-    
-    const accountId = accountData.id;
-    
-    // Update auth state with subscription information
-    if ('plan_type' in accountData) {
-      authState.setPlanType(accountData.plan_type || 'free');
-    }
-    if ('subscription_status' in accountData) {
-      authState.setSubscriptionStatus(accountData.subscription_status || 'free');
-    }
-    if ('plan_expires_at' in accountData) {
-      authState.setPlanExpiresAt(accountData.plan_expires_at);
-    }
-    
-    // Step 2: Get profiles for this account
-    const { data: profiles, error: profilesError } = await supabase
-      .from('profiles')
-      .select('id, name, is_active, is_owner, grade')
-      .eq('account_id', accountId as any)
-      .order('created_at', { ascending: false });
-    
-    if (profilesError) {
-      console.error('Error fetching profiles:', profilesError);
-      if (showToasts && !isRetry) {
-        toast.error('Failed to load user profiles');
+      
+      const accountId = accountData.id;
+      
+      // Update auth state with subscription information
+      if ('plan_type' in accountData) {
+        authState.setPlanType(accountData.plan_type || 'free');
       }
-      return false;
-    }
-    
-    if (!profiles || !Array.isArray(profiles) || profiles.length === 0) {
-      console.warn('No profiles found for account:', accountId);
-      if (showToasts && !isRetry) {
-        toast.error('No profiles found for your account');
+      if ('subscription_status' in accountData) {
+        authState.setSubscriptionStatus(accountData.subscription_status || 'free');
       }
-      return false;
-    }
-    
-    authState.setHasMultipleProfiles(profiles.length > 1);
-    
-    // Get stored profile ID or select one
-    const storedProfileId = localStorage.getItem(ACTIVE_PROFILE_KEY);
-    let selectedProfile = null;
-    
-    if (storedProfileId) {
-      selectedProfile = profiles.find(p => 'id' in p && p.id === storedProfileId);
-    }
-    
-    if (!selectedProfile) {
-      // Auto-select profile
-      if (profiles.length === 1) {
-        selectedProfile = profiles[0];
-      } else {
-        // Try to get owner profile
-        selectedProfile = profiles.find(p => 'is_owner' in p && p.is_owner === true);
-        if (!selectedProfile) {
-          // Use first profile
+      if ('plan_expires_at' in accountData) {
+        authState.setPlanExpiresAt(accountData.plan_expires_at);
+      }
+      
+      // Step 2: Get profiles for this account
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, name, is_active, is_owner, grade')
+        .eq('account_id', accountId as any)
+        .order('created_at', { ascending: false });
+      
+      if (profilesError) {
+        logger.error(`Error fetching profiles: ${profilesError.message}`);
+        if (showToasts && !isRetry) {
+          toast.error('Failed to load user profiles');
+        }
+        resolve(false);
+        return;
+      }
+      
+      if (!profiles || !Array.isArray(profiles) || profiles.length === 0) {
+        logger.warn(`No profiles found for account: ${accountId}`);
+        if (showToasts && !isRetry) {
+          toast.error('No profiles found for your account');
+        }
+        resolve(false);
+        return;
+      }
+      
+      logger.debug(`Found ${profiles.length} profile(s) for account: ${accountId}`);
+      authState.setHasMultipleProfiles(profiles.length > 1);
+      
+      // Get stored profile ID or select one
+      const storedProfileId = localStorage.getItem(ACTIVE_PROFILE_KEY);
+      let selectedProfile = null;
+      
+      if (storedProfileId) {
+        selectedProfile = profiles.find(p => 'id' in p && p.id === storedProfileId);
+        logger.debug(`Using stored profile ID: ${storedProfileId}, found: ${!!selectedProfile}`);
+      }
+      
+      if (!selectedProfile) {
+        // Auto-select profile
+        if (profiles.length === 1) {
           selectedProfile = profiles[0];
+          logger.debug('Auto-selecting single available profile');
+        } else {
+          // Try to get owner profile
+          selectedProfile = profiles.find(p => 'is_owner' in p && p.is_owner === true);
+          if (!selectedProfile) {
+            // Use first profile
+            selectedProfile = profiles[0];
+            logger.debug('Using first available profile (no owner found)');
+          } else {
+            logger.debug('Using owner profile');
+          }
+        }
+        
+        // Store selected profile
+        if (selectedProfile && 'id' in selectedProfile) {
+          localStorage.setItem(ACTIVE_PROFILE_KEY, selectedProfile.id);
         }
       }
       
-      // Store selected profile
       if (selectedProfile && 'id' in selectedProfile) {
-        localStorage.setItem(ACTIVE_PROFILE_KEY, selectedProfile.id);
+        // Use profile name as requested by the user
+        const profileName = selectedProfile.name || '';
+        logger.debug(`Setting user profile: ID ${selectedProfile.id}, name: ${profileName}`);
+        
+        authState.setDefaultProfileId(selectedProfile.id);
+        authState.setUsername(profileName);
+        authState.setIsLoadingProfile(false);
+        
+        // If this was a new signup and it's a retry, show success message
+        if (authState.isNewSignup && isRetry && showToasts) {
+          toast.success('Account created successfully!');
+          authState.setIsNewSignup(false);
+        }
+        
+        resolve(true);
+        return;
+      } else {
+        logger.warn('Could not find a valid profile');
+        if (showToasts && !isRetry) {
+          toast.error('Could not find a valid profile');
+        }
+        resolve(false);
+        return;
       }
-    }
-    
-    if (selectedProfile && 'id' in selectedProfile) {
-      // Use profile name as requested by the user
-      authState.setDefaultProfileId(selectedProfile.id);
-      authState.setUsername(selectedProfile.name || '');
-      authState.setIsLoadingProfile(false);
-      
-      // If this was a new signup and it's a retry, show success message
-      if (authState.isNewSignup && isRetry && showToasts) {
-        toast.success('Account created successfully!');
-        authState.setIsNewSignup(false);
-      }
-      
-      return true;
-    } else {
-      console.warn('Could not find a valid profile');
+    } catch (error: any) {
+      logger.error(`Error in fetchAndSaveAccountProfile: ${error?.message || 'Unknown error'}`);
       if (showToasts && !isRetry) {
-        toast.error('Could not find a valid profile');
+        toast.error('Error loading user data');
       }
-      return false;
+      resolve(false);
+    } finally {
+      if (!isRetry) {
+        authState.setIsLoadingProfile(false);
+      }
+      // Release the fetch lock after a short delay to prevent race conditions
+      setTimeout(() => {
+        isFetchingProfile = false;
+      }, 300);
     }
-  } catch (error) {
-    console.error('Error in fetchAndSaveAccountProfile:', error);
-    if (showToasts && !isRetry) {
-      toast.error('Error loading user data');
-    }
-    return false;
-  } finally {
-    if (!isRetry) {
-      authState.setIsLoadingProfile(false);
-    }
-    // Release the fetch lock after a short delay to prevent race conditions
+  });
+  
+  // Set up a timeout to prevent hanging operations
+  const timeoutPromise = new Promise<boolean>((resolve) => {
     setTimeout(() => {
-      isFetchingProfile = false;
-    }, 300);
-  }
+      logger.warn(`fetchAndSaveAccountProfile timed out after ${FETCH_TIMEOUT_MS}ms`);
+      resolve(false);
+    }, FETCH_TIMEOUT_MS);
+  });
+  
+  return Promise.race([fetchPromise, timeoutPromise]);
 };
 
 /**
@@ -200,7 +237,10 @@ export const refreshUserProfile = async (authState: AuthStateType): Promise<bool
   const { userId } = authState;
   
   if (!userId) {
+    logger.warn('refreshUserProfile called with no userId');
     return false;
   }
+  
+  logger.debug(`Refreshing user profile for: ${userId}`);
   return await fetchAndSaveAccountProfile(userId, authState, true);
 };
