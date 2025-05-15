@@ -55,11 +55,12 @@ export function SavedScoresPaywallModal({
       open={open}
       onOpenChange={onOpenChange}
       title="Score Save Limit Reached"
-      description={`Your current plan allows up to ${scoreSaveLimit} saved scores. You've used ${currentScoreSaveCount} saves. Upgrade your account to save more scores.`}
+      description={`Your current plan allows up to ${scoreSaveLimit} saved scores. Upgrade to save more scores.`}
       continueText="Continue without saving"
       cancelText="Upgrade"
       onContinue={handleContinueWithoutSaving}
       onCancel={handleUpgrade}
+      continueButtonClassName="hover:bg-none" // Remove hover effect
     />
   );
 }

@@ -22,7 +22,9 @@ const EndScreen = () => {
     getIsHighScore,
     isLoggedIn,
     setUserAnswer,
-    scoreHistory
+    scoreHistory,
+    hasSaveScoreLimitReached,
+    setShowScoreSavePaywall
   } = useGame();
   
   // Add state for calculated guest rank and loading state
@@ -129,6 +131,14 @@ const EndScreen = () => {
   }, []);
   
   const handleRestart = () => {
+    // Check if the user has reached their score save limit before restarting the game
+    if (isLoggedIn && planType === 'free' && hasSaveScoreLimitReached && hasSaveScoreLimitReached()) {
+      console.log('User has reached score save limit, showing paywall before restart');
+      setShowScoreSavePaywall(true);
+      return;
+    }
+    
+    // If they have not reached the limit or are on a paid plan, proceed normally
     resetScore();
     setTimeLeft(settings.timerSeconds);
     setUserAnswer(''); // Clear any previous answer
