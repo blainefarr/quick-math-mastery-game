@@ -12,6 +12,7 @@ import { ACTIVE_PROFILE_KEY } from '@/context/auth/utils/profileUtils';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { PaywallModal } from '../paywalls/PaywallModal';
 import { useNavigate } from 'react-router-dom';
+import logger from '@/utils/logger';
 
 interface Profile {
   id: string;
@@ -55,7 +56,7 @@ export function ProfileSwitcherDialog({
 
     // Don't show dialog for new signups
     if (isNewSignup) {
-      console.log('Not showing profile switcher: new signup in progress');
+      logger.debug('Not showing profile switcher: new signup in progress');
       onOpenChange(false);
       return;
     }
@@ -96,28 +97,28 @@ export function ProfileSwitcherDialog({
         .single();
       
       if (error) {
-        console.error('Error fetching profile limit:', error);
+        logger.error('Error fetching profile limit:', error);
         return;
       }
       
-      if (data && data.max_profiles !== undefined) {
+      if (data && typeof data === 'object' && 'max_profiles' in data) {
         setProfileLimit(data.max_profiles);
       }
     } catch (err) {
-      console.error('Error fetching profile limit:', err);
+      logger.error('Error fetching profile limit:', err);
     }
   };
 
   // Fetch all profiles for this account
   const fetchProfiles = async (): Promise<boolean> => {
     if (!userId) {
-      console.error('Cannot fetch profiles: No user ID available');
+      logger.error('Cannot fetch profiles: No user ID available');
       return false;
     }
     
     try {
       setIsLoading(true);
-      console.log('Fetching profiles for user ID:', userId);
+      logger.debug('Fetching profiles for user ID:', userId);
 
       // Get all profiles for this account sorted by creation time
       const {
@@ -128,27 +129,41 @@ export function ProfileSwitcherDialog({
       });
 
       if (error) {
-        console.error('Error fetching profiles:', error);
+        logger.error('Error fetching profiles:', error);
         return false;
       }
 
       // Get the active profile ID from localStorage
       const activeProfileId = localStorage.getItem(ACTIVE_PROFILE_KEY) || defaultProfileId;
       
-      console.log(`Found ${data?.length} profiles, activeProfileId:`, activeProfileId);
+      logger.debug(`Found ${data?.length || 0} profiles, activeProfileId:`, activeProfileId);
       
       // Make sure data is an array before mapping
       if (Array.isArray(data)) {
-        const processedProfiles: Profile[] = data.map(profile => ({
-          id: profile.id,
-          name: profile.name || '',
-          grade: profile.grade || undefined,
-          is_active: Boolean(profile.is_active),
-          created_at: profile.created_at,
-          is_owner: Boolean(profile.is_owner),
-          // Mark as active if it matches the active profile ID
-          active: profile.id === activeProfileId
-        }));
+        const processedProfiles: Profile[] = data.map(profile => {
+          // Ensure each profile object has all required properties with safe access
+          if (!profile || typeof profile !== 'object') {
+            return {
+              id: 'unknown',
+              name: 'Unknown Profile',
+              is_active: false,
+              created_at: new Date().toISOString(),
+              is_owner: false
+            };
+          }
+
+          return {
+            id: profile.id || 'unknown',
+            name: profile.name || '',
+            grade: profile.grade || undefined,
+            is_active: Boolean(profile.is_active),
+            created_at: profile.created_at || new Date().toISOString(),
+            is_owner: Boolean(profile.is_owner),
+            // Mark as active if it matches the active profile ID
+            active: profile.id === activeProfileId
+          };
+        });
+        
         setProfiles(processedProfiles);
       } else {
         setProfiles([]);
@@ -161,7 +176,7 @@ export function ProfileSwitcherDialog({
       
       return true;
     } catch (err) {
-      console.error('Error in profile fetch:', err);
+      logger.error('Error in profile fetch:', err);
       return false;
     } finally {
       setIsLoading(false);
@@ -177,7 +192,7 @@ export function ProfileSwitcherDialog({
   // Switch to a different profile
   const handleSwitchProfile = async (profile: Profile) => {
     try {
-      console.log('Switching to profile:', profile.id, profile.name);
+      logger.debug('Switching to profile:', profile.id, profile.name);
 
       // Update the local state
       setDefaultProfileId(profile.id);
@@ -205,7 +220,7 @@ export function ProfileSwitcherDialog({
         document.body.classList.remove('ReactModal__Body--open');
       }, 100);
     } catch (err) {
-      console.error('Error switching profile:', err);
+      logger.error('Error switching profile:', err);
       toast({
         variant: "destructive",
         title: "Error",
@@ -285,6 +300,7 @@ export function ProfileSwitcherDialog({
             )}
           </DialogHeader>
           
+          {/* Dialog content based on state */}
           {showCreateForm ? (
             <div className="p-6">
               <CreateProfileForm
@@ -308,6 +324,7 @@ export function ProfileSwitcherDialog({
             <ScrollArea className="max-h-[60vh] px-6">
               <div className="p-6 pt-0 px-[0px] my-[8px]">
                 <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 mb-6 px-[4px]">
+                  {/* Profile cards */}
                   {profiles.map(profile => (
                     <Card 
                       key={profile.id}

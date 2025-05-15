@@ -38,3 +38,28 @@ export type SafeUpdateType<T extends keyof Database['public']['Tables']> =
 
 export type SafeRowType<T extends keyof Database['public']['Tables']> = 
   Database['public']['Tables'][T]['Row'];
+
+// Add extra type safety for Supabase responses
+export type PostgrestSingleResultChecked<T> = { 
+  data: T; 
+  error: null;
+} | {
+  data: null;
+  error: PostgrestError;
+};
+
+export type PostgrestMaybeResultChecked<T> = { 
+  data: T | null; 
+  error: null;
+} | {
+  data: null;
+  error: PostgrestError;
+};
+
+// Type-safe wrapper around Supabase responses
+export function ensureData<T>(response: { data: T | null, error: PostgrestError | null }): T | null {
+  if (response.error) {
+    return null;
+  }
+  return response.data;
+}

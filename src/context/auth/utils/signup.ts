@@ -59,6 +59,7 @@ export const completeSignUp = async (email: string, password: string, displayNam
       .maybeSingle();
     
     if (!accountError && accountData) {
+      // Type-safe access with proper error handling
       accountId = accountData.id;
       break;
     }
@@ -90,28 +91,32 @@ export const completeSignUp = async (email: string, password: string, displayNam
       
       if (!profileError && profileData) {
         profileCreated = true;
-        profileId = profileData.id;
         
-        // Store the profile ID in localStorage
-        localStorage.setItem(ACTIVE_PROFILE_KEY, profileData.id);
-        
-        // IMPORTANT: Update the profile name if it doesn't match the display name
-        // This ensures the profile name matches what the user entered during signup
-        if (profileData.name !== displayName) {
-          // Use explicit typing for updates
-          const updateData = { name: displayName };
+        // Type-safe access with proper error handling
+        if (profileData && typeof profileData === 'object' && 'id' in profileData) {
+          profileId = profileData.id;
           
-          const { error: updateError } = await supabase
-            .from('profiles')
-            .update(updateData as any)
-            .eq('id', profileData.id);
+          // Store the profile ID in localStorage
+          localStorage.setItem(ACTIVE_PROFILE_KEY, profileData.id);
+          
+          // IMPORTANT: Update the profile name if it doesn't match the display name
+          // This ensures the profile name matches what the user entered during signup
+          if ('name' in profileData && profileData.name !== displayName) {
+            // Use explicit typing for updates
+            const updateData = { name: displayName };
             
-          if (updateError) {
-            logger.error('Failed to update profile name:', updateError);
+            const { error: updateError } = await supabase
+              .from('profiles')
+              .update(updateData as any)
+              .eq('id', profileData.id);
+              
+            if (updateError) {
+              logger.error('Failed to update profile name:', updateError);
+            }
           }
+          
+          break;
         }
-        
-        break;
       }
       
       retryCount++;

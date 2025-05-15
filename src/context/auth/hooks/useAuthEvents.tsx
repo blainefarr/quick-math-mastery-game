@@ -1,3 +1,4 @@
+
 import { useEffect, useState, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { fetchAndSaveAccountProfile } from '../utils/accountProfile';
@@ -86,8 +87,8 @@ export const useAuthEvents = (authState: AuthStateType) => {
           }
         });
 
-        // Store subscription for cleanup
-        authSubscription.current = data;
+        // Store subscription for cleanup - fixed type issue
+        authSubscription.current = { data: { subscription: data.subscription } };
         
         // Step 2: Check initial session
         const { data: { session } } = await supabase.auth.getSession();
