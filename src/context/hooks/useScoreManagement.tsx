@@ -14,7 +14,7 @@ export const useScoreManagement = (userId: string | null) => {
   const [scoreHistory, setScoreHistory] = useState<UserScore[]>([]);
   const [savingScore, setSavingScore] = useState(false);
   const [showSaveScorePaywall, setShowSaveScorePaywall] = useState(false);
-  const [scoreSaveLimit, setScoreSaveLimit] = useState<number | null>(null);
+  const [scoreSaveLimit, setScoreSaveLimit] = useState<number | null>(5); // Updated default to 5
   const [currentScoreSaveCount, setCurrentScoreSaveCount] = useState<number>(0);
   const [scoresAlreadyFetched, setScoresAlreadyFetched] = useState(false);
   const { defaultProfileId, isLoadingProfile, planType } = useAuth();
