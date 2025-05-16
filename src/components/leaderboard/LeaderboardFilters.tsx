@@ -3,8 +3,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { LeaderboardFilters as LeaderboardFiltersType } from "@/hooks/useLeaderboard";
 import { Operation } from "@/types";
-import { useCallback } from "react";
-import logger from "@/utils/logger";
 
 type Props = {
   filters: LeaderboardFiltersType;
@@ -36,39 +34,13 @@ const RANGES = [
 ];
 
 export const LeaderboardFilters = ({ filters, onFilterChange, className = '' }: Props) => {
-  // Memoized operation change handler
-  const handleOperationChange = useCallback((value: Operation) => {
-    logger.debug(`Changing operation filter to: ${value}`);
-    onFilterChange({ operation: value });
-  }, [onFilterChange]);
-
-  // Memoized range change handler
-  const handleRangeChange = useCallback((label: string) => {
-    logger.debug(`Changing range filter to: ${label}`);
-    const selectedRange = RANGES.find(r => r.label === label);
-    if (selectedRange) {
-      onFilterChange({ 
-        min1: selectedRange.min1, 
-        max1: selectedRange.max1, 
-        min2: selectedRange.min2, 
-        max2: selectedRange.max2 
-      });
-    }
-  }, [onFilterChange]);
-
-  // Memoized grade change handler
-  const handleGradeChange = useCallback((value: string) => {
-    logger.debug(`Changing grade filter to: ${value}`);
-    onFilterChange({ grade: value === "all" ? null : value });
-  }, [onFilterChange]);
-  
   return (
     <div className={`flex flex-col space-y-2 sm:space-y-0 sm:flex-row sm:items-center ${className}`}>
       <Label className="font-medium whitespace-nowrap mr-2 mb-1 sm:mb-0">Filter:</Label>
       <div className="flex flex-wrap gap-2">
         <Select
           value={filters.operation}
-          onValueChange={handleOperationChange}
+          onValueChange={(value: Operation) => onFilterChange({ operation: value })}
         >
           <SelectTrigger className="w-full sm:w-[140px] h-8">
             <SelectValue placeholder="All Operations" />
@@ -84,7 +56,17 @@ export const LeaderboardFilters = ({ filters, onFilterChange, className = '' }: 
 
         <Select
           value={getCurrentRangeLabel(filters)}
-          onValueChange={handleRangeChange}
+          onValueChange={(label) => {
+            const selectedRange = RANGES.find(r => r.label === label);
+            if (selectedRange) {
+              onFilterChange({ 
+                min1: selectedRange.min1, 
+                max1: selectedRange.max1, 
+                min2: selectedRange.min2, 
+                max2: selectedRange.max2 
+              });
+            }
+          }}
         >
           <SelectTrigger className="w-full sm:w-[140px] h-8">
             <SelectValue placeholder="All Ranges" />
@@ -100,7 +82,7 @@ export const LeaderboardFilters = ({ filters, onFilterChange, className = '' }: 
 
         <Select
           value={filters.grade || "all"}
-          onValueChange={handleGradeChange}
+          onValueChange={(value) => onFilterChange({ grade: value === "all" ? null : value })}
         >
           <SelectTrigger className="w-full sm:w-[140px] h-8">
             <SelectValue placeholder="All Grades" />

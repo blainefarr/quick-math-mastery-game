@@ -5,30 +5,6 @@ import { Operation } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useAuth } from '@/context/auth/useAuth';
-import { 
-  LeaderboardEntry as LeaderboardEntryType
-} from '@/types/supabase-extensions';
-import { 
-  safeRPCGetLeaderboard, 
-  safeRPCGetLeaderboardCount, 
-  safeRPCGetUserRank 
-} from '@/utils/supabase-helpers';
-import logger from '@/utils/logger';
-
-// Export the type so it can be used by LeaderboardTable
-export type LeaderboardEntry = {
-  rank: number;
-  user_id: string;
-  profile_id: string;
-  name: string;
-  grade: string | null;
-  best_score: number;
-  operation: string;
-  min1: number;
-  max1: number;
-  min2: number;
-  max2: number;
-};
 
 export type LeaderboardFilters = {
   operation: Operation;
@@ -38,6 +14,20 @@ export type LeaderboardFilters = {
   max2: number | null;
   grade: string | null;
   page: number;
+};
+
+export type LeaderboardEntry = {
+  rank: number;
+  user_id: string;
+  profile_id: string;
+  name: string;
+  grade: string | null;
+  best_score: number;
+  operation: Operation;
+  min1: number;
+  max1: number;
+  min2: number;
+  max2: number;
 };
 
 const DEFAULT_FILTERS: LeaderboardFilters = {
@@ -90,33 +80,11 @@ export const useLeaderboard = () => {
     filtersRef.current = parseFiltersFromParams(searchParams);
   }, [searchParams]);
 
-  // Helper function to fetch user rank
-  async function fetchUserRank(profileId: string, filters: LeaderboardFilters) {
-    try {
-      const rankData = await safeRPCGetUserRank({
-        p_profile_id: profileId,
-        p_operation: filters.operation,
-        p_min1: filters.min1 ?? undefined,
-        p_max1: filters.max1 ?? undefined,
-        p_min2: filters.min2 ?? undefined,
-        p_max2: filters.max2 ?? undefined,
-        p_grade: filters.grade === "all" ? null : filters.grade,
-      });
-      
-      if (rankData !== null) {
-        setUserRank(rankData);
-        logger.debug('User rank:', rankData);
-      }
-    } catch (error) {
-      logger.error('Error fetching user rank:', error);
-    }
-  }
-
   // Fetch leaderboard data from Supabase
   const fetchLeaderboard = useCallback(async () => {
     // Don't fetch if profile is still loading or if a fetch is already in progress
     if (isLoadingProfile || fetchInProgress.current) {
-      logger.debug('Skipping leaderboard fetch:', 
+      console.log('Skipping leaderboard fetch:', 
         isLoadingProfile ? 'profile still loading' : 'fetch already in progress');
       return;
     }
@@ -127,45 +95,34 @@ export const useLeaderboard = () => {
     
     const currentFilters = filtersRef.current;
     try {
-      logger.debug('Fetching leaderboard with filters:', currentFilters);
+      console.log('Fetching leaderboard with filters:', currentFilters);
       
-      // Get leaderboard entries using our safe RPC helper
-      const leaderboardData = await safeRPCGetLeaderboard({
-        p_operation: currentFilters.operation,
-        p_min1: currentFilters.min1 ?? undefined,
-        p_max1: currentFilters.max1 ?? undefined,
-        p_min2: currentFilters.min2 ?? undefined,
-        p_max2: currentFilters.max2 ?? undefined,
-        p_grade: currentFilters.grade === "all" ? null : currentFilters.grade,
-        p_page: currentFilters.page,
-        p_page_size: 25
-      });
+      // Get leaderboard entries
+      const { data: leaderboardData, error: leaderboardError } = await fetchLeaderboardData(currentFilters);
+      if (leaderboardError) throw leaderboardError;
       
-      // Get total count for pagination using our safe RPC helper
-      const countData = await safeRPCGetLeaderboardCount({
-        p_operation: currentFilters.operation,
-        p_min1: currentFilters.min1 ?? undefined,
-        p_max1: currentFilters.max1 ?? undefined,
-        p_min2: currentFilters.min2 ?? undefined,
-        p_max2: currentFilters.max2 ?? undefined,
-        p_grade: currentFilters.grade === "all" ? null : currentFilters.grade,
-      });
+      // Type casting the operation field to ensure compatibility with LeaderboardEntry
+      const typedLeaderboardData = leaderboardData?.map(entry => ({
+        ...entry,
+        operation: entry.operation as Operation
+      })) || [];
       
-      // Update state with fetched data - ensure proper casting
-      setEntries(leaderboardData || []);
+      // Get total count for pagination
+      const { data: countData, error: countError } = await fetchLeaderboardCount(currentFilters);
+      if (countError) throw countError;
       
-      // Safely convert countData to number for pagination
-      const totalCount = typeof countData === 'number' ? countData : 0;
-      setTotalPages(Math.max(1, Math.ceil(totalCount / 25)));
+      // Update state with fetched data
+      setEntries(typedLeaderboardData);
+      setTotalPages(Math.max(1, Math.ceil((countData || 0) / 25)));
       
       // Fetch user rank if profile ID is available
       if (defaultProfileId) {
         await fetchUserRank(defaultProfileId, currentFilters);
       } else {
-        logger.debug('No profile ID available, skipping user rank fetch');
+        console.log('No profile ID available, skipping user rank fetch');
       }
     } catch (err) {
-      logger.error('Leaderboard error:', err);
+      console.error('Leaderboard error:', err);
       setError(err instanceof Error ? err.message : 'Failed to load leaderboard');
       toast.error("Couldn't load the leaderboard data. Please try again.");
     } finally {
@@ -173,6 +130,56 @@ export const useLeaderboard = () => {
       fetchInProgress.current = false;
     }
   }, [defaultProfileId, isLoadingProfile]);
+
+  // Helper function to fetch leaderboard data
+  async function fetchLeaderboardData(filters: LeaderboardFilters) {
+    return supabase.rpc('get_leaderboard', {
+      p_operation: filters.operation,
+      p_min1: filters.min1,
+      p_max1: filters.max1,
+      p_min2: filters.min2,
+      p_max2: filters.max2,
+      p_grade: filters.grade === "all" ? null : filters.grade,
+      p_page: filters.page,
+    });
+  }
+
+  // Helper function to fetch total count for pagination
+  async function fetchLeaderboardCount(filters: LeaderboardFilters) {
+    return supabase.rpc('get_leaderboard_count', {
+      p_operation: filters.operation,
+      p_min1: filters.min1,
+      p_max1: filters.max1,
+      p_min2: filters.min2,
+      p_max2: filters.max2,
+      p_grade: filters.grade === "all" ? null : filters.grade,
+    });
+  }
+
+  // Helper function to fetch user rank
+  async function fetchUserRank(profileId: string, filters: LeaderboardFilters) {
+    try {
+      const { data: rankData, error: rankError } = await supabase
+        .rpc('get_user_rank', {
+          p_profile_id: profileId,
+          p_operation: filters.operation,
+          p_min1: filters.min1,
+          p_max1: filters.max1,
+          p_min2: filters.min2,
+          p_max2: filters.max2,
+          p_grade: filters.grade === "all" ? null : filters.grade,
+        });
+
+      if (rankError) {
+        console.error('Rank error:', rankError);
+      } else {
+        setUserRank(rankData);
+        console.log('User rank:', rankData);
+      }
+    } catch (error) {
+      console.error('Error fetching user rank:', error);
+    }
+  }
 
   // Calculate guest rank for a score
   const calculateGuestRankForScore = useCallback(async (
@@ -182,32 +189,37 @@ export const useLeaderboard = () => {
     grade: string | null = null
   ) => {
     try {
-      logger.debug('Calculating guest rank for score:', score, 'with operation:', operation, 'and range:', range);
+      console.log('Calculating guest rank for score:', score, 'with operation:', operation, 'and range:', range);
       
-      // Use our safe RPC helper
-      const leaderboardData = await safeRPCGetLeaderboard({
-        p_operation: operation,
-        p_min1: range.min1,
-        p_max1: range.max1,
-        p_min2: range.min2,
-        p_max2: range.max2,
-        p_grade: grade === "all" ? null : grade,
-        p_page: 1,
-        p_page_size: 1000 // Get a large number of scores to ensure we have enough for ranking
-      });
+      // Use the same get_leaderboard RPC function for consistency
+      const { data: leaderboardData, error: leaderboardError } = await supabase
+        .rpc('get_leaderboard', {
+          p_operation: operation,
+          p_min1: range.min1,
+          p_max1: range.max1,
+          p_min2: range.min2,
+          p_max2: range.max2,
+          p_grade: grade === "all" ? null : grade,
+          p_page: 1,
+          p_page_size: 1000 // Get a large number of scores to ensure we have enough for ranking
+        });
 
-      // Ensure we have an array even if null is returned
-      const entries = leaderboardData || [];
+      if (leaderboardError) {
+        console.error('Error fetching leaderboard data for guest rank:', leaderboardError);
+        return null;
+      }
+
+      console.log('Leaderboard data for guest ranking:', leaderboardData);
       
-      if (entries.length === 0) {
-        logger.debug('No leaderboard entries found, guest would be ranked #1');
+      if (!leaderboardData || leaderboardData.length === 0) {
+        console.log('No leaderboard entries found, guest would be ranked #1');
         return 1;
       }
 
       // Find where this score would be positioned
       let guestRank = 1; // Default to 1 if higher than all scores
       
-      for (const entry of entries) {
+      for (const entry of leaderboardData) {
         if (entry.best_score >= score) {
           guestRank++;
         } else {
@@ -215,10 +227,10 @@ export const useLeaderboard = () => {
         }
       }
       
-      logger.debug('Guest rank calculation result:', { score, rank: guestRank, totalEntries: entries.length });
+      console.log('Guest rank calculation result:', { score, rank: guestRank, totalEntries: leaderboardData.length });
       return guestRank;
     } catch (err) {
-      logger.error('Error calculating guest rank:', err);
+      console.error('Error calculating guest rank:', err);
       return null;
     }
   }, []);
@@ -226,7 +238,7 @@ export const useLeaderboard = () => {
   // Initial fetch on mount and when URL changes
   useEffect(() => {
     if (!initialLoadDone.current && !isLoadingProfile) {
-      logger.debug('Initial leaderboard fetch');
+      console.log('Initial leaderboard fetch');
       fetchLeaderboard();
       initialLoadDone.current = true;
     }
@@ -235,7 +247,7 @@ export const useLeaderboard = () => {
   // Fetch when profile loads
   useEffect(() => {
     if (!isLoadingProfile && defaultProfileId && initialLoadDone.current) {
-      logger.debug('Profile loaded, refreshing leaderboard');
+      console.log('Profile loaded, refreshing leaderboard');
       fetchLeaderboard();
     }
   }, [isLoadingProfile, defaultProfileId, fetchLeaderboard]);

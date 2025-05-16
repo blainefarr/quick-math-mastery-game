@@ -23,7 +23,7 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
   
   // Modified refreshProfileHandler to match the AuthContextType
   const refreshProfileHandler = async () => {
-    // Call refreshUserProfile and pass the authState
+    // Call refreshUserProfile and ignore the return value
     await refreshUserProfile(authState);
     // Return void as expected by the type definition
     return;
@@ -48,13 +48,10 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
     return false;
   };
   
-  // Check if the user can save scores with improved error handling
+  // Check if the user can save scores
   const canSaveScores = async () => {
     // If not logged in, cannot save scores
-    if (!authState.isLoggedIn || !authState.userId) {
-      logger.debug('canSaveScores: Not logged in');
-      return false;
-    }
+    if (!authState.isLoggedIn) return false;
     
     try {
       // Get the current plan details
@@ -65,7 +62,7 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
         .single();
       
       // Handle errors properly
-      if (error) {
+      if (error || !data) {
         logger.error({
           message: 'Error checking plan permissions', 
           error
@@ -73,42 +70,30 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
         return false;
       }
       
-      // Safely access data properties with proper type checks
-      if (data && typeof data === 'object') {
-        const canSaveScore = data.can_save_score;
-        const maxSavedScores = data.max_saved_scores;
+      // If the plan allows saving scores
+      if (data && data.can_save_score) {
+        // If there's no limit (null means unlimited)
+        if (data.max_saved_scores === null) return true;
         
-        // If the plan allows saving scores
-        if (canSaveScore) {
-          // If there's no limit (null means unlimited)
-          if (maxSavedScores === null) return true;
-          
-          // If there is a limit, check against current save count
-          const { data: accountData, error: accountError } = await supabase
-            .from('accounts')
-            .select('score_save_count')
-            .eq('id', authState.userId as any)
-            .single();
-          
-          // Handle errors properly
-          if (accountError) {
-            logger.error({
-              message: 'Error checking account score count', 
-              error: accountError
-            });
-            return false;
-          }
-          
-          // Safely access data with proper type checks
-          if (accountData && typeof accountData === 'object') {
-            const scoreSaveCount = accountData.score_save_count;
-            
-            // Make sure both properties exist before comparing
-            if (scoreSaveCount !== undefined && maxSavedScores !== undefined) {
-              logger.debug(`Score save check: ${scoreSaveCount}/${maxSavedScores}`);
-              return scoreSaveCount < maxSavedScores;
-            }
-          }
+        // If there is a limit, check against current save count
+        const { data: accountData, error: accountError } = await supabase
+          .from('accounts')
+          .select('score_save_count')
+          .eq('id', authState.userId as any)
+          .single();
+        
+        // Handle errors properly
+        if (accountError || !accountData) {
+          logger.error({
+            message: 'Error checking account score count', 
+            error: accountError
+          });
+          return false;
+        }
+        
+        // Make sure both properties exist before comparing
+        if (accountData.score_save_count !== undefined && data.max_saved_scores !== undefined) {
+          return accountData.score_save_count < data.max_saved_scores;
         }
       }
       
@@ -122,10 +107,7 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
   // Enhanced check and refresh subscription details with better error handling
   // Fixed to return void instead of boolean
   const checkAndRefreshSubscription = async (): Promise<void> => {
-    if (!authState.userId) {
-      logger.debug('checkAndRefreshSubscription: No user ID');
-      return;
-    }
+    if (!authState.userId) return;
     
     try {
       logger.debug("Checking subscription status for user: " + authState.userId);
@@ -145,25 +127,22 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
       if (account) {
         logger.debug("Account data from DB:", account);
         
-        // Safely access data with proper type checking
-        if (account && typeof account === 'object') {
-          // Use nullish coalescing to avoid setting undefined values
-          if ('plan_type' in account) {
-            authState.setPlanType(account.plan_type || 'free');
-          }
-          
-          if ('subscription_status' in account) {
-            authState.setSubscriptionStatus(account.subscription_status || 'free');
-          }
-          
-          if ('plan_expires_at' in account) {
-            authState.setPlanExpiresAt(account.plan_expires_at);
-          }
-          
-          // If we already have a non-free plan, we can stop here
-          if (account.plan_type !== 'free' && account.subscription_status !== 'free') {
-            return;
-          }
+        // Use nullish coalescing to avoid setting undefined values
+        if (account.plan_type !== undefined) {
+          authState.setPlanType(account.plan_type || 'free');
+        }
+        
+        if (account.subscription_status !== undefined) {
+          authState.setSubscriptionStatus(account.subscription_status || 'free');
+        }
+        
+        if (account.plan_expires_at !== undefined) {
+          authState.setPlanExpiresAt(account.plan_expires_at);
+        }
+        
+        // If we already have a non-free plan, we can stop here
+        if (account.plan_type !== 'free' && account.subscription_status !== 'free') {
+          return;
         }
       }
       

@@ -5,8 +5,6 @@ import { useAuth } from '@/context/auth/useAuth';
 import { GoalProgress, Operation, GoalLevel } from '@/types';
 import { toast } from 'sonner';
 import logger from '@/utils/logger';
-import { extractData } from '@/utils/supabase-helpers';
-import { Database } from '@/integrations/supabase/types';
 
 export const useGoalProgress = () => {
   const [goals, setGoals] = useState<GoalProgress[]>([]);
@@ -25,15 +23,16 @@ export const useGoalProgress = () => {
     setError(null);
     
     try {
-      const response = await supabase
+      const { data, error } = await supabase
         .from('goal_progress')
         .select('*')
-        .eq('profile_id', defaultProfileId);
+        .eq('profile_id', defaultProfileId as any);
       
-      // Use our helper function to safely extract data
-      const data = extractData(response, []);
+      if (error) {
+        throw error;
+      }
       
-      if (!data || !Array.isArray(data)) {
+      if (!data) {
         logger.warn('No goal data returned from database');
         setGoals([]);
         setIsLoading(false);
@@ -41,33 +40,16 @@ export const useGoalProgress = () => {
       }
       
       // Properly type-cast the operations from the database to match our Operation type
-      const typedGoals: GoalProgress[] = data.map(item => {
-        // Create a default goal object for null safety
-        const defaultGoal: GoalProgress = {
-          operation: 'addition' as Operation,
-          level: 'learning' as GoalLevel,
-          profile_id: defaultProfileId,
-          range: '0-0',
-          best_score: 0,
-          attempts: 0,
-          last_attempt: null,
-          last_level_up: null
-        };
-        
-        // Ensure item is not null before accessing properties
-        if (!item) return defaultGoal;
-        
-        return {
-          operation: (item.operation || 'addition') as Operation,
-          level: (item.level || 'learning') as GoalLevel,
-          profile_id: item.profile_id || defaultProfileId,
-          range: item.range || '0-0',
-          best_score: item.best_score || 0,
-          attempts: item.attempts || 0,
-          last_attempt: item.last_attempt || null,
-          last_level_up: item.last_level_up || null
-        };
-      });
+      const typedGoals: GoalProgress[] = data.map(item => ({
+        operation: item.operation as Operation,
+        level: item.level as GoalLevel,
+        profile_id: item.profile_id,
+        range: item.range,
+        best_score: item.best_score,
+        attempts: item.attempts,
+        last_attempt: item.last_attempt,
+        last_level_up: item.last_level_up
+      }));
       
       setGoals(typedGoals);
     } catch (err) {
@@ -105,10 +87,10 @@ export const useGoalProgress = () => {
       const previousLevel = existingGoal?.level || 'learning';
       const leveledUp = previousLevel !== level && level !== 'learning';
       
-      // Create properly typed goal data for database insert/update
-      const goalData = {
+      // Explicitly type the goal data for insert/update
+      const goalData: Record<string, any> = {
         profile_id: defaultProfileId,
-        operation: operation,
+        operation,
         range,
         best_score: bestScore,
         level: getGoalLevel(bestScore),
@@ -117,14 +99,14 @@ export const useGoalProgress = () => {
         last_level_up: leveledUp ? new Date().toISOString() : existingGoal?.last_level_up || null
       };
       
-      const response = await supabase
+      const { data, error } = await supabase
         .from('goal_progress')
-        .upsert(goalData as any, {
+        .upsert(goalData, {
           onConflict: 'profile_id,operation,range'
         });
         
-      if (response.error) {
-        throw response.error;
+      if (error) {
+        throw error;
       }
       
       // Refresh goals after update

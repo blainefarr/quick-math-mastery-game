@@ -4,9 +4,6 @@
 // Log levels
 type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
-// Log category (optional) for filtering logs
-type LogCategory = string | undefined;
-
 // Whether to show debug logs in production
 const SHOW_DEBUG = import.meta.env.MODE === 'development';
 
@@ -19,79 +16,33 @@ const LOG_STYLES = {
 };
 
 // Helper function to format the log output
-const formatLog = (
-  level: LogLevel, 
-  message: string | object | Error, 
-  category?: LogCategory, 
-  ...args: any[]
-) => {
+const formatLog = (level: LogLevel, message: string | object, ...args: any[]) => {
   const timestamp = new Date().toISOString();
   
   // Format different types of messages
-  let formattedMessage: string;
-  
-  if (message instanceof Error) {
-    formattedMessage = `${message.name}: ${message.message}`;
-    // Add error to args so the stack trace is visible in console
-    args = [message, ...args];
-  } else if (typeof message === 'object') {
-    try {
-      formattedMessage = JSON.stringify(message, null, 2);
-    } catch (e) {
-      formattedMessage = '[Unstringifiable object]';
-      args = [message, ...args]; // Keep the original object in args
-    }
-  } else {
-    formattedMessage = message;
-  }
-  
-  // Add category to the log format if provided
-  const categoryStr = category ? `[${category}] ` : '';
+  const formattedMessage = typeof message === 'object' 
+    ? JSON.stringify(message, null, 2)
+    : message;
   
   // Style the log based on level
-  console.log(
-    `%c[${level.toUpperCase()}] ${timestamp}: ${categoryStr}`,
-    LOG_STYLES[level], 
-    formattedMessage, 
-    ...args
-  );
+  console.log(`%c[${level.toUpperCase()}] ${timestamp}:`, LOG_STYLES[level], formattedMessage, ...args);
 };
 
 // Logger object with methods for each log level
 const logger = {
-  debug: (message: string | object | Error, categoryOrArgs?: LogCategory | any, ...args: any[]) => {
+  debug: (message: string | object, ...args: any[]) => {
     if (SHOW_DEBUG) {
-      // Handle optional category parameter
-      if (typeof categoryOrArgs === 'string') {
-        formatLog('debug', message, categoryOrArgs, ...args);
-      } else {
-        formatLog('debug', message, undefined, categoryOrArgs, ...args);
-      }
+      formatLog('debug', message, ...args);
     }
   },
-  info: (message: string | object | Error, categoryOrArgs?: LogCategory | any, ...args: any[]) => {
-    // Handle optional category parameter
-    if (typeof categoryOrArgs === 'string') {
-      formatLog('info', message, categoryOrArgs, ...args);
-    } else {
-      formatLog('info', message, undefined, categoryOrArgs, ...args);
-    }
+  info: (message: string | object, ...args: any[]) => {
+    formatLog('info', message, ...args);
   },
-  warn: (message: string | object | Error, categoryOrArgs?: LogCategory | any, ...args: any[]) => {
-    // Handle optional category parameter
-    if (typeof categoryOrArgs === 'string') {
-      formatLog('warn', message, categoryOrArgs, ...args);
-    } else {
-      formatLog('warn', message, undefined, categoryOrArgs, ...args);
-    }
+  warn: (message: string | object, ...args: any[]) => {
+    formatLog('warn', message, ...args);
   },
-  error: (message: string | object | Error, categoryOrArgs?: LogCategory | any, ...args: any[]) => {
-    // Handle optional category parameter
-    if (typeof categoryOrArgs === 'string') {
-      formatLog('error', message, categoryOrArgs, ...args);
-    } else {
-      formatLog('error', message, undefined, categoryOrArgs, ...args);
-    }
+  error: (message: string | object, ...args: any[]) => {
+    formatLog('error', message, ...args);
   }
 };
 
