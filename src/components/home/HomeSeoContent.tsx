@@ -72,17 +72,17 @@ const HomeSeoContent = () => {
 
       {/* Who It's For */}
       <section className="py-16 container mx-auto px-4">
-        <h2 className="text-3xl font-bold mb-10 text-center">Who It's For</h2>
+        <h2 className="text-3xl font-bold mb-10 text-center">Who Mental Math is for</h2>
         
         <div className="max-w-3xl mx-auto">
-          <p className="text-lg mb-6">Minute Math is built for:</p>
+          <p className="text-lg mb-6">Practice Mental Math is built for:</p>
           
           <ul className="space-y-4 mb-8">
             <li className="flex items-start">
               <div className="w-6 h-6 rounded-full bg-accent/30 flex items-center justify-center mr-3 mt-1">
                 <Check className="h-3 w-3 text-accent-foreground" />
               </div>
-              <span>Students who want to get faster at math facts</span>
+              <span>Students who want to get faster at timed minute math facts</span>
             </li>
             <li className="flex items-start">
               <div className="w-6 h-6 rounded-full bg-accent/30 flex items-center justify-center mr-3 mt-1">
@@ -94,7 +94,7 @@ const HomeSeoContent = () => {
               <div className="w-6 h-6 rounded-full bg-accent/30 flex items-center justify-center mr-3 mt-1">
                 <Check className="h-3 w-3 text-accent-foreground" />
               </div>
-              <span>Teachers who need warm-ups, timed challenges, or math center games</span>
+              <span>Teachers who need minute math warm-ups, timed challenges, or math center games</span>
             </li>
             <li className="flex items-start">
               <div className="w-6 h-6 rounded-full bg-accent/30 flex items-center justify-center mr-3 mt-1">
@@ -189,9 +189,7 @@ const HomeSeoContent = () => {
         <div className="grid md:grid-cols-2 gap-10 max-w-4xl mx-auto">
           <div className="bg-card p-8 rounded-lg shadow-sm relative">
             <div className="text-4xl font-serif text-primary/20 absolute top-4 left-4">"</div>
-            <p className="text-lg mb-6 relative z-10 pt-6">
-              Minute Math is the best mental math game I've found. My students are quicker, and they actually look forward to playing!
-            </p>
+            <p className="text-lg mb-6 relative z-10 pt-6">Practice Mental Math is the best minute math game I've found. It's easy to use, simple for kids, and easy to track.</p>
             <p className="font-medium">— 4th Grade Teacher, Texas</p>
           </div>
           
@@ -213,21 +211,16 @@ const HomeSeoContent = () => {
           <div className="max-w-3xl mx-auto space-y-8">
             <div>
               <h3 className="text-xl font-bold mb-2">What is a mental math game?</h3>
-              <p>
-                A mental math game is a timed challenge that helps students solve math problems in their head—without writing or calculators. 
-                Minute Math is a free online mental math app that does exactly that.
-              </p>
+              <p>A mental math game is a timed challenge that helps students solve math problems in their head—without writing or calculators. Practice Mental Math is a free online minute math app that does exactly that.</p>
             </div>
             
             <div>
-              <h3 className="text-xl font-bold mb-2">Is Minute Math really free?</h3>
-              <p>
-                Yes! You can play and save up to 10 scores on the free plan. Upgrades are available for more features.
-              </p>
+              <h3 className="text-xl font-bold mb-2">Is Practice Mental Math really free?</h3>
+              <p>Yes! You can play and save up to 5 scores on the free plan. You can continue to play without saving or upgrades are available for more features.</p>
             </div>
             
             <div>
-              <h3 className="text-xl font-bold mb-2">What age is Minute Math best for?</h3>
+              <h3 className="text-xl font-bold mb-2">What age is mental math and other minute math games  best for?</h3>
               <p>
                 The app is ideal for kids in 1st–6th grade, or anyone practicing core math facts.
               </p>
@@ -235,9 +228,7 @@ const HomeSeoContent = () => {
             
             <div>
               <h3 className="text-xl font-bold mb-2">How does this app build mental math skills?</h3>
-              <p>
-                Through repetition, speed, and immediate feedback, Minute Math improves mental math fluency in just a few minutes a day.
-              </p>
+              <p>Through repetition, speed, and immediate feedback, Practice Mental Math improves mental math fluency in just a few minutes a day.</p>
             </div>
             
             <div>
@@ -285,10 +276,7 @@ const HomeSeoContent = () => {
             </li>
           </ul>
           
-          <p className="text-center">
-            That's why mental math games like Minute Math are trusted by teachers, parents, and homeschoolers to build 
-            foundational math strength in a fun, repeatable way.
-          </p>
+          <p className="text-center">That's why mental math games like Practice Mental Math are trusted by teachers, parents, and homeschoolers to build foundational math strength in a fun, repeatable way.</p>
         </div>
       </section>
     </div>;
