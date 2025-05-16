@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
@@ -11,11 +10,7 @@ const HomeSeoContent = () => {
         <h2 className="text-3xl md:text-4xl font-bold mb-6 text-center">
           The ultimate app for mastering mental math—fast.
         </h2>
-        <p className="text-lg md:text-xl text-muted-foreground text-center max-w-3xl mx-auto">
-          Minute Math is a free mental math game designed to build speed, accuracy, and confidence in math facts. 
-          With timed challenges, instant feedback, and a kid-friendly interface, this app makes mental math practice 
-          fun and effective—for school or home.
-        </p>
+        <p className="text-lg md:text-xl text-muted-foreground text-center max-w-3xl mx-auto">Practice Mental Math is a free minute math game designed to build speed, accuracy, and confidence in math facts. With timed challenges, instant feedback, and a kid-friendly interface, this app makes mental math practice fun and effective—for school or home.</p>
       </section>
 
       {/* Why Our Mental Math App Works */}
