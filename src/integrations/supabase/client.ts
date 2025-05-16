@@ -28,7 +28,7 @@ export const supabase = createClient<Database>(
     global: {
       // Add retry mechanism for network failures
       headers: {
-        'X-Client-Info': 'math-game-web',
+        'X-Client-Info': 'mental-math-app',
       },
     },
     // Configure automatic retries for transient errors

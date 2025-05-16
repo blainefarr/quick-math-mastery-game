@@ -25,9 +25,10 @@ const ConditionalHeader = () => {
 const ConditionalFooter = () => {
   const { gameState } = useGame();
   
-  // Hide footer during gameplay, warmup, and countdown states
+  // Hide footer during gameplay, warmup, countdown, and ended (game over) states
   if (gameState === 'playing' || gameState === 'warmup' || 
-      gameState === 'countdown' || gameState === 'warmup-countdown') {
+      gameState === 'countdown' || gameState === 'warmup-countdown' ||
+      gameState === 'ended') {
     return null;
   }
   
