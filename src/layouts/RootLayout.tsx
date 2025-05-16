@@ -6,11 +6,12 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import logger from '@/utils/logger';
 
-// Define gtag function for TypeScript
+// Define gtag and clarity functions for TypeScript
 declare global {
   interface Window {
     gtag: (command: string, action: string, params?: any) => void;
     dataLayer: any[];
+    clarity: (command: string, value: string, options?: any) => void;
   }
 }
 
