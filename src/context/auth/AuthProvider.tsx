@@ -62,8 +62,9 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
         .eq('plan_type', authState.planType as any)
         .single();
       
-      // Handle errors properly using our type helper
-      if (!hasData(planResponse) || !planResponse.data) {
+      // Handle errors properly using our helper function
+      const planData = safeData(planResponse);
+      if (!planData) {
         logger.error({
           message: 'Error checking plan permissions', 
           error: planResponse.error
@@ -71,10 +72,8 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
         return false;
       }
       
-      const planData = planResponse.data;
-      
       // If the plan allows saving scores
-      if (planData && planData.can_save_score) {
+      if (planData.can_save_score) {
         // If there's no limit (null means unlimited)
         if (planData.max_saved_scores === null) return true;
         
@@ -85,16 +84,15 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
           .eq('id', authState.userId as any)
           .single();
         
-        // Handle errors properly
-        if (!hasData(accountResponse) || !accountResponse.data) {
+        // Handle errors properly using our helper function
+        const accountData = safeData(accountResponse);
+        if (!accountData) {
           logger.error({
             message: 'Error checking account score count', 
             error: accountResponse.error
           });
           return false;
         }
-        
-        const accountData = accountResponse.data;
         
         // Make sure both properties exist before comparing
         if (accountData.score_save_count !== undefined && planData.max_saved_scores !== undefined) {
@@ -124,25 +122,25 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
         .eq('id', authState.userId as any)
         .single();
       
-      if (hasData(accountResponse)) {
-        const account = accountResponse.data;
-        logger.debug("Account data from DB:", account);
+      const accountData = safeData(accountResponse);
+      if (accountData) {
+        logger.debug("Account data from DB:", accountData);
         
         // Use nullish coalescing to avoid setting undefined values
-        if (hasProperty(account, 'plan_type')) {
-          authState.setPlanType(account.plan_type || 'free');
+        if (hasProperty(accountData, 'plan_type')) {
+          authState.setPlanType(accountData.plan_type || 'free');
         }
         
-        if (hasProperty(account, 'subscription_status')) {
-          authState.setSubscriptionStatus(account.subscription_status || 'free');
+        if (hasProperty(accountData, 'subscription_status')) {
+          authState.setSubscriptionStatus(accountData.subscription_status || 'free');
         }
         
-        if (hasProperty(account, 'plan_expires_at')) {
-          authState.setPlanExpiresAt(account.plan_expires_at);
+        if (hasProperty(accountData, 'plan_expires_at')) {
+          authState.setPlanExpiresAt(accountData.plan_expires_at);
         }
         
         // If we already have a non-free plan, we can stop here
-        if (account.plan_type !== 'free' && account.subscription_status !== 'free') {
+        if (accountData.plan_type !== 'free' && accountData.subscription_status !== 'free') {
           return;
         }
       } else if (accountResponse.error) {

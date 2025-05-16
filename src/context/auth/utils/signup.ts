@@ -60,8 +60,9 @@ export const completeSignUp = async (email: string, password: string, displayNam
       .maybeSingle();
     
     // Use type guard to safely extract the data
-    if (hasData(accountResponse)) {
-      accountId = accountResponse.data.id;
+    const accountData = safeData(accountResponse);
+    if (accountData && accountData.id) {
+      accountId = accountData.id;
       break;
     }
   }
@@ -91,23 +92,24 @@ export const completeSignUp = async (email: string, password: string, displayNam
         .maybeSingle();
       
       // Use our type guard to safely access the data
-      if (hasData(profileResponse)) {
+      const profileData = safeData(profileResponse);
+      if (profileData) {
         profileCreated = true;
-        profileId = profileResponse.data.id;
+        profileId = profileData.id;
         
         // Store the profile ID in localStorage
-        localStorage.setItem(ACTIVE_PROFILE_KEY, profileResponse.data.id);
+        localStorage.setItem(ACTIVE_PROFILE_KEY, profileData.id);
         
         // IMPORTANT: Update the profile name if it doesn't match the display name
         // This ensures the profile name matches what the user entered during signup
-        if (profileResponse.data.name !== displayName) {
+        if (profileData.name !== displayName) {
           // Use explicit typing for updates
           const updateData = { name: displayName };
           
           const updateResponse = await supabase
             .from('profiles')
             .update(updateData as any)
-            .eq('id', profileResponse.data.id);
+            .eq('id', profileData.id);
             
           if (hasError(updateResponse)) {
             logger.error('Failed to update profile name:', updateResponse.error);

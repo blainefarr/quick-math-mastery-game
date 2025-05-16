@@ -55,16 +55,16 @@ export const handleLogout = async (authState: AuthStateType) => {
     }
     
     // Instead of using window.location.href which causes a full page refresh,
-    // we'll redirect through React Router. However, since this utility might be
-    // used outside of React Router context, we need to handle both cases.
-    // Since we can't use useNavigate here, we still need a fallback that works
+    // use a controlled approach that works both in React Router context and outside
     if (typeof window !== 'undefined') {
       if (window.location.pathname !== '/') {
-        // Fallback to safe window navigation
-        window.location.href = '/';
+        // Navigate to home page
+        window.history.pushState({}, '', '/');
+        // Dispatch a popstate event to trigger router update
+        window.dispatchEvent(new PopStateEvent('popstate', { state: {} }));
       } else {
-        // Reload just the current page
-        window.location.reload();
+        // If already on home page, just reload the current state
+        window.dispatchEvent(new Event('popstate'));
       }
     }
   } catch (error) {

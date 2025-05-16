@@ -79,3 +79,17 @@ export function safeExtract<T, K extends string>(
   
   return defaultValue;
 }
+
+/**
+ * Safe data access for Supabase queries that returns properly typed data
+ * Use this when you want to safely access data from any Supabase query response
+ */
+export function safeResponseData<T>(response: PostgrestResponse<T>): T | null {
+  if (response.error || !response.data) {
+    if (response.error) {
+      logger.error('Supabase query error:', response.error);
+    }
+    return null;
+  }
+  return response.data;
+}

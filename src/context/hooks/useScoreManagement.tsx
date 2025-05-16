@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { UserScore, Operation, ProblemRange } from '@/types';
@@ -5,6 +6,7 @@ import { toast } from 'sonner';
 import { useAuth } from '@/context/auth/useAuth';
 import { getGoalLevel } from '@/hooks/useGoalProgress';
 import logger from '@/utils/logger';
+import { safeData, hasData, hasError } from '@/utils/supabase-type-helpers';
 
 // Local storage key for active profile
 const ACTIVE_PROFILE_KEY = 'math_game_active_profile';
@@ -42,23 +44,24 @@ export const useScoreManagement = (userId: string | null) => {
     if (!userId || !planType) return;
     
     try {
-      const { data, error } = await supabase
+      const response = await supabase
         .from('plans')
         .select('max_saved_scores, can_save_score')
         .eq('plan_type', planType as any)
         .single();
       
-      if (error) {
-        logger.error('Error fetching score save limit:', error);
+      const planData = safeData(response);
+      if (!planData) {
+        if (response.error) {
+          logger.error('Error fetching score save limit:', response.error);
+        }
         return;
       }
       
-      if (data) {
-        // Use safe property access with optional chaining
-        const maxSavedScores = data.max_saved_scores;
-        setScoreSaveLimit(maxSavedScores);
-        logger.debug(`Score save limit for ${planType} plan: ${maxSavedScores}`);
-      }
+      // Use safe property access with optional chaining
+      const maxSavedScores = planData.max_saved_scores;
+      setScoreSaveLimit(maxSavedScores);
+      logger.debug(`Score save limit for ${planType} plan: ${maxSavedScores}`);
     } catch (err) {
       logger.error('Error fetching score save limit:', err);
     }
@@ -69,20 +72,23 @@ export const useScoreManagement = (userId: string | null) => {
     if (!userId) return;
     
     try {
-      const { data, error } = await supabase
+      const response = await supabase
         .from('accounts')
         .select('score_save_count')
         .eq('id', userId as any)
         .single();
       
-      if (error) {
-        logger.error('Error fetching score save count:', error);
+      const accountData = safeData(response);
+      if (!accountData) {
+        if (response.error) {
+          logger.error('Error fetching score save count:', response.error);
+        }
         return;
       }
       
-      if (data && data.score_save_count !== undefined) {
-        setCurrentScoreSaveCount(data.score_save_count);
-        logger.debug({ message: 'Current score save count', count: data.score_save_count });
+      if (accountData.score_save_count !== undefined) {
+        setCurrentScoreSaveCount(accountData.score_save_count);
+        logger.debug({ message: 'Current score save count', count: accountData.score_save_count });
       }
     } catch (err) {
       logger.error('Error fetching score save count:', err);
@@ -179,14 +185,15 @@ export const useScoreManagement = (userId: string | null) => {
     
     try {
       // Get the current plan details
-      const { data: planData, error: planError } = await supabase
+      const planResponse = await supabase
         .from('plans')
         .select('can_save_score, max_saved_scores')
         .eq('plan_type', planType as any)
         .single();
       
-      if (planError || !planData) {
-        logger.error('Error fetching plan details:', planError);
+      const planData = safeData(planResponse);
+      if (!planData) {
+        logger.error('Error fetching plan details:', planResponse.error);
         return { allowed: false, limitReached: false };
       }
       

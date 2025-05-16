@@ -99,12 +99,11 @@ export function ProfileSwitcherDialog({
         .eq('plan_type', planType as any)
         .single();
       
-      // Safe extract using our helper function
-      if (hasData(response) && response.data) {
-        const limit = response.data.max_profiles;
-        if (typeof limit === 'number') {
-          setProfileLimit(limit);
-        }
+      // Use our helper function to safely extract data
+      const planData = safeData(response);
+      
+      if (planData && typeof planData.max_profiles === 'number') {
+        setProfileLimit(planData.max_profiles);
       } else if (response.error) {
         logger.error('Error fetching profile limit:', response.error);
       }
@@ -131,12 +130,15 @@ export function ProfileSwitcherDialog({
         .eq('account_id', userId as any)
         .order('created_at', { ascending: true });
 
-      if (!hasData(response)) {
-        logger.error('Error fetching profiles:', response.error);
+      // Use our helper function to safely access data
+      const data = safeData(response);
+      
+      if (!data) {
+        if (response.error) {
+          logger.error('Error fetching profiles:', response.error);
+        }
         return false;
       }
-
-      const data = response.data;
 
       // Get the active profile ID from localStorage
       const activeProfileId = localStorage.getItem(ACTIVE_PROFILE_KEY) || defaultProfileId;
