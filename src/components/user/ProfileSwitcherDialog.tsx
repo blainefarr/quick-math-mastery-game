@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Card } from '@/components/ui/card';
@@ -12,6 +13,8 @@ import { ACTIVE_PROFILE_KEY } from '@/context/auth/utils/profileUtils';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { PaywallModal } from '../paywalls/PaywallModal';
 import { useNavigate } from 'react-router-dom';
+import { hasData, safeData } from '@/utils/supabase-type-helpers';
+import logger from '@/utils/logger';
 
 interface Profile {
   id: string;
@@ -20,6 +23,7 @@ interface Profile {
   is_active: boolean;
   created_at: string;
   is_owner: boolean;
+  active?: boolean;
 }
 
 interface ProfileSwitcherDialogProps {
@@ -89,53 +93,55 @@ export function ProfileSwitcherDialog({
     if (!userId || !planType) return;
     
     try {
-      const { data, error } = await supabase
+      const response = await supabase
         .from('plans')
         .select('max_profiles')
         .eq('plan_type', planType as any)
         .single();
       
-      if (error) {
-        console.error('Error fetching profile limit:', error);
-        return;
-      }
-      
-      if (data && data.max_profiles !== undefined) {
-        setProfileLimit(data.max_profiles);
+      // Safe extract using our helper function
+      if (hasData(response) && response.data) {
+        const limit = response.data.max_profiles;
+        if (typeof limit === 'number') {
+          setProfileLimit(limit);
+        }
+      } else if (response.error) {
+        logger.error('Error fetching profile limit:', response.error);
       }
     } catch (err) {
-      console.error('Error fetching profile limit:', err);
+      logger.error('Error fetching profile limit:', err);
     }
   };
 
   // Fetch all profiles for this account
   const fetchProfiles = async (): Promise<boolean> => {
     if (!userId) {
-      console.error('Cannot fetch profiles: No user ID available');
+      logger.error('Cannot fetch profiles: No user ID available');
       return false;
     }
     
     try {
       setIsLoading(true);
-      console.log('Fetching profiles for user ID:', userId);
+      logger.debug('Fetching profiles for user ID:', userId);
 
       // Get all profiles for this account sorted by creation time
-      const {
-        data,
-        error
-      } = await supabase.from('profiles').select('*').eq('account_id', userId as any).order('created_at', {
-        ascending: true
-      });
+      const response = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('account_id', userId as any)
+        .order('created_at', { ascending: true });
 
-      if (error) {
-        console.error('Error fetching profiles:', error);
+      if (!hasData(response)) {
+        logger.error('Error fetching profiles:', response.error);
         return false;
       }
+
+      const data = response.data;
 
       // Get the active profile ID from localStorage
       const activeProfileId = localStorage.getItem(ACTIVE_PROFILE_KEY) || defaultProfileId;
       
-      console.log(`Found ${data?.length} profiles, activeProfileId:`, activeProfileId);
+      logger.debug(`Found ${data.length} profiles, activeProfileId:`, activeProfileId);
       
       // Make sure data is an array before mapping
       if (Array.isArray(data)) {
@@ -161,7 +167,7 @@ export function ProfileSwitcherDialog({
       
       return true;
     } catch (err) {
-      console.error('Error in profile fetch:', err);
+      logger.error('Error in profile fetch:', err);
       return false;
     } finally {
       setIsLoading(false);
@@ -177,7 +183,7 @@ export function ProfileSwitcherDialog({
   // Switch to a different profile
   const handleSwitchProfile = async (profile: Profile) => {
     try {
-      console.log('Switching to profile:', profile.id, profile.name);
+      logger.debug('Switching to profile:', profile.id, profile.name);
 
       // Update the local state
       setDefaultProfileId(profile.id);
@@ -205,7 +211,7 @@ export function ProfileSwitcherDialog({
         document.body.classList.remove('ReactModal__Body--open');
       }, 100);
     } catch (err) {
-      console.error('Error switching profile:', err);
+      logger.error('Error switching profile:', err);
       toast({
         variant: "destructive",
         title: "Error",

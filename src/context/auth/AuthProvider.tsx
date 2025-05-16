@@ -9,6 +9,7 @@ import { refreshUserProfile } from './utils/accountProfile';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import logger from '@/utils/logger';
+import { safeData, hasData, hasProperty } from '@/utils/supabase-type-helpers';
 
 const AuthProvider = ({ children }: AuthProviderProps) => {
   const authState = useAuthState();
@@ -55,45 +56,49 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
     
     try {
       // Get the current plan details
-      const { data, error } = await supabase
+      const planResponse = await supabase
         .from('plans')
         .select('can_save_score, max_saved_scores')
         .eq('plan_type', authState.planType as any)
         .single();
       
-      // Handle errors properly
-      if (error || !data) {
+      // Handle errors properly using our type helper
+      if (!hasData(planResponse) || !planResponse.data) {
         logger.error({
           message: 'Error checking plan permissions', 
-          error
+          error: planResponse.error
         });
         return false;
       }
       
+      const planData = planResponse.data;
+      
       // If the plan allows saving scores
-      if (data && data.can_save_score) {
+      if (planData && planData.can_save_score) {
         // If there's no limit (null means unlimited)
-        if (data.max_saved_scores === null) return true;
+        if (planData.max_saved_scores === null) return true;
         
         // If there is a limit, check against current save count
-        const { data: accountData, error: accountError } = await supabase
+        const accountResponse = await supabase
           .from('accounts')
           .select('score_save_count')
           .eq('id', authState.userId as any)
           .single();
         
         // Handle errors properly
-        if (accountError || !accountData) {
+        if (!hasData(accountResponse) || !accountResponse.data) {
           logger.error({
             message: 'Error checking account score count', 
-            error: accountError
+            error: accountResponse.error
           });
           return false;
         }
         
+        const accountData = accountResponse.data;
+        
         // Make sure both properties exist before comparing
-        if (accountData.score_save_count !== undefined && data.max_saved_scores !== undefined) {
-          return accountData.score_save_count < data.max_saved_scores;
+        if (accountData.score_save_count !== undefined && planData.max_saved_scores !== undefined) {
+          return accountData.score_save_count < planData.max_saved_scores;
         }
       }
       
@@ -113,30 +118,26 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
       logger.debug("Checking subscription status for user: " + authState.userId);
       
       // First try to fetch from direct database to avoid any webhook latency
-      const { data: account, error: accountError } = await supabase
+      const accountResponse = await supabase
         .from('accounts')
         .select('plan_type, subscription_status, plan_expires_at')
         .eq('id', authState.userId as any)
         .single();
       
-      if (accountError) {
-        logger.error('Error fetching account data:', accountError);
-        throw new Error(accountError.message);
-      }
-      
-      if (account) {
+      if (hasData(accountResponse)) {
+        const account = accountResponse.data;
         logger.debug("Account data from DB:", account);
         
         // Use nullish coalescing to avoid setting undefined values
-        if (account.plan_type !== undefined) {
+        if (hasProperty(account, 'plan_type')) {
           authState.setPlanType(account.plan_type || 'free');
         }
         
-        if (account.subscription_status !== undefined) {
+        if (hasProperty(account, 'subscription_status')) {
           authState.setSubscriptionStatus(account.subscription_status || 'free');
         }
         
-        if (account.plan_expires_at !== undefined) {
+        if (hasProperty(account, 'plan_expires_at')) {
           authState.setPlanExpiresAt(account.plan_expires_at);
         }
         
@@ -144,6 +145,8 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
         if (account.plan_type !== 'free' && account.subscription_status !== 'free') {
           return;
         }
+      } else if (accountResponse.error) {
+        logger.error('Error fetching account data:', accountResponse.error);
       }
       
       // If we don't have a subscription yet or it's free, check directly with the API
@@ -162,9 +165,9 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
           logger.debug("Subscription data from API:", checkData);
           
           // Use optional chaining to safely access properties
-          if ('plan_type' in checkData) authState.setPlanType(checkData.plan_type);
-          if ('subscription_status' in checkData) authState.setSubscriptionStatus(checkData.subscription_status);
-          if ('plan_expires_at' in checkData) authState.setPlanExpiresAt(checkData.plan_expires_at);
+          if (hasProperty(checkData, 'plan_type')) authState.setPlanType(checkData.plan_type);
+          if (hasProperty(checkData, 'subscription_status')) authState.setSubscriptionStatus(checkData.subscription_status);
+          if (hasProperty(checkData, 'plan_expires_at')) authState.setPlanExpiresAt(checkData.plan_expires_at);
         }
       } catch (apiError) {
         logger.error('Error calling check-subscription function:', apiError);

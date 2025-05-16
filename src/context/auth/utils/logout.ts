@@ -3,6 +3,7 @@ import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { ACTIVE_PROFILE_KEY } from './profileUtils';
 import { AuthStateType } from '../auth-types';
+import logger from '@/utils/logger';
 
 /**
  * Handle user logout and clean up user state
@@ -50,12 +51,24 @@ export const handleLogout = async (authState: AuthStateType) => {
       sessionStorage.removeItem('PROFILE_SWITCHER_SHOWN_KEY');
     } catch (err) {
       // Ignore errors from localStorage operations
-      console.warn('Error clearing localStorage items:', err);
+      logger.warn('Error clearing localStorage items:', err);
     }
     
-    window.location.href = '/'; // Redirect to home page after logout
+    // Instead of using window.location.href which causes a full page refresh,
+    // we'll redirect through React Router. However, since this utility might be
+    // used outside of React Router context, we need to handle both cases.
+    // Since we can't use useNavigate here, we still need a fallback that works
+    if (typeof window !== 'undefined') {
+      if (window.location.pathname !== '/') {
+        // Fallback to safe window navigation
+        window.location.href = '/';
+      } else {
+        // Reload just the current page
+        window.location.reload();
+      }
+    }
   } catch (error) {
-    console.error('Error during logout:', error);
+    logger.error('Error during logout:', error);
     
     // Even if error occurs, still reset client-side state
     setIsLoggedIn(false);
@@ -66,6 +79,8 @@ export const handleLogout = async (authState: AuthStateType) => {
     setIsLoadingProfile(false);
     
     // Still try to redirect
-    window.location.href = '/';
+    if (typeof window !== 'undefined') {
+      window.location.href = '/';
+    }
   }
 };

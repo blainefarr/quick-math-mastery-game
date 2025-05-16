@@ -8,7 +8,7 @@ import logger from '@/utils/logger';
 // This hook handles authentication events and session state
 export const useAuthEvents = (authState: AuthStateType) => {
   // Keep track of auth subscription for cleanup
-  const authSubscription = useRef<{ data: { subscription: { unsubscribe: () => void } } } | null>(null);
+  const authSubscription = useRef<{ subscription: { unsubscribe: () => void } } | null>(null);
   // Track if we're initializing
   const isInitializing = useRef(true);
   // Track session to avoid processing the same session multiple times
@@ -86,8 +86,10 @@ export const useAuthEvents = (authState: AuthStateType) => {
           }
         });
 
-        // Store subscription for cleanup
-        authSubscription.current = data;
+        // Store subscription for cleanup - fixed to match expected type
+        authSubscription.current = {
+          subscription: data.subscription
+        };
         
         // Step 2: Check initial session
         const { data: { session } } = await supabase.auth.getSession();
@@ -134,8 +136,8 @@ export const useAuthEvents = (authState: AuthStateType) => {
       isMounted = false;
       
       // Unsubscribe from auth events
-      if (authSubscription.current?.data?.subscription) {
-        authSubscription.current.data.subscription.unsubscribe();
+      if (authSubscription.current?.subscription) {
+        authSubscription.current.subscription.unsubscribe();
         logger.debug('Unsubscribed from auth events');
       }
     };

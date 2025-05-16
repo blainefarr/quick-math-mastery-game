@@ -2,6 +2,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { ACTIVE_PROFILE_KEY } from './profileUtils';
 import logger from '@/utils/logger';
+import { safeData, hasData, hasError } from '@/utils/supabase-type-helpers';
 
 /**
  * Complete signup process that ensures account and profile creation
@@ -52,14 +53,15 @@ export const completeSignUp = async (email: string, password: string, displayNam
     }
     
     // Check if the account was created
-    const { data: accountData, error: accountError } = await supabase
+    const accountResponse = await supabase
       .from('accounts')
       .select('id')
       .eq('id', userId as any)  // In your schema, account.id = user.id
       .maybeSingle();
     
-    if (!accountError && accountData) {
-      accountId = accountData.id;
+    // Use type guard to safely extract the data
+    if (hasData(accountResponse)) {
+      accountId = accountResponse.data.id;
       break;
     }
   }
@@ -82,32 +84,33 @@ export const completeSignUp = async (email: string, password: string, displayNam
       }
       
       // Check if profile exists
-      const { data: profileData, error: profileError } = await supabase
+      const profileResponse = await supabase
         .from('profiles')
         .select('id, name')
         .eq('account_id', userId as any)
         .maybeSingle();
       
-      if (!profileError && profileData) {
+      // Use our type guard to safely access the data
+      if (hasData(profileResponse)) {
         profileCreated = true;
-        profileId = profileData.id;
+        profileId = profileResponse.data.id;
         
         // Store the profile ID in localStorage
-        localStorage.setItem(ACTIVE_PROFILE_KEY, profileData.id);
+        localStorage.setItem(ACTIVE_PROFILE_KEY, profileResponse.data.id);
         
         // IMPORTANT: Update the profile name if it doesn't match the display name
         // This ensures the profile name matches what the user entered during signup
-        if (profileData.name !== displayName) {
+        if (profileResponse.data.name !== displayName) {
           // Use explicit typing for updates
           const updateData = { name: displayName };
           
-          const { error: updateError } = await supabase
+          const updateResponse = await supabase
             .from('profiles')
             .update(updateData as any)
-            .eq('id', profileData.id);
+            .eq('id', profileResponse.data.id);
             
-          if (updateError) {
-            logger.error('Failed to update profile name:', updateError);
+          if (hasError(updateResponse)) {
+            logger.error('Failed to update profile name:', updateResponse.error);
           }
         }
         
