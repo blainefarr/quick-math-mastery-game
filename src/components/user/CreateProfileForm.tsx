@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
@@ -77,45 +78,39 @@ export function CreateProfileForm({
 
     try {
       if (isEditing && profileId) {
-        // Update existing profile - fix type errors with explicit typing
-        const updateData: { name: string; grade: string | null } = {
-          name: values.name,
-          grade: values.grade || null,
-        };
-
+        // Update existing profile
         const { data, error } = await supabase
           .from('profiles')
-          .update(updateData as any)
-          .eq('id', profileId as any)
+          .update({
+            name: values.name,
+            grade: values.grade || null,
+          })
+          .eq('id', profileId)
           .select();
 
         if (error) throw error;
         
         toast.success("Profile updated successfully");
-        if (data && data.length > 0) {
-          onSuccess(data[0]);
-        }
+        onSuccess(data?.[0]);
       } else {
-        // Create new profile - fix type errors with explicit typing
-        const insertData = {
-          account_id: userId,
-          name: values.name,
-          grade: values.grade || null,
-          is_active: false,
-          is_owner: false
-        };
-
+        // Create new profile - removed is_default field which doesn't exist
         const { data, error } = await supabase
           .from('profiles')
-          .insert([insertData as any])
+          .insert([
+            {
+              account_id: userId,
+              name: values.name,
+              grade: values.grade || null,
+              is_active: false, // New profiles are not active by default
+              is_owner: false   // New profiles are not owner by default
+            },
+          ])
           .select();
 
         if (error) throw error;
         
         toast.success("Profile created successfully");
-        if (data && data.length > 0) {
-          onSuccess(data[0]);
-        }
+        onSuccess(data?.[0]);
       }
     } catch (error) {
       console.error('Error saving profile:', error);

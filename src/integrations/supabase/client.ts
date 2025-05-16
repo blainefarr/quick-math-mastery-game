@@ -3,14 +3,12 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
-// Constants with fallbacks for instantiation
 const SUPABASE_URL = "https://dczsjvcgjxqgjdihonfj.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRjenNqdmNnanhxZ2pkaWhvbmZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDUzODQyOTgsImV4cCI6MjA2MDk2MDI5OH0.X2nlf1EWQodx3XxDNoNVHcO3UdoKtMAD8pMiVSvAbik";
 
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
-// Enhanced client configuration with robust auth settings
 export const supabase = createClient<Database>(
   SUPABASE_URL, 
   SUPABASE_PUBLISHABLE_KEY,
@@ -19,46 +17,6 @@ export const supabase = createClient<Database>(
       storage: localStorage,
       persistSession: true,
       autoRefreshToken: true,
-      // New settings for better security and error handling
-      detectSessionInUrl: true,
-      flowType: 'pkce',
-      // Debug mode off in production
-      debug: import.meta.env.DEV,
-    },
-    global: {
-      // Add retry mechanism for network failures
-      headers: {
-        'X-Client-Info': 'mental-math-app',
-      },
-    },
-    // Configure automatic retries for transient errors
-    retryAttempts: 3,
-    retryInterval: 1000,
+    }
   }
 );
-
-// Add fallback error handling
-supabase.auth.onAuthStateChange((event, session) => {
-  if (event === 'SIGNED_OUT' || event === 'USER_DELETED') {
-    // Clear any cached data on signout
-    localStorage.removeItem('math_game_active_profile');
-  }
-});
-
-// Export a function to get a fresh client if needed
-export const getSupabaseClient = () => {
-  return createClient<Database>(
-    SUPABASE_URL,
-    SUPABASE_PUBLISHABLE_KEY,
-    {
-      auth: {
-        storage: localStorage,
-        persistSession: true,
-        autoRefreshToken: true,
-        detectSessionInUrl: true,
-        flowType: 'pkce',
-        debug: import.meta.env.DEV,
-      },
-    }
-  );
-};

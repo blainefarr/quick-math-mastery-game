@@ -3,7 +3,6 @@ import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { ACTIVE_PROFILE_KEY } from './profileUtils';
 import { AuthStateType } from '../auth-types';
-import logger from '@/utils/logger';
 
 /**
  * Handle user logout and clean up user state
@@ -51,24 +50,12 @@ export const handleLogout = async (authState: AuthStateType) => {
       sessionStorage.removeItem('PROFILE_SWITCHER_SHOWN_KEY');
     } catch (err) {
       // Ignore errors from localStorage operations
-      logger.warn('Error clearing localStorage items:', err);
+      console.warn('Error clearing localStorage items:', err);
     }
     
-    // Instead of using window.location.href which causes a full page refresh,
-    // use a controlled approach that works both in React Router context and outside
-    if (typeof window !== 'undefined') {
-      if (window.location.pathname !== '/') {
-        // Navigate to home page
-        window.history.pushState({}, '', '/');
-        // Dispatch a popstate event to trigger router update
-        window.dispatchEvent(new PopStateEvent('popstate', { state: {} }));
-      } else {
-        // If already on home page, just reload the current state
-        window.dispatchEvent(new Event('popstate'));
-      }
-    }
+    window.location.href = '/'; // Redirect to home page after logout
   } catch (error) {
-    logger.error('Error during logout:', error);
+    console.error('Error during logout:', error);
     
     // Even if error occurs, still reset client-side state
     setIsLoggedIn(false);
@@ -79,8 +66,6 @@ export const handleLogout = async (authState: AuthStateType) => {
     setIsLoadingProfile(false);
     
     // Still try to redirect
-    if (typeof window !== 'undefined') {
-      window.location.href = '/';
-    }
+    window.location.href = '/';
   }
 };

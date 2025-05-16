@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Card } from '@/components/ui/card';
@@ -13,8 +12,6 @@ import { ACTIVE_PROFILE_KEY } from '@/context/auth/utils/profileUtils';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { PaywallModal } from '../paywalls/PaywallModal';
 import { useNavigate } from 'react-router-dom';
-import { hasData, safeData } from '@/utils/supabase-type-helpers';
-import logger from '@/utils/logger';
 
 interface Profile {
   id: string;
@@ -23,7 +20,6 @@ interface Profile {
   is_active: boolean;
   created_at: string;
   is_owner: boolean;
-  active?: boolean;
 }
 
 interface ProfileSwitcherDialogProps {
@@ -90,77 +86,57 @@ export function ProfileSwitcherDialog({
 
   // Fetch profile limit based on plan type
   const fetchProfileLimit = async () => {
-    if (!userId || !planType) return;
+    if (!userId) return;
     
     try {
-      const response = await supabase
+      const { data, error } = await supabase
         .from('plans')
         .select('max_profiles')
-        .eq('plan_type', planType as any)
+        .eq('plan_type', planType)
         .single();
       
-      // Use our helper function to safely extract data
-      const planData = safeData(response);
+      if (error) {
+        console.error('Error fetching profile limit:', error);
+        return;
+      }
       
-      if (planData && typeof planData.max_profiles === 'number') {
-        setProfileLimit(planData.max_profiles);
-      } else if (response.error) {
-        logger.error('Error fetching profile limit:', response.error);
+      if (data) {
+        setProfileLimit(data.max_profiles);
       }
     } catch (err) {
-      logger.error('Error fetching profile limit:', err);
+      console.error('Error fetching profile limit:', err);
     }
   };
 
   // Fetch all profiles for this account
   const fetchProfiles = async (): Promise<boolean> => {
     if (!userId) {
-      logger.error('Cannot fetch profiles: No user ID available');
+      console.error('Cannot fetch profiles: No user ID available');
       return false;
     }
     
     try {
       setIsLoading(true);
-      logger.debug('Fetching profiles for user ID:', userId);
+      console.log('Fetching profiles for user ID:', userId);
 
       // Get all profiles for this account sorted by creation time
-      const response = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('account_id', userId as any)
-        .order('created_at', { ascending: true });
-
-      // Use our helper function to safely access data
-      const data = safeData(response);
-      
-      if (!data) {
-        if (response.error) {
-          logger.error('Error fetching profiles:', response.error);
-        }
-        return false;
-      }
+      const {
+        data,
+        error
+      } = await supabase.from('profiles').select('*').eq('account_id', userId).order('created_at', {
+        ascending: true
+      });
 
       // Get the active profile ID from localStorage
       const activeProfileId = localStorage.getItem(ACTIVE_PROFILE_KEY) || defaultProfileId;
       
-      logger.debug(`Found ${data.length} profiles, activeProfileId:`, activeProfileId);
-      
-      // Make sure data is an array before mapping
-      if (Array.isArray(data)) {
-        const processedProfiles: Profile[] = data.map(profile => ({
-          id: profile.id,
-          name: profile.name || '',
-          grade: profile.grade || undefined,
-          is_active: Boolean(profile.is_active),
-          created_at: profile.created_at,
-          is_owner: Boolean(profile.is_owner),
-          // Mark as active if it matches the active profile ID
-          active: profile.id === activeProfileId
-        }));
-        setProfiles(processedProfiles);
-      } else {
-        setProfiles([]);
-      }
+      console.log(`Found ${data?.length} profiles, activeProfileId:`, activeProfileId);
+      const processedProfiles = data?.map(profile => ({
+        ...profile,
+        // Mark as active if it matches the active profile ID
+        active: profile.id === activeProfileId
+      })) || [];
+      setProfiles(processedProfiles);
       
       // Check if profile limit needs to be fetched
       if (profileLimit === null) {
@@ -169,7 +145,7 @@ export function ProfileSwitcherDialog({
       
       return true;
     } catch (err) {
-      logger.error('Error in profile fetch:', err);
+      console.error('Error in profile fetch:', err);
       return false;
     } finally {
       setIsLoading(false);
@@ -185,7 +161,7 @@ export function ProfileSwitcherDialog({
   // Switch to a different profile
   const handleSwitchProfile = async (profile: Profile) => {
     try {
-      logger.debug('Switching to profile:', profile.id, profile.name);
+      console.log('Switching to profile:', profile.id, profile.name);
 
       // Update the local state
       setDefaultProfileId(profile.id);
@@ -203,7 +179,7 @@ export function ProfileSwitcherDialog({
       // Refresh user profile in the auth context
       await refreshUserProfile();
 
-      // Close the dialog and ensure cleanup
+      // Close the dialog and ensure cleanup - fix for issue #1
       onOpenChange(false);
 
       // Extra cleanup to ensure no modal backdrop issues
@@ -213,7 +189,7 @@ export function ProfileSwitcherDialog({
         document.body.classList.remove('ReactModal__Body--open');
       }, 100);
     } catch (err) {
-      logger.error('Error switching profile:', err);
+      console.error('Error switching profile:', err);
       toast({
         variant: "destructive",
         title: "Error",
@@ -374,7 +350,7 @@ export function ProfileSwitcherDialog({
         </DialogContent>
       </Dialog>
       
-      {/* Profile Limit Paywall Modal */}
+      {/* Profile Limit Paywall Modal - Add the missing onCancel prop */}
       <PaywallModal
         open={showPaywallModal}
         onOpenChange={setShowPaywallModal}
