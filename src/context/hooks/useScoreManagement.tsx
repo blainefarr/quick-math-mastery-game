@@ -249,12 +249,12 @@ export const useScoreManagement = (userId: string | null) => {
     try {
       setSavingScore(true);
       
-      // Calculate metrics
+      // Calculate metrics - assume 0.5 seconds per math problem
       let total_speed = null;
       let adjusted_math_speed = null;
       
       if (score > 0) {
-        // Changed calculation: seconds per math problem
+        // Changed calculation: seconds per math problem - assuming 0.5s per question is possible
         total_speed = timerSeconds / score;
         
         // If typing speed is available (it represents seconds per typing problem)
